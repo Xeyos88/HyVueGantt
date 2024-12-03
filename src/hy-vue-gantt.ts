@@ -8,11 +8,11 @@ import weekOfYear from "dayjs/plugin/weekOfYear"
 import advancedFormat from "dayjs/plugin/advancedFormat"
 import customParseFormat from "dayjs/plugin/customParseFormat.js"
 
-import type { GanttBarObject } from "./types.js"
 import type { ColorScheme } from "./color-schemes"
 
 import GGanttChart from "./components/GGanttChart.vue"
 import GGanttRow from "./components/GGanttRow.vue"
+import type { GanttBarObject } from "./types"
 
 export function extendDayjs() {
   dayjs.extend(isSameOrBefore)

@@ -159,61 +159,20 @@ import GGanttBarTooltip from "./GGanttBarTooltip.vue"
 import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
 
-import type { GanttBarObject } from "../types"
 import type { ColorSchemeKey } from "../color-schemes.js"
 
 import { useElementSize } from "@vueuse/core"
 import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
-import { colorSchemes, type ColorScheme } from "../color-schemes.js"
-import {
-  BOOLEAN_KEY,
-  CHART_ROWS_KEY,
-  CONFIG_KEY,
-  EMIT_BAR_EVENT_KEY,
-  type ChartRow
-} from "../provider/symbols.js"
+import { colorSchemes } from "../color-schemes.js"
+import { BOOLEAN_KEY, CHART_ROWS_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols.js"
 import dayjs from "dayjs"
-
-export interface GGanttChartProps {
-  chartStart: string | Date
-  chartEnd: string | Date
-  precision?: "hour" | "day" | "date" | "week" | "month"
-  barStart: string
-  barEnd: string
-  currentTime?: boolean
-  currentTimeLabel?: string
-  dateFormat?: string | false
-  width?: string
-  hideTimeaxis?: boolean
-  colorScheme?: ColorSchemeKey | ColorScheme
-  grid?: boolean
-  pushOnOverlap?: boolean
-  noOverlap?: boolean
-  rowHeight?: number
-  highlightedUnits?: number[]
-  font?: string
-  labelColumnTitle?: string
-  labelColumnWidth?: string
-  commands?: boolean
-  enableMinutes?: boolean
-  enableConnections?: boolean
-  defaultConnectionType?: "bezier" | "straight" | "squared"
-  defaultConnectionColor?: string
-}
-
-export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
-  colors: ComputedRef<ColorScheme>
-  chartSize: {
-    width: Ref<number>
-    height: Ref<number>
-  }
-  widthNumber: Ref<number>
-}
-
-export type GGanttBooleanConfig = {
-  commands?: boolean
-  enableMinutes?: boolean
-}
+import type {
+  BarConnection,
+  BarPosition,
+  GanttBarObject,
+  GGanttChartProps,
+  ChartRow
+} from "../types"
 
 const props = withDefaults(defineProps<GGanttChartProps>(), {
   currentTimeLabel: "",
@@ -495,21 +454,6 @@ provide(CONFIG_KEY, {
 provide(EMIT_BAR_EVENT_KEY, emitBarEvent)
 provide(BOOLEAN_KEY, { ...props })
 
-interface BarPosition {
-  id: string
-  x: number
-  y: number
-  width: number
-  height: number
-}
-
-interface BarConnection {
-  sourceId: string
-  targetId: string
-  type?: "bezier" | "straight" | "squared"
-  color?: string
-}
-
 const connections = ref<BarConnection[]>([])
 
 flatBars.forEach((el) => {
@@ -524,8 +468,6 @@ flatBars.forEach((el) => {
     })
   }
 })
-
-console.log(connections)
 
 const barPositions = ref<Map<string, BarPosition>>(new Map())
 

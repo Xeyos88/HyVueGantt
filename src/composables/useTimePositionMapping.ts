@@ -1,4 +1,4 @@
-import type { GGanttChartConfig } from "../components/GGanttChart.vue"
+import type { GGanttChartConfig } from "../types"
 import { computed } from "vue"
 
 import useDayjsHelper from "./useDayjsHelper.js"

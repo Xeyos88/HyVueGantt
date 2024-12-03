@@ -1,15 +1,6 @@
 <script setup lang="ts">
+import type { BarPosition, ConnectionType } from "../types"
 import { computed } from "vue"
-
-interface BarPosition {
-  id: string
-  x: number
-  y: number
-  width: number
-  height: number
-}
-
-type ConnectionType = "bezier" | "straight" | "squared"
 
 interface Props {
   sourceBar: BarPosition
