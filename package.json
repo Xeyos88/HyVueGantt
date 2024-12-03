@@ -1,0 +1,82 @@
+{
+  "name": "hy-vue-gantt",
+  "version": "1.0.0",
+  "description": "Fork and update of vue-ganttastic",
+  "author": "Eugenio Topa (@Xeyos88)",
+  "scripts": {
+    "serve": "vite",
+    "build": "npm run build:types && npm run build:lib",
+    "build:lib": "vite build",
+    "build:types": "vue-tsc --declaration --emitDeclarationOnly --outDir lib_types -p tsconfig.build.json",
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "npm run lint --fix",
+    "docs:build": "vitepress build docs",
+    "docs:dev": "vitepress dev docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./lib_types/hy-vue-gantt.d.ts",
+      "import": "./lib/hy-vue-gantt.js",
+      "require": "./lib/hy-vue-gantt.umd.cjs"
+    }
+  },
+  "main": "./lib/hy-vue-gantt.umd.cjs",
+  "types": "./lib_types/hy-vue-gantt.d.ts",
+  "files": [
+    "lib_types",
+    "lib/hy-vue-gantt.js",
+    "lib/hy-vue-gantt.umd.cjs"
+  ],
+  "devDependencies": {
+    "@eslint/compat": "^1.2.3",
+    "@rushstack/eslint-patch": "^1.2.0",
+    "@senojs/rollup-plugin-style-inject": "^0.2.3",
+    "@types/node": "^22.10.1",
+    "@types/postcss-preset-env": "^7.7.0",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/eslint-config-prettier": "^10.1.0",
+    "@vue/eslint-config-typescript": "^14.1.4",
+    "@vue/tsconfig": "^0.7.0",
+    "@vuepress/plugin-search": "2.0.0-beta.51",
+    "eslint": "^9.16.0",
+    "eslint-plugin-vue": "^9.32.0",
+    "npm-run-all": "^4.1.5",
+    "postcss": "^8.4.17",
+    "postcss-preset-env": "^10.1.1",
+    "prettier": "^3.4.1",
+    "typescript": "~5.4.3",
+    "vite": "^6.0.2",
+    "vitepress": "^1.0.0-rc.4",
+    "vue-tsc": "^2.1.10"
+  },
+  "peerDependencies": {
+    "dayjs": "^1.11.13",
+    "vue": "^3.5.13"
+  },
+  "homepage": "",
+  "keywords": [
+    "gantt",
+    "chart",
+    "bar",
+    "diagram",
+    "vue",
+    "vuejs",
+    "ganttastic"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Xeyos88/HyVueGantt"
+  },
+  "dependencies": {
+    "@fortawesome/free-brands-svg-icons": "^6.7.1",
+    "@fortawesome/free-regular-svg-icons": "^6.7.1",
+    "@fortawesome/free-solid-svg-icons": "^6.7.1",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
+    "@tsconfig/node22": "^22.0.0",
+    "@vueuse/core": "^12.0.0"
+  }
+}
