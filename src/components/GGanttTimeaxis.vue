@@ -67,9 +67,9 @@
 </template>
 
 <script setup lang="ts">
-import provideConfig from "../provider/provideConfig.js"
-import provideBooleanConfig from "../provider/provideBooleanConfig.js"
-import useTimeaxisUnits from "../composables/useTimeaxisUnits.js"
+import provideConfig from "../provider/provideConfig"
+import provideBooleanConfig from "../provider/provideBooleanConfig"
+import useTimeaxisUnits from "../composables/useTimeaxisUnits"
 import { ref } from "vue"
 
 const { precision, colors } = provideConfig()

@@ -1,6 +1,6 @@
 import type { GanttBarObject } from "../types"
-import provideConfig from "../provider/provideConfig.js"
-import provideGetChartRows from "../provider/provideGetChartRows.js"
+import provideConfig from "../provider/provideConfig"
+import provideGetChartRows from "../provider/provideGetChartRows"
 
 export default function useBarDragLimit() {
   const { pushOnOverlap } = provideConfig()
@@ -38,8 +38,8 @@ export default function useBarDragLimit() {
       }
 
       for (let i = 0; i < bundleBarsOnPath.length; i++) {
-        const barFromBundle = bundleBarsOnPath[i].bar
-        const gapDist = bundleBarsOnPath[i].gapDistance
+        const barFromBundle = bundleBarsOnPath[i]!.bar
+        const gapDist = bundleBarsOnPath[i]!.gapDistance
         const otherBarsFromBundle = getBarsFromBundle(barFromBundle.ganttBarConfig.bundle).filter(
           (otherBar) => otherBar !== barFromBundle
         )
@@ -151,7 +151,7 @@ export default function useBarDragLimit() {
     }
     if (allBarsLeftOrRight.length > 0) {
       return allBarsLeftOrRight.reduce((bar1, bar2) => {
-        const bar1Elem = document.getElementById(bar1.ganttBarConfig.id) as HTMLElement
+        const bar1Elem = document.getElementById(bar1!.ganttBarConfig.id) as HTMLElement
         const bar2Elem = document.getElementById(bar2.ganttBarConfig.id) as HTMLElement
         const bar1Dist = Math.abs(bar1Elem.offsetLeft - barElem.offsetLeft)
         const bar2Dist = Math.abs(bar2Elem.offsetLeft - barElem.offsetLeft)

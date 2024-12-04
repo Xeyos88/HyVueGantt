@@ -1,5 +1,5 @@
 import { inject } from "vue"
-import { CHART_ROWS_KEY } from "./symbols.js"
+import { CHART_ROWS_KEY } from "./symbols"
 
 export default function provideGetChartRows() {
   const getChartRows = inject(CHART_ROWS_KEY)

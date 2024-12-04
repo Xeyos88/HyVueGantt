@@ -28,7 +28,7 @@ export type { ColorScheme, GanttBarObject }
 export { GGanttChart, GGanttRow }
 
 export const hyvuegantt: Plugin = {
-  install(app, options?) {
+  install(app) {
     extendDayjs()
     app.component("GGanttChart", GGanttChart)
     app.component("GGanttRow", GGanttRow)

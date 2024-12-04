@@ -36,12 +36,12 @@
 <script setup lang="ts">
 import { computed, ref, toRefs, watch, onMounted, inject } from "vue"
 
-import useBarDragManagement from "../composables/useBarDragManagement.js"
-import useTimePositionMapping from "../composables/useTimePositionMapping.js"
-import useBarDragLimit from "../composables/useBarDragLimit.js"
+import useBarDragManagement from "../composables/useBarDragManagement"
+import useTimePositionMapping from "../composables/useTimePositionMapping"
+import useBarDragLimit from "../composables/useBarDragLimit"
 import type { GanttBarObject } from "../types"
-import provideEmitBarEvent from "../provider/provideEmitBarEvent.js"
-import provideConfig from "../provider/provideConfig.js"
+import provideEmitBarEvent from "../provider/provideEmitBarEvent"
+import provideConfig from "../provider/provideConfig"
 import { BAR_CONTAINER_KEY } from "../provider/symbols"
 
 const props = defineProps<{

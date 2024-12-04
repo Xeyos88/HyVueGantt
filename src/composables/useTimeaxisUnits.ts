@@ -1,6 +1,6 @@
 import { computed } from "vue"
-import useDayjsHelper from "./useDayjsHelper.js"
-import provideConfig from "../provider/provideConfig.js"
+import useDayjsHelper from "./useDayjsHelper"
+import provideConfig from "../provider/provideConfig"
 
 export default function useTimeaxisUnits() {
   const { precision, widthNumber } = provideConfig()

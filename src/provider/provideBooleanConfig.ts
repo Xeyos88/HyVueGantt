@@ -1,5 +1,5 @@
 import { inject } from "vue"
-import { BOOLEAN_KEY } from "./symbols.js"
+import { BOOLEAN_KEY } from "./symbols"
 
 export default function provideBooleanConfig() {
   const config = inject(BOOLEAN_KEY)

@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import provideGetChartRows from "../provider/provideGetChartRows"
-import provideConfig from "../provider/provideConfig.js"
+import provideConfig from "../provider/provideConfig"
 import { computed } from "vue"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
 

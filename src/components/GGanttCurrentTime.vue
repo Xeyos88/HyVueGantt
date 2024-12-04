@@ -21,9 +21,9 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import useTimePositionMapping from "../composables/useTimePositionMapping.js"
+import useTimePositionMapping from "../composables/useTimePositionMapping"
 import dayjs from "dayjs"
-import provideConfig from "../provider/provideConfig.js"
+import provideConfig from "../provider/provideConfig"
 
 import { useIntervalFn } from "@vueuse/core"
 

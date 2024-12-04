@@ -1,8 +1,8 @@
 import type { GGanttChartConfig } from "../types"
 import { computed } from "vue"
 
-import useDayjsHelper from "./useDayjsHelper.js"
-import provideConfig from "../provider/provideConfig.js"
+import useDayjsHelper from "./useDayjsHelper"
+import provideConfig from "../provider/provideConfig"
 
 export default function useTimePositionMapping(config: GGanttChartConfig = provideConfig()) {
   const { dateFormat, chartSize } = config

@@ -1,10 +1,10 @@
 import type { GanttBarObject } from "../types"
 
-import createBarDrag from "./createBarDrag.js"
-import useDayjsHelper from "./useDayjsHelper.js"
-import provideConfig from "../provider/provideConfig.js"
-import provideGetChartRows from "../provider/provideGetChartRows.js"
-import provideEmitBarEvent from "../provider/provideEmitBarEvent.js"
+import createBarDrag from "./createBarDrag"
+import useDayjsHelper from "./useDayjsHelper"
+import provideConfig from "../provider/provideConfig"
+import provideGetChartRows from "../provider/provideGetChartRows"
+import provideEmitBarEvent from "../provider/provideEmitBarEvent"
 
 export default function useBarDragManagement() {
   const config = provideConfig()
@@ -111,10 +111,10 @@ export default function useBarDragManagement() {
     const overlapType = overlapLeft
       ? "left"
       : overlapRight
-      ? "right"
-      : overlapInBetween
-      ? "between"
-      : null
+        ? "right"
+        : overlapInBetween
+          ? "between"
+          : null
     return { overlapBar, overlapType }
   }
 

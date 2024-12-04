@@ -30,8 +30,8 @@
 <script setup lang="ts">
 import { ref, type Ref, toRefs, computed, type StyleValue, provide } from "vue"
 
-import useTimePositionMapping from "../composables/useTimePositionMapping.js"
-import provideConfig from "../provider/provideConfig.js"
+import useTimePositionMapping from "../composables/useTimePositionMapping"
+import provideConfig from "../provider/provideConfig"
 import type { GanttBarObject } from "../types"
 import GGanttBar from "./GGanttBar.vue"
 import { BAR_CONTAINER_KEY } from "../provider/symbols"
@@ -74,9 +74,8 @@ const onDrop = (e: MouseEvent) => {
 }
 
 const isBlank = (str: string) => {
-  return (!str || /^\s*$/.test(str))
+  return !str || /^\s*$/.test(str)
 }
-
 </script>
 
 <style>

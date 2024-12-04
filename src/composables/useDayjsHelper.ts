@@ -2,7 +2,7 @@ import dayjs, { type Dayjs } from "dayjs"
 import { computed } from "vue"
 
 import type { GanttBarObject, GGanttChartConfig } from "../types"
-import provideConfig from "../provider/provideConfig.js"
+import provideConfig from "../provider/provideConfig"
 
 export const DEFAULT_DATE_FORMAT = "YYYY-MM-DD HH:mm"
 

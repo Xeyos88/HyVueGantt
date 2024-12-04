@@ -1,9 +1,17 @@
 {
   "extends": "./tsconfig.json",
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/__tests__/*"],
   "compilerOptions": {
     "noEmit": false,
     "emitDeclarationOnly": true,
-    "outDir": "lib_types",
-    "allowImportingTsExtensions": false
+    "declaration": true,
+    "declarationDir": "lib_types",
+    "declarationMap": true,
+    "stripInternal": true,
+    "removeComments": false,
+    "preserveConstEnums": true,
+    "allowImportingTsExtensions": false,
+    "skipLibCheck": true,
+    "isolatedModules": true
   }
 }
