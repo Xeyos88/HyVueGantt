@@ -1,5 +1,5 @@
 import type { ComputedRef, Ref, ToRefs } from "vue"
-import type { ConnectionType, TimeUnit } from "./chart"
+import type { ConnectionPattern, ConnectionType, TimeUnit } from "./chart"
 import type { ColorScheme } from "./style"
 
 export interface GGanttChartProps {
@@ -27,6 +27,7 @@ export interface GGanttChartProps {
   enableConnections?: boolean
   defaultConnectionType?: ConnectionType
   defaultConnectionColor?: string
+  defaultConnectionPattern?: ConnectionPattern
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

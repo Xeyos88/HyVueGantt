@@ -8,14 +8,27 @@ interface Props {
   type?: ConnectionType
   color?: string
   strokeWidth?: number
-  dashArray?: string
+  pattern?: "solid" | "dash" | "dot" | "dashdot"
 }
 
 const props = withDefaults(defineProps<Props>(), {
   type: "straight",
   color: "#ff0000",
   strokeWidth: 2,
-  dashArray: ""
+  pattern: "solid"
+})
+
+const dashArrayPattern = computed(() => {
+  switch (props.pattern) {
+    case "dash":
+      return "8,8"
+    case "dot":
+      return "2,6"
+    case "dashdot":
+      return "12,6,3,6"
+    default:
+      return ""
+  }
 })
 
 const pathData = computed(() => {
@@ -65,7 +78,7 @@ const pathData = computed(() => {
       fill="none"
       :stroke="color"
       :stroke-width="strokeWidth"
-      :stroke-dasharray="dashArray"
+      :stroke-dasharray="dashArrayPattern"
       class="connector-path"
     />
   </svg>

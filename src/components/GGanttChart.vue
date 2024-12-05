@@ -66,6 +66,7 @@
                   :target-bar="barPositions.get(conn.targetId)!"
                   :type="conn.type || defaultConnectionType"
                   :color="conn.color || defaultConnectionColor"
+                  :pattern="conn.pattern || defaultConnectionPattern"
                 />
               </template>
             </template>
@@ -205,7 +206,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   enableMinutes: false,
   enableConnections: true,
   defaultConnectionType: "straight",
-  defaultConnectionColor: "#ff0000"
+  defaultConnectionColor: "#ff0000",
+  defaultConnectionPattern: "solid"
 })
 
 const emit = defineEmits<{

@@ -15,7 +15,8 @@ export function useConnections(getChartRows: () => ChartRow[]) {
             sourceId: el.ganttBarConfig.id,
             targetId: conn.targetId,
             type: conn.connectionType,
-            color: conn.connectionColor
+            color: conn.connectionColor,
+            pattern: conn.connectionPattern
           })
         })
       }
