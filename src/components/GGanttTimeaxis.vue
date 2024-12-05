@@ -40,7 +40,7 @@
         />
       </div>
     </div>
-    <div v-if="enableMinutes" class="g-timeunits-container">
+    <div v-if="precision === 'hour' && enableMinutes" class="g-timeunits-container">
       <div
         v-for="({ label, width, date }, index) in timeaxisUnits.minutesUnits"
         :key="`${label}-${index}`"

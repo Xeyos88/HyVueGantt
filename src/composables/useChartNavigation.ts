@@ -9,6 +9,7 @@ export function useChartNavigation(options: ChartNavigationOptions) {
   const { diffDays, diffHours } = options
 
   const zoomFactor = ref(diffDays)
+  const maxZoom = ref(Math.max(10, 5 * diffDays))
   const ganttPosition = ref(0)
   const ganttStep = computed(() => 100 / diffHours)
 
@@ -35,9 +36,8 @@ export function useChartNavigation(options: ChartNavigationOptions) {
     if (zoomFactor.value === 1) return
     zoomFactor.value = zoomFactor.value - 1
   }
-
   const increaseZoom = () => {
-    if (zoomFactor.value === 10) return
+    if (zoomFactor.value === maxZoom.value) return
     zoomFactor.value = zoomFactor.value + 1
   }
 

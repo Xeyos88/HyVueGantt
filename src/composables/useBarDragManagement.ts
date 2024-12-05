@@ -1,198 +1,231 @@
-import type { GanttBarObject } from "../types"
-
-import createBarDrag from "./createBarDrag"
-import useDayjsHelper from "./useDayjsHelper"
 import provideConfig from "../provider/provideConfig"
+import type { GanttBarObject } from "../types/bar"
 import provideGetChartRows from "../provider/provideGetChartRows"
 import provideEmitBarEvent from "../provider/provideEmitBarEvent"
+import useDayjsHelper from "./useDayjsHelper"
+import createBarDrag from "./createBarDrag"
+// Types for better typing and code organization
+type DragState = {
+  movedBars: Map<GanttBarObject, { oldStart: string; oldEnd: string }>
+  isDragging: boolean
+}
 
-export default function useBarDragManagement() {
+type BarMovement = {
+  bar: GanttBarObject
+  minutes: number
+  direction: "left" | "right"
+}
+
+type OverlapResult = {
+  overlapBar?: GanttBarObject
+  overlapType: "left" | "right" | "between" | null
+}
+
+// Main hook for drag and drop management
+const useBarDragManagement = () => {
   const config = provideConfig()
   const getChartRows = provideGetChartRows()
   const emitBarEvent = provideEmitBarEvent()
   const { pushOnOverlap, barStart, barEnd, noOverlap, dateFormat } = config
 
-  const movedBarsInDrag = new Map<GanttBarObject, { oldStart: string; oldEnd: string }>()
+  // Central state management for drag operations
+  const dragState: DragState = {
+    movedBars: new Map(),
+    isDragging: false
+  }
 
   const { toDayjs, format } = useDayjsHelper()
 
+  // Initialize drag for a single bar
   const initDragOfBar = (bar: GanttBarObject, e: MouseEvent) => {
-    const { initDrag } = createBarDrag(bar, onDrag, onEndDrag, config)
-    emitBarEvent({ ...e, type: "dragstart" }, bar)
-    initDrag(e)
+    const dragHandler = createDragHandler(bar)
+    dragHandler.initiateDrag(e)
     addBarToMovedBars(bar)
+    emitBarEvent({ ...e, type: "dragstart" }, bar)
   }
 
+  // Initialize drag for a bundle of bars
   const initDragOfBundle = (mainBar: GanttBarObject, e: MouseEvent) => {
     const bundle = mainBar.ganttBarConfig.bundle
-    if (bundle == null) {
-      return
-    }
-    getChartRows().forEach((row) => {
-      row.bars.forEach((bar) => {
-        if (bar.ganttBarConfig.bundle === bundle) {
-          const dragEndHandler = bar === mainBar ? onEndDrag : () => null
-          const { initDrag } = createBarDrag(bar, onDrag, dragEndHandler, config)
-          initDrag(e)
-          addBarToMovedBars(bar)
-        }
-      })
+    if (!bundle) return
+
+    const getBundleBars = () =>
+      getChartRows()
+        .flatMap((row) => row.bars)
+        .filter((bar) => bar.ganttBarConfig.bundle === bundle)
+
+    getBundleBars().forEach((bar) => {
+      const isMainBar = bar === mainBar
+      const dragHandler = createDragHandler(bar, isMainBar)
+      dragHandler.initiateDrag(e)
+      addBarToMovedBars(bar)
     })
+
     emitBarEvent({ ...e, type: "dragstart" }, mainBar)
   }
 
-  const onDrag = (e: MouseEvent, bar: GanttBarObject) => {
+  // Create handler for drag events
+  const createDragHandler = (bar: GanttBarObject, isMainBar = true) => ({
+    initiateDrag: (e: MouseEvent) => {
+      const { initDrag } = createBarDrag(
+        bar,
+        (e) => handleDrag(e, bar),
+        isMainBar ? handleDragEnd : () => null,
+        config
+      )
+      initDrag(e)
+    }
+  })
+
+  // Handle ongoing drag operations
+  const handleDrag = (e: MouseEvent, bar: GanttBarObject) => {
     emitBarEvent({ ...e, type: "drag" }, bar)
-    fixOverlaps(bar)
-  }
-
-  const fixOverlaps = (ganttBar: GanttBarObject) => {
-    if (!pushOnOverlap?.value) {
-      return
-    }
-    let currentBar = ganttBar
-    let { overlapBar, overlapType } = getOverlapBarAndType(currentBar)
-    while (overlapBar) {
-      addBarToMovedBars(overlapBar)
-      const currentBarStart = toDayjs(currentBar[barStart.value])
-      const currentBarEnd = toDayjs(currentBar[barEnd.value])
-      const overlapBarStart = toDayjs(overlapBar[barStart.value])
-      const overlapBarEnd = toDayjs(overlapBar[barEnd.value])
-      let minuteDiff: number
-      switch (overlapType) {
-        case "left":
-          minuteDiff = overlapBarEnd.diff(currentBarStart, "minutes", true)
-          overlapBar[barEnd.value] = format(currentBar[barStart.value], dateFormat.value)
-          overlapBar[barStart.value] = format(
-            overlapBarStart.subtract(minuteDiff, "minutes"),
-            dateFormat.value
-          )
-          break
-        case "right":
-          minuteDiff = currentBarEnd.diff(overlapBarStart, "minutes", true)
-          overlapBar[barStart.value] = format(currentBarEnd, dateFormat.value)
-          overlapBar[barEnd.value] = format(
-            overlapBarEnd.add(minuteDiff, "minutes"),
-            dateFormat.value
-          )
-          break
-        default:
-          console.warn(
-            "Vue-Ganttastic: One bar is inside of the other one! This should never occur while push-on-overlap is active!"
-          )
-          return
-      }
-      if (overlapBar && (overlapType === "left" || overlapType === "right")) {
-        moveBundleOfPushedBarByMinutes(overlapBar, minuteDiff, overlapType)
-      }
-      currentBar = overlapBar
-      ;({ overlapBar, overlapType } = getOverlapBarAndType(overlapBar))
+    if (pushOnOverlap?.value) {
+      handleOverlaps(bar)
     }
   }
 
-  const getOverlapBarAndType = (ganttBar: GanttBarObject) => {
-    let overlapLeft, overlapRight, overlapInBetween
-    const allBarsInRow = getChartRows().find((row) => row.bars.includes(ganttBar))?.bars ?? []
-    const ganttBarStart = toDayjs(ganttBar[barStart.value])
-    const ganttBarEnd = toDayjs(ganttBar[barEnd.value])
-    const overlapBar = allBarsInRow.find((otherBar) => {
-      if (otherBar === ganttBar) {
-        return false
-      }
-      const otherBarStart = toDayjs(otherBar[barStart.value])
-      const otherBarEnd = toDayjs(otherBar[barEnd.value])
-      overlapLeft = ganttBarStart.isBetween(otherBarStart, otherBarEnd)
-      overlapRight = ganttBarEnd.isBetween(otherBarStart, otherBarEnd)
-      overlapInBetween =
-        otherBarStart.isBetween(ganttBarStart, ganttBarEnd) ||
-        otherBarEnd.isBetween(ganttBarStart, ganttBarEnd)
-      return overlapLeft || overlapRight || overlapInBetween
-    })
-    const overlapType = overlapLeft
-      ? "left"
-      : overlapRight
-        ? "right"
-        : overlapInBetween
-          ? "between"
-          : null
-    return { overlapBar, overlapType }
+  // Manage overlapping bars during drag
+  const handleOverlaps = (bar: GanttBarObject) => {
+    let currentBar = bar
+    let overlap = detectOverlap(currentBar)
+
+    while (overlap.overlapBar) {
+      const adjustedBar = adjustOverlappingBar(currentBar, overlap)
+      if (!adjustedBar) break
+
+      currentBar = adjustedBar
+      overlap = detectOverlap(currentBar)
+    }
   }
 
-  const moveBundleOfPushedBarByMinutes = (
-    pushedBar: GanttBarObject,
-    minutes: number,
-    direction: "left" | "right"
-  ) => {
-    addBarToMovedBars(pushedBar)
-    if (!pushedBar.ganttBarConfig.bundle) {
-      return
+  // Detect if and how bars overlap
+  const detectOverlap = (bar: GanttBarObject): OverlapResult => {
+    const barsInRow = getChartRows().find((row) => row.bars.includes(bar))?.bars || []
+
+    for (const otherBar of barsInRow) {
+      if (otherBar === bar) continue
+
+      const overlapType = determineOverlapType(bar, otherBar)
+      if (overlapType) {
+        return { overlapBar: otherBar, overlapType }
+      }
     }
+
+    return { overlapType: null }
+  }
+
+  // Determine the type of overlap between two bars
+  const determineOverlapType = (bar1: GanttBarObject, bar2: GanttBarObject) => {
+    const start1 = toDayjs(bar1[barStart.value])
+    const end1 = toDayjs(bar1[barEnd.value])
+    const start2 = toDayjs(bar2[barStart.value])
+    const end2 = toDayjs(bar2[barEnd.value])
+
+    if (start1.isBetween(start2, end2)) return "left"
+    if (end1.isBetween(start2, end2)) return "right"
+    if (start2.isBetween(start1, end1) || end2.isBetween(start1, end1)) return "between"
+
+    return null
+  }
+
+  // Adjust bar positions when overlap is detected
+  const adjustOverlappingBar = (currentBar: GanttBarObject, overlap: OverlapResult) => {
+    if (!overlap.overlapBar || !overlap.overlapType) return null
+
+    const adjustment = calculateBarMovement(currentBar, overlap.overlapBar, overlap.overlapType)
+    applyBarAdjustment(overlap.overlapBar, adjustment)
+
+    if (overlap.overlapBar.ganttBarConfig.bundle) {
+      adjustBundleBars(overlap.overlapBar, adjustment)
+    }
+
+    return overlap.overlapBar
+  }
+
+  // Calculate the required movement to resolve overlap
+  const calculateBarMovement = (
+    currentBar: GanttBarObject,
+    overlapBar: GanttBarObject,
+    type: string
+  ): BarMovement => {
+    const currentStart = toDayjs(currentBar[barStart.value])
+    const currentEnd = toDayjs(currentBar[barEnd.value])
+    const overlapStart = toDayjs(overlapBar[barStart.value])
+    const overlapEnd = toDayjs(overlapBar[barEnd.value])
+
+    if (type === "left") {
+      const minutes = overlapEnd.diff(currentStart, "minutes", true)
+      return { bar: overlapBar, minutes, direction: "left" }
+    }
+
+    const minutes = currentEnd.diff(overlapStart, "minutes", true)
+    return { bar: overlapBar, minutes, direction: "right" }
+  }
+
+  // Apply movement adjustment to a bar
+  const applyBarAdjustment = (bar: GanttBarObject, adjustment: BarMovement) => {
+    addBarToMovedBars(bar)
+
+    const timeAdjustment =
+      adjustment.direction === "left"
+        ? (time: string) => toDayjs(time).subtract(adjustment.minutes, "minutes")
+        : (time: string) => toDayjs(time).add(adjustment.minutes, "minutes")
+
+    bar[barStart.value] = format(timeAdjustment(bar[barStart.value]), dateFormat.value)
+    bar[barEnd.value] = format(timeAdjustment(bar[barEnd.value]), dateFormat.value)
+  }
+
+  // Adjust all bars in a bundle
+  const adjustBundleBars = (sourceBar: GanttBarObject, adjustment: BarMovement) => {
+    const bundle = sourceBar.ganttBarConfig.bundle
+    if (!bundle) return
+
     getChartRows().forEach((row) => {
       row.bars.forEach((bar) => {
-        if (bar.ganttBarConfig.bundle === pushedBar.ganttBarConfig.bundle && bar !== pushedBar) {
+        if (bar.ganttBarConfig.bundle === bundle && bar !== sourceBar) {
           addBarToMovedBars(bar)
-          moveBarByMinutes(bar, minutes, direction)
+          applyBarAdjustment(bar, adjustment)
         }
       })
     })
   }
 
-  const moveBarByMinutes = (bar: GanttBarObject, minutes: number, direction: "left" | "right") => {
-    switch (direction) {
-      case "left":
-        bar[barStart.value] = format(
-          toDayjs(bar, "start").subtract(minutes, "minutes"),
-          dateFormat.value
-        )
-        bar[barEnd.value] = format(
-          toDayjs(bar, "end").subtract(minutes, "minutes"),
-          dateFormat.value
-        )
-        break
-      case "right":
-        bar[barStart.value] = format(
-          toDayjs(bar, "start").add(minutes, "minutes"),
-          dateFormat.value
-        )
-        bar[barEnd.value] = format(toDayjs(bar, "end").add(minutes, "minutes"), dateFormat.value)
+  // Handle the end of a drag operation
+  const handleDragEnd = (e: MouseEvent, bar: GanttBarObject) => {
+    if (shouldSnapBack()) {
+      snapBackMovedBars()
     }
-    fixOverlaps(bar)
+
+    emitBarEvent({ ...e, type: "dragend" }, bar, undefined, new Map(dragState.movedBars))
+
+    dragState.movedBars.clear()
+    dragState.isDragging = false
   }
 
-  const onEndDrag = (e: MouseEvent, bar: GanttBarObject) => {
-    snapBackAllMovedBarsIfNeeded()
-    const ev = {
-      ...e,
-      type: "dragend"
-    }
-    emitBarEvent(ev, bar, undefined, new Map(movedBarsInDrag))
-    movedBarsInDrag.clear()
-  }
-
+  // Add a bar to the moved bars tracking
   const addBarToMovedBars = (bar: GanttBarObject) => {
-    if (!movedBarsInDrag.has(bar)) {
-      const oldStart = bar[barStart.value]
-      const oldEnd = bar[barEnd.value]
-      movedBarsInDrag.set(bar, { oldStart, oldEnd })
+    if (!dragState.movedBars.has(bar)) {
+      dragState.movedBars.set(bar, {
+        oldStart: bar[barStart.value],
+        oldEnd: bar[barEnd.value]
+      })
     }
   }
 
-  const snapBackAllMovedBarsIfNeeded = () => {
-    if (pushOnOverlap.value || !noOverlap.value) {
-      return
-    }
+  // Check if bars should snap back to original positions
+  const shouldSnapBack = () => {
+    if (pushOnOverlap.value || !noOverlap.value) return false
 
-    let isAnyOverlap = false
-    movedBarsInDrag.forEach((_, bar) => {
-      const { overlapBar } = getOverlapBarAndType(bar)
-      if (overlapBar != null) {
-        isAnyOverlap = true
-      }
+    return Array.from(dragState.movedBars.keys()).some((bar) => {
+      const { overlapBar } = detectOverlap(bar)
+      return overlapBar != null
     })
-    if (!isAnyOverlap) {
-      return
-    }
-    movedBarsInDrag.forEach(({ oldStart, oldEnd }, bar) => {
+  }
+
+  // Reset all moved bars to their original positions
+  const snapBackMovedBars = () => {
+    dragState.movedBars.forEach(({ oldStart, oldEnd }, bar) => {
       bar[barStart.value] = oldStart
       bar[barEnd.value] = oldEnd
     })
@@ -203,3 +236,5 @@ export default function useBarDragManagement() {
     initDragOfBundle
   }
 }
+
+export default useBarDragManagement
