@@ -1,9 +1,41 @@
-import { ref } from "vue"
-import type { BarConnection, BarPosition, ChartRow } from "../types"
+import { computed, ref } from "vue"
+import type { BarConnection, BarPosition, ChartRow, GGanttChartProps } from "../types"
 
-export function useConnections(getChartRows: () => ChartRow[]) {
+export function useConnections(getChartRows: () => ChartRow[], props: GGanttChartProps) {
   const connections = ref<BarConnection[]>([])
   const barPositions = ref<Map<string, BarPosition>>(new Map())
+
+  const getConnectorProps = computed(() => (conn: BarConnection) => {
+    const sourceBar = barPositions.value.get(conn.sourceId)
+    const targetBar = barPositions.value.get(conn.targetId)
+
+    if (!sourceBar || !targetBar) {
+      return null
+    }
+
+    const defaultProps = {
+      type: props.defaultConnectionType,
+      color: props.defaultConnectionColor,
+      pattern: props.defaultConnectionPattern,
+      animated: props.defaultConnectionAnimated,
+      animationSpeed: props.defaultConnectionAnimationSpeed
+    }
+
+    const connectionProps = {
+      type: conn.type,
+      color: conn.color,
+      pattern: conn.pattern,
+      animated: conn.animated,
+      animationSpeed: conn.animationSpeed
+    }
+
+    return {
+      sourceBar,
+      targetBar,
+      ...defaultProps,
+      ...connectionProps
+    }
+  })
 
   const initializeConnections = () => {
     const flatBars = getChartRows().flatMap((el: ChartRow) => el.bars)
@@ -14,9 +46,11 @@ export function useConnections(getChartRows: () => ChartRow[]) {
           connections.value.push({
             sourceId: el.ganttBarConfig.id,
             targetId: conn.targetId,
-            type: conn.connectionType,
-            color: conn.connectionColor,
-            pattern: conn.connectionPattern
+            type: conn.type,
+            color: conn.color,
+            pattern: conn.pattern,
+            animated: conn.animated,
+            animationSpeed: conn.animationSpeed
           })
         })
       }
@@ -54,6 +88,7 @@ export function useConnections(getChartRows: () => ChartRow[]) {
   return {
     connections,
     barPositions,
+    getConnectorProps,
     initializeConnections,
     updateBarPositions
   }
