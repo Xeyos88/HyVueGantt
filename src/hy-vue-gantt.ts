@@ -12,7 +12,7 @@ import type { ColorScheme } from "./color-schemes"
 
 import GGanttChart from "./components/GGanttChart.vue"
 import GGanttRow from "./components/GGanttRow.vue"
-import type { GanttBarObject } from "./types"
+import type { GanttBarObject, GanttBarConfig } from "./types"
 
 export function extendDayjs() {
   dayjs.extend(isSameOrBefore)
@@ -24,7 +24,7 @@ export function extendDayjs() {
   dayjs.extend(advancedFormat)
 }
 
-export type { ColorScheme, GanttBarObject }
+export type { ColorScheme, GanttBarObject, GanttBarConfig }
 export { GGanttChart, GGanttRow }
 
 export const hyvuegantt: Plugin = {

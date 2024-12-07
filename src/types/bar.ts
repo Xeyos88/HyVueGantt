@@ -1,9 +1,19 @@
 import type { CSSProperties } from "vue"
+import type { ConnectionPattern, ConnectionSpeed, ConnectionType } from "./chart"
 
-export interface GanttBarConnection {
+export interface BaseConnection {
   targetId: string
-  connectionType?: "bezier" | "straight" | "squared"
-  connectionColor?: string
+  type?: ConnectionType
+  color?: string
+  pattern?: ConnectionPattern
+  animated?: boolean
+  animationSpeed?: ConnectionSpeed
+}
+
+export type GanttBarConnection = BaseConnection
+
+export interface BarConnection extends BaseConnection {
+  sourceId: string
 }
 
 export interface GanttBarConfig {
@@ -32,11 +42,4 @@ export interface BarPosition {
   y: number
   width: number
   height: number
-}
-
-export interface BarConnection {
-  sourceId: string
-  targetId: string
-  type?: "bezier" | "straight" | "squared"
-  color?: string
 }

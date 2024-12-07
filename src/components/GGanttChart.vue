@@ -62,10 +62,7 @@
               <template v-for="conn in connections" :key="`${conn.sourceId}-${conn.targetId}`">
                 <g-gantt-connector
                   v-if="barPositions.get(conn.sourceId) && barPositions.get(conn.targetId)"
-                  :source-bar="barPositions.get(conn.sourceId)!"
-                  :target-bar="barPositions.get(conn.targetId)!"
-                  :type="conn.type || defaultConnectionType"
-                  :color="conn.color || defaultConnectionColor"
+                  v-bind="getConnectorProps(conn)!"
                 />
               </template>
             </template>
@@ -205,7 +202,10 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   enableMinutes: false,
   enableConnections: true,
   defaultConnectionType: "straight",
-  defaultConnectionColor: "#ff0000"
+  defaultConnectionColor: "#ff0000",
+  defaultConnectionPattern: "solid",
+  defaultConnectionAnimated: false,
+  defaultConnectionAnimationSpeed: "normal"
 })
 
 const emit = defineEmits<{
@@ -267,8 +267,8 @@ const getChartRows = () => {
 }
 
 // Composables
-const { connections, barPositions, initializeConnections, updateBarPositions } =
-  useConnections(getChartRows)
+const { connections, barPositions, getConnectorProps, initializeConnections, updateBarPositions } =
+  useConnections(getChartRows, props)
 
 const { showTooltip, tooltipBar, initTooltip, clearTooltip } = useTooltip()
 
