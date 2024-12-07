@@ -1,7 +1,13 @@
 <template>
-  <div>
+  <div
+    role="application"
+    aria-label="Interactive Gantt"
+    tabindex="0"
+    @keydown="handleKeyDown"
+    ref="ganttContainer"
+  >
     <!-- Chart Layout Section -->
-    <div :class="[{ 'labels-in-column': !!labelColumnTitle }]">
+    <div :class="[{ 'labels-in-column': !!labelColumnTitle }]" aria-controls="gantt-controls">
       <!-- Label Column -->
       <g-gantt-label-column v-if="labelColumnTitle" :style="{ width: labelColumnWidth }">
         <template #label-column-title>
@@ -76,16 +82,22 @@
       v-if="commands"
       class="g-gantt-command"
       :style="{ background: colors.commands, fontFamily: font }"
+      aria-label="Gantt Commands"
     >
       <!-- Navigation Controls -->
       <div class="g-gantt-command-fixed">
         <div class="g-gantt-command-slider">
-          <button :disabled="ganttPosition === 0" @click="handleStep(0, ganttWrapper!)">
+          <button
+            :disabled="ganttPosition === 0"
+            @click="handleStep(0, ganttWrapper!)"
+            aria-label="Scroll to start"
+          >
             <FontAwesomeIcon :icon="faAnglesLeft" class="command-icon" />
           </button>
           <button
             :disabled="ganttPosition === 0"
             @click="handleStep(ganttPosition - ganttStep, ganttWrapper!)"
+            aria-label="Scroll back"
           >
             <FontAwesomeIcon :icon="faAngleLeft" class="command-icon" />
           </button>
@@ -99,15 +111,24 @@
             class="g-gantt-scroller"
             :style="{ '--value': `${ganttPosition}%` }"
             @input="handleScroll(ganttWrapper!)"
+            :aria-valuemin="0"
+            :aria-valuemax="100"
+            :aria-valuenow="ganttPosition"
+            aria-label="Gantt scroll position"
           />
 
           <button
             :disabled="ganttPosition === 100"
             @click="handleStep(Number(ganttPosition) + Number(ganttStep), ganttWrapper!)"
+            aria-label="Scroll up"
           >
             <FontAwesomeIcon :icon="faAngleRight" class="command-icon" />
           </button>
-          <button :disabled="ganttPosition === 100" @click="handleStep(100, ganttWrapper!)">
+          <button
+            :disabled="ganttPosition === 100"
+            @click="handleStep(100, ganttWrapper!)"
+            aria-label="Scroll to end"
+          >
             <FontAwesomeIcon :icon="faAnglesRight" class="command-icon" />
           </button>
         </div>
@@ -115,10 +136,10 @@
 
       <!-- Zoom Controls -->
       <div class="g-gantt-command-zoom">
-        <button @click="decreaseZoom">
+        <button @click="decreaseZoom" aria-label="Zoom-out Gantt">
           <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
         </button>
-        <button @click="increaseZoom">
+        <button @click="increaseZoom" aria-label="Zoom-out Gantt">
           <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
         </button>
       </div>
@@ -175,6 +196,7 @@ import GGanttConnector from "./GGanttConnector.vue"
 import { useConnections } from "../composables/useConnections"
 import { useTooltip } from "../composables/useTooltip"
 import { useChartNavigation } from "../composables/useChartNavigation"
+import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
 
 // Types and Constants
 import { colorSchemes, type ColorScheme, type ColorSchemeKey } from "../color-schemes"
@@ -266,6 +288,13 @@ const getChartRows = () => {
   return allBars
 }
 
+// Chart Elements Refs
+const ganttChart = ref<HTMLElement | null>(null)
+const chartSize = useElementSize(ganttChart)
+const ganttWrapper = ref<HTMLElement | null>(null)
+const timeaxisComponent = ref<InstanceType<typeof GGanttTimeaxis> | null>(null)
+const ganttContainer = ref<HTMLElement | null>(null)
+
 // Composables
 const { connections, barPositions, getConnectorProps, initializeConnections, updateBarPositions } =
   useConnections(getChartRows, props)
@@ -286,6 +315,19 @@ const {
   diffHours: diffHours.value
 })
 
+const navigationControls = {
+  zoomFactor,
+  ganttPosition,
+  ganttStep,
+  handleStep,
+  handleScroll,
+  handleWheel,
+  decreaseZoom,
+  increaseZoom
+}
+
+const { handleKeyDown } = useKeyboardNavigation(navigationControls, ganttWrapper, ganttContainer)
+
 // Derived State
 const widthNumber = computed(() => zoomFactor.value * 100)
 const customWidth = computed(() => `${widthNumber.value}%`)
@@ -299,12 +341,6 @@ const getColorScheme = (scheme: string | ColorScheme): ColorScheme =>
 
 const colors = computed(() => getColorScheme(colorScheme.value))
 const radius = computed(() => (props.commands ? "0px" : "5px"))
-
-// Chart Elements Refs
-const ganttChart = ref<HTMLElement | null>(null)
-const chartSize = useElementSize(ganttChart)
-const ganttWrapper = ref<HTMLElement | null>(null)
-const timeaxisComponent = ref<InstanceType<typeof GGanttTimeaxis> | null>(null)
 
 // Time Axis Interaction State
 const isDragging = ref(false)
@@ -565,5 +601,10 @@ provide(BOOLEAN_KEY, { ...props })
 
 button {
   display: flex;
+}
+
+.g-gantt-chart:focus-within {
+  outline: 2px solid v-bind(colors.primary);
+  outline-offset: 2px;
 }
 </style>

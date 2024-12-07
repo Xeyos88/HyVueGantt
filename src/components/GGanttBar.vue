@@ -17,6 +17,11 @@
     @mouseenter="onMouseEvent"
     @mouseleave="onMouseEvent"
     @contextmenu="onMouseEvent"
+    role="listitem"
+    :aria-label="`Activity ${barConfig.label}`"
+    :aria-grabbed="isDragging"
+    tabindex="0"
+    :aria-describedby="`tooltip-${barConfig.id}`"
   >
     <div class="g-gantt-bar-label">
       <slot :bar="bar">

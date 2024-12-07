@@ -1,5 +1,11 @@
 <template>
-  <div ref="timeaxisElement" class="g-timeaxis" @mousedown="handleMouseDown">
+  <div
+    ref="timeaxisElement"
+    class="g-timeaxis"
+    @mousedown="handleMouseDown"
+    role="tablist"
+    aria-label="Time Axis"
+  >
     <div class="g-timeunits-container">
       <div
         v-for="({ label, value, date, width }, index) in timeaxisUnits.upperUnits"
