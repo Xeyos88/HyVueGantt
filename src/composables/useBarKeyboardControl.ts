@@ -2,6 +2,7 @@ import type { GanttBarObject } from "../types/bar"
 import useDayjsHelper from "./useDayjsHelper"
 import type { GGanttChartConfig } from "../types/config"
 import type dayjs from "dayjs"
+import useBarDragManagement from "./useBarDragManagement"
 
 export function useBarKeyboardControl(
   bar: GanttBarObject,
@@ -10,6 +11,8 @@ export function useBarKeyboardControl(
 ) {
   const { barStart, barEnd, dateFormat } = config
   const { toDayjs, format } = useDayjsHelper(config)
+
+  const { handleOverlaps, shouldSnapBack, snapBackMovedBars } = useBarDragManagement()
 
   const TIME_STEP = {
     hour: 5,
@@ -29,6 +32,7 @@ export function useBarKeyboardControl(
 
     const currentStart = toDayjs(bar[barStart.value])
     const currentEnd = toDayjs(bar[barEnd.value])
+
     const newStart = currentStart.add(minutesToMove * multiplier, "minutes")
     const newEnd = currentEnd.add(minutesToMove * multiplier, "minutes")
 
@@ -36,8 +40,22 @@ export function useBarKeyboardControl(
       return
     }
 
+    const originalStart = bar[barStart.value]
+    const originalEnd = bar[barEnd.value]
+
     bar[barStart.value] = format(newStart, dateFormat.value)
     bar[barEnd.value] = format(newEnd, dateFormat.value)
+
+    if (config.pushOnOverlap.value) {
+      handleOverlaps(bar)
+    }
+
+    if (shouldSnapBack()) {
+      bar[barStart.value] = originalStart
+      bar[barEnd.value] = originalEnd
+      snapBackMovedBars()
+      return
+    }
 
     emitDragEvents()
   }
@@ -71,8 +89,22 @@ export function useBarKeyboardControl(
       return
     }
 
+    const originalStart = bar[barStart.value]
+    const originalEnd = bar[barEnd.value]
+
     bar[barStart.value] = format(newStart, dateFormat.value)
     bar[barEnd.value] = format(newEnd, dateFormat.value)
+
+    if (config.pushOnOverlap.value) {
+      handleOverlaps(bar)
+    }
+
+    if (shouldSnapBack()) {
+      bar[barStart.value] = originalStart
+      bar[barEnd.value] = originalEnd
+      snapBackMovedBars()
+      return
+    }
 
     emitDragEvents()
   }
