@@ -7,6 +7,7 @@
     @drop="onDrop($event)"
     @mouseover="isHovering = true"
     @mouseleave="isHovering = false"
+    role="list"
   >
     <div
       v-if="!isBlank(label) && !labelColumnTitle"

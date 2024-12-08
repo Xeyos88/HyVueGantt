@@ -233,7 +233,10 @@ const useBarDragManagement = () => {
 
   return {
     initDragOfBar,
-    initDragOfBundle
+    initDragOfBundle,
+    snapBackMovedBars,
+    shouldSnapBack,
+    handleOverlaps
   }
 }
 
