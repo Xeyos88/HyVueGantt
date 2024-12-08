@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, type Ref } from "vue"
+import { type Ref } from "vue"
 import type { UseChartNavigationReturn } from "../types/navigation"
 
 export function useKeyboardNavigation(
@@ -64,14 +64,6 @@ export function useKeyboardNavigation(
       action()
     }
   }
-
-  onMounted(() => {
-    document.addEventListener("keydown", handleKeyDown)
-  })
-
-  onUnmounted(() => {
-    document.removeEventListener("keydown", handleKeyDown)
-  })
 
   return {
     handleKeyDown

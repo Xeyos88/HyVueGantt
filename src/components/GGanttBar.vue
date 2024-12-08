@@ -17,6 +17,7 @@
     @mouseenter="onMouseEvent"
     @mouseleave="onMouseEvent"
     @contextmenu="onMouseEvent"
+    @keydown="onBarKeyDown"
     role="listitem"
     :aria-label="`Activity ${barConfig.label}`"
     :aria-grabbed="isDragging"
@@ -44,6 +45,7 @@ import { computed, ref, toRefs, watch, onMounted, inject } from "vue"
 import useBarDragManagement from "../composables/useBarDragManagement"
 import useTimePositionMapping from "../composables/useTimePositionMapping"
 import useBarDragLimit from "../composables/useBarDragLimit"
+import { useBarKeyboardControl } from "../composables/useBarKeyboardControl"
 import type { GanttBarObject } from "../types"
 import provideEmitBarEvent from "../provider/provideEmitBarEvent"
 import provideConfig from "../provider/provideConfig"
@@ -65,6 +67,8 @@ const { setDragLimitsOfGanttBar } = useBarDragLimit()
 const isDragging = ref(false)
 
 const barConfig = computed(() => bar.value.ganttBarConfig)
+
+const { onBarKeyDown } = useBarKeyboardControl(bar.value, config, emitBarEvent)
 
 function firstMousemoveCallback(e: MouseEvent) {
   if (barConfig.value.bundle != null) {
