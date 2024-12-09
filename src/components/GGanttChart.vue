@@ -214,6 +214,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   colorScheme: "default",
   grid: false,
   pushOnOverlap: false,
+  pushOnConnect: false,
   noOverlap: false,
   rowHeight: 40,
   highlightedUnits: () => [],

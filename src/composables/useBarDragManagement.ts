@@ -26,7 +26,7 @@ const useBarDragManagement = () => {
   const config = provideConfig()
   const getChartRows = provideGetChartRows()
   const emitBarEvent = provideEmitBarEvent()
-  const { pushOnOverlap, barStart, barEnd, noOverlap, dateFormat } = config
+  const { pushOnOverlap, pushOnConnect, barStart, barEnd, noOverlap, dateFormat } = config
 
   // Central state management for drag operations
   const dragState: DragState = {
@@ -80,8 +80,28 @@ const useBarDragManagement = () => {
   // Handle ongoing drag operations
   const handleDrag = (e: MouseEvent, bar: GanttBarObject) => {
     emitBarEvent({ ...e, type: "drag" }, bar)
-    if (pushOnOverlap?.value) {
+    if (pushOnOverlap?.value && pushOnConnect?.value) {
+      const barsToProcess = [bar]
+      const processedBars = new Set<string>([bar.ganttBarConfig.id])
+
+      while (barsToProcess.length > 0) {
+        const currentBar = barsToProcess.shift()!
+
+        handleOverlaps(currentBar)
+        handleOverlapsConnect(currentBar)
+
+        const connectedBars = getConnectedBars(currentBar)
+        connectedBars.forEach((connectedBar) => {
+          if (!processedBars.has(connectedBar.ganttBarConfig.id)) {
+            processedBars.add(connectedBar.ganttBarConfig.id)
+            barsToProcess.push(connectedBar)
+          }
+        })
+      }
+    } else if (pushOnOverlap?.value) {
       handleOverlaps(bar)
+    } else if (pushOnConnect?.value) {
+      handleOverlapsConnect(bar)
     }
   }
 
@@ -97,6 +117,54 @@ const useBarDragManagement = () => {
       currentBar = adjustedBar
       overlap = detectOverlap(currentBar)
     }
+  }
+
+  const getConnectedBars = (bar: GanttBarObject): GanttBarObject[] => {
+    const connectedBars: GanttBarObject[] = []
+    const allBars = getChartRows().flatMap((row) => row.bars)
+
+    bar.ganttBarConfig.connections?.forEach((conn) => {
+      const targetBar = allBars.find((b) => b.ganttBarConfig.id === conn.targetId)
+      if (targetBar) connectedBars.push(targetBar)
+    })
+
+    allBars.forEach((otherBar) => {
+      otherBar.ganttBarConfig.connections?.forEach((conn) => {
+        if (conn.targetId === bar.ganttBarConfig.id && !connectedBars.includes(otherBar)) {
+          connectedBars.push(otherBar)
+        }
+      })
+    })
+
+    return connectedBars
+  }
+
+  const handleOverlapsConnect = (bar: GanttBarObject) => {
+    let currentBar = bar
+    let overlap = detectOverlapConnect(currentBar)
+
+    while (overlap.overlapBar) {
+      const adjustedBar = adjustOverlappingBar(currentBar, overlap)
+      if (!adjustedBar) break
+
+      currentBar = adjustedBar
+      overlap = detectOverlapConnect(currentBar)
+    }
+  }
+
+  const detectOverlapConnect = (bar: GanttBarObject): OverlapResult => {
+    const barsInRow = getConnectedBars(bar)
+
+    for (const otherBar of barsInRow) {
+      if (otherBar === bar) continue
+
+      const overlapType = determineOverlapType(bar, otherBar)
+      if (overlapType) {
+        return { overlapBar: otherBar, overlapType }
+      }
+    }
+
+    return { overlapType: null }
   }
 
   // Detect if and how bars overlap

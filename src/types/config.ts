@@ -16,6 +16,7 @@ export interface GGanttChartProps {
   colorScheme?: string | ColorScheme
   grid?: boolean
   pushOnOverlap?: boolean
+  pushOnConnect?: boolean
   noOverlap?: boolean
   rowHeight?: number
   highlightedUnits?: number[]
