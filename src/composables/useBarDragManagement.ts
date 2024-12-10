@@ -119,6 +119,19 @@ const useBarDragManagement = () => {
     }
   }
 
+  const handleOverlapsConnect = (bar: GanttBarObject) => {
+    let currentBar = bar
+    let overlap = detectOverlapConnect(currentBar)
+
+    while (overlap.overlapBar) {
+      const adjustedBar = adjustOverlappingBar(currentBar, overlap)
+      if (!adjustedBar) break
+
+      currentBar = adjustedBar
+      overlap = detectOverlapConnect(currentBar)
+    }
+  }
+
   const getConnectedBars = (bar: GanttBarObject): GanttBarObject[] => {
     const connectedBars: GanttBarObject[] = []
     const allBars = getChartRows().flatMap((row) => row.bars)
@@ -139,18 +152,7 @@ const useBarDragManagement = () => {
     return connectedBars
   }
 
-  const handleOverlapsConnect = (bar: GanttBarObject) => {
-    let currentBar = bar
-    let overlap = detectOverlapConnect(currentBar)
-
-    while (overlap.overlapBar) {
-      const adjustedBar = adjustOverlappingBar(currentBar, overlap)
-      if (!adjustedBar) break
-
-      currentBar = adjustedBar
-      overlap = detectOverlapConnect(currentBar)
-    }
-  }
+  
 
   const detectOverlapConnect = (bar: GanttBarObject): OverlapResult => {
     const barsInRow = getConnectedBars(bar)
@@ -169,7 +171,11 @@ const useBarDragManagement = () => {
 
   // Detect if and how bars overlap
   const detectOverlap = (bar: GanttBarObject): OverlapResult => {
-    const barsInRow = getChartRows().find((row) => row.bars.includes(bar))?.bars || []
+    let barsInRow = getChartRows().find((row) => row.bars.includes(bar))?.bars || []
+    if (pushOnConnect.value) {
+      barsInRow = [...barsInRow, ...getConnectedBars(bar)]
+    }    
+
 
     for (const otherBar of barsInRow) {
       if (otherBar === bar) continue
