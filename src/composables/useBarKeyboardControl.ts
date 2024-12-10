@@ -36,8 +36,13 @@ export function useBarKeyboardControl(
     const newStart = currentStart.add(minutesToMove * multiplier, "minutes")
     const newEnd = currentEnd.add(minutesToMove * multiplier, "minutes")
 
+    //TODO solo se tutto fuori da un lato
     if (newStart.isBefore(config.chartStart.value) || newEnd.isAfter(config.chartEnd.value)) {
       return
+    }
+
+     if (config.pushOnOverlap.value || config.pushOnConnect.value) {
+      handleOverlaps(bar)
     }
 
     const originalStart = bar[barStart.value]
@@ -46,9 +51,7 @@ export function useBarKeyboardControl(
     bar[barStart.value] = format(newStart, dateFormat.value)
     bar[barEnd.value] = format(newEnd, dateFormat.value)
 
-    if (config.pushOnOverlap.value) {
-      handleOverlaps(bar)
-    }
+   
 
     if (shouldSnapBack()) {
       bar[barStart.value] = originalStart
@@ -95,7 +98,7 @@ export function useBarKeyboardControl(
     bar[barStart.value] = format(newStart, dateFormat.value)
     bar[barEnd.value] = format(newEnd, dateFormat.value)
 
-    if (config.pushOnOverlap.value) {
+    if (config.pushOnOverlap.value || config.pushOnConnect.value) {
       handleOverlaps(bar)
     }
 
@@ -120,7 +123,7 @@ export function useBarKeyboardControl(
   const onBarKeyDown = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement
 
-    if (!target.id || target.id !== bar.ganttBarConfig.id) {
+    if (!target.id || target.id !== bar.ganttBarConfig.id || bar.ganttBarConfig.immobile) {
       return
     }
 

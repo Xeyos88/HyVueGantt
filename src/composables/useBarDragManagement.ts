@@ -77,8 +77,30 @@ const useBarDragManagement = () => {
     }
   })
 
-  // Handle ongoing drag operations
   const handleDrag = (e: MouseEvent, bar: GanttBarObject) => {
+    emitBarEvent({ ...e, type: "drag" }, bar)
+    if (pushOnOverlap?.value || pushOnConnect?.value) {
+      const barsToProcess = [bar]
+      const processedBars = new Set<string>([bar.ganttBarConfig.id])
+
+      while (barsToProcess.length > 0) {
+        const currentBar = barsToProcess.shift()!
+
+        handleOverlaps(currentBar)
+
+        const connectedBars = getConnectedBars(currentBar)
+        connectedBars.forEach((connectedBar) => {
+          if (!processedBars.has(connectedBar.ganttBarConfig.id)) {
+            processedBars.add(connectedBar.ganttBarConfig.id)
+            barsToProcess.push(connectedBar)
+          }
+        })
+      }
+    }
+  }
+
+  // Handle ongoing drag operations
+ /* const handleDrag = (e: MouseEvent, bar: GanttBarObject) => {
     emitBarEvent({ ...e, type: "drag" }, bar)
     if (pushOnOverlap?.value && pushOnConnect?.value) {
       const barsToProcess = [bar]
@@ -103,8 +125,7 @@ const useBarDragManagement = () => {
     } else if (pushOnConnect?.value) {
       handleOverlapsConnect(bar)
     }
-  }
-
+  }*/
   // Manage overlapping bars during drag
   const handleOverlaps = (bar: GanttBarObject) => {
     let currentBar = bar
@@ -119,18 +140,18 @@ const useBarDragManagement = () => {
     }
   }
 
-  const handleOverlapsConnect = (bar: GanttBarObject) => {
+  /*const handleOverlapsConnect = (bar: GanttBarObject) => {
     let currentBar = bar
-    let overlap = detectOverlapConnect(currentBar)
+    let overlap = detectOverlap(currentBar)
 
     while (overlap.overlapBar) {
       const adjustedBar = adjustOverlappingBar(currentBar, overlap)
       if (!adjustedBar) break
 
       currentBar = adjustedBar
-      overlap = detectOverlapConnect(currentBar)
+      overlap = detectOverlap(currentBar)
     }
-  }
+  }*/
 
   const getConnectedBars = (bar: GanttBarObject): GanttBarObject[] => {
     const connectedBars: GanttBarObject[] = []
@@ -152,9 +173,7 @@ const useBarDragManagement = () => {
     return connectedBars
   }
 
-  
-
-  const detectOverlapConnect = (bar: GanttBarObject): OverlapResult => {
+ /* const detectOverlapConnect = (bar: GanttBarObject): OverlapResult => {
     const barsInRow = getConnectedBars(bar)
 
     for (const otherBar of barsInRow) {
@@ -167,20 +186,23 @@ const useBarDragManagement = () => {
     }
 
     return { overlapType: null }
-  }
+  }*/
 
   // Detect if and how bars overlap
   const detectOverlap = (bar: GanttBarObject): OverlapResult => {
-    let barsInRow = getChartRows().find((row) => row.bars.includes(bar))?.bars || []
+    let barsInRow: GanttBarObject[] = []
+    if (pushOnOverlap.value) {
+      barsInRow = getChartRows().find((row) => row.bars.includes(bar))?.bars || []
+    } 
     if (pushOnConnect.value) {
       barsInRow = [...barsInRow, ...getConnectedBars(bar)]
     }    
 
-
     for (const otherBar of barsInRow) {
-      if (otherBar === bar) continue
+      if (otherBar === bar || otherBar.ganttBarConfig.immobile) continue
 
       const overlapType = determineOverlapType(bar, otherBar)
+
       if (overlapType) {
         return { overlapBar: otherBar, overlapType }
       }
@@ -310,7 +332,8 @@ const useBarDragManagement = () => {
     initDragOfBundle,
     snapBackMovedBars,
     shouldSnapBack,
-    handleOverlaps
+    handleOverlaps,
+    getConnectedBars
   }
 }
 

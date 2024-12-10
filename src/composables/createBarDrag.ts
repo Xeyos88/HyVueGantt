@@ -12,7 +12,7 @@ export default function createBarDrag(
   onEndDrag: (e: MouseEvent, bar: GanttBarObject) => void = () => null,
   config: GGanttChartConfig = provideConfig()
 ) {
-  const { barStart, barEnd, pushOnOverlap } = config
+  const { barStart, barEnd, pushOnOverlap, pushOnConnect } = config
 
   const isDragging = ref(false)
   let cursorOffsetX = 0
@@ -76,7 +76,14 @@ export default function createBarDrag(
     }
 
     const xStart = e.clientX - barContainer.left
+    
     const newBarStart = mapPositionToTime(xStart)
+    const barWidth = barElement.getBoundingClientRect().width
+    const xEnd = (e.clientX - barContainer.left) + barWidth
+
+    if (isOutOfRange(xStart, xEnd)) {
+      return
+    }
     if (toDayjs(newBarStart).isSameOrAfter(toDayjs(bar, "end"))) {
       return
     }
@@ -92,6 +99,10 @@ export default function createBarDrag(
 
     const xEnd = e.clientX - barContainer.left
     const newBarEnd = mapPositionToTime(xEnd)
+    const xStart = (e.clientX - barContainer.left)
+    if (isOutOfRange(xStart, xEnd)) {
+      return
+    }
     if (toDayjs(newBarEnd).isSameOrBefore(toDayjs(bar, "start"))) {
       return
     }
@@ -100,7 +111,7 @@ export default function createBarDrag(
   }
 
   const isOutOfRange = (xStart?: number, xEnd?: number) => {
-    if (!pushOnOverlap.value) {
+    if (!pushOnOverlap.value && !pushOnConnect.value) {
       return false
     }
     const dragLimitLeft = bar.ganttBarConfig.dragLimitLeft
@@ -122,6 +133,7 @@ export default function createBarDrag(
 
   return {
     isDragging,
-    initDrag
+    initDrag,
+    isOutOfRange
   }
 }
