@@ -5,7 +5,12 @@
         {{ labelColumnTitle }}
       </div>
     </slot>
-    <div class="g-label-column-rows">
+    <div
+      class="g-label-column-rows"
+      :style="labelContainerStyle"
+      ref="labelContainer"
+      @scroll="handleLabelScroll"
+    >
       <div
         v-for="({ label }, index) in getChartRows()"
         :key="`${label}_${index}`"
@@ -26,11 +31,38 @@
 <script setup lang="ts">
 import provideGetChartRows from "../provider/provideGetChartRows"
 import provideConfig from "../provider/provideConfig"
+import { ref, computed } from "vue"
+import type { CSSProperties } from "vue"
 
-const { font, colors, labelColumnTitle, rowHeight } = provideConfig()
+const { font, colors, labelColumnTitle, rowHeight, maxRows } = provideConfig()
 
 const getChartRows = provideGetChartRows()
+const labelContainer = ref<HTMLElement | null>(null)
 
+const labelContainerStyle = computed<CSSProperties>(() => {
+  if (maxRows.value === 0) return {}
+
+  return {
+    height: `${maxRows.value * rowHeight.value}px`,
+    "overflow-y": "auto"
+  }
+})
+const emit = defineEmits<{
+  (e: "scroll", value: number): void
+}>()
+
+const handleLabelScroll = (e: Event) => {
+  const target = e.target as HTMLElement
+  emit("scroll", target.scrollTop)
+}
+
+defineExpose({
+  setScroll: (value: number) => {
+    if (labelContainer.value) {
+      labelContainer.value.scrollTop = value
+    }
+  }
+})
 </script>
 
 <style>
@@ -56,10 +88,14 @@ const getChartRows = provideGetChartRows()
 .g-label-column-rows {
   width: 100%;
   height: 100%;
-  display: flex;
+  //display: flex;
   flex-direction: column;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-
+.g-label-column-rows::-webkit-scrollbar {
+  display: none;
+}
 .g-label-column-row {
   width: 100%;
   height: 100%;
@@ -72,6 +108,4 @@ const getChartRows = provideGetChartRows()
   align-items: center;
   justify-content: center;
 }
-
-
 </style>

@@ -1,12 +1,17 @@
-import { ref, computed } from "vue"
+import { ref, computed, type Ref } from "vue"
 
+interface ScrollRefs {
+  rowsContainer: Ref<HTMLElement | null>
+  labelColumn: Ref<any>
+}
 interface ChartNavigationOptions {
   diffDays: number
   diffHours: number
+  scrollRefs: ScrollRefs
 }
 
-export function useChartNavigation(options: ChartNavigationOptions) {
-  const { diffDays, diffHours } = options
+export function useChartNavigation(options: ChartNavigationOptions, maxRows: number) {
+  const { diffDays, diffHours, scrollRefs } = options
 
   const zoomFactor = ref(diffDays)
   const maxZoom = ref(Math.max(10, 5 * diffDays))
@@ -27,9 +32,29 @@ export function useChartNavigation(options: ChartNavigationOptions) {
   }
 
   const handleWheel = (e: WheelEvent, wrapper: HTMLElement) => {
-    const maxScroll = wrapper.scrollWidth - wrapper.clientWidth
+    if (maxRows !== 0) {
+      if (e.deltaX !== 0) {
+        e.preventDefault()
+      }
+      return
+    }
+
     wrapper.scrollLeft += e.deltaX || e.deltaY
+    const maxScroll = wrapper.scrollWidth - wrapper.clientWidth
     ganttPosition.value = (wrapper.scrollLeft / maxScroll) * 100
+  }
+
+  const handleContentScroll = (e: Event) => {
+    const target = e.target as HTMLElement
+    if (scrollRefs.labelColumn.value) {
+      scrollRefs.labelColumn.value.setScroll(target.scrollTop)
+    }
+  }
+
+  const handleLabelScroll = (scrollTop: number) => {
+    if (scrollRefs.rowsContainer.value) {
+      scrollRefs.rowsContainer.value.scrollTop = scrollTop
+    }
   }
 
   const decreaseZoom = () => {
@@ -49,6 +74,8 @@ export function useChartNavigation(options: ChartNavigationOptions) {
     handleScroll,
     handleWheel,
     decreaseZoom,
-    increaseZoom
+    increaseZoom,
+    handleContentScroll,
+    handleLabelScroll
   }
 }

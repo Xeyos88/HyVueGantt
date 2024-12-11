@@ -31,6 +31,7 @@ export interface GGanttChartProps {
   defaultConnectionPattern?: ConnectionPattern
   defaultConnectionAnimated?: boolean
   defaultConnectionAnimationSpeed?: ConnectionSpeed
+  maxRows?: number
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
