@@ -1,18 +1,18 @@
-import type { GanttBarObject } from "../types/bar"
+import type { GanttBarObject } from "../types"
 import useDayjsHelper from "./useDayjsHelper"
 import type { GGanttChartConfig } from "../types/config"
-import type dayjs from "dayjs"
-import useBarDragManagement from "./useBarDragManagement"
+import { useBarMovement } from "./useBarMovement"
+import provideGetChartRows from "../provider/provideGetChartRows"
 
 export function useBarKeyboardControl(
   bar: GanttBarObject,
   config: GGanttChartConfig,
   emitBarEvent: (e: MouseEvent, bar: GanttBarObject, datetime?: string | Date) => void
 ) {
-  const { barStart, barEnd, dateFormat } = config
-  const { toDayjs, format } = useDayjsHelper(config)
-
-  const { handleOverlaps, shouldSnapBack, snapBackMovedBars } = useBarDragManagement()
+  const dayjs = useDayjsHelper(config)
+  const getChartRows = provideGetChartRows()
+  const { barStart, barEnd, dateFormat, precision } = config
+  const movement = useBarMovement(config, getChartRows, dayjs)
 
   const TIME_STEP = {
     hour: 5,
@@ -22,16 +22,16 @@ export function useBarKeyboardControl(
   }
 
   const getTimeStep = (isShiftPressed: boolean): number => {
-    const baseStep = TIME_STEP[config.precision.value as keyof typeof TIME_STEP] || TIME_STEP.hour
+    const baseStep = TIME_STEP[precision.value as keyof typeof TIME_STEP] || TIME_STEP.hour
     return isShiftPressed ? baseStep * 12 : baseStep
   }
 
-  const moveBar = (direction: "forward" | "backward", isShiftPressed: boolean) => {
+  const moveBarPosition = (direction: "forward" | "backward", isShiftPressed: boolean) => {
     const multiplier = direction === "forward" ? 1 : -1
     const minutesToMove = getTimeStep(isShiftPressed)
 
-    const currentStart = toDayjs(bar[barStart.value])
-    const currentEnd = toDayjs(bar[barEnd.value])
+    const currentStart = dayjs.toDayjs(bar[barStart.value])
+    const currentEnd = dayjs.toDayjs(bar[barEnd.value])
 
     const newStart = currentStart.add(minutesToMove * multiplier, "minutes")
     const newEnd = currentEnd.add(minutesToMove * multiplier, "minutes")
@@ -40,29 +40,18 @@ export function useBarKeyboardControl(
       return
     }
 
-    const originalStart = bar[barStart.value]
-    const originalEnd = bar[barEnd.value]
+    const newStartStr = dayjs.format(newStart, dateFormat.value) as string
+    const newEndStr = dayjs.format(newEnd, dateFormat.value) as string
 
-    bar[barStart.value] = format(newStart, dateFormat.value)
-    bar[barEnd.value] = format(newEnd, dateFormat.value)
-
-    if (config.pushOnOverlap.value) {
-      handleOverlaps(bar)
+    const result = movement.moveBar(bar, newStartStr, newEndStr)
+    if (result.success) {
+      emitDragEvents()
     }
-
-    if (shouldSnapBack()) {
-      bar[barStart.value] = originalStart
-      bar[barEnd.value] = originalEnd
-      snapBackMovedBars()
-      return
-    }
-
-    emitDragEvents()
   }
 
   const resizeBar = (type: "expand" | "shrink", isShiftPressed: boolean) => {
-    const currentStart = toDayjs(bar[barStart.value])
-    const currentEnd = toDayjs(bar[barEnd.value])
+    const currentStart = dayjs.toDayjs(bar[barStart.value])
+    const currentEnd = dayjs.toDayjs(bar[barEnd.value])
     let minutesToMove = getTimeStep(isShiftPressed)
 
     if (minutesToMove === 5) {
@@ -70,43 +59,35 @@ export function useBarKeyboardControl(
     }
     const timePerSide = minutesToMove / 2
 
-    let newStart: dayjs.Dayjs
-    let newEnd: dayjs.Dayjs
+    let newStart: string
+    let newEnd: string
 
     if (type === "expand") {
-      newStart = currentStart.subtract(timePerSide, "minutes")
-      newEnd = currentEnd.add(timePerSide, "minutes")
+      newStart = dayjs.format(
+        currentStart.subtract(timePerSide, "minutes"),
+        dateFormat.value
+      ) as string
+      newEnd = dayjs.format(currentEnd.add(timePerSide, "minutes"), dateFormat.value) as string
     } else {
       const currentDuration = currentEnd.diff(currentStart, "minutes")
       if (currentDuration <= minutesToMove) {
         return
       }
-      newStart = currentStart.add(timePerSide, "minutes")
-      newEnd = currentEnd.subtract(timePerSide, "minutes")
+      newStart = dayjs.format(currentStart.add(timePerSide, "minutes"), dateFormat.value) as string
+      newEnd = dayjs.format(currentEnd.subtract(timePerSide, "minutes"), dateFormat.value) as string
     }
 
-    if (newStart.isBefore(config.chartStart.value) || newEnd.isAfter(config.chartEnd.value)) {
+    const startDayjs = dayjs.toDayjs(newStart)
+    const endDayjs = dayjs.toDayjs(newEnd)
+
+    if (startDayjs.isBefore(config.chartStart.value) || endDayjs.isAfter(config.chartEnd.value)) {
       return
     }
 
-    const originalStart = bar[barStart.value]
-    const originalEnd = bar[barEnd.value]
-
-    bar[barStart.value] = format(newStart, dateFormat.value)
-    bar[barEnd.value] = format(newEnd, dateFormat.value)
-
-    if (config.pushOnOverlap.value) {
-      handleOverlaps(bar)
+    const result = movement.moveBar(bar, newStart, newEnd)
+    if (result.success) {
+      emitDragEvents()
     }
-
-    if (shouldSnapBack()) {
-      bar[barStart.value] = originalStart
-      bar[barEnd.value] = originalEnd
-      snapBackMovedBars()
-      return
-    }
-
-    emitDragEvents()
   }
 
   const emitDragEvents = () => {
@@ -120,18 +101,18 @@ export function useBarKeyboardControl(
   const onBarKeyDown = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement
 
-    if (!target.id || target.id !== bar.ganttBarConfig.id) {
+    if (!target.id || target.id !== bar.ganttBarConfig.id || bar.ganttBarConfig.immobile) {
       return
     }
 
     switch (event.key) {
       case "ArrowLeft":
         event.preventDefault()
-        moveBar("backward", event.shiftKey)
+        moveBarPosition("backward", event.shiftKey)
         break
       case "ArrowRight":
         event.preventDefault()
-        moveBar("forward", event.shiftKey)
+        moveBarPosition("forward", event.shiftKey)
         break
       case "ArrowUp":
         event.preventDefault()

@@ -1,10 +1,12 @@
 import type { GanttBarObject } from "../types"
 import provideConfig from "../provider/provideConfig"
 import provideGetChartRows from "../provider/provideGetChartRows"
+import useBarDragManagement from "./useBarDragManagement"
 
 export default function useBarDragLimit() {
-  const { pushOnOverlap } = provideConfig()
+  const { pushOnOverlap, pushOnConnect } = provideConfig()
   const getChartRows = provideGetChartRows()
+  const { getConnectedBars } = useBarDragManagement()
 
   const getBarsFromBundle = (bundle?: string) => {
     const res: GanttBarObject[] = []
@@ -21,7 +23,8 @@ export default function useBarDragLimit() {
   }
 
   const setDragLimitsOfGanttBar = (bar: GanttBarObject) => {
-    if (!pushOnOverlap.value || bar.ganttBarConfig.pushOnOverlap === false) {
+    if ((!pushOnOverlap.value || bar.ganttBarConfig.pushOnOverlap === false) || 
+      (!pushOnConnect.value || bar.ganttBarConfig.pushOnConnect === false)) {
       return
     }
     for (const sideValue of ["left", "right"]) {
@@ -31,6 +34,7 @@ export default function useBarDragLimit() {
         0,
         side
       )
+
       let totalGapDistance = gapDistanceSoFar
       const bundleBarsOnPath = bundleBarsAndGapDist
       if (!bundleBarsOnPath) {
@@ -128,7 +132,13 @@ export default function useBarDragLimit() {
 
   const getNextGanttBar = (bar: GanttBarObject, side: "left" | "right") => {
     const barElem = document.getElementById(bar.ganttBarConfig.id) as HTMLElement
-    const allBarsInRow = getChartRows().find((row) => row.bars.includes(bar))?.bars ?? []
+    let allBarsInRow: GanttBarObject[] = []
+    if (pushOnOverlap.value) {
+      allBarsInRow = getChartRows().find((row) => row.bars.includes(bar))?.bars || []
+    } 
+    if (pushOnConnect.value) {
+      allBarsInRow = [...allBarsInRow, ...getConnectedBars(bar)]
+    }    
     let allBarsLeftOrRight = []
     if (side === "left") {
       allBarsLeftOrRight = allBarsInRow.filter((otherBar) => {
@@ -136,7 +146,8 @@ export default function useBarDragLimit() {
         return (
           otherBarElem &&
           otherBarElem.offsetLeft < barElem.offsetLeft &&
-          otherBar.ganttBarConfig.pushOnOverlap !== false
+          otherBar.ganttBarConfig.pushOnOverlap !== false &&
+          otherBar.ganttBarConfig.pushOnConnect !== false
         )
       })
     } else {
@@ -145,7 +156,9 @@ export default function useBarDragLimit() {
         return (
           otherBarElem &&
           otherBarElem.offsetLeft > barElem.offsetLeft &&
-          otherBar.ganttBarConfig.pushOnOverlap !== false
+          otherBar.ganttBarConfig.pushOnOverlap !== false &&
+          otherBar.ganttBarConfig.pushOnConnect !== false
+
         )
       })
     }

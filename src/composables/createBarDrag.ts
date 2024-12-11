@@ -1,19 +1,17 @@
 import { ref } from "vue"
-
-import provideConfig from "../provider/provideConfig"
-
 import type { GanttBarObject, GGanttChartConfig } from "../types"
 import useDayjsHelper from "./useDayjsHelper"
 import useTimePositionMapping from "./useTimePositionMapping"
+import type { MovementAPI } from "./useBarMovement"
 
 export default function createBarDrag(
   bar: GanttBarObject,
   onDrag: (e: MouseEvent, bar: GanttBarObject) => void = () => null,
   onEndDrag: (e: MouseEvent, bar: GanttBarObject) => void = () => null,
-  config: GGanttChartConfig = provideConfig()
+  config: GGanttChartConfig,
+  movementAPI: MovementAPI
 ) {
-  const { barStart, barEnd, pushOnOverlap } = config
-
+  const { barStart, barEnd } = config
   const isDragging = ref(false)
   let cursorOffsetX = 0
   let dragCallBack: (e: MouseEvent) => void
@@ -22,6 +20,9 @@ export default function createBarDrag(
   const { toDayjs } = useDayjsHelper(config)
 
   const initDrag = (e: MouseEvent) => {
+    if (bar.ganttBarConfig.immobile) {
+      return
+    }
     const barElement = document.getElementById(bar.ganttBarConfig.id)
     if (!barElement) {
       return
@@ -61,55 +62,60 @@ export default function createBarDrag(
     const barWidth = barElement.getBoundingClientRect().width
     const xStart = e.clientX - barContainer.left - cursorOffsetX
     const xEnd = xStart + barWidth
-    if (isOutOfRange(xStart, xEnd)) {
+
+    const newBarStart = mapPositionToTime(xStart) as string
+    const newBarEnd = mapPositionToTime(xEnd) as string
+
+    const currentStart = bar[barStart.value]
+    const currentEnd = bar[barEnd.value]
+
+    const result = movementAPI.moveBar(bar, newBarStart, newBarEnd)
+    if (!result.success) {
+      bar[barStart.value] = currentStart
+      bar[barEnd.value] = currentEnd
+      endDrag(e)
       return
     }
-    bar[barStart.value] = mapPositionToTime(xStart)
-    bar[barEnd.value] = mapPositionToTime(xEnd)
+
     onDrag(e, bar)
   }
 
   const dragByLeftHandle = (e: MouseEvent) => {
-    const { barElement, barContainer } = getBarElements()
-    if (!barElement || !barContainer) {
+    const { barContainer } = getBarElements()
+    if (!barContainer) {
       return
     }
 
     const xStart = e.clientX - barContainer.left
-    const newBarStart = mapPositionToTime(xStart)
-    if (toDayjs(newBarStart).isSameOrAfter(toDayjs(bar, "end"))) {
+    const newBarStart = mapPositionToTime(xStart) as string
+
+    if (toDayjs(newBarStart).isSameOrAfter(toDayjs(bar[barEnd.value]))) {
       return
     }
-    bar[barStart.value] = newBarStart
-    onDrag(e, bar)
+
+    const result = movementAPI.moveBar(bar, newBarStart, bar[barEnd.value])
+    if (result.success) {
+      onDrag(e, bar)
+    }
   }
 
   const dragByRightHandle = (e: MouseEvent) => {
-    const { barElement, barContainer } = getBarElements()
-    if (!barElement || !barContainer) {
+    const { barContainer } = getBarElements()
+    if (!barContainer) {
       return
     }
 
     const xEnd = e.clientX - barContainer.left
-    const newBarEnd = mapPositionToTime(xEnd)
-    if (toDayjs(newBarEnd).isSameOrBefore(toDayjs(bar, "start"))) {
+    const newBarEnd = mapPositionToTime(xEnd) as string
+
+    if (toDayjs(newBarEnd).isSameOrBefore(toDayjs(bar[barStart.value]))) {
       return
     }
-    bar[barEnd.value] = newBarEnd
-    onDrag(e, bar)
-  }
 
-  const isOutOfRange = (xStart?: number, xEnd?: number) => {
-    if (!pushOnOverlap.value) {
-      return false
+    const result = movementAPI.moveBar(bar, bar[barStart.value], newBarEnd)
+    if (result.success) {
+      onDrag(e, bar)
     }
-    const dragLimitLeft = bar.ganttBarConfig.dragLimitLeft
-    const dragLimitRight = bar.ganttBarConfig.dragLimitRight
-
-    return (
-      (xStart && dragLimitLeft != null && xStart < dragLimitLeft) ||
-      (xEnd && dragLimitRight != null && xEnd > dragLimitRight)
-    )
   }
 
   const endDrag = (e: MouseEvent) => {

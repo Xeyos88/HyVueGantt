@@ -24,6 +24,7 @@ export interface GanttBarConfig {
   immobile?: boolean
   bundle?: string
   pushOnOverlap?: boolean
+  pushOnConnect?: boolean
   dragLimitLeft?: number
   dragLimitRight?: number
   style?: CSSProperties
