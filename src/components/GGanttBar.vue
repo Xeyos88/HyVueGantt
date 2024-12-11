@@ -9,7 +9,8 @@
       left: `${xStart}px`,
       width: `${xEnd - xStart}px`,
       height: `${rowHeight * 0.8}px`,
-      zIndex: isDragging ? 3 : 2
+      zIndex: isDragging ? 3 : 2,
+      cursor: bar.ganttBarConfig.immobile ? '' : 'grab'
     }"
     @mousedown="onMouseEvent"
     @click="onMouseEvent"

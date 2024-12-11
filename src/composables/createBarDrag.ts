@@ -20,6 +20,9 @@ export default function createBarDrag(
   const { toDayjs } = useDayjsHelper(config)
 
   const initDrag = (e: MouseEvent) => {
+    if (bar.ganttBarConfig.immobile) {
+      return
+    }
     const barElement = document.getElementById(bar.ganttBarConfig.id)
     if (!barElement) {
       return
