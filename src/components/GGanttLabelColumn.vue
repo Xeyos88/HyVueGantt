@@ -26,17 +26,11 @@
 <script setup lang="ts">
 import provideGetChartRows from "../provider/provideGetChartRows"
 import provideConfig from "../provider/provideConfig"
-import { computed } from "vue"
-import provideBooleanConfig from "../provider/provideBooleanConfig"
 
 const { font, colors, labelColumnTitle, rowHeight } = provideConfig()
-const { commands } = provideBooleanConfig()
 
 const getChartRows = provideGetChartRows()
 
-const radius = computed(() => {
-  return commands ? "0px" : "5px"
-})
 </script>
 
 <style>
@@ -57,7 +51,6 @@ const radius = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-top-left-radius: 5px;
 }
 
 .g-label-column-rows {
@@ -65,7 +58,6 @@ const radius = computed(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  border-bottom-left-radius: 5px;
 }
 
 .g-label-column-row {
@@ -81,7 +73,5 @@ const radius = computed(() => {
   justify-content: center;
 }
 
-.g-label-column-row:last-child {
-  border-bottom-left-radius: v-bind(radius);
-}
+
 </style>

@@ -1,11 +1,14 @@
 <template>
   <div
+      class="g-gantt-container" 
+
     role="application"
     aria-label="Interactive Gantt"
     tabindex="0"
     @keydown="handleKeyDown"
     ref="ganttContainer"
   >
+  <div class="g-gantt-rounded-wrapper">
     <!-- Chart Layout Section -->
     <div :class="[{ 'labels-in-column': !!labelColumnTitle }]" aria-controls="gantt-controls">
       <!-- Label Column -->
@@ -25,13 +28,12 @@
         :style="{
           width: '100%',
           'overflow-x': commands ? 'hidden' : 'auto',
-          'border-top-right-radius': '5px'
         }"
       >
         <!-- Main Chart -->
         <div
           ref="ganttChart"
-          :class="['g-gantt-chart', { 'with-column': labelColumnTitle }]"
+          class="g-gantt-chart"
           :style="{
             width: customWidth,
             background: colors.background,
@@ -149,6 +151,7 @@
         <slot name="commands" />
       </div>
     </div>
+  </div>
 
     <!-- Tooltip -->
     <g-gantt-bar-tooltip :model-value="showTooltip || isDragging" :bar="tooltipBar">
@@ -229,6 +232,10 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   defaultConnectionPattern: "solid",
   defaultConnectionAnimated: false,
   defaultConnectionAnimationSpeed: "normal"
+})
+
+watch([() => props.chartStart, () => props.chartEnd], () => {
+  updateBarPositions()
 })
 
 const emit = defineEmits<{
@@ -341,7 +348,6 @@ const getColorScheme = (scheme: string | ColorScheme): ColorScheme =>
     : ((colorSchemes[scheme as ColorSchemeKey] || colorSchemes.default) as ColorScheme)
 
 const colors = computed(() => getColorScheme(colorScheme.value))
-const radius = computed(() => (props.commands ? "0px" : "5px"))
 
 // Time Axis Interaction State
 const isDragging = ref(false)
@@ -482,6 +488,11 @@ provide(BOOLEAN_KEY, { ...props })
 </script>
 
 <style>
+.g-gantt-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
 /* Layout */
 .g-gantt-chart {
   position: relative;
@@ -491,16 +502,9 @@ provide(BOOLEAN_KEY, { ...props })
   -webkit-touch-callout: none;
   user-select: none;
   font-variant-numeric: tabular-nums;
-  border-radius: 5px;
-  border-bottom-right-radius: v-bind(radius);
 }
 
-.with-column {
-  border-top-left-radius: 0px;
-  border-bottom-left-radius: 0px;
-  border-top-right-radius: 5px;
-  border-bottom-right-radius: v-bind(radius);
-}
+
 
 /* Container Styles */
 .g-gantt-rows-container {
@@ -517,8 +521,6 @@ provide(BOOLEAN_KEY, { ...props })
 
 /* Command Section Styles */
 .g-gantt-command {
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
   display: flex;
   align-items: center;
   height: 40px;
@@ -608,4 +610,14 @@ button {
   outline: 2px solid v-bind(colors.primary);
   outline-offset: 2px;
 }
+
+.g-gantt-rounded-wrapper {
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid #eaeaea;
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+
 </style>
