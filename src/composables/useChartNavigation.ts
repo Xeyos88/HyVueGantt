@@ -17,6 +17,16 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
   const maxZoom = ref(Math.max(10, 5 * diffDays))
   const ganttPosition = ref(0)
   const ganttStep = computed(() => 100 / diffHours)
+  const isAtTop = ref(true)
+  const isAtBottom = ref(false)
+
+  const updateVerticalScrollState = () => {
+    if (!scrollRefs.rowsContainer.value) return
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollRefs.rowsContainer.value
+    isAtTop.value = scrollTop === 0
+    isAtBottom.value = Math.ceil(scrollTop + clientHeight) >= scrollHeight
+  }
 
   const handleStep = (value: number, wrapper: HTMLElement) => {
     ganttPosition.value = value
@@ -49,12 +59,48 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
     if (scrollRefs.labelColumn.value) {
       scrollRefs.labelColumn.value.setScroll(target.scrollTop)
     }
+    updateVerticalScrollState()
   }
 
   const handleLabelScroll = (scrollTop: number) => {
     if (scrollRefs.rowsContainer.value) {
       scrollRefs.rowsContainer.value.scrollTop = scrollTop
+      updateVerticalScrollState()
     }
+  }
+
+  const createScrollEvent = (target: HTMLElement): Event => {
+    const event = new Event("scroll", {
+      bubbles: true,
+      cancelable: true
+    })
+    Object.defineProperty(event, "target", {
+      value: target,
+      enumerable: true
+    })
+    return event
+  }
+
+  const scrollRowUp = () => {
+    if (!scrollRefs.rowsContainer.value) return
+
+    const currentScroll = scrollRefs.rowsContainer.value.scrollTop
+    const rowHeight = scrollRefs.rowsContainer.value.firstElementChild?.clientHeight || 0
+
+    scrollRefs.rowsContainer.value.scrollTop = Math.max(0, currentScroll - rowHeight)
+    handleContentScroll(createScrollEvent(scrollRefs.rowsContainer.value))
+  }
+
+  const scrollRowDown = () => {
+    if (!scrollRefs.rowsContainer.value) return
+
+    const currentScroll = scrollRefs.rowsContainer.value.scrollTop
+    const rowHeight = scrollRefs.rowsContainer.value.firstElementChild?.clientHeight || 0
+    const maxScroll =
+      scrollRefs.rowsContainer.value.scrollHeight - scrollRefs.rowsContainer.value.clientHeight
+
+    scrollRefs.rowsContainer.value.scrollTop = Math.min(maxScroll, currentScroll + rowHeight)
+    handleContentScroll(createScrollEvent(scrollRefs.rowsContainer.value))
   }
 
   const decreaseZoom = () => {
@@ -68,6 +114,7 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
 
   return {
     zoomFactor,
+    maxZoom,
     ganttPosition,
     ganttStep,
     handleStep,
@@ -76,6 +123,10 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
     decreaseZoom,
     increaseZoom,
     handleContentScroll,
-    handleLabelScroll
+    handleLabelScroll,
+    scrollRowUp,
+    scrollRowDown,
+    isAtTop,
+    isAtBottom
   }
 }

@@ -11,4 +11,6 @@ export interface UseChartNavigationReturn {
   handleLabelScroll: (scrollTop: number) => void
   decreaseZoom: () => void
   increaseZoom: () => void
+  scrollRowUp: () => void
+  scrollRowDown: () => void
 }

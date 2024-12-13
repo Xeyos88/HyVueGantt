@@ -96,6 +96,14 @@
         aria-label="Gantt Commands"
       >
         <!-- Navigation Controls -->
+        <div class="g-gantt-command-vertical" v-if="maxRows > 0 && getChartRows().length > maxRows">
+          <button @click="scrollRowUp" aria-label="Scroll row up" :disabled="isAtTop">
+            <FontAwesomeIcon :icon="faAngleUp" class="command-icon" />
+          </button>
+          <button @click="scrollRowDown" aria-label="Scroll row down" :disabled="isAtBottom">
+            <FontAwesomeIcon :icon="faAngleDown" class="command-icon" />
+          </button>
+        </div>
         <div class="g-gantt-command-fixed">
           <div class="g-gantt-command-slider">
             <button
@@ -147,10 +155,14 @@
 
         <!-- Zoom Controls -->
         <div class="g-gantt-command-zoom">
-          <button @click="decreaseZoom" aria-label="Zoom-out Gantt">
+          <button @click="decreaseZoom" aria-label="Zoom-out Gantt" :disabled="zoomFactor === 1">
             <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
           </button>
-          <button @click="increaseZoom" aria-label="Zoom-out Gantt">
+          <button
+            @click="increaseZoom"
+            aria-label="Zoom-out Gantt"
+            :disabled="zoomFactor === maxZoom"
+          >
             <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
           </button>
         </div>
@@ -179,6 +191,8 @@ import {
   faAngleLeft,
   faAngleRight,
   faAnglesRight,
+  faAngleUp,
+  faAngleDown,
   faMagnifyingGlassPlus,
   faMagnifyingGlassMinus
 } from "@fortawesome/free-solid-svg-icons"
@@ -249,10 +263,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
 const rowsContainerStyle = computed<CSSProperties>(() => {
   if (props.maxRows === 0) return {}
 
-  const minRows = Math.min(props.maxRows, getChartRows().length)
-
   return {
-    "max-height": `${minRows  * props.rowHeight}px`,
+    "max-height": `${props.maxRows * props.rowHeight}px`,
     "overflow-y": "auto"
   }
 })
@@ -338,6 +350,7 @@ const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
 
 const {
   zoomFactor,
+  maxZoom,
   ganttPosition,
   ganttStep,
   handleStep,
@@ -346,7 +359,11 @@ const {
   handleContentScroll,
   handleLabelScroll,
   decreaseZoom,
-  increaseZoom
+  increaseZoom,
+  scrollRowUp,
+  scrollRowDown,
+  isAtTop,
+  isAtBottom
 } = useChartNavigation(
   {
     diffDays: diffDays.value,
@@ -369,7 +386,9 @@ const navigationControls = {
   handleContentScroll,
   handleLabelScroll,
   decreaseZoom,
-  increaseZoom
+  increaseZoom,
+  scrollRowUp,
+  scrollRowDown
 }
 
 const { handleKeyDown } = useKeyboardNavigation(navigationControls, ganttWrapper, ganttContainer)
@@ -577,6 +596,19 @@ provide(BOOLEAN_KEY, { ...props })
 
 .g-gantt-command-custom {
   flex-grow: 1;
+}
+
+.g-gantt-command-vertical {
+  display: flex;
+  gap: 2px;
+  margin-left: 8px;
+}
+
+.g-gantt-command-vertical button:disabled,
+.g-gantt-command-slider button:disabled,
+.g-gantt-command-zoom button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Scroller Styles */
