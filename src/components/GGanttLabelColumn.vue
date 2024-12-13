@@ -12,7 +12,7 @@
       @scroll="handleLabelScroll"
     >
       <div
-        v-for="({ label }, index) in getChartRows()"
+        v-for="({ label }, index) in allBars"
         :key="`${label}_${index}`"
         class="g-label-column-row"
         :style="{
@@ -37,13 +37,15 @@ import type { CSSProperties } from "vue"
 const { font, colors, labelColumnTitle, rowHeight, maxRows } = provideConfig()
 
 const getChartRows = provideGetChartRows()
+const allBars = getChartRows()
 const labelContainer = ref<HTMLElement | null>(null)
 
 const labelContainerStyle = computed<CSSProperties>(() => {
   if (maxRows.value === 0) return {}
+ const minRows = Math.min(maxRows.value, allBars.length)
 
   return {
-    height: `${maxRows.value * rowHeight.value}px`,
+    height: `${minRows * rowHeight.value}px`,
     "overflow-y": "auto"
   }
 })

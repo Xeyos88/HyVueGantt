@@ -249,8 +249,10 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
 const rowsContainerStyle = computed<CSSProperties>(() => {
   if (props.maxRows === 0) return {}
 
+  const minRows = Math.min(props.maxRows, getChartRows().length)
+
   return {
-    "max-height": `${props.maxRows * props.rowHeight}px`,
+    "max-height": `${minRows  * props.rowHeight}px`,
     "overflow-y": "auto"
   }
 })
