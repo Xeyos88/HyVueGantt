@@ -1,6 +1,13 @@
 import type { ComputedRef, Ref, ToRefs } from "vue"
-import type { ConnectionPattern, ConnectionSpeed, ConnectionType, TimeUnit } from "./chart"
+import type {
+  ChartRow,
+  ConnectionPattern,
+  ConnectionSpeed,
+  ConnectionType,
+  TimeUnit
+} from "./chart"
 import type { ColorScheme } from "./style"
+import type { SortDirection } from "./chart"
 
 export interface GGanttChartProps {
   chartStart: string | Date
@@ -32,6 +39,8 @@ export interface GGanttChartProps {
   defaultConnectionAnimated?: boolean
   defaultConnectionAnimationSpeed?: ConnectionSpeed
   maxRows?: number
+  initialSortDirection?: SortDirection
+  initialRows?: ChartRow[]
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

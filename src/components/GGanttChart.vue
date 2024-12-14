@@ -16,6 +16,8 @@
           :style="{ width: labelColumnWidth }"
           ref="labelColumn"
           @scroll="handleLabelScroll"
+          :sort-direction="sortDirection"
+          @sort="handleSort"
         >
           <template #label-column-title>
             <slot name="label-column-title" />
@@ -73,7 +75,9 @@
               ref="rowsContainer"
               @scroll="handleContentScroll"
             >
-              <slot />
+              <template v-if="$slots.default">
+                <component :is="$slots.default" v-bind="slotProps" />
+              </template>
               <!-- Connections -->
               <template v-if="enableConnections">
                 <template v-for="conn in connections" :key="`${conn.sourceId}-${conn.targetId}`">
@@ -228,7 +232,7 @@ import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
 import { colorSchemes, type ColorScheme, type ColorSchemeKey } from "../color-schemes"
 import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
 import { BOOLEAN_KEY, CHART_ROWS_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols"
-import type { GanttBarObject, GGanttChartProps, ChartRow } from "../types"
+import type { GanttBarObject, GGanttChartProps, ChartRow, SortDirection } from "../types"
 import type { CSSProperties } from "vue"
 
 // Props & Emits Definition
@@ -256,7 +260,9 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   defaultConnectionPattern: "solid",
   defaultConnectionAnimated: false,
   defaultConnectionAnimationSpeed: "normal",
-  maxRows: 0
+  maxRows: 0,
+  initialSortDirection: "none",
+  initialRows: () => []
 })
 
 // Based on props
@@ -298,6 +304,7 @@ const emit = defineEmits<{
     e: "contextmenu-bar",
     value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
   ): void
+  (e: "sort", value: { direction: SortDirection }): void
 }>()
 
 // Computed Properties
@@ -306,12 +313,43 @@ const chartEndDayjs = computed(() => dayjs(props.chartEnd, props.dateFormat as s
 
 const diffDays = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "day") + 1)
 const diffHours = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "hour"))
+const sortDirection = ref<SortDirection>(props.initialSortDirection)
+
+const handleSort = () => {
+  switch (sortDirection.value) {
+    case "none":
+      sortDirection.value = "asc"
+      break
+    case "asc":
+      sortDirection.value = "desc"
+      break
+    case "desc":
+      sortDirection.value = "none"
+      break
+  }
+  emit("sort", { direction: sortDirection.value })
+}
 
 // Chart Layout Management
 const slots = useSlots()
 const getChartRows = () => {
+  if (props.initialRows?.length) {
+    let rows = [...props.initialRows]
+
+    if (sortDirection.value !== "none") {
+      rows = rows.sort((a, b) => {
+        const comparison = a.label.localeCompare(b.label, undefined, {
+          numeric: true,
+          sensitivity: "base"
+        })
+        return sortDirection.value === "asc" ? comparison : -comparison
+      })
+    }
+
+    return rows
+  }
   const defaultSlot = slots.default?.()
-  const allBars: ChartRow[] = []
+  let allBars: ChartRow[] = []
 
   if (!defaultSlot) return allBars
 
@@ -329,8 +367,30 @@ const getChartRows = () => {
       })
     }
   })
+
+  if (sortDirection.value !== "none") {
+    allBars = [...allBars].sort((a, b) => {
+      const comparison = a.label.localeCompare(b.label, undefined, {
+        numeric: true,
+        sensitivity: "base"
+      })
+      return sortDirection.value === "asc" ? comparison : -comparison
+    })
+  }
+
   return allBars
 }
+
+const slotProps = computed(() => {
+  const rows = getChartRows()
+  updateBarPositions()
+  return {
+    rows: rows.map((row) => ({
+      ...row,
+      key: row.label
+    }))
+  }
+})
 
 // Chart Elements Refs
 const ganttChart = ref<HTMLElement | null>(null)
