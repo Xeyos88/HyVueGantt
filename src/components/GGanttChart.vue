@@ -1,157 +1,182 @@
 <template>
   <div
-      class="g-gantt-container" 
-
+    class="g-gantt-container"
     role="application"
     aria-label="Interactive Gantt"
     tabindex="0"
     @keydown="handleKeyDown"
     ref="ganttContainer"
   >
-  <div class="g-gantt-rounded-wrapper">
-    <!-- Chart Layout Section -->
-    <div :class="[{ 'labels-in-column': !!labelColumnTitle }]" aria-controls="gantt-controls">
-      <!-- Label Column -->
-      <g-gantt-label-column v-if="labelColumnTitle" :style="{ width: labelColumnWidth }">
-        <template #label-column-title>
-          <slot name="label-column-title" />
-        </template>
-        <template #label-column-row="{ label }">
-          <slot name="label-column-row" :label="label" />
-        </template>
-      </g-gantt-label-column>
+    <div class="g-gantt-rounded-wrapper">
+      <!-- Chart Layout Section -->
+      <div :class="[{ 'labels-in-column': !!labelColumnTitle }]" aria-controls="gantt-controls">
+        <!-- Label Column -->
+        <g-gantt-label-column
+          v-if="labelColumnTitle"
+          :style="{ width: labelColumnWidth }"
+          ref="labelColumn"
+          @scroll="handleLabelScroll"
+          :sort-direction="sortDirection"
+          @sort="handleSort"
+        >
+          <template #label-column-title>
+            <slot name="label-column-title" />
+          </template>
+          <template #label-column-row="{ label }">
+            <slot name="label-column-row" :label="label" />
+          </template>
+        </g-gantt-label-column>
 
-      <!-- Chart Wrapper -->
-      <div
-        ref="ganttWrapper"
-        class="gantt-wrapper"
-        :style="{
-          width: '100%',
-          'overflow-x': commands ? 'hidden' : 'auto',
-        }"
-      >
-        <!-- Main Chart -->
+        <!-- Chart Wrapper -->
         <div
-          ref="ganttChart"
-          class="g-gantt-chart"
+          ref="ganttWrapper"
+          class="gantt-wrapper"
           :style="{
-            width: customWidth,
-            background: colors.background,
-            fontFamily: font
+            width: '100%',
+            'overflow-x': commands ? 'hidden' : 'auto'
           }"
         >
-          <!-- Timeaxis Component -->
-          <g-gantt-timeaxis
-            v-if="!hideTimeaxis"
-            ref="timeaxisComponent"
-            @drag-start="handleTimeaxisMouseDown"
+          <!-- Main Chart -->
+          <div
+            ref="ganttChart"
+            class="g-gantt-chart"
+            :style="{
+              width: customWidth,
+              background: colors.background,
+              fontFamily: font
+            }"
           >
-            <template #upper-timeunit="slotProps">
-              <slot name="upper-timeunit" v-bind="slotProps" />
-            </template>
-            <template #timeunit="slotProps">
-              <slot name="timeunit" v-bind="slotProps" />
-            </template>
-          </g-gantt-timeaxis>
-
-          <!-- Optional Components -->
-          <g-gantt-grid v-if="grid" :highlighted-units="highlightedUnits" />
-          <g-gantt-current-time v-if="currentTime">
-            <template #current-time-label>
-              <slot name="current-time-label" />
-            </template>
-          </g-gantt-current-time>
-
-          <!-- Rows Container -->
-          <div class="g-gantt-rows-container">
-            <slot />
-            <!-- Connections -->
-            <template v-if="enableConnections">
-              <template v-for="conn in connections" :key="`${conn.sourceId}-${conn.targetId}`">
-                <g-gantt-connector
-                  v-if="barPositions.get(conn.sourceId) && barPositions.get(conn.targetId)"
-                  v-bind="getConnectorProps(conn)!"
-                />
+            <!-- Timeaxis Component -->
+            <g-gantt-timeaxis
+              v-if="!hideTimeaxis"
+              ref="timeaxisComponent"
+              @drag-start="handleTimeaxisMouseDown"
+            >
+              <template #upper-timeunit="slotProps">
+                <slot name="upper-timeunit" v-bind="slotProps" />
               </template>
-            </template>
+              <template #timeunit="slotProps">
+                <slot name="timeunit" v-bind="slotProps" />
+              </template>
+            </g-gantt-timeaxis>
+
+            <!-- Optional Components -->
+            <g-gantt-grid v-if="grid" :highlighted-units="highlightedUnits" />
+            <g-gantt-current-time v-if="currentTime">
+              <template #current-time-label>
+                <slot name="current-time-label" />
+              </template>
+            </g-gantt-current-time>
+
+            <!-- Rows Container -->
+            <div
+              class="g-gantt-rows-container"
+              :style="rowsContainerStyle"
+              ref="rowsContainer"
+              @scroll="handleContentScroll"
+            >
+              <template v-if="$slots.default">
+                <component :is="$slots.default" v-bind="slotProps" />
+              </template>
+              <!-- Connections -->
+              <template v-if="enableConnections">
+                <template v-for="conn in connections" :key="`${conn.sourceId}-${conn.targetId}`">
+                  <g-gantt-connector
+                    v-if="barPositions.get(conn.sourceId) && barPositions.get(conn.targetId)"
+                    v-bind="getConnectorProps(conn)!"
+                  />
+                </template>
+              </template>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Controls Section -->
-    <div
-      v-if="commands"
-      class="g-gantt-command"
-      :style="{ background: colors.commands, fontFamily: font }"
-      aria-label="Gantt Commands"
-    >
-      <!-- Navigation Controls -->
-      <div class="g-gantt-command-fixed">
-        <div class="g-gantt-command-slider">
-          <button
-            :disabled="ganttPosition === 0"
-            @click="handleStep(0, ganttWrapper!)"
-            aria-label="Scroll to start"
-          >
-            <FontAwesomeIcon :icon="faAnglesLeft" class="command-icon" />
+      <!-- Controls Section -->
+      <div
+        v-if="commands"
+        class="g-gantt-command"
+        :style="{ background: colors.commands, fontFamily: font }"
+        aria-label="Gantt Commands"
+      >
+        <!-- Navigation Controls -->
+        <div class="g-gantt-command-vertical" v-if="maxRows > 0 && getChartRows().length > maxRows">
+          <button @click="scrollRowUp" aria-label="Scroll row up" :disabled="isAtTop">
+            <FontAwesomeIcon :icon="faAngleUp" class="command-icon" />
           </button>
-          <button
-            :disabled="ganttPosition === 0"
-            @click="handleStep(ganttPosition - ganttStep, ganttWrapper!)"
-            aria-label="Scroll back"
-          >
-            <FontAwesomeIcon :icon="faAngleLeft" class="command-icon" />
-          </button>
-
-          <!-- Position Slider -->
-          <input
-            v-model="ganttPosition"
-            type="range"
-            min="0"
-            max="100"
-            class="g-gantt-scroller"
-            :style="{ '--value': `${ganttPosition}%` }"
-            @input="handleScroll(ganttWrapper!)"
-            :aria-valuemin="0"
-            :aria-valuemax="100"
-            :aria-valuenow="ganttPosition"
-            aria-label="Gantt scroll position"
-          />
-
-          <button
-            :disabled="ganttPosition === 100"
-            @click="handleStep(Number(ganttPosition) + Number(ganttStep), ganttWrapper!)"
-            aria-label="Scroll up"
-          >
-            <FontAwesomeIcon :icon="faAngleRight" class="command-icon" />
-          </button>
-          <button
-            :disabled="ganttPosition === 100"
-            @click="handleStep(100, ganttWrapper!)"
-            aria-label="Scroll to end"
-          >
-            <FontAwesomeIcon :icon="faAnglesRight" class="command-icon" />
+          <button @click="scrollRowDown" aria-label="Scroll row down" :disabled="isAtBottom">
+            <FontAwesomeIcon :icon="faAngleDown" class="command-icon" />
           </button>
         </div>
-      </div>
+        <div class="g-gantt-command-fixed">
+          <div class="g-gantt-command-slider">
+            <button
+              :disabled="ganttPosition === 0"
+              @click="handleStep(0, ganttWrapper!)"
+              aria-label="Scroll to start"
+            >
+              <FontAwesomeIcon :icon="faAnglesLeft" class="command-icon" />
+            </button>
+            <button
+              :disabled="ganttPosition === 0"
+              @click="handleStep(ganttPosition - ganttStep, ganttWrapper!)"
+              aria-label="Scroll back"
+            >
+              <FontAwesomeIcon :icon="faAngleLeft" class="command-icon" />
+            </button>
 
-      <!-- Zoom Controls -->
-      <div class="g-gantt-command-zoom">
-        <button @click="decreaseZoom" aria-label="Zoom-out Gantt">
-          <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
-        </button>
-        <button @click="increaseZoom" aria-label="Zoom-out Gantt">
-          <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
-        </button>
-      </div>
+            <!-- Position Slider -->
+            <input
+              v-model="ganttPosition"
+              type="range"
+              min="0"
+              max="100"
+              class="g-gantt-scroller"
+              :style="{ '--value': `${ganttPosition}%` }"
+              @input="handleScroll(ganttWrapper!)"
+              :aria-valuemin="0"
+              :aria-valuemax="100"
+              :aria-valuenow="ganttPosition"
+              aria-label="Gantt scroll position"
+            />
 
-      <!-- Custom Commands Slot -->
-      <div class="g-gantt-command-custom">
-        <slot name="commands" />
+            <button
+              :disabled="ganttPosition === 100"
+              @click="handleStep(Number(ganttPosition) + Number(ganttStep), ganttWrapper!)"
+              aria-label="Scroll up"
+            >
+              <FontAwesomeIcon :icon="faAngleRight" class="command-icon" />
+            </button>
+            <button
+              :disabled="ganttPosition === 100"
+              @click="handleStep(100, ganttWrapper!)"
+              aria-label="Scroll to end"
+            >
+              <FontAwesomeIcon :icon="faAnglesRight" class="command-icon" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Zoom Controls -->
+        <div class="g-gantt-command-zoom">
+          <button @click="decreaseZoom" aria-label="Zoom-out Gantt" :disabled="zoomFactor === 1">
+            <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
+          </button>
+          <button
+            @click="increaseZoom"
+            aria-label="Zoom-out Gantt"
+            :disabled="zoomFactor === maxZoom"
+          >
+            <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
+          </button>
+        </div>
+
+        <!-- Custom Commands Slot -->
+        <div class="g-gantt-command-custom">
+          <slot name="commands" />
+        </div>
       </div>
     </div>
-  </div>
 
     <!-- Tooltip -->
     <g-gantt-bar-tooltip :model-value="showTooltip || isDragging" :bar="tooltipBar">
@@ -170,6 +195,8 @@ import {
   faAngleLeft,
   faAngleRight,
   faAnglesRight,
+  faAngleUp,
+  faAngleDown,
   faMagnifyingGlassPlus,
   faMagnifyingGlassMinus
 } from "@fortawesome/free-solid-svg-icons"
@@ -205,7 +232,8 @@ import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
 import { colorSchemes, type ColorScheme, type ColorSchemeKey } from "../color-schemes"
 import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
 import { BOOLEAN_KEY, CHART_ROWS_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols"
-import type { GanttBarObject, GGanttChartProps, ChartRow } from "../types"
+import type { GanttBarObject, GGanttChartProps, ChartRow, SortDirection } from "../types"
+import type { CSSProperties } from "vue"
 
 // Props & Emits Definition
 const props = withDefaults(defineProps<GGanttChartProps>(), {
@@ -231,13 +259,27 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   defaultConnectionColor: "#ff0000",
   defaultConnectionPattern: "solid",
   defaultConnectionAnimated: false,
-  defaultConnectionAnimationSpeed: "normal"
+  defaultConnectionAnimationSpeed: "normal",
+  maxRows: 0,
+  initialSortDirection: "none",
+  initialRows: () => []
+})
+
+// Based on props
+const rowsContainerStyle = computed<CSSProperties>(() => {
+  if (props.maxRows === 0) return {}
+
+  return {
+    "max-height": `${props.maxRows * props.rowHeight}px`,
+    "overflow-y": "auto"
+  }
 })
 
 watch([() => props.chartStart, () => props.chartEnd], () => {
   updateBarPositions()
 })
 
+// Events
 const emit = defineEmits<{
   (e: "click-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
   (
@@ -262,6 +304,7 @@ const emit = defineEmits<{
     e: "contextmenu-bar",
     value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
   ): void
+  (e: "sort", value: { direction: SortDirection }): void
 }>()
 
 // Computed Properties
@@ -270,12 +313,43 @@ const chartEndDayjs = computed(() => dayjs(props.chartEnd, props.dateFormat as s
 
 const diffDays = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "day") + 1)
 const diffHours = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "hour"))
+const sortDirection = ref<SortDirection>(props.initialSortDirection)
+
+const handleSort = () => {
+  switch (sortDirection.value) {
+    case "none":
+      sortDirection.value = "asc"
+      break
+    case "asc":
+      sortDirection.value = "desc"
+      break
+    case "desc":
+      sortDirection.value = "none"
+      break
+  }
+  emit("sort", { direction: sortDirection.value })
+}
 
 // Chart Layout Management
 const slots = useSlots()
 const getChartRows = () => {
+  if (props.initialRows?.length) {
+    let rows = [...props.initialRows]
+
+    if (sortDirection.value !== "none") {
+      rows = rows.sort((a, b) => {
+        const comparison = a.label.localeCompare(b.label, undefined, {
+          numeric: true,
+          sensitivity: "base"
+        })
+        return sortDirection.value === "asc" ? comparison : -comparison
+      })
+    }
+
+    return rows
+  }
   const defaultSlot = slots.default?.()
-  const allBars: ChartRow[] = []
+  let allBars: ChartRow[] = []
 
   if (!defaultSlot) return allBars
 
@@ -293,8 +367,30 @@ const getChartRows = () => {
       })
     }
   })
+
+  if (sortDirection.value !== "none") {
+    allBars = [...allBars].sort((a, b) => {
+      const comparison = a.label.localeCompare(b.label, undefined, {
+        numeric: true,
+        sensitivity: "base"
+      })
+      return sortDirection.value === "asc" ? comparison : -comparison
+    })
+  }
+
   return allBars
 }
+
+const slotProps = computed(() => {
+  const rows = getChartRows()
+  updateBarPositions()
+  return {
+    rows: rows.map((row) => ({
+      ...row,
+      key: row.label
+    }))
+  }
+})
 
 // Chart Elements Refs
 const ganttChart = ref<HTMLElement | null>(null)
@@ -309,19 +405,36 @@ const { connections, barPositions, getConnectorProps, initializeConnections, upd
 
 const { showTooltip, tooltipBar, initTooltip, clearTooltip } = useTooltip()
 
+const rowsContainer = ref<HTMLElement | null>(null)
+const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
+
 const {
   zoomFactor,
+  maxZoom,
   ganttPosition,
   ganttStep,
   handleStep,
   handleScroll,
   handleWheel,
+  handleContentScroll,
+  handleLabelScroll,
   decreaseZoom,
-  increaseZoom
-} = useChartNavigation({
-  diffDays: diffDays.value,
-  diffHours: diffHours.value
-})
+  increaseZoom,
+  scrollRowUp,
+  scrollRowDown,
+  isAtTop,
+  isAtBottom
+} = useChartNavigation(
+  {
+    diffDays: diffDays.value,
+    diffHours: diffHours.value,
+    scrollRefs: {
+      rowsContainer,
+      labelColumn
+    }
+  },
+  props.maxRows
+)
 
 const navigationControls = {
   zoomFactor,
@@ -330,8 +443,12 @@ const navigationControls = {
   handleStep,
   handleScroll,
   handleWheel,
+  handleContentScroll,
+  handleLabelScroll,
   decreaseZoom,
-  increaseZoom
+  increaseZoom,
+  scrollRowUp,
+  scrollRowDown
 }
 
 const { handleKeyDown } = useKeyboardNavigation(navigationControls, ganttWrapper, ganttContainer)
@@ -504,14 +621,14 @@ provide(BOOLEAN_KEY, { ...props })
   font-variant-numeric: tabular-nums;
 }
 
-
-
 /* Container Styles */
 .g-gantt-rows-container {
   position: relative;
   width: 100%;
   height: 100%;
   overflow: visible;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .labels-in-column {
@@ -539,6 +656,19 @@ provide(BOOLEAN_KEY, { ...props })
 
 .g-gantt-command-custom {
   flex-grow: 1;
+}
+
+.g-gantt-command-vertical {
+  display: flex;
+  gap: 2px;
+  margin-left: 8px;
+}
+
+.g-gantt-command-vertical button:disabled,
+.g-gantt-command-slider button:disabled,
+.g-gantt-command-zoom button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Scroller Styles */
@@ -620,4 +750,7 @@ button {
   flex-direction: column;
 }
 
+.g-gantt-rows-container::-webkit-scrollbar {
+  display: none;
+}
 </style>
