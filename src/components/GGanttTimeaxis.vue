@@ -31,13 +31,13 @@
         :style="{
           background: index % 2 === 0 ? colors.ternary : colors.quartenary,
           color: colors.text,
-          flexDirection: precision === 'hour' ? 'column' : 'row',
-          alignItems: precision === 'hour' ? '' : 'center',
+          flexDirection: precision === 'hour' ? 'row-reverse' : 'row',
+          alignItems: 'center',
           width
         }"
       >
         <slot name="timeunit" :label="label" :value="value" :date="date">
-          {{ label }}
+          <div class="label-unit">{{ label }}</div>
         </slot>
         <div
           v-if="precision === 'hour'"
@@ -54,13 +54,13 @@
         :style="{
           background: index % 2 === 0 ? colors.ternary : colors.quartenary,
           color: colors.text,
-          flexDirection: precision === 'hour' ? 'column' : 'row',
-          alignItems: precision === 'hour' ? '' : 'center',
+          flexDirection: precision === 'hour' ? 'row-reverse' : 'row',
+          alignItems: 'center',
           width
         }"
       >
         <slot name="timeunit" :label="label" :value="label" :date="date">
-          {{ label }}
+          <div class="label-unit">{{ label }}</div>
         </slot>
         <div
           v-if="precision === 'hour'"
@@ -77,18 +77,17 @@ import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
 import useTimeaxisUnits from "../composables/useTimeaxisUnits"
 import { ref } from "vue"
+const timeaxisElement = ref<HTMLElement | null>(null)
 
 const { precision, colors } = provideConfig()
 const { enableMinutes } = provideBooleanConfig()
-const { timeaxisUnits } = useTimeaxisUnits()
+const { timeaxisUnits } = useTimeaxisUnits(timeaxisElement)
 
 const emit = defineEmits<{
   (e: "dragStart", value: MouseEvent): void
   (e: "drag", value: MouseEvent): void
   (e: "dragEnd", value: MouseEvent): void
 }>()
-
-const timeaxisElement = ref<HTMLElement | null>(null)
 
 const handleMouseDown = (e: MouseEvent) => {
   emit("dragStart", e)
@@ -138,5 +137,10 @@ defineExpose({ timeaxisElement })
 .g-timeaxis-hour-pin {
   width: 1px;
   height: 10px;
+}
+
+.label-unit {
+  flex-grow: 1;
+  text-align: center;
 }
 </style>
