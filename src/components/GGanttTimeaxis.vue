@@ -5,6 +5,7 @@
     @mousedown="handleMouseDown"
     role="tablist"
     aria-label="Time Axis"
+    :style="{ maxWidth: maxWidth }"
   >
     <div class="g-timeunits-container">
       <div
@@ -76,10 +77,28 @@
 import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
 import useTimeaxisUnits from "../composables/useTimeaxisUnits"
-import { ref } from "vue"
+import { ref, watch } from "vue"
+import useDayjsHelper from "../composables/useDayjsHelper"
+const { precision, colors, chartSize } = provideConfig()
+
+const { chartStartDayjs, chartEndDayjs } = useDayjsHelper()
+const totalHour = chartEndDayjs.value.diff(chartStartDayjs.value, "hour", true)
+
 const timeaxisElement = ref<HTMLElement | null>(null)
 
-const { precision, colors } = provideConfig()
+const maxWidth = ref()
+watch(
+  () => chartSize.width.value,
+  () => {
+    console.log(chartSize.width.value)
+    if (chartSize.width.value / totalHour >= 12) {
+      maxWidth.value = `${Math.floor(chartSize.width.value)}px`
+    } else {
+      maxWidth.value = `${totalHour * 12}px`
+    }
+  }
+)
+
 const { enableMinutes } = provideBooleanConfig()
 const { timeaxisUnits } = useTimeaxisUnits(timeaxisElement)
 

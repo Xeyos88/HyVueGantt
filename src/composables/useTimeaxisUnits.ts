@@ -96,7 +96,7 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
   }
 
   const getMinutesStepFromCellWidth = (cellWidth: number): string[] => {
-    const minCellWidth = 30
+    const minCellWidth = 24
 
     const possibleDivisions = Math.floor(cellWidth / minCellWidth)
 
