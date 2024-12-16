@@ -2,7 +2,7 @@
   <div class="g-grid-container">
     <template v-if="!enableMinutes">
       <div
-        v-for="{ label, value, width } in timeaxisUnits.lowerUnits"
+        v-for="{ label, value, width } in timeaxisUnits.result.lowerUnits"
         :key="label"
         class="g-grid-line"
         :style="{
@@ -13,7 +13,7 @@
     </template>
     <template v-else>
       <div
-        v-for="({ label, width }, index) in timeaxisUnits.minutesUnits"
+        v-for="({ label, width }, index) in timeaxisUnits.result.minutesUnits"
         :key="`${label}-${index}`"
         class="g-grid-line"
         :style="{

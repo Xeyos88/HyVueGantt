@@ -9,7 +9,7 @@
   >
     <div class="g-timeunits-container">
       <div
-        v-for="({ label, value, date, width }, index) in timeaxisUnits.upperUnits"
+        v-for="({ label, value, date, width }, index) in timeaxisUnits.result.upperUnits"
         :key="label"
         class="g-upper-timeunit"
         :style="{
@@ -26,48 +26,44 @@
 
     <div class="g-timeunits-container">
       <div
-        v-for="({ label, value, date, width }, index) in timeaxisUnits.lowerUnits"
+        v-for="({ label, value, date, width }, index) in timeaxisUnits.result.lowerUnits"
         :key="label"
         class="g-timeunit"
         :style="{
           background: index % 2 === 0 ? colors.ternary : colors.quartenary,
           color: colors.text,
-          flexDirection: precision === 'hour' ? 'row-reverse' : 'row',
+          flexDirection: precision === 'hour' ? (enableMinutes ? 'column' : 'row-reverse') : 'row',
           alignItems: 'center',
           width
         }"
       >
-        <slot name="timeunit" :label="label" :value="value" :date="date">
-          <div class="label-unit">{{ label }}</div>
-        </slot>
-        <div
-          v-if="precision === 'hour'"
-          class="g-timeaxis-hour-pin"
-          :style="{ background: colors.text }"
-        />
-      </div>
-    </div>
-    <div v-if="precision === 'hour' && enableMinutes" class="g-timeunits-container">
-      <div
-        v-for="({ label, width, date }, index) in timeaxisUnits.minutesUnits"
-        :key="`${label}-${index}`"
-        class="g-timeunit"
-        :style="{
-          background: index % 2 === 0 ? colors.ternary : colors.quartenary,
-          color: colors.text,
-          flexDirection: precision === 'hour' ? 'row-reverse' : 'row',
-          alignItems: 'center',
-          width
-        }"
-      >
-        <slot name="timeunit" :label="label" :value="label" :date="date">
-          <div class="label-unit">{{ label }}</div>
-        </slot>
-        <div
-          v-if="precision === 'hour'"
-          class="g-timeaxis-hour-pin"
-          :style="{ background: colors.text }"
-        />
+        <div class="g-timeunit-min">
+          <slot name="timeunit" :label="label" :value="value" :date="date">
+            <div class="label-unit">{{ label }}</div>
+          </slot>
+          <div
+            v-if="precision === 'hour'"
+            class="g-timeaxis-hour-pin"
+            :style="{ background: colors.text }"
+          />
+        </div>
+        <div v-if="precision === 'hour' && enableMinutes" class="g-timeunit-step">
+          <div
+            v-for="step in timeaxisUnits.globalMinuteStep"
+            :key="`${label}-${step}`"
+            :style="{
+              background: index % 2 === 0 ? colors.ternary : colors.quartenary,
+              color: colors.text,
+              display: 'flex',
+              flexGrow: 1,
+              flexDirection: 'row-reverse',
+              alignItems: 'center'
+            }"
+          >
+            <div class="label-unit">{{ step }}</div>
+            <div class="g-timeaxis-hour-pin" :style="{ background: colors.text }" />
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -161,5 +157,17 @@ defineExpose({ timeaxisElement })
 .label-unit {
   flex-grow: 1;
   text-align: center;
+}
+
+.g-timeunit-min {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  width: 100%;
+}
+
+.g-timeunit-step {
+  display: flex;
+  width: 100%;
 }
 </style>

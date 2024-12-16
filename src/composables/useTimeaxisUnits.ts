@@ -96,7 +96,7 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
   }
 
   const getMinutesStepFromCellWidth = (cellWidth: number): string[] => {
-    const minCellWidth = 24
+    const minCellWidth = 16
 
     const possibleDivisions = Math.floor(cellWidth / minCellWidth)
 
@@ -150,7 +150,7 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
         createTimeaxisUnit(currentLowerUnit, getDisplayFormat(precision.value), width)
       )
 
-      if (precision.value === "hour" && enableMinutes) {
+      /*if (precision.value === "hour" && enableMinutes) {
         if (!result.minutesUnits) {
           result.minutesUnits = []
         }
@@ -170,7 +170,7 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
             })
           }
         })
-      }
+      }*/
 
       currentLowerUnit = nextLowerUnit
     }
@@ -192,7 +192,7 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
       currentUpperUnit = advanceTimeUnit(endOfCurrentUpper, upperPrecision.value)
     }
 
-    return result
+    return { result, globalMinuteStep }
   })
 
   const calculateWidth = (start: Dayjs, end: Dayjs, total: number): string => {
