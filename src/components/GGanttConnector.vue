@@ -13,8 +13,6 @@ interface Props {
   animationSpeed?: "slow" | "normal" | "fast"
 }
 
-//TODO Gestire type animation e common connection type
-
 const props = withDefaults(defineProps<Props>(), {
   type: "straight",
   color: "#ff0000",

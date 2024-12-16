@@ -2,7 +2,7 @@
   <div class="g-grid-container">
     <template v-if="!enableMinutes">
       <div
-        v-for="{ label, value, width } in timeaxisUnits.lowerUnits"
+        v-for="{ label, value, width } in timeaxisUnits.result.lowerUnits"
         :key="label"
         class="g-grid-line"
         :style="{
@@ -13,7 +13,7 @@
     </template>
     <template v-else>
       <div
-        v-for="({ label, width }, index) in timeaxisUnits.minutesUnits"
+        v-for="({ label, width }, index) in timeaxisUnits.result.minutesUnits"
         :key="`${label}-${index}`"
         class="g-grid-line"
         :style="{
@@ -29,6 +29,7 @@
 import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
 import useTimeaxisUnits from "../composables/useTimeaxisUnits"
+import { ref } from "vue"
 
 defineProps<{
   highlightedUnits?: number[]
@@ -37,7 +38,9 @@ defineProps<{
 const { colors } = provideConfig()
 const { enableMinutes } = provideBooleanConfig()
 
-const { timeaxisUnits } = useTimeaxisUnits()
+const time = ref(null)
+
+const { timeaxisUnits } = useTimeaxisUnits(time)
 </script>
 
 <style>
