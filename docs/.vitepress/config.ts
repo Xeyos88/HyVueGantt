@@ -14,10 +14,7 @@ export default defineConfig({
     },
 
     nav: [
-      { text: "Guide", link: "/guide/" },
-      { text: "Components", link: "/components/" },
-      { text: "Examples", link: "/examples/" },
-      { text: "API", link: "/api/" },
+      { text: "Home", link: "/" },
       {
         text: "Links",
         items: [
@@ -28,31 +25,38 @@ export default defineConfig({
     ],
 
     sidebar: {
-      "/guide/": [
+      "/": [
         {
           text: "Getting Started",
           items: [
-            { text: "Introduction", link: "/guide/" },
-            { text: "Installation", link: "/guide/installation" },
-            { text: "Quick Start", link: "/guide/quick-start" }
+            { text: "Introduction", link: "/introduction" },
+            { text: "Installation", link: "/installation" },
+            { text: "Quick Start", link: "/quick-start" }
           ]
         },
         {
           text: "Core Concepts",
           items: [
-            { text: "Chart Configuration", link: "/guide/chart-configuration" },
-            { text: "Time Axis", link: "/guide/time-axis" },
-            { text: "Connections", link: "/guide/connections" },
-            { text: "Styling", link: "/guide/styling" }
+            { text: "Chart Configuration", link: "/chart-configuration" },
+            { text: "Time Axis", link: "/time-axis" },
+            { text: "Connections", link: "/connections" },
+            { text: "Styling", link: "/styling" }
           ]
-        }
-      ],
-      "/components/": [
+        },
         {
           text: "Components",
           items: [
-            { text: "GGanttChart", link: "/components/g-gantt-chart" },
-            { text: "GGanttRow", link: "/components/g-gantt-row" }
+            { text: "GGanttChart", link: "/g-gantt-chart" },
+            { text: "GGanttRow", link: "/g-gantt-row" }
+          ]
+        },
+        {
+          text: "API Reference",
+          items: [
+            { text: "Props", link: "/props" },
+            { text: "Events", link: "/events" },
+            { text: "Types", link: "/types" },
+            { text: "Color Schemes", link: "/color-schemes" }
           ]
         }
       ],
@@ -68,17 +72,6 @@ export default defineConfig({
           ]
         }
       ],
-      "/api/": [
-        {
-          text: "API Reference",
-          items: [
-            { text: "Props", link: "/api/props" },
-            { text: "Events", link: "/api/events" },
-            { text: "Types", link: "/api/types" },
-            { text: "Color Schemes", link: "/api/color-schemes" }
-          ]
-        }
-      ]
     },
 
     socialLinks: [{ icon: "github", link: "https://github.com/Xeyos88/HyVueGantt" }],

@@ -1,6 +1,6 @@
 # Hyper Vue Gantt 
 
-A powerful and flexible Gantt chart component for Vue 3 applications. This component is an evolution of vue-ganttastic.
+A powerful and flexible Gantt chart component for Vue 3 applications. This component is an evolution of [vue-ganttastic](https://github.com/zunnzunn/vue-ganttastic) package.
 
 ## Features
 
@@ -62,5 +62,3 @@ const rows = [
 ]
 </script>
 ```
-
-## Getting Started

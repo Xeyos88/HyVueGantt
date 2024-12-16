@@ -13,7 +13,7 @@ hero:
 
   - theme: brand
     text: Get Started
-    link: /guide/introduction
+    link: /introduction
   - theme: alt
     text: View on GitHub
     link: https://github.com/Xeyos88/HyVueGantt
