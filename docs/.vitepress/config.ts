@@ -1,6 +1,13 @@
 import { defineConfig } from "vitepress"
 
 export default defineConfig({
+  vue: {
+    template: {
+      compilerOptions: {
+        isCustomElement: (tag) => tag.includes('hy-vue-')
+      }
+    }
+  },
   lang: 'en-US',
   title: "Hyper Vue Gantt",
   description: "Documentation for the Huper Vue Gantt Chart Library",
@@ -29,38 +36,36 @@ export default defineConfig({
         {
           text: "Getting Started",
           items: [
-            { text: "Introduction", link: "/introduction" },
-            { text: "Installation", link: "/installation" },
-            { text: "Quick Start", link: "/quick-start" }
+            { text: "Introduction", link: "/guide/introduction" },
+            { text: "Installation", link: "/guide/installation" },
+            { text: "Quick Start", link: "/guide/quick-start" }
           ]
         },
         {
           text: "Core Concepts",
           items: [
-            { text: "Chart Configuration", link: "/chart-configuration" },
-            { text: "Time Axis", link: "/time-axis" },
-            { text: "Connections", link: "/connections" },
-            { text: "Styling", link: "/styling" }
+            { text: "Chart Configuration", link: "/guide/chart-configuration" },
+            { text: "Time Axis", link: "/guide/time-axis" },
+            { text: "Connections", link: "/guide/connections" },
+            { text: "Styling", link: "/guide/styling" }
           ]
         },
         {
           text: "Components",
           items: [
-            { text: "GGanttChart", link: "/g-gantt-chart" },
-            { text: "GGanttRow", link: "/g-gantt-row" }
+            { text: "GGanttChart", link: "/components/g-gantt-chart" },
+            { text: "GGanttRow", link: "/components/g-gantt-row" }
           ]
         },
         {
           text: "API Reference",
           items: [
-            { text: "Props", link: "/props" },
-            { text: "Events", link: "/events" },
-            { text: "Types", link: "/types" },
-            { text: "Color Schemes", link: "/color-schemes" }
+            { text: "Props", link: "/api/props" },
+            { text: "Events", link: "/api/events" },
+            { text: "Types", link: "/api/types" },
+            { text: "Color Schemes", link: "/api/color-schemes" }
           ]
-        }
-      ],
-      "/examples/": [
+        },
         {
           text: "Examples",
           items: [
@@ -68,7 +73,9 @@ export default defineConfig({
             { text: "Custom Styling", link: "/examples/styling" },
             { text: "Bar Connections", link: "/examples/connections" },
             { text: "Time Management", link: "/examples/time" },
-            { text: "Advanced Features", link: "/examples/advanced" }
+            { text: "Advanced Features", link: "/examples/advanced" },
+            { text: "Live Demo", link: "/examples/live" }
+
           ]
         }
       ],

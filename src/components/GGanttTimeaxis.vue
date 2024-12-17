@@ -86,7 +86,6 @@ const maxWidth = ref()
 watch(
   () => chartSize.width.value,
   () => {
-    console.log(chartSize.width.value)
     if (chartSize.width.value / totalHour >= 12) {
       maxWidth.value = `${Math.floor(chartSize.width.value)}px`
     } else {

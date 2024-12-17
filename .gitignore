@@ -32,5 +32,4 @@ docs/.vitepress/dist
 
 #temporary
 hy-vue-gantt-1.0.0.tgz
-deploy.sh
-docs-deploy.yml
+
