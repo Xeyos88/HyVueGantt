@@ -1,7 +1,11 @@
-import { computed, ref } from "vue"
+import { computed, ref, type Ref } from "vue"
 import type { BarConnection, BarPosition, ChartRow, GGanttChartProps } from "../types"
 
-export function useConnections(getChartRows: () => ChartRow[], props: GGanttChartProps) {
+export function useConnections(
+  getChartRows: () => ChartRow[],
+  props: GGanttChartProps,
+  id: Ref<string>
+) {
   const connections = ref<BarConnection[]>([])
   const barPositions = ref<Map<string, BarPosition>>(new Map())
 
@@ -60,11 +64,12 @@ export function useConnections(getChartRows: () => ChartRow[], props: GGanttChar
   const updateBarPositions = async () => {
     await new Promise((resolve) => requestAnimationFrame(resolve))
 
-    const rowsContainer = document.querySelector(".g-gantt-rows-container")
+    const parentElement = document.getElementById(id.value)
+    const rowsContainer = parentElement!.querySelector(".g-gantt-rows-container")
     if (!rowsContainer) return
 
     const containerRect = rowsContainer.getBoundingClientRect()
-    const bars = document.querySelectorAll(".g-gantt-bar")
+    const bars = parentElement!.querySelectorAll(".g-gantt-bar")
 
     barPositions.value.clear()
 

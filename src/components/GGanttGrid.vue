@@ -1,3 +1,21 @@
+<script setup lang="ts">
+import provideConfig from "../provider/provideConfig"
+import provideBooleanConfig from "../provider/provideBooleanConfig"
+import useTimeaxisUnits from "../composables/useTimeaxisUnits"
+import { ref } from "vue"
+
+defineProps<{
+  highlightedUnits?: number[]
+}>()
+
+const { colors } = provideConfig()
+const { enableMinutes } = provideBooleanConfig()
+
+const time = ref(null)
+
+const { timeaxisUnits } = useTimeaxisUnits(time)
+</script>
+
 <template>
   <div class="g-grid-container">
     <template v-if="!enableMinutes">
@@ -24,24 +42,6 @@
     </template>
   </div>
 </template>
-
-<script setup lang="ts">
-import provideConfig from "../provider/provideConfig"
-import provideBooleanConfig from "../provider/provideBooleanConfig"
-import useTimeaxisUnits from "../composables/useTimeaxisUnits"
-import { ref } from "vue"
-
-defineProps<{
-  highlightedUnits?: number[]
-}>()
-
-const { colors } = provideConfig()
-const { enableMinutes } = provideBooleanConfig()
-
-const time = ref(null)
-
-const { timeaxisUnits } = useTimeaxisUnits(time)
-</script>
 
 <style>
 .g-grid-container {

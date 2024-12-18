@@ -1,45 +1,3 @@
-<template>
-  <div class="g-label-column" :style="{ fontFamily: font, color: colors.text }">
-    <slot name="label-column-title">
-      <div
-        class="g-label-column-header"
-        :style="{ background: colors.primary }"
-        @click="handleSort"
-        role="button"
-        aria-label="Sort rows"
-      >
-        {{ labelColumnTitle }}
-        <span v-if="sortDirection === 'asc'" class="sort-icon">
-          <FontAwesomeIcon :icon="faArrowDownAZ" />
-        </span>
-        <span v-if="sortDirection === 'desc'" class="sort-icon">
-          <FontAwesomeIcon :icon="faArrowDownZA" />
-        </span>
-      </div>
-    </slot>
-    <div
-      class="g-label-column-rows"
-      :style="labelContainerStyle"
-      ref="labelContainer"
-      @scroll="handleLabelScroll"
-    >
-      <div
-        v-for="({ label }, index) in allRows"
-        :key="`${label}_${index}`"
-        class="g-label-column-row"
-        :style="{
-          background: index % 2 === 0 ? colors.ternary : colors.quartenary,
-          height: `${rowHeight}px`
-        }"
-      >
-        <slot name="label-column-row" :label="label">
-          <span>{{ label }}</span>
-        </slot>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import provideGetChartRows from "../provider/provideGetChartRows"
 import provideConfig from "../provider/provideConfig"
@@ -90,6 +48,48 @@ defineExpose({
   }
 })
 </script>
+
+<template>
+  <div class="g-label-column" :style="{ fontFamily: font, color: colors.text }">
+    <slot name="label-column-title">
+      <div
+        class="g-label-column-header"
+        :style="{ background: colors.primary }"
+        @click="handleSort"
+        role="button"
+        aria-label="Sort rows"
+      >
+        {{ labelColumnTitle }}
+        <span v-if="sortDirection === 'asc'" class="sort-icon">
+          <FontAwesomeIcon :icon="faArrowDownAZ" />
+        </span>
+        <span v-if="sortDirection === 'desc'" class="sort-icon">
+          <FontAwesomeIcon :icon="faArrowDownZA" />
+        </span>
+      </div>
+    </slot>
+    <div
+      class="g-label-column-rows"
+      :style="labelContainerStyle"
+      ref="labelContainer"
+      @scroll="handleLabelScroll"
+    >
+      <div
+        v-for="({ label }, index) in allRows"
+        :key="`${label}_${index}`"
+        class="g-label-column-row"
+        :style="{
+          background: index % 2 === 0 ? colors.ternary : colors.quartenary,
+          height: `${rowHeight}px`
+        }"
+      >
+        <slot name="label-column-row" :label="label">
+          <span>{{ label }}</span>
+        </slot>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style>
 .g-label-column {

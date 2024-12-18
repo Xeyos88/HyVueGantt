@@ -1,3 +1,424 @@
+<script setup lang="ts">
+// External Imports
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
+import {
+  faAnglesLeft,
+  faAngleLeft,
+  faAngleRight,
+  faAnglesRight,
+  faAngleUp,
+  faAngleDown,
+  faMagnifyingGlassPlus,
+  faMagnifyingGlassMinus
+} from "@fortawesome/free-solid-svg-icons"
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  provide,
+  ref,
+  toRefs,
+  useSlots,
+  watch
+} from "vue"
+import { useElementSize } from "@vueuse/core"
+import dayjs from "dayjs"
+
+// Internal Imports - Components
+import GGanttGrid from "./GGanttGrid.vue"
+import GGanttLabelColumn from "./GGanttLabelColumn.vue"
+import GGanttTimeaxis from "./GGanttTimeaxis.vue"
+import GGanttBarTooltip from "./GGanttBarTooltip.vue"
+import GGanttCurrentTime from "./GGanttCurrentTime.vue"
+import GGanttConnector from "./GGanttConnector.vue"
+
+// Internal Imports - Composables
+import { useConnections } from "../composables/useConnections"
+import { useTooltip } from "../composables/useTooltip"
+import { useChartNavigation } from "../composables/useChartNavigation"
+import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
+
+// Types and Constants
+import { colorSchemes, type ColorScheme, type ColorSchemeKey } from "../color-schemes"
+import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
+import { BOOLEAN_KEY, CHART_ROWS_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols"
+import type { GanttBarObject, GGanttChartProps, ChartRow, SortDirection } from "../types"
+import type { CSSProperties } from "vue"
+
+// Props & Emits Definition
+const props = withDefaults(defineProps<GGanttChartProps>(), {
+  currentTimeLabel: "",
+  dateFormat: DEFAULT_DATE_FORMAT,
+  precision: "day",
+  width: "100%",
+  hideTimeaxis: false,
+  colorScheme: "default",
+  grid: false,
+  pushOnOverlap: false,
+  pushOnConnect: false,
+  noOverlap: false,
+  rowHeight: 40,
+  highlightedUnits: () => [],
+  font: "inherit",
+  labelColumnTitle: "",
+  labelColumnWidth: "150px",
+  commands: true,
+  enableMinutes: false,
+  enableConnections: true,
+  defaultConnectionType: "straight",
+  defaultConnectionColor: "#ff0000",
+  defaultConnectionPattern: "solid",
+  defaultConnectionAnimated: false,
+  defaultConnectionAnimationSpeed: "normal",
+  maxRows: 0,
+  initialSortDirection: "none",
+  initialRows: () => []
+})
+
+const id = ref(crypto.randomUUID())
+
+// Based on props
+const rowsContainerStyle = computed<CSSProperties>(() => {
+  if (props.maxRows === 0) return {}
+
+  return {
+    "max-height": `${props.maxRows * props.rowHeight}px`,
+    "overflow-y": "auto"
+  }
+})
+
+watch([() => props.chartStart, () => props.chartEnd], () => {
+  updateBarPositions()
+})
+
+// Events
+const emit = defineEmits<{
+  (e: "click-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
+  (
+    e: "mousedown-bar",
+    value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
+  ): void
+  (e: "mouseup-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
+  (e: "dblclick-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
+  (e: "mouseenter-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
+  (e: "mouseleave-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
+  (e: "dragstart-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
+  (e: "drag-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
+  (
+    e: "dragend-bar",
+    value: {
+      bar: GanttBarObject
+      e: MouseEvent
+      movedBars?: Map<GanttBarObject, { oldStart: string; oldEnd: string }>
+    }
+  ): void
+  (
+    e: "contextmenu-bar",
+    value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
+  ): void
+  (e: "sort", value: { direction: SortDirection }): void
+}>()
+
+// Computed Properties
+const chartStartDayjs = computed(() => dayjs(props.chartStart, props.dateFormat as string, true))
+const chartEndDayjs = computed(() => dayjs(props.chartEnd, props.dateFormat as string, true))
+
+const diffDays = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "day") + 1)
+const diffHours = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "hour"))
+const sortDirection = ref<SortDirection>(props.initialSortDirection)
+
+const handleSort = () => {
+  switch (sortDirection.value) {
+    case "none":
+      sortDirection.value = "asc"
+      break
+    case "asc":
+      sortDirection.value = "desc"
+      break
+    case "desc":
+      sortDirection.value = "none"
+      break
+  }
+  emit("sort", { direction: sortDirection.value })
+}
+
+// Chart Layout Management
+const slots = useSlots()
+const getChartRows = () => {
+  if (props.initialRows?.length) {
+    let rows = [...props.initialRows]
+
+    if (sortDirection.value !== "none") {
+      rows = rows.sort((a, b) => {
+        const comparison = a.label.localeCompare(b.label, undefined, {
+          numeric: true,
+          sensitivity: "base"
+        })
+        return sortDirection.value === "asc" ? comparison : -comparison
+      })
+    }
+
+    return rows
+  }
+  const defaultSlot = slots.default?.()
+  let allBars: ChartRow[] = []
+
+  if (!defaultSlot) return allBars
+
+  defaultSlot.forEach((child) => {
+    if (child.props?.bars) {
+      const { label, bars } = child.props
+      allBars.push({ label, bars })
+    } else if (Array.isArray(child.children)) {
+      child.children.forEach((grandchild) => {
+        const granchildNode = grandchild as { props?: ChartRow }
+        if (granchildNode?.props?.bars) {
+          const { label, bars } = granchildNode.props
+          allBars.push({ label, bars })
+        }
+      })
+    }
+  })
+
+  if (sortDirection.value !== "none") {
+    allBars = [...allBars].sort((a, b) => {
+      const comparison = a.label.localeCompare(b.label, undefined, {
+        numeric: true,
+        sensitivity: "base"
+      })
+      return sortDirection.value === "asc" ? comparison : -comparison
+    })
+  }
+
+  return allBars
+}
+
+const slotProps = computed(() => {
+  const rows = getChartRows()
+  updateBarPositions()
+  return {
+    rows: rows.map((row) => ({
+      ...row,
+      key: row.label
+    }))
+  }
+})
+
+// Chart Elements Refs
+const ganttChart = ref<HTMLElement | null>(null)
+const chartSize = useElementSize(ganttChart)
+const ganttWrapper = ref<HTMLElement | null>(null)
+const timeaxisComponent = ref<InstanceType<typeof GGanttTimeaxis> | null>(null)
+const ganttContainer = ref<HTMLElement | null>(null)
+
+// Composables
+const { connections, barPositions, getConnectorProps, initializeConnections, updateBarPositions } =
+  useConnections(getChartRows, props, id)
+
+const { showTooltip, tooltipBar, initTooltip, clearTooltip } = useTooltip()
+
+const rowsContainer = ref<HTMLElement | null>(null)
+const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
+
+const {
+  zoomFactor,
+  maxZoom,
+  ganttPosition,
+  ganttStep,
+  handleStep,
+  handleScroll,
+  handleWheel,
+  handleContentScroll,
+  handleLabelScroll,
+  decreaseZoom,
+  increaseZoom,
+  scrollRowUp,
+  scrollRowDown,
+  isAtTop,
+  isAtBottom
+} = useChartNavigation(
+  {
+    diffDays: diffDays.value,
+    diffHours: diffHours.value,
+    scrollRefs: {
+      rowsContainer,
+      labelColumn
+    }
+  },
+  props.maxRows
+)
+
+const navigationControls = {
+  zoomFactor,
+  ganttPosition,
+  ganttStep,
+  handleStep,
+  handleScroll,
+  handleWheel,
+  handleContentScroll,
+  handleLabelScroll,
+  decreaseZoom,
+  increaseZoom,
+  scrollRowUp,
+  scrollRowDown
+}
+
+const { handleKeyDown } = useKeyboardNavigation(navigationControls, ganttWrapper, ganttContainer)
+
+// Derived State
+const widthNumber = computed(() => zoomFactor.value * 100)
+const customWidth = computed(() => `${widthNumber.value}%`)
+
+const { font, colorScheme } = toRefs(props)
+
+const getColorScheme = (scheme: string | ColorScheme): ColorScheme =>
+  typeof scheme !== "string"
+    ? scheme
+    : ((colorSchemes[scheme as ColorSchemeKey] || colorSchemes.default) as ColorScheme)
+
+const colors = computed(() => getColorScheme(colorScheme.value))
+
+// Time Axis Interaction State
+const isDragging = ref(false)
+const isDraggingTimeaxis = ref(false)
+const lastMouseX = ref(0)
+
+// Time Axis Event Handlers
+const handleTimeaxisMouseDown = (e: MouseEvent) => {
+  isDraggingTimeaxis.value = true
+  lastMouseX.value = e.clientX
+}
+
+const handleTimeaxisMouseMove = (e: MouseEvent) => {
+  if (!isDraggingTimeaxis.value || !ganttWrapper.value) return
+
+  const deltaX = e.clientX - lastMouseX.value
+  lastMouseX.value = e.clientX
+
+  ganttWrapper.value.scrollLeft -= deltaX
+  const maxScroll = ganttWrapper.value.scrollWidth - ganttWrapper.value.clientWidth
+  ganttPosition.value = (ganttWrapper.value.scrollLeft / maxScroll) * 100
+}
+
+const handleTimeaxisMouseUp = () => {
+  isDraggingTimeaxis.value = false
+}
+
+// Bar Event Handling
+const emitBarEvent = (
+  e: MouseEvent,
+  bar: GanttBarObject,
+  datetime?: string | Date,
+  movedBars?: Map<GanttBarObject, { oldStart: string; oldEnd: string }>
+) => {
+  switch (e.type) {
+    case "click":
+      emit("click-bar", { bar, e, datetime })
+      break
+    case "mousedown":
+      emit("mousedown-bar", { bar, e, datetime })
+      break
+    case "mouseup":
+      emit("mouseup-bar", { bar, e, datetime })
+      break
+    case "dblclick":
+      emit("dblclick-bar", { bar, e, datetime })
+      break
+    case "mouseenter":
+      initTooltip(bar)
+      emit("mouseenter-bar", { bar, e })
+      break
+    case "mouseleave":
+      clearTooltip()
+      emit("mouseleave-bar", { bar, e })
+      break
+    case "dragstart":
+      isDragging.value = true
+      emit("dragstart-bar", { bar, e })
+      updateBarPositions()
+      break
+    case "drag":
+      emit("drag-bar", { bar, e })
+      updateBarPositions()
+      break
+    case "dragend":
+      isDragging.value = false
+      emit("dragend-bar", { bar, e, movedBars })
+      updateBarPositions()
+      break
+    case "contextmenu":
+      emit("contextmenu-bar", { bar, e, datetime })
+      break
+  }
+}
+
+// Style Updates
+const updateRangeBackground = () => {
+  const parentElement = document.getElementById(id.value)
+  const slider = parentElement!.querySelector(".g-gantt-scroller") as HTMLInputElement
+  if (slider) {
+    slider.style.setProperty("--value", `${ganttPosition.value}%`)
+  }
+}
+
+// ResizeObserver instance
+let resizeObserver: ResizeObserver
+
+// Lifecycle Hooks
+onMounted(() => {
+  if (ganttWrapper.value) {
+    ganttWrapper.value.addEventListener("wheel", (e) => handleWheel(e, ganttWrapper.value!))
+  }
+
+  window.addEventListener("mousemove", handleTimeaxisMouseMove)
+  window.addEventListener("mouseup", handleTimeaxisMouseUp)
+
+  resizeObserver = new ResizeObserver(updateBarPositions)
+  const container = document.querySelector(".g-gantt-chart")
+  if (container) {
+    resizeObserver.observe(container)
+  }
+
+  window.addEventListener("resize", updateBarPositions)
+  initializeConnections()
+
+  nextTick(() => {
+    updateBarPositions()
+  })
+
+  // Watchers
+  watch(ganttPosition, updateRangeBackground, { immediate: true })
+})
+
+onUnmounted(() => {
+  if (ganttWrapper.value) {
+    ganttWrapper.value.removeEventListener("wheel", (e) => handleWheel(e, ganttWrapper.value!))
+  }
+
+  window.removeEventListener("mousemove", handleTimeaxisMouseMove)
+  window.removeEventListener("mouseup", handleTimeaxisMouseUp)
+
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
+
+  window.removeEventListener("resize", updateBarPositions)
+})
+
+// Provider Setup
+provide(CHART_ROWS_KEY, getChartRows)
+provide(CONFIG_KEY, {
+  ...toRefs(props),
+  colors,
+  chartSize,
+  widthNumber
+})
+provide(EMIT_BAR_EVENT_KEY, emitBarEvent)
+provide(BOOLEAN_KEY, { ...props })
+provide("id", id)
+</script>
+
 <template>
   <div
     class="g-gantt-container"
@@ -6,6 +427,7 @@
     tabindex="0"
     @keydown="handleKeyDown"
     ref="ganttContainer"
+    :id="id"
   >
     <div class="g-gantt-rounded-wrapper">
       <!-- Chart Layout Section -->
@@ -186,423 +608,6 @@
     </g-gantt-bar-tooltip>
   </div>
 </template>
-
-<script setup lang="ts">
-// External Imports
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
-import {
-  faAnglesLeft,
-  faAngleLeft,
-  faAngleRight,
-  faAnglesRight,
-  faAngleUp,
-  faAngleDown,
-  faMagnifyingGlassPlus,
-  faMagnifyingGlassMinus
-} from "@fortawesome/free-solid-svg-icons"
-import {
-  computed,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  provide,
-  ref,
-  toRefs,
-  useSlots,
-  watch
-} from "vue"
-import { useElementSize } from "@vueuse/core"
-import dayjs from "dayjs"
-
-// Internal Imports - Components
-import GGanttGrid from "./GGanttGrid.vue"
-import GGanttLabelColumn from "./GGanttLabelColumn.vue"
-import GGanttTimeaxis from "./GGanttTimeaxis.vue"
-import GGanttBarTooltip from "./GGanttBarTooltip.vue"
-import GGanttCurrentTime from "./GGanttCurrentTime.vue"
-import GGanttConnector from "./GGanttConnector.vue"
-
-// Internal Imports - Composables
-import { useConnections } from "../composables/useConnections"
-import { useTooltip } from "../composables/useTooltip"
-import { useChartNavigation } from "../composables/useChartNavigation"
-import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
-
-// Types and Constants
-import { colorSchemes, type ColorScheme, type ColorSchemeKey } from "../color-schemes"
-import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
-import { BOOLEAN_KEY, CHART_ROWS_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols"
-import type { GanttBarObject, GGanttChartProps, ChartRow, SortDirection } from "../types"
-import type { CSSProperties } from "vue"
-
-// Props & Emits Definition
-const props = withDefaults(defineProps<GGanttChartProps>(), {
-  currentTimeLabel: "",
-  dateFormat: DEFAULT_DATE_FORMAT,
-  precision: "day",
-  width: "100%",
-  hideTimeaxis: false,
-  colorScheme: "default",
-  grid: false,
-  pushOnOverlap: false,
-  pushOnConnect: false,
-  noOverlap: false,
-  rowHeight: 40,
-  highlightedUnits: () => [],
-  font: "inherit",
-  labelColumnTitle: "",
-  labelColumnWidth: "150px",
-  commands: true,
-  enableMinutes: false,
-  enableConnections: true,
-  defaultConnectionType: "straight",
-  defaultConnectionColor: "#ff0000",
-  defaultConnectionPattern: "solid",
-  defaultConnectionAnimated: false,
-  defaultConnectionAnimationSpeed: "normal",
-  maxRows: 0,
-  initialSortDirection: "none",
-  initialRows: () => []
-})
-
-// Based on props
-const rowsContainerStyle = computed<CSSProperties>(() => {
-  if (props.maxRows === 0) return {}
-
-  return {
-    "max-height": `${props.maxRows * props.rowHeight}px`,
-    "overflow-y": "auto"
-  }
-})
-
-watch([() => props.chartStart, () => props.chartEnd], () => {
-  updateBarPositions()
-})
-
-// Events
-const emit = defineEmits<{
-  (e: "click-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
-  (
-    e: "mousedown-bar",
-    value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
-  ): void
-  (e: "mouseup-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
-  (e: "dblclick-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
-  (e: "mouseenter-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (e: "mouseleave-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (e: "dragstart-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (e: "drag-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (
-    e: "dragend-bar",
-    value: {
-      bar: GanttBarObject
-      e: MouseEvent
-      movedBars?: Map<GanttBarObject, { oldStart: string; oldEnd: string }>
-    }
-  ): void
-  (
-    e: "contextmenu-bar",
-    value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
-  ): void
-  (e: "sort", value: { direction: SortDirection }): void
-}>()
-
-// Computed Properties
-const chartStartDayjs = computed(() => dayjs(props.chartStart, props.dateFormat as string, true))
-const chartEndDayjs = computed(() => dayjs(props.chartEnd, props.dateFormat as string, true))
-
-const diffDays = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "day") + 1)
-const diffHours = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "hour"))
-const sortDirection = ref<SortDirection>(props.initialSortDirection)
-
-const handleSort = () => {
-  switch (sortDirection.value) {
-    case "none":
-      sortDirection.value = "asc"
-      break
-    case "asc":
-      sortDirection.value = "desc"
-      break
-    case "desc":
-      sortDirection.value = "none"
-      break
-  }
-  emit("sort", { direction: sortDirection.value })
-}
-
-// Chart Layout Management
-const slots = useSlots()
-const getChartRows = () => {
-  if (props.initialRows?.length) {
-    let rows = [...props.initialRows]
-
-    if (sortDirection.value !== "none") {
-      rows = rows.sort((a, b) => {
-        const comparison = a.label.localeCompare(b.label, undefined, {
-          numeric: true,
-          sensitivity: "base"
-        })
-        return sortDirection.value === "asc" ? comparison : -comparison
-      })
-    }
-
-    return rows
-  }
-  const defaultSlot = slots.default?.()
-  let allBars: ChartRow[] = []
-
-  if (!defaultSlot) return allBars
-
-  defaultSlot.forEach((child) => {
-    if (child.props?.bars) {
-      const { label, bars } = child.props
-      allBars.push({ label, bars })
-    } else if (Array.isArray(child.children)) {
-      child.children.forEach((grandchild) => {
-        const granchildNode = grandchild as { props?: ChartRow }
-        if (granchildNode?.props?.bars) {
-          const { label, bars } = granchildNode.props
-          allBars.push({ label, bars })
-        }
-      })
-    }
-  })
-
-  if (sortDirection.value !== "none") {
-    allBars = [...allBars].sort((a, b) => {
-      const comparison = a.label.localeCompare(b.label, undefined, {
-        numeric: true,
-        sensitivity: "base"
-      })
-      return sortDirection.value === "asc" ? comparison : -comparison
-    })
-  }
-
-  return allBars
-}
-
-const slotProps = computed(() => {
-  const rows = getChartRows()
-  updateBarPositions()
-  return {
-    rows: rows.map((row) => ({
-      ...row,
-      key: row.label
-    }))
-  }
-})
-
-// Chart Elements Refs
-const ganttChart = ref<HTMLElement | null>(null)
-const chartSize = useElementSize(ganttChart)
-const ganttWrapper = ref<HTMLElement | null>(null)
-const timeaxisComponent = ref<InstanceType<typeof GGanttTimeaxis> | null>(null)
-const ganttContainer = ref<HTMLElement | null>(null)
-
-// Composables
-const { connections, barPositions, getConnectorProps, initializeConnections, updateBarPositions } =
-  useConnections(getChartRows, props)
-
-const { showTooltip, tooltipBar, initTooltip, clearTooltip } = useTooltip()
-
-const rowsContainer = ref<HTMLElement | null>(null)
-const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
-
-const {
-  zoomFactor,
-  maxZoom,
-  ganttPosition,
-  ganttStep,
-  handleStep,
-  handleScroll,
-  handleWheel,
-  handleContentScroll,
-  handleLabelScroll,
-  decreaseZoom,
-  increaseZoom,
-  scrollRowUp,
-  scrollRowDown,
-  isAtTop,
-  isAtBottom
-} = useChartNavigation(
-  {
-    diffDays: diffDays.value,
-    diffHours: diffHours.value,
-    scrollRefs: {
-      rowsContainer,
-      labelColumn
-    }
-  },
-  props.maxRows
-)
-
-const navigationControls = {
-  zoomFactor,
-  ganttPosition,
-  ganttStep,
-  handleStep,
-  handleScroll,
-  handleWheel,
-  handleContentScroll,
-  handleLabelScroll,
-  decreaseZoom,
-  increaseZoom,
-  scrollRowUp,
-  scrollRowDown
-}
-
-const { handleKeyDown } = useKeyboardNavigation(navigationControls, ganttWrapper, ganttContainer)
-
-// Derived State
-const widthNumber = computed(() => zoomFactor.value * 100)
-const customWidth = computed(() => `${widthNumber.value}%`)
-
-const { font, colorScheme } = toRefs(props)
-
-const getColorScheme = (scheme: string | ColorScheme): ColorScheme =>
-  typeof scheme !== "string"
-    ? scheme
-    : ((colorSchemes[scheme as ColorSchemeKey] || colorSchemes.default) as ColorScheme)
-
-const colors = computed(() => getColorScheme(colorScheme.value))
-
-// Time Axis Interaction State
-const isDragging = ref(false)
-const isDraggingTimeaxis = ref(false)
-const lastMouseX = ref(0)
-
-// Time Axis Event Handlers
-const handleTimeaxisMouseDown = (e: MouseEvent) => {
-  isDraggingTimeaxis.value = true
-  lastMouseX.value = e.clientX
-}
-
-const handleTimeaxisMouseMove = (e: MouseEvent) => {
-  if (!isDraggingTimeaxis.value || !ganttWrapper.value) return
-
-  const deltaX = e.clientX - lastMouseX.value
-  lastMouseX.value = e.clientX
-
-  ganttWrapper.value.scrollLeft -= deltaX
-  const maxScroll = ganttWrapper.value.scrollWidth - ganttWrapper.value.clientWidth
-  ganttPosition.value = (ganttWrapper.value.scrollLeft / maxScroll) * 100
-}
-
-const handleTimeaxisMouseUp = () => {
-  isDraggingTimeaxis.value = false
-}
-
-// Bar Event Handling
-const emitBarEvent = (
-  e: MouseEvent,
-  bar: GanttBarObject,
-  datetime?: string | Date,
-  movedBars?: Map<GanttBarObject, { oldStart: string; oldEnd: string }>
-) => {
-  switch (e.type) {
-    case "click":
-      emit("click-bar", { bar, e, datetime })
-      break
-    case "mousedown":
-      emit("mousedown-bar", { bar, e, datetime })
-      break
-    case "mouseup":
-      emit("mouseup-bar", { bar, e, datetime })
-      break
-    case "dblclick":
-      emit("dblclick-bar", { bar, e, datetime })
-      break
-    case "mouseenter":
-      initTooltip(bar)
-      emit("mouseenter-bar", { bar, e })
-      break
-    case "mouseleave":
-      clearTooltip()
-      emit("mouseleave-bar", { bar, e })
-      break
-    case "dragstart":
-      isDragging.value = true
-      emit("dragstart-bar", { bar, e })
-      updateBarPositions()
-      break
-    case "drag":
-      emit("drag-bar", { bar, e })
-      updateBarPositions()
-      break
-    case "dragend":
-      isDragging.value = false
-      emit("dragend-bar", { bar, e, movedBars })
-      updateBarPositions()
-      break
-    case "contextmenu":
-      emit("contextmenu-bar", { bar, e, datetime })
-      break
-  }
-}
-
-// Style Updates
-const updateRangeBackground = () => {
-  const slider = document.querySelector(".g-gantt-scroller") as HTMLInputElement
-  if (slider) {
-    slider.style.setProperty("--value", `${ganttPosition.value}%`)
-  }
-}
-
-// ResizeObserver instance
-let resizeObserver: ResizeObserver
-
-// Lifecycle Hooks
-onMounted(() => {
-  if (ganttWrapper.value) {
-    ganttWrapper.value.addEventListener("wheel", (e) => handleWheel(e, ganttWrapper.value!))
-  }
-
-  window.addEventListener("mousemove", handleTimeaxisMouseMove)
-  window.addEventListener("mouseup", handleTimeaxisMouseUp)
-
-  resizeObserver = new ResizeObserver(updateBarPositions)
-  const container = document.querySelector(".g-gantt-chart")
-  if (container) {
-    resizeObserver.observe(container)
-  }
-
-  window.addEventListener("resize", updateBarPositions)
-  initializeConnections()
-
-  nextTick(() => {
-    updateBarPositions()
-  })
-})
-
-onUnmounted(() => {
-  if (ganttWrapper.value) {
-    ganttWrapper.value.removeEventListener("wheel", (e) => handleWheel(e, ganttWrapper.value!))
-  }
-
-  window.removeEventListener("mousemove", handleTimeaxisMouseMove)
-  window.removeEventListener("mouseup", handleTimeaxisMouseUp)
-
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-  }
-
-  window.removeEventListener("resize", updateBarPositions)
-})
-
-// Watchers
-watch(ganttPosition, updateRangeBackground, { immediate: true })
-
-// Provider Setup
-provide(CHART_ROWS_KEY, getChartRows)
-provide(CONFIG_KEY, {
-  ...toRefs(props),
-  colors,
-  chartSize,
-  widthNumber
-})
-provide(EMIT_BAR_EVENT_KEY, emitBarEvent)
-provide(BOOLEAN_KEY, { ...props })
-</script>
 
 <style>
 .g-gantt-container {

@@ -1,24 +1,3 @@
-<template>
-  <ClientOnly>
-    <div class="demo-container" v-if="isLibraryReady">
-      <g-gantt-chart
-        chart-start="2024-12-10 08:00"
-        chart-end="2024-12-13 23:00"
-        precision="hour"
-        bar-start="start"
-        bar-end="end"
-      >
-        <g-gantt-row
-          v-for="row in rows"
-          :key="row.label"
-          :label="row.label"
-          :bars="row.bars"
-        />
-      </g-gantt-chart>
-    </div>
-  </ClientOnly>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import dayjs from 'dayjs'
@@ -103,6 +82,27 @@ onMounted(() => {
   isLibraryReady.value = true
 })
 </script>
+
+<template>
+  <ClientOnly>
+    <div class="demo-container" v-if="isLibraryReady">
+      <g-gantt-chart
+        chart-start="2024-12-10 08:00"
+        chart-end="2024-12-13 23:00"
+        precision="hour"
+        bar-start="start"
+        bar-end="end"
+      >
+        <g-gantt-row
+          v-for="row in rows"
+          :key="row.label"
+          :label="row.label"
+          :bars="row.bars"
+        />
+      </g-gantt-chart>
+    </div>
+  </ClientOnly>
+</template>
 
 <style scoped>
 .demo-container {

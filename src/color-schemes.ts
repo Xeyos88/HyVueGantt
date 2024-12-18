@@ -38,7 +38,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     hoverHighlight: "rgba(230, 221, 202, 0.5)",
     markerCurrentTime: "#000",
     text: "#542d05",
-    background: "white"
+    background: "white",
+    commands: "white",
+    rangeHighlight: "#000"
   },
 
   crimson: {
@@ -49,9 +51,10 @@ export const colorSchemes: Record<string, ColorScheme> = {
     hoverHighlight: "rgba(196, 141, 141, 0.5)",
     markerCurrentTime: "#000",
     text: "white",
-    background: "white"
+    background: "white",
+    commands: "white",
+    rangeHighlight: "#000"
   },
-
   dark: {
     primary: "#404040",
     secondary: "#303030",
@@ -61,7 +64,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     markerCurrentTime: "#fff",
     text: "white",
     background: "#525252",
-    toast: "#1f1f1f"
+    toast: "#1f1f1f",
+    commands: "#525252",
+    rangeHighlight: "#000"
   },
 
   flare: {
@@ -72,7 +77,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     hoverHighlight: "rgba(196, 141, 141, 0.5)",
     markerCurrentTime: "#000",
     text: "white",
-    background: "white"
+    background: "white",
+    rangeHighlight: "#000"
   },
 
   fuchsia: {
@@ -83,7 +89,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     hoverHighlight: "rgba(196, 141, 141, 0.5)",
     markerCurrentTime: "#000",
     text: "white",
-    background: "white"
+    background: "white",
+    commands: "white",
+    rangeHighlight: "#000"
   },
 
   grove: {
@@ -94,7 +102,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     hoverHighlight: "rgba(160, 219, 171, 0.5)",
     markerCurrentTime: "#000",
     text: "white",
-    background: "white"
+    background: "white",
+    commands: "white",
+    rangeHighlight: "#000"
   },
 
   "material-blue": {
@@ -105,7 +115,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     hoverHighlight: "rgba(110, 165, 196, 0.5)",
     markerCurrentTime: "#000",
     text: "white",
-    background: "white"
+    background: "white",
+    commands: "white",
+    rangeHighlight: "#000"
   },
 
   sky: {
@@ -116,7 +128,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     hoverHighlight: "rgba(193, 202, 214, 0.5)",
     markerCurrentTime: "#000",
     text: "#022c47",
-    background: "white"
+    background: "white",
+    commands: "white",
+    rangeHighlight: "#000"
   },
 
   slumber: {
@@ -128,7 +142,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     markerCurrentTime: "#fff",
     text: "#ffe0b3",
     background: "#38383b",
-    toast: "#1f1f1f"
+    toast: "#1f1f1f",
+    commands: "#38383b",
+    rangeHighlight: "#000"
   },
 
   vue: {
@@ -139,7 +155,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     hoverHighlight: "rgba(160, 219, 171, 0.5)",
     markerCurrentTime: "#000",
     text: "white",
-    background: "white"
+    background: "white",
+    commands: "white",
+    rangeHighlight: "#000"
   }
 }
 
