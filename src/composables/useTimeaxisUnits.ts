@@ -1,15 +1,14 @@
-import { computed } from "vue"
+import { computed, type Ref } from "vue"
 import type { Dayjs, ManipulateType, UnitType } from "dayjs"
 import useDayjsHelper from "./useDayjsHelper"
 import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
 import type { TimeaxisUnit, TimeUnit } from "../types"
 
-// Modifichiamo il tipo per renderlo condizionale
 type TimeAxisUnitGroup = {
   upperUnits: TimeaxisUnit[]
   lowerUnits: TimeaxisUnit[]
-  minutesUnits?: TimeaxisUnit[] // Ora è opzionale
+  minutesUnits?: TimeaxisUnit[]
 }
 
 type ExtendedTimeUnit = TimeUnit | "year" | "isoWeek"
@@ -23,7 +22,7 @@ type PrecisionMapType = {
   [key in TimeUnit]: ExtendedTimeUnit
 }
 
-export default function useTimeaxisUnits() {
+export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
   const { precision, widthNumber } = provideConfig()
   const { enableMinutes } = provideBooleanConfig()
   const { chartStartDayjs, chartEndDayjs } = useDayjsHelper()
@@ -66,13 +65,6 @@ export default function useTimeaxisUnits() {
     return precisionMap[precision.value]
   })
 
-  const minutesStep = computed(() => {
-    if (widthNumber.value <= 200) return ["0", "30"]
-    if (widthNumber.value <= 500) return ["0", "15", "30", "45"]
-    if (widthNumber.value <= 700) return ["0", "10", "20", "30", "40", "50"]
-    return ["0", "5", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"]
-  })
-
   const getDayjsUnit = (unit: ExtendedTimeUnit): DayjsUnitType => {
     const unitMap: Record<ExtendedTimeUnit, DayjsUnitType> = {
       hour: "hour",
@@ -91,6 +83,39 @@ export default function useTimeaxisUnits() {
     return displayFormats[unit as keyof DisplayFormat] || displayFormats.day
   }
 
+  const calculateCellWidth = (percentageWidth: string): number => {
+    if (!timeaxisRef.value) {
+      return 0
+    }
+
+    const containerWidth = timeaxisRef.value.offsetWidth
+    const numericWidth = parseFloat(percentageWidth)
+    const cellWidth = (containerWidth * numericWidth) / 100
+
+    return cellWidth
+  }
+
+  const getMinutesStepFromCellWidth = (cellWidth: number): string[] => {
+    const minCellWidth = 16
+
+    const possibleDivisions = Math.floor(cellWidth / minCellWidth)
+
+    let step: number
+    if (possibleDivisions >= 60) step = 1
+    else if (possibleDivisions >= 12) step = 5
+    else if (possibleDivisions >= 6) step = 10
+    else if (possibleDivisions >= 4) step = 15
+    else if (possibleDivisions >= 2) step = 30
+    else return ["00"]
+
+    const steps: string[] = []
+    for (let i = 0; i < 60; i += step) {
+      steps.push(i.toString().padStart(2, "0"))
+    }
+
+    return steps
+  }
+
   const timeaxisUnits = computed(() => {
     const totalMinutes = chartEndDayjs.value.diff(chartStartDayjs.value, "minutes", true)
 
@@ -99,37 +124,55 @@ export default function useTimeaxisUnits() {
       lowerUnits: []
     }
 
-    let currentUpperUnit = chartStartDayjs.value.startOf(getDayjsUnit(upperPrecision.value))
-    let currentLowerUnit = chartStartDayjs.value.startOf(getDayjsUnit(lowerPrecision.value))
+    let currentUpperUnit = chartStartDayjs.value.clone()
+    let currentLowerUnit = chartStartDayjs.value.clone()
 
-    while (currentLowerUnit.isSameOrBefore(chartEndDayjs.value)) {
-      const endOfCurrentLower = currentLowerUnit.endOf(getDayjsUnit(lowerPrecision.value))
-      const isLastItem = endOfCurrentLower.isAfter(chartEndDayjs.value)
-
-      const width = calculateWidth(
+    let globalMinuteStep: string[] = []
+    if (precision.value === "hour" && enableMinutes) {
+      const sampleWidth = calculateWidth(
         currentLowerUnit,
-        isLastItem ? chartEndDayjs.value : endOfCurrentLower,
+        currentLowerUnit.clone().add(1, "hour"),
         totalMinutes
       )
+      const cellWidth = calculateCellWidth(sampleWidth)
+      globalMinuteStep = widthNumber.value >= 100 ? getMinutesStepFromCellWidth(cellWidth) : ["00"]
+    }
+
+    while (currentLowerUnit.isBefore(chartEndDayjs.value)) {
+      const nextLowerUnit = advanceTimeUnit(currentLowerUnit, lowerPrecision.value)
+      const endOfCurrentLower = nextLowerUnit.isBefore(chartEndDayjs.value)
+        ? nextLowerUnit
+        : chartEndDayjs.value
+
+      const width = calculateWidth(currentLowerUnit, endOfCurrentLower, totalMinutes)
 
       result.lowerUnits.push(
         createTimeaxisUnit(currentLowerUnit, getDisplayFormat(precision.value), width)
       )
 
-      if (precision.value === "hour" && enableMinutes) {
+      /*if (precision.value === "hour" && enableMinutes) {
         if (!result.minutesUnits) {
           result.minutesUnits = []
         }
-        minutesStep.value.forEach((minute) => {
-          result.minutesUnits!.push({
-            label: minute,
-            width: `${parseFloat(width) / minutesStep.value.length}%`,
-            date: new Date()
-          })
-        })
-      }
 
-      currentLowerUnit = advanceTimeUnit(endOfCurrentLower, lowerPrecision.value)
+        const minuteWidth = `${parseFloat(width) / globalMinuteStep.length}%`
+
+        globalMinuteStep.forEach((minute) => {
+          const minuteValue = parseInt(minute)
+          const minuteDate = currentLowerUnit.clone().minute(minuteValue)
+
+          if (minuteDate.isBefore(endOfCurrentLower) && minuteDate.isBefore(chartEndDayjs.value)) {
+            result.minutesUnits!.push({
+              label: minute,
+              value: String(minuteDate),
+              width: minuteWidth,
+              date: minuteDate.toDate()
+            })
+          }
+        })
+      }*/
+
+      currentLowerUnit = nextLowerUnit
     }
 
     while (currentUpperUnit.isSameOrBefore(chartEndDayjs.value)) {
@@ -149,7 +192,7 @@ export default function useTimeaxisUnits() {
       currentUpperUnit = advanceTimeUnit(endOfCurrentUpper, upperPrecision.value)
     }
 
-    return result
+    return { result, globalMinuteStep }
   })
 
   const calculateWidth = (start: Dayjs, end: Dayjs, total: number): string => {

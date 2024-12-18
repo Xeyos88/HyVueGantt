@@ -1,0 +1,85 @@
+/* docs/.vitepress/theme/custom.css */
+:root {
+  --vp-c-brand: #42b883;
+  --vp-c-brand-light: #42d392;
+  --vp-c-brand-dark: #38b2ac;
+}
+
+/* Hero section */
+.VPHero {
+  padding: 4rem 0 !important;
+}
+
+.VPHero .container {
+  max-width: 1200px;
+}
+
+/* Feature section */
+.VPFeatures {
+  padding: 0 16px;
+  background-color: var(--vp-c-bg);
+}
+
+.VPFeatures .container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.VPFeatures .item {
+  background-color: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  padding: 18px;
+  transition: all 0.3s ease;
+}
+
+.VPFeatures .item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.VPFeatures .item .icon {
+  display: inline-block;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background-color: var(--vp-c-bg-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.VPFeatures .item .title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--vp-c-text-1);
+}
+
+.VPFeatures .item .details {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--vp-c-text-2);
+}
+
+/* Footer */
+.VPFooter {
+  padding: 12px !important;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+/* Dark mode specifics */
+.dark .VPFeatures .item {
+  background-color: #1a1a1a;
+  border-color: #2a2a2a;
+}
+
+.dark .VPFeatures .item:hover {
+  border-color: var(--vp-c-brand);
+}
+
+.dark .VPFeatures .item .icon {
+  background-color: #2a2a2a;
+}

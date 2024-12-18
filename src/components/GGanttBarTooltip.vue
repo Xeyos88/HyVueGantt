@@ -1,24 +1,3 @@
-<template>
-  <teleport to="body">
-    <transition name="g-fade" mode="out-in">
-      <div
-        v-if="modelValue"
-        class="g-gantt-tooltip"
-        :style="{
-          top: tooltipTop,
-          left: tooltipLeft,
-          fontFamily: font
-        }"
-      >
-        <div class="g-gantt-tooltip-color-dot" :style="{ background: dotColor }" />
-        <slot :bar="bar" :bar-start="barStartRaw" :bar-end="barEndRaw">
-          {{ tooltipContent }}
-        </slot>
-      </div>
-    </transition>
-  </teleport>
-</template>
-
 <script setup lang="ts">
 import { computed, toRefs, ref, watch, nextTick } from "vue"
 
@@ -85,6 +64,27 @@ const tooltipContent = computed(() => {
   return `${barStartFormatted} \u2013 ${barEndFormatted}`
 })
 </script>
+
+<template>
+  <teleport to="body">
+    <transition name="g-fade" mode="out-in">
+      <div
+        v-if="modelValue"
+        class="g-gantt-tooltip"
+        :style="{
+          top: tooltipTop,
+          left: tooltipLeft,
+          fontFamily: font
+        }"
+      >
+        <div class="g-gantt-tooltip-color-dot" :style="{ background: dotColor }" />
+        <slot :bar="bar" :bar-start="barStartRaw" :bar-end="barEndRaw">
+          {{ tooltipContent }}
+        </slot>
+      </div>
+    </transition>
+  </teleport>
+</template>
 
 <style>
 .g-gantt-tooltip {
