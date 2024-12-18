@@ -1,33 +1,3 @@
-<template>
-  <div
-    class="g-gantt-row"
-    :style="rowStyle"
-    @dragover.prevent="isHovering = true"
-    @dragleave="isHovering = false"
-    @drop="onDrop($event)"
-    @mouseover="isHovering = true"
-    @mouseleave="isHovering = false"
-    role="list"
-  >
-    <div
-      v-if="!isBlank(label) && !labelColumnTitle"
-      class="g-gantt-row-label"
-      :style="{ background: colors.primary, color: colors.text }"
-    >
-      <slot name="label">
-        {{ label }}
-      </slot>
-    </div>
-    <div ref="barContainer" class="g-gantt-row-bars-container" v-bind="$attrs">
-      <transition-group name="bar-transition" tag="div">
-        <g-gantt-bar v-for="bar in bars" :key="bar.ganttBarConfig.id" :bar="bar">
-          <slot name="bar-label" :bar="bar" />
-        </g-gantt-bar>
-      </transition-group>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, type Ref, toRefs, computed, type StyleValue, provide } from "vue"
 
@@ -78,6 +48,36 @@ const isBlank = (str: string) => {
   return !str || /^\s*$/.test(str)
 }
 </script>
+
+<template>
+  <div
+    class="g-gantt-row"
+    :style="rowStyle"
+    @dragover.prevent="isHovering = true"
+    @dragleave="isHovering = false"
+    @drop="onDrop($event)"
+    @mouseover="isHovering = true"
+    @mouseleave="isHovering = false"
+    role="list"
+  >
+    <div
+      v-if="!isBlank(label) && !labelColumnTitle"
+      class="g-gantt-row-label"
+      :style="{ background: colors.primary, color: colors.text }"
+    >
+      <slot name="label">
+        {{ label }}
+      </slot>
+    </div>
+    <div ref="barContainer" class="g-gantt-row-bars-container" v-bind="$attrs">
+      <transition-group name="bar-transition" tag="div">
+        <g-gantt-bar v-for="bar in bars" :key="bar.ganttBarConfig.id" :bar="bar">
+          <slot name="bar-label" :bar="bar" />
+        </g-gantt-bar>
+      </transition-group>
+    </div>
+  </div>
+</template>
 
 <style>
 .g-gantt-row {

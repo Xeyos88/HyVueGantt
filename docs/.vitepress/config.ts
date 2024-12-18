@@ -1,6 +1,13 @@
 import { defineConfig } from "vitepress"
 
 export default defineConfig({
+  vue: {
+    template: {
+      compilerOptions: {
+        isCustomElement: (tag) => tag.includes('hy-vue-')
+      }
+    }
+  },
   lang: 'en-US',
   title: "Hyper Vue Gantt",
   description: "Documentation for the Huper Vue Gantt Chart Library",
@@ -14,10 +21,7 @@ export default defineConfig({
     },
 
     nav: [
-      { text: "Guide", link: "/guide/" },
-      { text: "Components", link: "/components/" },
-      { text: "Examples", link: "/examples/" },
-      { text: "API", link: "/api/" },
+      { text: "Home", link: "/" },
       {
         text: "Links",
         items: [
@@ -28,11 +32,11 @@ export default defineConfig({
     ],
 
     sidebar: {
-      "/guide/": [
+      "/": [
         {
           text: "Getting Started",
           items: [
-            { text: "Introduction", link: "/guide/" },
+            { text: "Introduction", link: "/guide/introduction" },
             { text: "Installation", link: "/guide/installation" },
             { text: "Quick Start", link: "/guide/quick-start" }
           ]
@@ -45,30 +49,14 @@ export default defineConfig({
             { text: "Connections", link: "/guide/connections" },
             { text: "Styling", link: "/guide/styling" }
           ]
-        }
-      ],
-      "/components/": [
+        },
         {
           text: "Components",
           items: [
             { text: "GGanttChart", link: "/components/g-gantt-chart" },
             { text: "GGanttRow", link: "/components/g-gantt-row" }
           ]
-        }
-      ],
-      "/examples/": [
-        {
-          text: "Examples",
-          items: [
-            { text: "Basic Usage", link: "/examples/basic" },
-            { text: "Custom Styling", link: "/examples/styling" },
-            { text: "Bar Connections", link: "/examples/connections" },
-            { text: "Time Management", link: "/examples/time" },
-            { text: "Advanced Features", link: "/examples/advanced" }
-          ]
-        }
-      ],
-      "/api/": [
+        },
         {
           text: "API Reference",
           items: [
@@ -77,8 +65,20 @@ export default defineConfig({
             { text: "Types", link: "/api/types" },
             { text: "Color Schemes", link: "/api/color-schemes" }
           ]
+        },
+        {
+          text: "Examples",
+          items: [
+            { text: "Basic Usage", link: "/examples/basic" },
+            { text: "Custom Styling", link: "/examples/styling" },
+            { text: "Bar Connections", link: "/examples/connections" },
+            { text: "Time Management", link: "/examples/time" },
+            { text: "Advanced Features", link: "/examples/advanced" },
+            { text: "Live Demo", link: "/examples/live" }
+
+          ]
         }
-      ]
+      ],
     },
 
     socialLinks: [{ icon: "github", link: "https://github.com/Xeyos88/HyVueGantt" }],

@@ -1,24 +1,3 @@
-<template>
-  <div
-    class="g-grid-current-time"
-    :style="{
-      left: `${xDist}px`
-    }"
-  >
-    <div
-      class="g-grid-current-time-marker"
-      :style="{
-        border: `1px dashed ${colors.markerCurrentTime}`
-      }"
-    />
-    <span class="g-grid-current-time-text" :style="{ color: colors.markerCurrentTime }">
-      <slot name="current-time-label">
-        {{ currentTimeLabel }}
-      </slot>
-    </span>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref } from "vue"
 import useTimePositionMapping from "../composables/useTimePositionMapping"
@@ -39,6 +18,27 @@ const loopTime = () => {
 }
 useIntervalFn(loopTime, 1000)
 </script>
+
+<template>
+  <div
+    class="g-grid-current-time"
+    :style="{
+      left: `${xDist}px`
+    }"
+  >
+    <div
+      class="g-grid-current-time-marker"
+      :style="{
+        border: `1px dashed ${colors.markerCurrentTime}`
+      }"
+    />
+    <span class="g-grid-current-time-text" :style="{ color: colors.markerCurrentTime }">
+      <slot name="current-time-label">
+        {{ currentTimeLabel }}
+      </slot>
+    </span>
+  </div>
+</template>
 
 <style>
 .g-grid-current-time {

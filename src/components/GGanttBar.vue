@@ -1,45 +1,3 @@
-<template>
-  <div
-    :id="barConfig.id"
-    :class="['g-gantt-bar', barConfig.class || '']"
-    :style="{
-      ...barConfig.style,
-      position: 'absolute',
-      top: `${rowHeight * 0.1}px`,
-      left: `${xStart}px`,
-      width: `${xEnd - xStart}px`,
-      height: `${rowHeight * 0.8}px`,
-      zIndex: isDragging ? 3 : 2,
-      cursor: bar.ganttBarConfig.immobile ? '' : 'grab'
-    }"
-    @mousedown="onMouseEvent"
-    @click="onMouseEvent"
-    @dblclick="onMouseEvent"
-    @mouseenter="onMouseEvent"
-    @mouseleave="onMouseEvent"
-    @contextmenu="onMouseEvent"
-    @keydown="onBarKeyDown"
-    role="listitem"
-    :aria-label="`Activity ${barConfig.label}`"
-    :aria-grabbed="isDragging"
-    tabindex="0"
-    :aria-describedby="`tooltip-${barConfig.id}`"
-  >
-    <div class="g-gantt-bar-label">
-      <slot :bar="bar">
-        <div>
-          {{ barConfig.label || "" }}
-        </div>
-        <div v-if="barConfig.html" v-html="barConfig.html" />
-      </slot>
-    </div>
-    <template v-if="barConfig.hasHandles">
-      <div class="g-gantt-bar-handle-left" />
-      <div class="g-gantt-bar-handle-right" />
-    </template>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, ref, toRefs, watch, onMounted, inject } from "vue"
 
@@ -137,6 +95,48 @@ onMounted(() => {
   )
 })
 </script>
+
+<template>
+  <div
+    :id="barConfig.id"
+    :class="['g-gantt-bar', barConfig.class || '']"
+    :style="{
+      ...barConfig.style,
+      position: 'absolute',
+      top: `${rowHeight * 0.1}px`,
+      left: `${xStart}px`,
+      width: `${xEnd - xStart}px`,
+      height: `${rowHeight * 0.8}px`,
+      zIndex: isDragging ? 3 : 2,
+      cursor: bar.ganttBarConfig.immobile ? '' : 'grab'
+    }"
+    @mousedown="onMouseEvent"
+    @click="onMouseEvent"
+    @dblclick="onMouseEvent"
+    @mouseenter="onMouseEvent"
+    @mouseleave="onMouseEvent"
+    @contextmenu="onMouseEvent"
+    @keydown="onBarKeyDown"
+    role="listitem"
+    :aria-label="`Activity ${barConfig.label}`"
+    :aria-grabbed="isDragging"
+    tabindex="0"
+    :aria-describedby="`tooltip-${barConfig.id}`"
+  >
+    <div class="g-gantt-bar-label">
+      <slot :bar="bar">
+        <div>
+          {{ barConfig.label || "" }}
+        </div>
+        <div v-if="barConfig.html" v-html="barConfig.html" />
+      </slot>
+    </div>
+    <template v-if="barConfig.hasHandles">
+      <div class="g-gantt-bar-handle-left" />
+      <div class="g-gantt-bar-handle-right" />
+    </template>
+  </div>
+</template>
 
 <style>
 .g-gantt-bar {
