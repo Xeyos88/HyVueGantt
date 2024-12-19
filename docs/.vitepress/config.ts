@@ -1,17 +1,11 @@
 import { defineConfig } from "vitepress"
 
 export default defineConfig({
-  vue: {
-    template: {
-      compilerOptions: {
-        isCustomElement: (tag) => tag.includes('hy-vue-')
-      }
-    }
-  },
+
   lang: 'en-US',
   title: "Hyper Vue Gantt",
   description: "Documentation for the Huper Vue Gantt Chart Library",
-  base: '/hy-vue-gantt/',
+  base: '/HyVueGantt/',
   head: [['link', { rel: 'icon', href: '/favicon.ico' }]],
 
   themeConfig: {
