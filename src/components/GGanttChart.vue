@@ -73,7 +73,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   defaultConnectionAnimationSpeed: "normal",
   maxRows: 0,
   initialSortDirection: "none",
-  initialRows: () => []
+  initialRows: () => [],
+  multiColumnLabel: () => ["Label"]
 })
 
 const id = ref(crypto.randomUUID())
@@ -444,8 +445,8 @@ provide("id", id)
           <template #label-column-title>
             <slot name="label-column-title" />
           </template>
-          <template #label-column-row="{ label }">
-            <slot name="label-column-row" :label="label" />
+          <template #label-column-row="slotProps">
+            <slot name="label-column-row" v-bind="slotProps" />
           </template>
         </g-gantt-label-column>
 

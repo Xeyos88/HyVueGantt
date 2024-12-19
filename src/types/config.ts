@@ -4,6 +4,7 @@ import type {
   ConnectionPattern,
   ConnectionSpeed,
   ConnectionType,
+  LabelColumnField,
   TimeUnit
 } from "./chart"
 import type { ColorScheme } from "./style"
@@ -30,6 +31,7 @@ export interface GGanttChartProps {
   font?: string
   labelColumnTitle?: string
   labelColumnWidth?: string
+  multiColumnLabel?: LabelColumnField[]
   commands?: boolean
   enableMinutes?: boolean
   enableConnections?: boolean
