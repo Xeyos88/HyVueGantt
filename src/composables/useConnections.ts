@@ -67,6 +67,8 @@ export function useConnections(
     const parentElement = document.getElementById(id.value)
     const rowsContainer = parentElement!.querySelector(".g-gantt-rows-container")
     if (!rowsContainer) return
+    const scrollTop = rowsContainer.scrollTop
+    const scrollLeft = rowsContainer.scrollLeft
 
     const containerRect = rowsContainer.getBoundingClientRect()
     const bars = parentElement!.querySelectorAll(".g-gantt-bar")
@@ -80,8 +82,8 @@ export function useConnections(
       if (barId) {
         const position = {
           id: barId,
-          x: rect.left - containerRect.left,
-          y: rect.top - containerRect.top,
+          x: rect.left - containerRect.left +scrollLeft,
+          y: rect.top - containerRect.top +scrollTop,
           width: rect.width,
           height: rect.height
         }

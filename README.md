@@ -2,6 +2,12 @@
 
 A powerful Gantt chart component for Vue 3, evolved from vue-ganttastic. Provides flexible and performant timeline visualization for modern applications.
 
+<img src="https://github.com/Xeyos88/HyVueGantt/blob/main/docs/.vitepress/public/logo.png?raw=true" alt="logo HyVueGantt" witdh="300" height="300">
+
+## Guide and Docs
+
+For further guides and references, check out the [documentation](https://github.com/Xeyos88/HyVueGantt).  
+
 ## 🚀 Installation
 
 ```bash
