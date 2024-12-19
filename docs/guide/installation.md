@@ -36,8 +36,6 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import hyvuegantt from 'hy-vue-gantt'
 
-// Import the default styles
-import 'hy-vue-gantt/dist/style.css'
 
 const app = createApp(App)
 app.use(hyvuegantt)
