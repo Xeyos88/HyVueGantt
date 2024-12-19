@@ -29,8 +29,6 @@ Here's a minimal example of using the GGanttChart component:
 
 ### Props
 
-### Props
-
 | Prop Name | Type | Default | Description |
 |-----------|------|---------|-------------|
 | chartStart | `string \| Date` | Required | The start date of the chart's visible range |

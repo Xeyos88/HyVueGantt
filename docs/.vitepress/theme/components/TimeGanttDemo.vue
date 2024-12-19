@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import dayjs from 'dayjs'
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
 
-dayjs.extend(isSameOrBefore)
 
 const isLibraryReady = ref(false)
 const currentPrecision = ref('hour')

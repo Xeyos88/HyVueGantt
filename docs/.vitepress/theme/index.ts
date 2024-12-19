@@ -1,10 +1,17 @@
 import DefaultTheme from 'vitepress/theme'
 import { defineClientComponent } from 'vitepress'
 import './custom.css'
-import dayjs from 'dayjs'
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
+import dayjs from "dayjs"
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore.js"
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter.js"
+import isBetween from "dayjs/plugin/isBetween.js"
 
-dayjs.extend(isSameOrBefore)
+
+export function extendDayjs() {
+  dayjs.extend(isSameOrBefore)
+  dayjs.extend(isSameOrAfter)
+  dayjs.extend(isBetween)
+}
 
 const GanttDemo = defineClientComponent(() => {
   return import('./components/BasicGanttDemo.vue')
@@ -30,10 +37,11 @@ const OtherGanttDemo = defineClientComponent(() => {
 export default {
   extends: DefaultTheme,
   enhanceApp({ app }) {
+    extendDayjs()
     app.component('BasicGanttDemo', GanttDemo)
     app.component('ConnectionsGanttDemo', ConnectionsGanttDemo)
     app.component('TimeGanttDemo', TimeGanttDemo)
     app.component('AdvancedGanttDemo',AdvancedGanttDemo)
-    app.component('OtherGanttDemo',OtherGanttDemo)
+    app.component('OtherGanttDemo', OtherGanttDemo)
   }
 }

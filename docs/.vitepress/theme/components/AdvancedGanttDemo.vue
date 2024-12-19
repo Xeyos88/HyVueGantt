@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import dayjs from 'dayjs'
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
-
-dayjs.extend(isSameOrBefore)
 
 const isLibraryReady = ref(false)
 const currentScheme = ref('default')
@@ -70,8 +66,8 @@ onMounted(() => {
           </select>
         </div>
       <g-gantt-chart
-        chart-start="2024-12-10"
-        chart-end="2024-12-20"
+        chart-start="2024-12-11"
+        chart-end="2024-12-17"
         precision="day"
         bar-start="start"
         bar-end="end"
