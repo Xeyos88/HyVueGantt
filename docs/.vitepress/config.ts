@@ -6,11 +6,11 @@ export default defineConfig({
   title: "Hyper Vue Gantt",
   description: "Documentation for the Huper Vue Gantt Chart Library",
   base: '/HyVueGantt/',
-  head: [['link', { rel: 'icon', href: '/favicon.ico' }]],
+  head: [['link', { rel: 'icon', href: 'https://raw.githubusercontent.com/Xeyos88/HyVueGantt/refs/heads/main/public/favicon.ico' }]],
 
   themeConfig: {
     logo: {
-      src: '/logo.png',
+      src: 'https://github.com/Xeyos88/HyVueGantt/blob/main/docs/.vitepress/public/logo.png?raw=true',
       alt: 'Hyper Vue Gantt Logo'
     },
 
