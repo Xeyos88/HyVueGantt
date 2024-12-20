@@ -30,7 +30,7 @@ export interface GGanttChartProps {
   highlightedUnits?: number[]
   font?: string
   labelColumnTitle?: string
-  labelColumnWidth?: string
+  labelColumnWidth?: number
   multiColumnLabel?: LabelColumnField[]
   commands?: boolean
   enableMinutes?: boolean

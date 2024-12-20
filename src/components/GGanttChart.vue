@@ -32,6 +32,7 @@ import GGanttTimeaxis from "./GGanttTimeaxis.vue"
 import GGanttBarTooltip from "./GGanttBarTooltip.vue"
 import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
+import GGanttRow from "./GGanttRow.vue"
 
 // Internal Imports - Composables
 import { useConnections } from "../composables/useConnections"
@@ -62,7 +63,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   highlightedUnits: () => [],
   font: "inherit",
   labelColumnTitle: "",
-  labelColumnWidth: "150px",
+  labelColumnWidth: 150,
   commands: true,
   enableMinutes: false,
   enableConnections: true,
@@ -74,7 +75,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   maxRows: 0,
   initialSortDirection: "none",
   initialRows: () => [],
-  multiColumnLabel: () => ["Label"]
+  multiColumnLabel: () =>  []
 })
 
 const id = ref(crypto.randomUUID())
@@ -142,6 +143,10 @@ const handleSort = () => {
       break
   }
   emit("sort", { direction: sortDirection.value })
+  nextTick(() => {
+    updateBarPositions()
+  })
+
 }
 
 // Chart Layout Management
@@ -195,7 +200,7 @@ const getChartRows = () => {
   return allBars
 }
 
-const slotProps = computed(() => {
+/*const slotProps = computed(() => {
   const rows = getChartRows()
   updateBarPositions()
   return {
@@ -204,7 +209,7 @@ const slotProps = computed(() => {
       key: row.label
     }))
   }
-})
+})*/
 
 // Chart Elements Refs
 const ganttChart = ref<HTMLElement | null>(null)
@@ -436,7 +441,7 @@ provide("id", id)
         <!-- Label Column -->
         <g-gantt-label-column
           v-if="labelColumnTitle"
-          :style="{ width: labelColumnWidth }"
+          :style="{ width: `${labelColumnWidth * multiColumnLabel.length}px` }"
           ref="labelColumn"
           @scroll="handleLabelScroll"
           :sort-direction="sortDirection"
@@ -498,9 +503,16 @@ provide("id", id)
               ref="rowsContainer"
               @scroll="handleContentScroll"
             >
-              <template v-if="$slots.default">
-                <component :is="$slots.default" v-bind="slotProps" />
-              </template>
+               <g-gantt-row
+                  v-for="row in getChartRows()"
+                  :key="row.id || row.label"
+                  :label="row.label"
+                  :bars="row.bars"
+                >
+                  <template #bar-label="slotProps">
+                    <slot name="bar-label" v-bind="slotProps" />
+                  </template>
+                </g-gantt-row>
               <!-- Connections -->
               <template v-if="enableConnections">
                 <template v-for="conn in connections" :key="`${conn.sourceId}-${conn.targetId}`">

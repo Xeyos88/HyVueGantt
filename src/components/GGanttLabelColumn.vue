@@ -24,7 +24,6 @@ const {
   barEnd
 } = provideConfig()
 const { toDayjs, format } = useDayjsHelper()
-console.log(multiColumnLabel.value)
 
 const getChartRows = provideGetChartRows()
 const allRows = computed(() => getChartRows())
@@ -68,7 +67,7 @@ const getRowValue = (row: ChartRow, column: LabelColumnField, index: number) => 
         const currentStart = bar[barStart.value]
         return !min || toDayjs(currentStart).isBefore(toDayjs(min)) ? currentStart : min
       }, "")
-      return format(minDate)
+      return format(minDate, 'hh:mm DD/MM/YYYY')
     }
     case "EndDate": {
       if (!row.bars.length) return "-"
@@ -76,7 +75,7 @@ const getRowValue = (row: ChartRow, column: LabelColumnField, index: number) => 
         const currentEnd = bar[barEnd.value]
         return !max || toDayjs(currentEnd).isAfter(toDayjs(max)) ? currentEnd : max
       }, "")
-      return format(maxDate)
+      return format(maxDate, 'hh:mm DD/MM/YYYY')
     }
     case "Duration": {
       if (!row.bars.length) return "-"
