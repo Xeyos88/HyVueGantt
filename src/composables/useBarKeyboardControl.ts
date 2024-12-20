@@ -2,7 +2,8 @@ import type { GanttBarObject } from "../types"
 import useDayjsHelper from "./useDayjsHelper"
 import type { GGanttChartConfig } from "../types/config"
 import { useBarMovement } from "./useBarMovement"
-import provideGetChartRows from "../provider/provideGetChartRows"
+import { inject } from "vue"
+import type { UseRowsReturn } from "./useRows"
 
 export function useBarKeyboardControl(
   bar: GanttBarObject,
@@ -10,9 +11,10 @@ export function useBarKeyboardControl(
   emitBarEvent: (e: MouseEvent, bar: GanttBarObject, datetime?: string | Date) => void
 ) {
   const dayjs = useDayjsHelper(config)
-  const getChartRows = provideGetChartRows()
   const { barStart, barEnd, dateFormat, precision } = config
-  const movement = useBarMovement(config, getChartRows, dayjs)
+  const rowManager = inject<UseRowsReturn>("useRows")!
+
+  const movement = useBarMovement(config, rowManager, dayjs)
 
   const TIME_STEP = {
     hour: 5,

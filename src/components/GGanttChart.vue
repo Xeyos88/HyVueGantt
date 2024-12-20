@@ -19,6 +19,7 @@ import {
   provide,
   ref,
   toRefs,
+  toRef,
   useSlots,
   watch
 } from "vue"
@@ -39,12 +40,13 @@ import { useConnections } from "../composables/useConnections"
 import { useTooltip } from "../composables/useTooltip"
 import { useChartNavigation } from "../composables/useChartNavigation"
 import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
+import { useRows } from "../composables/useRows"
 
 // Types and Constants
 import { colorSchemes, type ColorScheme, type ColorSchemeKey } from "../color-schemes"
 import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
-import { BOOLEAN_KEY, CHART_ROWS_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols"
-import type { GanttBarObject, GGanttChartProps, ChartRow, SortDirection } from "../types"
+import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols"
+import type { GanttBarObject, GGanttChartProps, SortDirection } from "../types"
 import type { CSSProperties } from "vue"
 
 // Props & Emits Definition
@@ -75,10 +77,16 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   maxRows: 0,
   initialSortDirection: "none",
   initialRows: () => [],
-  multiColumnLabel: () =>  []
+  multiColumnLabel: () => []
 })
 
 const id = ref(crypto.randomUUID())
+const slots = useSlots()
+
+const rowManager = useRows(slots, props.initialRows ? toRef(props, "initialRows") : undefined)
+const rows = computed(() => rowManager.rows.value)
+
+provide("useRows", rowManager)
 
 // Based on props
 const rowsContainerStyle = computed<CSSProperties>(() => {
@@ -128,88 +136,6 @@ const chartEndDayjs = computed(() => dayjs(props.chartEnd, props.dateFormat as s
 
 const diffDays = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "day") + 1)
 const diffHours = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "hour"))
-const sortDirection = ref<SortDirection>(props.initialSortDirection)
-
-const handleSort = () => {
-  switch (sortDirection.value) {
-    case "none":
-      sortDirection.value = "asc"
-      break
-    case "asc":
-      sortDirection.value = "desc"
-      break
-    case "desc":
-      sortDirection.value = "none"
-      break
-  }
-  emit("sort", { direction: sortDirection.value })
-  nextTick(() => {
-    updateBarPositions()
-  })
-
-}
-
-// Chart Layout Management
-const slots = useSlots()
-const getChartRows = () => {
-  if (props.initialRows?.length) {
-    let rows = [...props.initialRows]
-
-    if (sortDirection.value !== "none") {
-      rows = rows.sort((a, b) => {
-        const comparison = a.label.localeCompare(b.label, undefined, {
-          numeric: true,
-          sensitivity: "base"
-        })
-        return sortDirection.value === "asc" ? comparison : -comparison
-      })
-    }
-
-    return rows
-  }
-  const defaultSlot = slots.default?.()
-  let allBars: ChartRow[] = []
-
-  if (!defaultSlot) return allBars
-
-  defaultSlot.forEach((child) => {
-    if (child.props?.bars) {
-      const { label, bars } = child.props
-      allBars.push({ label, bars })
-    } else if (Array.isArray(child.children)) {
-      child.children.forEach((grandchild) => {
-        const granchildNode = grandchild as { props?: ChartRow }
-        if (granchildNode?.props?.bars) {
-          const { label, bars } = granchildNode.props
-          allBars.push({ label, bars })
-        }
-      })
-    }
-  })
-
-  if (sortDirection.value !== "none") {
-    allBars = [...allBars].sort((a, b) => {
-      const comparison = a.label.localeCompare(b.label, undefined, {
-        numeric: true,
-        sensitivity: "base"
-      })
-      return sortDirection.value === "asc" ? comparison : -comparison
-    })
-  }
-
-  return allBars
-}
-
-/*const slotProps = computed(() => {
-  const rows = getChartRows()
-  updateBarPositions()
-  return {
-    rows: rows.map((row) => ({
-      ...row,
-      key: row.label
-    }))
-  }
-})*/
 
 // Chart Elements Refs
 const ganttChart = ref<HTMLElement | null>(null)
@@ -220,7 +146,7 @@ const ganttContainer = ref<HTMLElement | null>(null)
 
 // Composables
 const { connections, barPositions, getConnectorProps, initializeConnections, updateBarPositions } =
-  useConnections(getChartRows, props, id)
+  useConnections(rowManager, props, id)
 
 const { showTooltip, tooltipBar, initTooltip, clearTooltip } = useTooltip()
 
@@ -373,6 +299,8 @@ let resizeObserver: ResizeObserver
 
 // Lifecycle Hooks
 onMounted(() => {
+  const cleanup = rowManager.onSortChange(updateBarPositions)
+  onUnmounted(cleanup)
   if (ganttWrapper.value) {
     ganttWrapper.value.addEventListener("wheel", (e) => handleWheel(e, ganttWrapper.value!))
   }
@@ -413,7 +341,6 @@ onUnmounted(() => {
 })
 
 // Provider Setup
-provide(CHART_ROWS_KEY, getChartRows)
 provide(CONFIG_KEY, {
   ...toRefs(props),
   colors,
@@ -441,11 +368,11 @@ provide("id", id)
         <!-- Label Column -->
         <g-gantt-label-column
           v-if="labelColumnTitle"
-          :style="{ width: `${labelColumnWidth * multiColumnLabel.length}px` }"
+          :style="{
+            width: `${labelColumnWidth * (multiColumnLabel.length === 0 ? 1 : multiColumnLabel.length)}px`
+          }"
           ref="labelColumn"
           @scroll="handleLabelScroll"
-          :sort-direction="sortDirection"
-          @sort="handleSort"
         >
           <template #label-column-title>
             <slot name="label-column-title" />
@@ -503,16 +430,16 @@ provide("id", id)
               ref="rowsContainer"
               @scroll="handleContentScroll"
             >
-               <g-gantt-row
-                  v-for="row in getChartRows()"
-                  :key="row.id || row.label"
-                  :label="row.label"
-                  :bars="row.bars"
-                >
-                  <template #bar-label="slotProps">
-                    <slot name="bar-label" v-bind="slotProps" />
-                  </template>
-                </g-gantt-row>
+              <g-gantt-row
+                v-for="row in rows"
+                :key="row.id || row.label"
+                :label="row.label"
+                :bars="row.bars"
+              >
+                <template #bar-label="slotProps">
+                  <slot name="bar-label" v-bind="slotProps" />
+                </template>
+              </g-gantt-row>
               <!-- Connections -->
               <template v-if="enableConnections">
                 <template v-for="conn in connections" :key="`${conn.sourceId}-${conn.targetId}`">
@@ -535,7 +462,7 @@ provide("id", id)
         aria-label="Gantt Commands"
       >
         <!-- Navigation Controls -->
-        <div class="g-gantt-command-vertical" v-if="maxRows > 0 && getChartRows().length > maxRows">
+        <div class="g-gantt-command-vertical" v-if="maxRows > 0 && rows.length > maxRows">
           <button @click="scrollRowUp" aria-label="Scroll row up" :disabled="isAtTop">
             <FontAwesomeIcon :icon="faAngleUp" class="command-icon" />
           </button>

@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import provideGetChartRows from "../provider/provideGetChartRows"
 import provideConfig from "../provider/provideConfig"
-import { ref, computed } from "vue"
+import { ref, computed, inject } from "vue"
 import type { CSSProperties } from "vue"
-import type { SortDirection, LabelColumnField, ChartRow, GanttBarObject } from "../types"
+import type { LabelColumnField, ChartRow, GanttBarObject } from "../types"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import { faArrowDownAZ, faArrowDownZA } from "@fortawesome/free-solid-svg-icons"
 import useDayjsHelper from "../composables/useDayjsHelper"
+import type { UseRowsReturn } from "../composables/useRows"
 
-defineProps<{
-  sortDirection?: SortDirection
-}>()
+const rowManager = inject<UseRowsReturn>("useRows")
+if (!rowManager) {
+  throw new Error("useRows non fornito")
+}
+
+const { rows, sortDirection, toggleSort } = rowManager
 
 const {
   font,
@@ -23,11 +26,8 @@ const {
   barStart,
   barEnd
 } = provideConfig()
-const { toDayjs, format } = useDayjsHelper()
 
-const getChartRows = provideGetChartRows()
-const allRows = computed(() => getChartRows())
-const labelContainer = ref<HTMLElement | null>(null)
+const { toDayjs, format } = useDayjsHelper()
 
 const columns = computed<LabelColumnField[]>(() => {
   if (!multiColumnLabel.value?.length || !labelColumnTitle.value) {
@@ -67,7 +67,7 @@ const getRowValue = (row: ChartRow, column: LabelColumnField, index: number) => 
         const currentStart = bar[barStart.value]
         return !min || toDayjs(currentStart).isBefore(toDayjs(min)) ? currentStart : min
       }, "")
-      return format(minDate, 'hh:mm DD/MM/YYYY')
+      return format(minDate, "hh:mm DD/MM/YYYY")
     }
     case "EndDate": {
       if (!row.bars.length) return "-"
@@ -75,7 +75,7 @@ const getRowValue = (row: ChartRow, column: LabelColumnField, index: number) => 
         const currentEnd = bar[barEnd.value]
         return !max || toDayjs(currentEnd).isAfter(toDayjs(max)) ? currentEnd : max
       }, "")
-      return format(maxDate, 'hh:mm DD/MM/YYYY')
+      return format(maxDate, "hh:mm DD/MM/YYYY")
     }
     case "Duration": {
       if (!row.bars.length) return "-"
@@ -94,9 +94,11 @@ const getRowValue = (row: ChartRow, column: LabelColumnField, index: number) => 
   }
 }
 
+const labelContainer = ref<HTMLElement | null>(null)
+
 const labelContainerStyle = computed<CSSProperties>(() => {
   if (maxRows.value === 0) return {}
-  const minRows = Math.min(maxRows.value, allRows.value.length)
+  const minRows = Math.min(maxRows.value, rows.value.length)
 
   return {
     height: `${minRows * rowHeight.value}px`,
@@ -106,16 +108,11 @@ const labelContainerStyle = computed<CSSProperties>(() => {
 
 const emit = defineEmits<{
   (e: "scroll", value: number): void
-  (e: "sort"): void
 }>()
 
 const handleLabelScroll = (e: Event) => {
   const target = e.target as HTMLElement
   emit("scroll", target.scrollTop)
-}
-
-const handleSort = () => {
-  emit("sort")
 }
 
 defineExpose({
@@ -135,7 +132,7 @@ defineExpose({
           v-for="column in columns"
           :key="column"
           class="g-label-column-header-cell"
-          @click="column === 'Label' ? handleSort() : undefined"
+          @click="column === 'Label' ? toggleSort() : undefined"
           :class="{ sortable: column === 'Label' }"
           role="columnheader"
         >
@@ -156,7 +153,7 @@ defineExpose({
       @scroll="handleLabelScroll"
     >
       <div
-        v-for="(row, index) in allRows"
+        v-for="(row, index) in rows"
         :key="`${row.id || row.label}_${index}`"
         class="g-label-column-row"
         :style="{
