@@ -78,7 +78,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   initialSortDirection: "none",
   initialRows: () => [],
   multiColumnLabel: () => [],
-  sortable: true
+  sortable: true,
+  labelResizable: true
 })
 
 const id = ref(crypto.randomUUID())
@@ -374,14 +375,7 @@ provide("id", id)
       <!-- Chart Layout Section -->
       <div :class="[{ 'labels-in-column': !!labelColumnTitle }]" aria-controls="gantt-controls">
         <!-- Label Column -->
-        <g-gantt-label-column
-          v-if="labelColumnTitle"
-          :style="{
-            width: `${labelColumnWidth * (multiColumnLabel.length === 0 ? 1 : multiColumnLabel.length)}px`
-          }"
-          ref="labelColumn"
-          @scroll="handleLabelScroll"
-        >
+        <g-gantt-label-column v-if="labelColumnTitle" ref="labelColumn" @scroll="handleLabelScroll">
           <template #label-column-title>
             <slot name="label-column-title" />
           </template>

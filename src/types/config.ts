@@ -44,6 +44,7 @@ export interface GGanttChartProps {
   initialSortDirection?: SortDirection
   initialRows?: ChartRow[]
   sortable?: boolean
+  labelResizable?: boolean
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
@@ -59,4 +60,5 @@ export type GGanttBooleanConfig = {
   commands?: boolean
   enableMinutes?: boolean
   sortable?: boolean
+  labelResizable?: boolean
 }

@@ -65,7 +65,6 @@ const rows = ref([
 
 <template>
   <div class="demo-container">
-    <h3>Multi-Column Demo</h3>
     <g-gantt-chart
       :chart-start="chartStart"
       :chart-end="chartEnd"
@@ -77,7 +76,7 @@ const rows = ref([
       label-column-title="Project Details"
       :multi-column-label="multiColumnLabel"
       sortable
-      color-scheme="vue"
+      color-scheme="slumber"
     >
       <g-gantt-row
         v-for="row in rows"

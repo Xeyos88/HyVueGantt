@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
-import { ref, computed, inject } from "vue"
+import { ref, computed, inject, reactive, onMounted } from "vue"
 import type { CSSProperties } from "vue"
 import type { LabelColumnField, ChartRow, GanttBarObject } from "../types"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
@@ -15,7 +15,7 @@ if (!rowManager) {
 }
 
 const { rows, sortState, toggleSort } = rowManager
-const { sortable } = provideBooleanConfig()
+const { sortable, labelResizable } = provideBooleanConfig()
 const {
   font,
   colors,
@@ -32,11 +32,65 @@ const {
 
 const { toDayjs, format } = useDayjsHelper()
 
+const columnWidths = reactive<Map<string, number>>(new Map())
+const isDragging = ref(false)
+const dragStartX = ref(0)
+const draggedColumn = ref<string | null>(null)
+
+const initializeColumnWidths = () => {
+  columns.value.forEach((column) => {
+    if (!columnWidths.has(column)) {
+      columnWidths.set(column, labelColumnWidth.value)
+    }
+  })
+}
+
 const columns = computed<LabelColumnField[]>(() => {
   if (!multiColumnLabel.value?.length || !labelColumnTitle.value) {
     return ["Label"]
   }
   return multiColumnLabel.value
+})
+
+const totalWidth = computed(() => {
+  let total = 0
+  columnWidths.forEach((width) => (total += width))
+  return total
+})
+
+const handleDragStart = (e: MouseEvent, column: string) => {
+  isDragging.value = true
+  dragStartX.value = e.clientX
+  draggedColumn.value = column
+  document.addEventListener("mousemove", handleDrag)
+  document.addEventListener("mouseup", handleDragEnd)
+}
+
+const handleDrag = (e: MouseEvent) => {
+  if (!isDragging.value || !draggedColumn.value) return
+
+  const deltaX = e.clientX - dragStartX.value
+  const currentWidth = columnWidths.get(draggedColumn.value) || labelColumnWidth.value
+  const newWidth = Math.max(50, currentWidth + deltaX)
+
+  columnWidths.set(draggedColumn.value, newWidth)
+  dragStartX.value = e.clientX
+}
+
+const handleDragEnd = () => {
+  isDragging.value = false
+  draggedColumn.value = null
+  document.removeEventListener("mousemove", handleDrag)
+  document.removeEventListener("mouseup", handleDragEnd)
+}
+
+const getColumnStyle = (column: string): CSSProperties => ({
+  width: `${columnWidths.get(column) || labelColumnWidth.value}px`,
+  minWidth: `${columnWidths.get(column) || labelColumnWidth.value}px`,
+  maxWidth: `${columnWidths.get(column) || labelColumnWidth.value}px`,
+  position: "relative",
+  flexShrink: 0,
+  flexGrow: 0
 })
 
 const calculateDuration = (startDate: string, endDate: string) => {
@@ -129,6 +183,10 @@ const handleLabelScroll = (e: Event) => {
   emit("scroll", target.scrollTop)
 }
 
+onMounted(() => {
+  initializeColumnWidths()
+})
+
 defineExpose({
   setScroll: (value: number) => {
     if (labelContainer.value) {
@@ -139,23 +197,40 @@ defineExpose({
 </script>
 
 <template>
-  <div class="g-label-column" :style="{ fontFamily: font, color: colors.text }">
+  <div
+    class="g-label-column"
+    :style="{
+      fontFamily: font,
+      color: colors.text,
+      width: `${totalWidth}px`,
+      minWidth: `${totalWidth}px`,
+      flex: `0 0 ${totalWidth}px`
+    }"
+  >
     <slot name="label-column-title">
       <div class="g-label-column-header" :style="{ background: colors.primary }">
         <template v-for="column in columns" :key="column">
           <div
             v-if="isValidColumn(column)"
             class="g-label-column-header-cell"
-            @click="sortable ? toggleSort(column) : undefined"
             :class="{ sortable: sortable }"
             role="columnheader"
-            :style="{ width: `${labelColumnWidth}px` }"
+            :style="getColumnStyle(column)"
           >
-            {{ column }}
-            <span v-if="sortable" class="sort-icon">
-              <FontAwesomeIcon :icon="getSortIcon(column)" />
-            </span></div
-        ></template>
+            <div class="header-content" @click="sortable ? toggleSort(column) : undefined">
+              <span class="text-ellipsis">{{ column }}</span>
+              <span v-if="sortable" class="sort-icon">
+                <FontAwesomeIcon :icon="getSortIcon(column)" />
+              </span>
+            </div>
+            <div
+              v-if="labelResizable"
+              class="column-resizer"
+              @mousedown="(e) => handleDragStart(e, column)"
+              :class="{ 'is-dragging': isDragging && draggedColumn === column }"
+            ></div>
+          </div>
+        </template>
       </div>
     </slot>
     <div
@@ -173,19 +248,25 @@ defineExpose({
           height: `${rowHeight}px`
         }"
       >
-        <template v-for="column in columns" :key="column">
-          <template v-if="isValidColumn(column)">
-            <slot
-              :name="`label-column-${column.toLowerCase()}`"
-              :row="row"
-              :value="getRowValue(row, column, index)"
-            >
-              <div class="g-label-column-cell" :style="{ width: `${labelColumnWidth}px` }">
-                {{ getRowValue(row, column, index) }}
-              </div>
-            </slot>
+        <div class="g-label-column-row-inner">
+          <template v-for="column in columns" :key="column">
+            <template v-if="isValidColumn(column)">
+              <slot
+                :name="`label-column-${column.toLowerCase()}`"
+                :row="row"
+                :value="getRowValue(row, column, index)"
+              >
+                <div class="g-label-column-cell" :style="getColumnStyle(column)">
+                  <div class="cell-content">
+                    <span class="text-ellipsis">
+                      {{ getRowValue(row, column, index) }}
+                    </span>
+                  </div>
+                </div>
+              </slot>
+            </template>
           </template>
-        </template>
+        </div>
       </div>
     </div>
   </div>
@@ -194,30 +275,71 @@ defineExpose({
 <style>
 .g-label-column {
   display: flex;
-  align-items: center;
   flex-direction: column;
   color: rgb(64, 64, 64);
   font-variant-numeric: tabular-nums;
   font-size: 0.9em;
+  background: white;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .g-label-column-header {
   width: 100%;
   height: 80px;
   min-height: 80px;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
+  align-items: center;
+  overflow: visible;
+}
+
+.g-label-column-row-inner {
+  display: flex;
+  width: 100%;
+  min-width: 100%;
+  flex-wrap: nowrap;
   align-items: center;
 }
 
 .g-label-column-header-cell {
-  flex: 1;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 0.5rem;
   height: 100%;
   gap: 0.5rem;
+  box-sizing: border-box;
+}
+
+.g-label-column-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1rem 0.3rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: none;
+}
+
+.header-content,
+.cell-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 4px;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .g-label-column-header-cell.sortable {
@@ -231,10 +353,9 @@ defineExpose({
 
 .g-label-column-rows {
   width: 100%;
-  height: 100%;
-  flex-direction: column;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .g-label-column-rows::-webkit-scrollbar {
@@ -246,17 +367,7 @@ defineExpose({
   display: flex;
   box-sizing: border-box;
   align-items: center;
-}
-
-.g-label-column-cell {
-  flex: 1;
-  padding: 0.1rem 0.3rem;
-  overflow: hidden;
-  white-space: normal;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-wrap: nowrap;
 }
 
 .sort-icon {
@@ -269,5 +380,34 @@ defineExpose({
 
 .sortable:hover .sort-icon {
   opacity: 1;
+}
+
+.column-resizer {
+  position: absolute;
+  right: -1px;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 1;
+  background: transparent;
+}
+
+.column-resizer:hover,
+.column-resizer.is-dragging {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.g-label-column-header-cell {
+  position: relative;
+  overflow: visible;
+}
+
+.g-label-column {
+  user-select: none;
+}
+
+.g-label-column.dragging {
+  cursor: col-resize;
 }
 </style>
