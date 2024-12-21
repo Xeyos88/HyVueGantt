@@ -83,3 +83,11 @@
 .dark .VPFeatures .item .icon {
   background-color: #2a2a2a;
 }
+
+.VPContent.has-sidebar {
+  padding-right: calc((90vw - var(--vp-layout-max-width)) / 2) !important;
+}
+
+.VPDoc.has-aside .content-container {
+  max-width: 900px !important;
+}

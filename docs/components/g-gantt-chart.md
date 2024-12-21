@@ -48,6 +48,8 @@ Here's a minimal example of using the GGanttChart component:
 | font | `string` | `'inherit'` | Font family for the chart |
 | labelColumnTitle | `string` | `''` | Title for the label column |
 | labelColumnWidth | `string` | `'150px'` | Width of the label column |
+| sortable | `boolean` | `true` | Enable row sorting functionality |
+| multiColumnLabel | `LabelColumnField[]` | `[]` | Array of columns to display in the header |
 | commands | `boolean` | `true` | Show chart control commands |
 | enableMinutes | `boolean` | `false` | Enable minutes precision for hour view |
 | enableConnections | `boolean` | `true` | Enable connections between bars |

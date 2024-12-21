@@ -20,6 +20,7 @@ const {
   font,
   colors,
   labelColumnTitle,
+  labelColumnWidth,
   rowHeight,
   maxRows,
   multiColumnLabel,
@@ -148,6 +149,7 @@ defineExpose({
             @click="sortable ? toggleSort(column) : undefined"
             :class="{ sortable: sortable }"
             role="columnheader"
+            :style="{ width: `${labelColumnWidth}px` }"
           >
             {{ column }}
             <span v-if="sortable" class="sort-icon">
@@ -178,7 +180,7 @@ defineExpose({
               :row="row"
               :value="getRowValue(row, column, index)"
             >
-              <div class="g-label-column-cell">
+              <div class="g-label-column-cell" :style="{ width: `${labelColumnWidth}px` }">
                 {{ getRowValue(row, column, index) }}
               </div>
             </slot>
