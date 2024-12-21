@@ -77,13 +77,21 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   maxRows: 0,
   initialSortDirection: "none",
   initialRows: () => [],
-  multiColumnLabel: () => []
+  multiColumnLabel: () => [],
+  sortable: true
 })
 
 const id = ref(crypto.randomUUID())
 const slots = useSlots()
 
-const rowManager = useRows(slots, props.initialRows ? toRef(props, "initialRows") : undefined)
+const rowManager = useRows(
+  slots,
+  {
+    barStart: toRef(props, "barStart"),
+    barEnd: toRef(props, "barEnd")
+  },
+  props.initialRows ? toRef(props, "initialRows") : undefined
+)
 const rows = computed(() => rowManager.rows.value)
 
 provide("useRows", rowManager)

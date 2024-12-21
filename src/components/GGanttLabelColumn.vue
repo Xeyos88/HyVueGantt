@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import provideConfig from "../provider/provideConfig"
+import provideBooleanConfig from "../provider/provideBooleanConfig"
 import { ref, computed, inject } from "vue"
 import type { CSSProperties } from "vue"
 import type { LabelColumnField, ChartRow, GanttBarObject } from "../types"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
-import { faArrowDownAZ, faArrowDownZA } from "@fortawesome/free-solid-svg-icons"
+import { faArrowDownAZ, faArrowDownZA, faSort } from "@fortawesome/free-solid-svg-icons"
 import useDayjsHelper from "../composables/useDayjsHelper"
 import type { UseRowsReturn } from "../composables/useRows"
 
 const rowManager = inject<UseRowsReturn>("useRows")
 if (!rowManager) {
-  throw new Error("useRows non fornito")
+  throw new Error("useRows does not provide ")
 }
 
-const { rows, sortDirection, toggleSort } = rowManager
-
+const { rows, sortState, toggleSort } = rowManager
+const { sortable } = provideBooleanConfig()
 const {
   font,
   colors,
@@ -24,7 +25,8 @@ const {
   multiColumnLabel,
   precision,
   barStart,
-  barEnd
+  barEnd,
+  dateFormat
 } = provideConfig()
 
 const { toDayjs, format } = useDayjsHelper()
@@ -67,7 +69,7 @@ const getRowValue = (row: ChartRow, column: LabelColumnField, index: number) => 
         const currentStart = bar[barStart.value]
         return !min || toDayjs(currentStart).isBefore(toDayjs(min)) ? currentStart : min
       }, "")
-      return format(minDate, "hh:mm DD/MM/YYYY")
+      return format(minDate, dateFormat.value)
     }
     case "EndDate": {
       if (!row.bars.length) return "-"
@@ -75,7 +77,7 @@ const getRowValue = (row: ChartRow, column: LabelColumnField, index: number) => 
         const currentEnd = bar[barEnd.value]
         return !max || toDayjs(currentEnd).isAfter(toDayjs(max)) ? currentEnd : max
       }, "")
-      return format(maxDate, "hh:mm DD/MM/YYYY")
+      return format(maxDate, dateFormat.value)
     }
     case "Duration": {
       if (!row.bars.length) return "-"
@@ -106,6 +108,17 @@ const labelContainerStyle = computed<CSSProperties>(() => {
   }
 })
 
+const getSortIcon = (column: LabelColumnField) => {
+  if (column !== sortState.value.column || sortState.value.direction === "none") {
+    return faSort
+  }
+  return sortState.value.direction === "asc" ? faArrowDownAZ : faArrowDownZA
+}
+
+const isValidColumn = (column: LabelColumnField) => {
+  return ["Id", "Label", "StartDate", "EndDate", "Duration"].includes(column)
+}
+
 const emit = defineEmits<{
   (e: "scroll", value: number): void
 }>()
@@ -128,22 +141,19 @@ defineExpose({
   <div class="g-label-column" :style="{ fontFamily: font, color: colors.text }">
     <slot name="label-column-title">
       <div class="g-label-column-header" :style="{ background: colors.primary }">
-        <div
-          v-for="column in columns"
-          :key="column"
-          class="g-label-column-header-cell"
-          @click="column === 'Label' ? toggleSort() : undefined"
-          :class="{ sortable: column === 'Label' }"
-          role="columnheader"
-        >
-          {{ column }}
-          <span v-if="column === 'Label' && sortDirection === 'asc'" class="sort-icon">
-            <FontAwesomeIcon :icon="faArrowDownAZ" />
-          </span>
-          <span v-if="column === 'Label' && sortDirection === 'desc'" class="sort-icon">
-            <FontAwesomeIcon :icon="faArrowDownZA" />
-          </span>
-        </div>
+        <template v-for="column in columns" :key="column">
+          <div
+            v-if="isValidColumn(column)"
+            class="g-label-column-header-cell"
+            @click="sortable ? toggleSort(column) : undefined"
+            :class="{ sortable: sortable }"
+            role="columnheader"
+          >
+            {{ column }}
+            <span v-if="sortable" class="sort-icon">
+              <FontAwesomeIcon :icon="getSortIcon(column)" />
+            </span></div
+        ></template>
       </div>
     </slot>
     <div
@@ -162,15 +172,17 @@ defineExpose({
         }"
       >
         <template v-for="column in columns" :key="column">
-          <slot
-            :name="`label-column-${column.toLowerCase()}`"
-            :row="row"
-            :value="getRowValue(row, column, index)"
-          >
-            <div class="g-label-column-cell">
-              {{ getRowValue(row, column, index) }}
-            </div>
-          </slot>
+          <template v-if="isValidColumn(column)">
+            <slot
+              :name="`label-column-${column.toLowerCase()}`"
+              :row="row"
+              :value="getRowValue(row, column, index)"
+            >
+              <div class="g-label-column-cell">
+                {{ getRowValue(row, column, index) }}
+              </div>
+            </slot>
+          </template>
         </template>
       </div>
     </div>
@@ -203,10 +215,16 @@ defineExpose({
   justify-content: center;
   padding: 0 0.5rem;
   height: 100%;
+  gap: 0.5rem;
 }
 
 .g-label-column-header-cell.sortable {
   cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.g-label-column-header-cell.sortable:hover {
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .g-label-column-rows {
@@ -240,6 +258,14 @@ defineExpose({
 }
 
 .sort-icon {
-  margin-left: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.6;
+  font-size: 0.8em;
+  transition: opacity 0.2s ease;
+}
+
+.sortable:hover .sort-icon {
+  opacity: 1;
 }
 </style>
