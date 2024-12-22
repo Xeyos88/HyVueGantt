@@ -6,7 +6,7 @@ A powerful Gantt chart component for Vue 3, evolved from vue-ganttastic. Provide
 
 ## Guide and Docs
 
-For further guides and references, check out the [documentation](https://github.com/Xeyos88/HyVueGantt).  
+For further guides and references, check out the [documentation](https://xeyos88.github.io/HyVueGantt/).
 
 ## 🚀 Installation
 

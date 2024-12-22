@@ -1,8 +1,7 @@
 import type { InjectionKey, Ref } from "vue"
 
-import type { GGanttBooleanConfig, GGanttChartConfig, GanttBarObject, ChartRow } from "../types"
+import type { GGanttBooleanConfig, GGanttChartConfig, GanttBarObject } from "../types"
 
-export type GetChartRows = () => ChartRow[]
 export type EmitBarEvent = (
   e: MouseEvent,
   bar: GanttBarObject,
@@ -10,7 +9,6 @@ export type EmitBarEvent = (
   movedBars?: Map<GanttBarObject, { oldStart: string; oldEnd: string }>
 ) => void
 
-export const CHART_ROWS_KEY = Symbol("CHART_ROWS_KEY") as InjectionKey<GetChartRows>
 export const CONFIG_KEY = Symbol("CONFIG_KEY") as InjectionKey<GGanttChartConfig>
 export const BOOLEAN_KEY = Symbol("BOOLEAN_KEY") as InjectionKey<GGanttBooleanConfig>
 export const EMIT_BAR_EVENT_KEY = Symbol("EMIT_BAR_EVENT_KEY") as InjectionKey<EmitBarEvent>

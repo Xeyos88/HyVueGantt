@@ -1,6 +1,7 @@
 import { type GanttBarObject } from "../types/bar"
 import type { GGanttChartConfig } from "../types/config"
 import type dayjs from "dayjs"
+import type { UseRowsReturn } from "./useRows"
 
 export interface MovementResult {
   success: boolean
@@ -20,7 +21,7 @@ interface DayjsHelper {
 
 export function useBarMovement(
   config: GGanttChartConfig,
-  getChartRows: () => { label: string; bars: GanttBarObject[] }[],
+  rowManager: UseRowsReturn,
   dayjsHelper: DayjsHelper
 ) {
   const { barStart, barEnd, dateFormat, pushOnOverlap, pushOnConnect } = config
@@ -142,7 +143,7 @@ export function useBarMovement(
   }
 
   const findOverlappingBars = (bar: GanttBarObject): GanttBarObject[] => {
-    const currentRow = getChartRows().find((row) => row.bars.includes(bar))
+    const currentRow = rowManager.rows.value.find((row) => row.bars.includes(bar))
     if (!currentRow) return []
 
     return currentRow.bars.filter((otherBar) => {
@@ -161,7 +162,7 @@ export function useBarMovement(
   }
 
   const findConnectedBars = (bar: GanttBarObject): GanttBarObject[] => {
-    const allBars = getChartRows().flatMap((row) => row.bars)
+    const allBars = rowManager.rows.value.flatMap((row) => row.bars)
     const connectedBars: GanttBarObject[] = []
 
     bar.ganttBarConfig.connections?.forEach((conn) => {

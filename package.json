@@ -1,7 +1,7 @@
 {
   "name": "hy-vue-gantt",
-  "version": "1.0.1",
-  "description": "Fork and update of vue-ganttastic",
+  "version": "1.1.0",
+  "description": "Evolution of vue-ganttastic package",
   "author": "Eugenio Topa (@Xeyos88)",
   "scripts": {
     "serve": "vite",

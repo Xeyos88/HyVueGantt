@@ -8,9 +8,6 @@ HyVue Gantt exposes several TypeScript types and interfaces for use in your appl
 // Time Units
 type TimeUnit = 'hour' | 'day' | 'week' | 'month';
 
-// Sort Direction
-type SortDirection = 'asc' | 'desc' | 'none';
-
 // Connection Types
 type ConnectionType = 'bezier' | 'straight' | 'squared';
 type ConnectionPattern = 'solid' | 'dot' | 'dash' | 'dashdot';
@@ -56,5 +53,19 @@ interface BarConnection {
   pattern?: ConnectionPattern;
   animated?: boolean;
   animationSpeed?: ConnectionSpeed;
+}
+```
+## Label Data Types
+
+```typescript
+export type LabelColumnField = "Id" | "Label" | "StartDate" | "EndDate" | "Duration"
+
+export type SortFunction = (a: ChartRow, b: ChartRow) => number
+
+interface LabelColumnConfig {
+  field: LabelColumnField | string
+  sortable?: boolean
+  valueGetter?: (row: ChartRow) => string | number
+  sortFn?: SortFunction
 }
 ```

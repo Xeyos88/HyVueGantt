@@ -4,6 +4,7 @@ import type {
   ConnectionPattern,
   ConnectionSpeed,
   ConnectionType,
+  LabelColumnConfig,
   TimeUnit
 } from "./chart"
 import type { ColorScheme } from "./style"
@@ -29,7 +30,8 @@ export interface GGanttChartProps {
   highlightedUnits?: number[]
   font?: string
   labelColumnTitle?: string
-  labelColumnWidth?: string
+  labelColumnWidth?: number
+  multiColumnLabel?: LabelColumnConfig[]
   commands?: boolean
   enableMinutes?: boolean
   enableConnections?: boolean
@@ -41,6 +43,8 @@ export interface GGanttChartProps {
   maxRows?: number
   initialSortDirection?: SortDirection
   initialRows?: ChartRow[]
+  sortable?: boolean
+  labelResizable?: boolean
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
@@ -55,4 +59,6 @@ export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
 export type GGanttBooleanConfig = {
   commands?: boolean
   enableMinutes?: boolean
+  sortable?: boolean
+  labelResizable?: boolean
 }

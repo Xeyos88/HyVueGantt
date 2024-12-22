@@ -33,6 +33,11 @@ const OtherGanttDemo = defineClientComponent(() => {
   return import('./components/OtherGanttDemo.vue')
 })
 
+const MultiColumnDemo= defineClientComponent(() => {
+  return import('./components/MultiColumnDemo.vue')
+})
+
+
 
 export default {
   extends: DefaultTheme,
@@ -41,7 +46,8 @@ export default {
     app.component('BasicGanttDemo', GanttDemo)
     app.component('ConnectionsGanttDemo', ConnectionsGanttDemo)
     app.component('TimeGanttDemo', TimeGanttDemo)
-    app.component('AdvancedGanttDemo',AdvancedGanttDemo)
+    app.component('AdvancedGanttDemo', AdvancedGanttDemo)
     app.component('OtherGanttDemo', OtherGanttDemo)
+    app.component('MultiColumnDemo', MultiColumnDemo)
   }
 }

@@ -24,6 +24,14 @@ Time Precions Live Demo for Hyper Vue Gantt:
   <TimeGanttDemo />
 </ClientOnly>
 
+## Multi-Column Demo
+
+Demo showcasing multi-column display with sorting capabilities:
+
+<ClientOnly>
+  <MultiColumnDemo />
+</ClientOnly>
+
 ## Advanced Custom Demo 
 
 Advanced Custom Live Demo for Hyper Vue Gantt:
