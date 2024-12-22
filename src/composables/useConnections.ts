@@ -1,8 +1,9 @@
 import { computed, ref, type Ref } from "vue"
 import type { BarConnection, BarPosition, ChartRow, GGanttChartProps } from "../types"
+import type { UseRowsReturn } from "./useRows"
 
 export function useConnections(
-  getChartRows: () => ChartRow[],
+  rowManager: UseRowsReturn,
   props: GGanttChartProps,
   id: Ref<string>
 ) {
@@ -42,7 +43,7 @@ export function useConnections(
   })
 
   const initializeConnections = () => {
-    const flatBars = getChartRows().flatMap((el: ChartRow) => el.bars)
+    const flatBars = rowManager.rows.value.flatMap((el: ChartRow) => el.bars)
 
     flatBars.forEach((el) => {
       if (el.ganttBarConfig.connections?.length) {
@@ -82,8 +83,8 @@ export function useConnections(
       if (barId) {
         const position = {
           id: barId,
-          x: rect.left - containerRect.left +scrollLeft,
-          y: rect.top - containerRect.top +scrollTop,
+          x: rect.left - containerRect.left + scrollLeft,
+          y: rect.top - containerRect.top + scrollTop,
           width: rect.width,
           height: rect.height
         }

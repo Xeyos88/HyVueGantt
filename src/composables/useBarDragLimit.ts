@@ -1,17 +1,18 @@
 import type { GanttBarObject } from "../types"
 import provideConfig from "../provider/provideConfig"
-import provideGetChartRows from "../provider/provideGetChartRows"
 import useBarDragManagement from "./useBarDragManagement"
+import { inject } from "vue"
+import type { UseRowsReturn } from "./useRows"
 
 export default function useBarDragLimit() {
   const { pushOnOverlap, pushOnConnect } = provideConfig()
-  const getChartRows = provideGetChartRows()
   const { getConnectedBars } = useBarDragManagement()
+  const rowManager = inject<UseRowsReturn>("useRows")!
 
   const getBarsFromBundle = (bundle?: string) => {
     const res: GanttBarObject[] = []
     if (bundle != null) {
-      getChartRows().forEach((row) => {
+      rowManager.rows.value.forEach((row) => {
         row.bars.forEach((bar) => {
           if (bar.ganttBarConfig.bundle === bundle) {
             res.push(bar)
@@ -23,8 +24,12 @@ export default function useBarDragLimit() {
   }
 
   const setDragLimitsOfGanttBar = (bar: GanttBarObject) => {
-    if ((!pushOnOverlap.value || bar.ganttBarConfig.pushOnOverlap === false) || 
-      (!pushOnConnect.value || bar.ganttBarConfig.pushOnConnect === false)) {
+    if (
+      !pushOnOverlap.value ||
+      bar.ganttBarConfig.pushOnOverlap === false ||
+      !pushOnConnect.value ||
+      bar.ganttBarConfig.pushOnConnect === false
+    ) {
       return
     }
     for (const sideValue of ["left", "right"]) {
@@ -134,11 +139,11 @@ export default function useBarDragLimit() {
     const barElem = document.getElementById(bar.ganttBarConfig.id) as HTMLElement
     let allBarsInRow: GanttBarObject[] = []
     if (pushOnOverlap.value) {
-      allBarsInRow = getChartRows().find((row) => row.bars.includes(bar))?.bars || []
-    } 
+      allBarsInRow = rowManager.rows.value.find((row) => row.bars.includes(bar))?.bars || []
+    }
     if (pushOnConnect.value) {
       allBarsInRow = [...allBarsInRow, ...getConnectedBars(bar)]
-    }    
+    }
     let allBarsLeftOrRight = []
     if (side === "left") {
       allBarsLeftOrRight = allBarsInRow.filter((otherBar) => {
@@ -158,7 +163,6 @@ export default function useBarDragLimit() {
           otherBarElem.offsetLeft > barElem.offsetLeft &&
           otherBar.ganttBarConfig.pushOnOverlap !== false &&
           otherBar.ganttBarConfig.pushOnConnect !== false
-
         )
       })
     }

@@ -1,10 +1,11 @@
 import provideConfig from "../provider/provideConfig"
 import type { GanttBarObject } from "../types/bar"
-import provideGetChartRows from "../provider/provideGetChartRows"
 import provideEmitBarEvent from "../provider/provideEmitBarEvent"
 import useDayjsHelper from "./useDayjsHelper"
 import createBarDrag from "./createBarDrag"
 import { useBarMovement } from "./useBarMovement"
+import { inject } from "vue"
+import type { UseRowsReturn } from "./useRows"
 
 type DragState = {
   movedBars: Map<GanttBarObject, { oldStart: string; oldEnd: string }>
@@ -13,12 +14,12 @@ type DragState = {
 
 const useBarDragManagement = () => {
   const config = provideConfig()
-  const getChartRows = provideGetChartRows()
   const emitBarEvent = provideEmitBarEvent()
   const dayjs = useDayjsHelper(config)
   const { barStart, barEnd } = config
+  const rowManager = inject<UseRowsReturn>("useRows")!
 
-  const movement = useBarMovement(config, getChartRows, dayjs)
+  const movement = useBarMovement(config, rowManager, dayjs)
 
   const dragState: DragState = {
     movedBars: new Map(),
@@ -36,7 +37,7 @@ const useBarDragManagement = () => {
     const bundle = mainBar.ganttBarConfig.bundle
     if (!bundle) return
 
-    const bundleBars = getChartRows()
+    const bundleBars = rowManager.rows.value
       .flatMap((row) => row.bars)
       .filter((bar) => bar.ganttBarConfig.bundle === bundle)
 

@@ -37,6 +37,19 @@ The GGanttRow component represents a single row in the Gantt chart. It manages t
 | label | None | Custom row label content |
 | bar-label | `{ bar: GanttBarObject }` | Custom bar label content |
 
+# Keyboard Controls
+
+Bars within the row support the following keyboard controls:
+
+| Key | Action | With Shift |
+|-----|--------|------------|
+| Left Arrow | Move bar backward | Move 12 units |
+| Right Arrow | Move bar forward | Move 12 units |
+| Up Arrow | Expand bar | Expand 12 units |
+| Down Arrow | Shrink bar | Shrink 12 units |
+
+The actual unit size depends on the chart's precision setting (hours, days, etc.).
+
 ## Bar Configuration
 
 Each bar in the bars array should follow this structure:
