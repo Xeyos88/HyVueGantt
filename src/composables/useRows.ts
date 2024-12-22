@@ -1,11 +1,11 @@
 import { ref, computed, type Ref, type Slots } from "vue"
-import type { ChartRow, LabelColumnField, SortState } from "../types"
+import type { ChartRow, LabelColumnConfig, LabelColumnField, SortState } from "../types"
 import dayjs from "dayjs"
 
 export interface UseRowsReturn {
   rows: Ref<ChartRow[]>
   sortState: Ref<SortState>
-  toggleSort: (column: LabelColumnField) => void
+  toggleSort: (column: string) => void
   getChartRows: () => ChartRow[]
   onSortChange: (callback: () => void) => () => void
 }
@@ -13,11 +13,12 @@ export interface UseRowsReturn {
 export interface UseRowsProps {
   barStart: Ref<string>
   barEnd: Ref<string>
+  multiColumnLabel: Ref<LabelColumnConfig[]>
 }
 
 export function useRows(
   slots: Slots,
-  { barStart, barEnd }: UseRowsProps,
+  { barStart, barEnd, multiColumnLabel }: UseRowsProps,
   initialRows?: Ref<ChartRow[]>,
   initialSortColumn: LabelColumnField = "Label"
 ): UseRowsReturn {
@@ -60,7 +61,13 @@ export function useRows(
     return dayjs()
   }
 
-  const compareValues = (a: ChartRow, b: ChartRow, column: LabelColumnField): number => {
+  const compareValues = (a: ChartRow, b: ChartRow, column: LabelColumnField | string): number => {
+    const columnConfig = multiColumnLabel.value?.find((conf) => conf.field === column)
+
+    if (columnConfig?.sortFn && !isStandardField(column)) {
+      return columnConfig.sortFn(a, b)
+    }
+
     switch (column) {
       case "Id":
         const aId = a.id ?? 0
@@ -94,8 +101,17 @@ export function useRows(
         return aDuration - bDuration
       }
       default:
+        if (columnConfig?.valueGetter) {
+          const aValue = columnConfig.valueGetter(a)
+          const bValue = columnConfig.valueGetter(b)
+          return String(aValue).localeCompare(String(bValue))
+        }
         return 0
     }
+  }
+
+  const isStandardField = (field: string): field is LabelColumnField => {
+    return ["Id", "Label", "StartDate", "EndDate", "Duration"].includes(field)
   }
 
   const rows = computed(() => {
@@ -116,7 +132,7 @@ export function useRows(
     return sourceRows
   })
 
-  const toggleSort = (column: LabelColumnField) => {
+  const toggleSort = (column: string) => {
     if (sortState.value.column !== column) {
       sortState.value = {
         column,

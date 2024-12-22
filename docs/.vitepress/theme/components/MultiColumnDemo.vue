@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
+import { GGanttChart, GGanttRow, type ChartRow, type LabelColumnConfig } from 'hy-vue-gantt'
 
 const chartStart = ref('2024-01-01')
 const chartEnd = ref('2024-03-31')
@@ -8,10 +8,36 @@ const precision = ref('day')
 const barStart = ref('start')
 const barEnd = ref('end')
 
-const multiColumnLabel = ref([
-  'Label',
-  'StartDate',
-  'Duration'
+const getN = (row: ChartRow) => {
+  return row.bars.length
+}
+
+const sortN = (a: ChartRow, b: ChartRow) => {
+  const aId = a.bars.length ?? 0
+  const bId = b.bars.length ?? 0
+  return aId < bId ? -1 : aId > bId ? 1 : 0
+}
+
+
+const multiColumnLabel = ref<LabelColumnConfig[]>([
+  {
+    field: 'Id',
+    sortable: false,
+  },
+  {
+    field: 'Label',
+  },
+  {
+    field: 'StartDate',
+  },
+  {
+    field: 'Duration',
+  },
+  {
+    field: 'Bars N°',
+    valueGetter: getN,
+    sortFn: sortN,
+  },
 ])
 
 const rows = ref([

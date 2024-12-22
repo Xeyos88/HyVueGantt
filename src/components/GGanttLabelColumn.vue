@@ -3,7 +3,7 @@ import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
 import { ref, computed, inject, reactive, onMounted } from "vue"
 import type { CSSProperties } from "vue"
-import type { LabelColumnField, ChartRow, GanttBarObject } from "../types"
+import type { LabelColumnField, ChartRow, GanttBarObject, LabelColumnConfig } from "../types"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import { faArrowDownAZ, faArrowDownZA, faSort } from "@fortawesome/free-solid-svg-icons"
 import useDayjsHelper from "../composables/useDayjsHelper"
@@ -39,15 +39,15 @@ const draggedColumn = ref<string | null>(null)
 
 const initializeColumnWidths = () => {
   columns.value.forEach((column) => {
-    if (!columnWidths.has(column)) {
-      columnWidths.set(column, labelColumnWidth.value)
+    if (!columnWidths.has(column.field)) {
+      columnWidths.set(column.field, labelColumnWidth.value)
     }
   })
 }
 
-const columns = computed<LabelColumnField[]>(() => {
+const columns = computed<LabelColumnConfig[]>(() => {
   if (!multiColumnLabel.value?.length || !labelColumnTitle.value) {
-    return ["Label"]
+    return [{ field: "Label", sortable: true }]
   }
   return multiColumnLabel.value
 })
@@ -112,8 +112,12 @@ const calculateDuration = (startDate: string, endDate: string) => {
   }
 }
 
-const getRowValue = (row: ChartRow, column: LabelColumnField, index: number) => {
-  switch (column) {
+const getRowValue = (row: ChartRow, column: LabelColumnConfig, index: number) => {
+  if (column.valueGetter) {
+    return column.valueGetter(row)
+  }
+
+  switch (column.field) {
     case "Id":
       return row.id ?? index + 1
     case "Label":
@@ -154,6 +158,7 @@ const getRowValue = (row: ChartRow, column: LabelColumnField, index: number) => 
 const labelContainer = ref<HTMLElement | null>(null)
 
 const labelContainerStyle = computed<CSSProperties>(() => {
+  console.log(maxRows.value, rows.value.length)
   if (maxRows.value === 0) return {}
   const minRows = Math.min(maxRows.value, rows.value.length)
 
@@ -163,15 +168,22 @@ const labelContainerStyle = computed<CSSProperties>(() => {
   }
 })
 
-const getSortIcon = (column: LabelColumnField) => {
-  if (column !== sortState.value.column || sortState.value.direction === "none") {
+const getSortIcon = (field: string) => {
+  if (field !== sortState.value.column || sortState.value.direction === "none") {
     return faSort
   }
   return sortState.value.direction === "asc" ? faArrowDownAZ : faArrowDownZA
 }
 
-const isValidColumn = (column: LabelColumnField) => {
-  return ["Id", "Label", "StartDate", "EndDate", "Duration"].includes(column)
+const isValidColumn = (field: string): field is LabelColumnField => {
+  return ["Id", "Label", "StartDate", "EndDate", "Duration"].includes(field)
+}
+
+const isSortable = (column: LabelColumnConfig) => {
+  if (column.sortable === false) return false
+  return (
+    (sortable || (!sortable && column.sortable)) && (isValidColumn(column.field) || column.sortFn)
+  )
 }
 
 const emit = defineEmits<{
@@ -211,23 +223,26 @@ defineExpose({
       <div class="g-label-column-header" :style="{ background: colors.primary }">
         <template v-for="column in columns" :key="column">
           <div
-            v-if="isValidColumn(column)"
+            v-if="isValidColumn(column.field) || column.valueGetter"
             class="g-label-column-header-cell"
-            :class="{ sortable: sortable }"
+            :class="{ sortable: isSortable(column) }"
             role="columnheader"
-            :style="getColumnStyle(column)"
+            :style="getColumnStyle(column.field)"
           >
-            <div class="header-content" @click="sortable ? toggleSort(column) : undefined">
-              <span class="text-ellipsis">{{ column }}</span>
-              <span v-if="sortable" class="sort-icon">
-                <FontAwesomeIcon :icon="getSortIcon(column)" />
+            <div
+              class="header-content"
+              @click="isSortable(column) ? toggleSort(column.field) : undefined"
+            >
+              <span class="text-ellipsis">{{ column.field }}</span>
+              <span v-if="isSortable(column)" class="sort-icon">
+                <FontAwesomeIcon :icon="getSortIcon(column.field)" />
               </span>
             </div>
             <div
               v-if="labelResizable"
               class="column-resizer"
-              @mousedown="(e) => handleDragStart(e, column)"
-              :class="{ 'is-dragging': isDragging && draggedColumn === column }"
+              @mousedown="(e) => handleDragStart(e, column.field)"
+              :class="{ 'is-dragging': isDragging && draggedColumn === column.field }"
             ></div>
           </div>
         </template>
@@ -249,14 +264,14 @@ defineExpose({
         }"
       >
         <div class="g-label-column-row-inner">
-          <template v-for="column in columns" :key="column">
-            <template v-if="isValidColumn(column)">
+          <template v-for="column in columns" :key="column.field">
+            <template v-if="isValidColumn(column.field) || column.valueGetter">
               <slot
-                :name="`label-column-${column.toLowerCase()}`"
+                :name="`label-column-${column.field.toLowerCase()}`"
                 :row="row"
                 :value="getRowValue(row, column, index)"
               >
-                <div class="g-label-column-cell" :style="getColumnStyle(column)">
+                <div class="g-label-column-cell" :style="getColumnStyle(column.field)">
                   <div class="cell-content">
                     <span class="text-ellipsis">
                       {{ getRowValue(row, column, index) }}
@@ -353,7 +368,6 @@ defineExpose({
 
 .g-label-column-rows {
   width: 100%;
-  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
 }

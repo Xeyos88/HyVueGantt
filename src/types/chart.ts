@@ -13,8 +13,17 @@ export type ConnectionSpeed = "slow" | "normal" | "fast"
 export type SortDirection = "asc" | "desc" | "none"
 export type LabelColumnField = "Id" | "Label" | "StartDate" | "EndDate" | "Duration"
 
+export type SortFunction = (a: ChartRow, b: ChartRow) => number
+
+export interface LabelColumnConfig {
+  field: LabelColumnField | string
+  sortable?: boolean
+  valueGetter?: (row: ChartRow) => string | number
+  sortFn?: SortFunction
+}
+
 export interface SortState {
-  column: LabelColumnField
+  column: string
   direction: SortDirection
 }
 

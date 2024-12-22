@@ -89,7 +89,8 @@ const rowManager = useRows(
   slots,
   {
     barStart: toRef(props, "barStart"),
-    barEnd: toRef(props, "barEnd")
+    barEnd: toRef(props, "barEnd"),
+    multiColumnLabel: toRef(props, "multiColumnLabel")
   },
   props.initialRows ? toRef(props, "initialRows") : undefined
 )
