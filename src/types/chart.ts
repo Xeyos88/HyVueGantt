@@ -33,3 +33,10 @@ export interface TimeaxisUnit {
   date: Date
   width?: string
 }
+
+export interface GanttMilestone {
+  date: string
+  name: string
+  description?: string
+  color?: string
+}

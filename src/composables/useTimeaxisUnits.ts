@@ -150,28 +150,6 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
         createTimeaxisUnit(currentLowerUnit, getDisplayFormat(precision.value), width)
       )
 
-      /*if (precision.value === "hour" && enableMinutes) {
-        if (!result.minutesUnits) {
-          result.minutesUnits = []
-        }
-
-        const minuteWidth = `${parseFloat(width) / globalMinuteStep.length}%`
-
-        globalMinuteStep.forEach((minute) => {
-          const minuteValue = parseInt(minute)
-          const minuteDate = currentLowerUnit.clone().minute(minuteValue)
-
-          if (minuteDate.isBefore(endOfCurrentLower) && minuteDate.isBefore(chartEndDayjs.value)) {
-            result.minutesUnits!.push({
-              label: minute,
-              value: String(minuteDate),
-              width: minuteWidth,
-              date: minuteDate.toDate()
-            })
-          }
-        })
-      }*/
-
       currentLowerUnit = nextLowerUnit
     }
 

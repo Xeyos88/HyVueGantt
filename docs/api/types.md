@@ -54,6 +54,13 @@ interface BarConnection {
   animated?: boolean;
   animationSpeed?: ConnectionSpeed;
 }
+
+export interface GanttMilestone {
+  date: string
+  name: string
+  description?: string
+  color?: string
+}
 ```
 ## Label Data Types
 

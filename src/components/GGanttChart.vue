@@ -34,6 +34,7 @@ import GGanttBarTooltip from "./GGanttBarTooltip.vue"
 import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
 import GGanttRow from "./GGanttRow.vue"
+import GGanttMilestone from "./GGanttMilestone.vue"
 
 // Internal Imports - Composables
 import { useConnections } from "../composables/useConnections"
@@ -65,7 +66,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   highlightedUnits: () => [],
   font: "inherit",
   labelColumnTitle: "",
-  labelColumnWidth: 150,
+  labelColumnWidth: 120,
   commands: true,
   enableMinutes: false,
   enableConnections: true,
@@ -79,7 +80,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   initialRows: () => [],
   multiColumnLabel: () => [],
   sortable: true,
-  labelResizable: true
+  labelResizable: true,
+  milestones: () => []
 })
 
 const id = ref(crypto.randomUUID())
@@ -425,6 +427,12 @@ provide("id", id)
                 <slot name="current-time-label" />
               </template>
             </g-gantt-current-time>
+
+            <g-gantt-milestone
+              v-for="milestone in milestones"
+              :key="milestone.date.toString()"
+              :milestone="milestone"
+            />
 
             <!-- Rows Container -->
             <div

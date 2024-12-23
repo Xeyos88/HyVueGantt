@@ -122,3 +122,84 @@ const rows = ref([
 }
 </style>
 ```
+
+## Multi Label Columns
+
+```vue
+<template>
+  <g-gantt-chart
+    v-bind="chartConfig"
+    :push-on-overlap="true"
+    :no-overlap="true"
+    label-column-title="Project Details"
+    :multi-column-label="multiColumnLabel"
+  >
+    <g-gantt-row
+      v-for="row in rows"
+      :key="row.label"
+      :label="row.label"
+      :bars="row.bars"
+    />
+  </g-gantt-chart>
+</template>
+
+<script setup lang="ts">
+const rows = ref([
+  {
+    label: 'Constrained Tasks',
+    bars: [
+      {
+        start: '2024-01-01',
+        end: '2024-01-15',
+        ganttBarConfig: {
+          id: '1',
+          label: 'Immobile Task',
+          immobile: true
+        }
+      },
+      {
+        start: '2024-01-16',
+        end: '2024-01-30',
+        ganttBarConfig: {
+          id: '2',
+          label: 'Movable Task',
+          pushOnOverlap: true
+        }
+      }
+    ]
+  }
+])
+
+const getN = (row: ChartRow) => {
+  return row.bars.length
+}
+
+const sortN = (a: ChartRow, b: ChartRow) => {
+  const aId = a.bars.length ?? 0
+  const bId = b.bars.length ?? 0
+  return aId < bId ? -1 : aId > bId ? 1 : 0
+}
+
+
+const multiColumnLabel = ref<LabelColumnConfig[]>([
+  {
+    field: 'Id',
+    sortable: false,
+  },
+  {
+    field: 'Label',
+  },
+  {
+    field: 'StartDate',
+  },
+  {
+    field: 'Duration',
+  },
+  {
+    field: 'Bars N°',
+    valueGetter: getN,
+    sortFn: sortN,
+  },
+])
+</script>
+```
