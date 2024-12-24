@@ -68,7 +68,7 @@ defineExpose({ timeaxisElement })
     <div class="g-timeunits-container">
       <div
         v-for="({ label, value, date, width }, index) in timeaxisUnits.result.lowerUnits"
-        :key="label"
+        :key="date.toISOString()"
         class="g-timeunit"
         :style="{
           background: index % 2 === 0 ? colors.ternary : colors.quartenary,

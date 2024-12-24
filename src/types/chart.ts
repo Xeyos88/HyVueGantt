@@ -40,3 +40,19 @@ export interface GanttMilestone {
   description?: string
   color?: string
 }
+
+export interface TimeaxisResult {
+  upperUnits: TimeaxisUnit[]
+  lowerUnits: TimeaxisUnit[]
+  minutesUnits?: TimeaxisUnit[]
+}
+
+export interface TimeaxisData {
+  result: TimeaxisResult
+  globalMinuteStep: string[]
+}
+
+export interface GGanttTimeaxisInstance {
+  timeaxisUnits: TimeaxisData
+  timeaxisElement: HTMLElement | null
+}

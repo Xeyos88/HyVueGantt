@@ -47,7 +47,12 @@ import { useRows } from "../composables/useRows"
 import { colorSchemes, type ColorScheme, type ColorSchemeKey } from "../color-schemes"
 import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
 import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols"
-import type { GanttBarObject, GGanttChartProps, SortDirection } from "../types"
+import type {
+  GanttBarObject,
+  GGanttChartProps,
+  SortDirection,
+  GGanttTimeaxisInstance
+} from "../types"
 import type { CSSProperties } from "vue"
 
 // Props & Emits Definition
@@ -153,7 +158,9 @@ const diffHours = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value,
 const ganttChart = ref<HTMLElement | null>(null)
 const chartSize = useElementSize(ganttChart)
 const ganttWrapper = ref<HTMLElement | null>(null)
-const timeaxisComponent = ref<InstanceType<typeof GGanttTimeaxis> | null>(null)
+const timeaxisComponent = ref<
+  (InstanceType<typeof GGanttTimeaxis> & GGanttTimeaxisInstance) | null
+>(null)
 const ganttContainer = ref<HTMLElement | null>(null)
 
 // Composables
@@ -211,7 +218,30 @@ const navigationControls = {
 const { handleKeyDown } = useKeyboardNavigation(navigationControls, ganttWrapper, ganttContainer)
 
 // Derived State
-const widthNumber = computed(() => zoomFactor.value * 100)
+const roundToOptimalWidth = (width: number, numberOfUnits: number): number => {
+  const unitWidth = width / numberOfUnits
+  const roundedUnitWidth = Math.round(unitWidth * 100) / 100
+  const optimalWidth = roundedUnitWidth * numberOfUnits
+  return Math.round(optimalWidth * 100) / 100
+}
+
+// Computed property per timeaxisUnits
+const timeaxisUnits = computed(() => {
+  if (!timeaxisComponent.value) return { result: { upperUnits: [], lowerUnits: [] } }
+  return timeaxisComponent.value.timeaxisUnits
+})
+
+// Aggiorna la computed property widthNumber
+const widthNumber = computed(() => {
+  const baseWidth = zoomFactor.value * 100
+  console.log(timeaxisUnits.value?.result?.lowerUnits?.length)
+
+  if (!timeaxisUnits.value?.result?.lowerUnits?.length) {
+    return baseWidth
+  }
+
+  return roundToOptimalWidth(baseWidth, timeaxisUnits.value.result.lowerUnits.length)
+})
 const customWidth = computed(() => `${widthNumber.value}%`)
 
 const { font, colorScheme } = toRefs(props)
