@@ -64,7 +64,8 @@ Here's a minimal example of using the GGanttChart component:
 | currentTime | `boolean` | `false` | Show current time indicator |
 | currentTimeLabel | `string` | `''` | Label for current time indicator |
 | dateFormat | `string \| false` | `'YYYY-MM-DD HH:mm'` | Format for dates |
-
+| milestones | `GanttMilestone[]` | `[]` | List of milestone |
+| holidayHighlight| `string` | `` | Country Cody of date-holidays |
 
 ### Events
 

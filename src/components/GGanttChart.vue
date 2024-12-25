@@ -34,6 +34,7 @@ import GGanttBarTooltip from "./GGanttBarTooltip.vue"
 import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
 import GGanttRow from "./GGanttRow.vue"
+import GGanttMilestone from "./GGanttMilestone.vue"
 
 // Internal Imports - Composables
 import { useConnections } from "../composables/useConnections"
@@ -43,10 +44,16 @@ import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
 import { useRows } from "../composables/useRows"
 
 // Types and Constants
-import { colorSchemes, type ColorScheme, type ColorSchemeKey } from "../color-schemes"
+import { colorSchemes, type ColorSchemeKey } from "../color-schemes"
 import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
 import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols"
-import type { GanttBarObject, GGanttChartProps, SortDirection } from "../types"
+import type {
+  GanttBarObject,
+  GGanttChartProps,
+  SortDirection,
+  GGanttTimeaxisInstance,
+  ColorScheme
+} from "../types"
 import type { CSSProperties } from "vue"
 
 // Props & Emits Definition
@@ -65,7 +72,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   highlightedUnits: () => [],
   font: "inherit",
   labelColumnTitle: "",
-  labelColumnWidth: 150,
+  labelColumnWidth: 120,
   commands: true,
   enableMinutes: false,
   enableConnections: true,
@@ -79,7 +86,9 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   initialRows: () => [],
   multiColumnLabel: () => [],
   sortable: true,
-  labelResizable: true
+  labelResizable: true,
+  milestones: () => [],
+  holidayHighlight: ""
 })
 
 const id = ref(crypto.randomUUID())
@@ -144,14 +153,23 @@ const emit = defineEmits<{
 const chartStartDayjs = computed(() => dayjs(props.chartStart, props.dateFormat as string, true))
 const chartEndDayjs = computed(() => dayjs(props.chartEnd, props.dateFormat as string, true))
 
-const diffDays = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "day") + 1)
+//const diffDays = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "day") + 1)
 const diffHours = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "hour"))
+const diffPrecision = computed(
+  () =>
+    chartEndDayjs.value.diff(
+      chartStartDayjs.value,
+      props.precision === "hour" ? "day" : props.precision
+    ) + 1
+)
 
 // Chart Elements Refs
 const ganttChart = ref<HTMLElement | null>(null)
 const chartSize = useElementSize(ganttChart)
 const ganttWrapper = ref<HTMLElement | null>(null)
-const timeaxisComponent = ref<InstanceType<typeof GGanttTimeaxis> | null>(null)
+const timeaxisComponent = ref<
+  (InstanceType<typeof GGanttTimeaxis> & GGanttTimeaxisInstance) | null
+>(null)
 const ganttContainer = ref<HTMLElement | null>(null)
 
 // Composables
@@ -181,12 +199,13 @@ const {
   isAtBottom
 } = useChartNavigation(
   {
-    diffDays: diffDays.value,
+    diffDays: diffPrecision.value,
     diffHours: diffHours.value,
     scrollRefs: {
       rowsContainer,
       labelColumn
-    }
+    },
+    updateBarPositions
   },
   props.maxRows
 )
@@ -208,7 +227,7 @@ const navigationControls = {
 
 const { handleKeyDown } = useKeyboardNavigation(navigationControls, ganttWrapper, ganttContainer)
 
-// Derived State
+// Computed property per timeaxisUnits
 const widthNumber = computed(() => zoomFactor.value * 100)
 const customWidth = computed(() => `${widthNumber.value}%`)
 
@@ -425,6 +444,12 @@ provide("id", id)
                 <slot name="current-time-label" />
               </template>
             </g-gantt-current-time>
+
+            <g-gantt-milestone
+              v-for="milestone in milestones"
+              :key="milestone.date.toString()"
+              :milestone="milestone"
+            />
 
             <!-- Rows Container -->
             <div

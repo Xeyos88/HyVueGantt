@@ -2,10 +2,12 @@
 import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
 import useTimeaxisUnits from "../composables/useTimeaxisUnits"
-import { ref, watch } from "vue"
+import { computed, ref, watch } from "vue"
 import useDayjsHelper from "../composables/useDayjsHelper"
-const { precision, colors, chartSize } = provideConfig()
+import type { TimeaxisUnit } from "@/types"
+import GGanttHolidayTooltip from "./GGanttHolidayTooltip.vue"
 
+const { precision, colors, chartSize, holidayHighlight } = provideConfig()
 const { chartStartDayjs, chartEndDayjs } = useDayjsHelper()
 const totalHour = chartEndDayjs.value.diff(chartStartDayjs.value, "hour", true)
 
@@ -24,7 +26,7 @@ watch(
 )
 
 const { enableMinutes } = provideBooleanConfig()
-const { timeaxisUnits } = useTimeaxisUnits(timeaxisElement)
+const { timeaxisUnits, internalPrecision } = useTimeaxisUnits(timeaxisElement)
 
 const emit = defineEmits<{
   (e: "dragStart", value: MouseEvent): void
@@ -34,6 +36,47 @@ const emit = defineEmits<{
 
 const handleMouseDown = (e: MouseEvent) => {
   emit("dragStart", e)
+}
+
+const shouldShowHoliday = computed(() => {
+  if (internalPrecision.value === "hour") {
+    return "upper"
+  } else if (internalPrecision.value === "day") {
+    return "lower"
+  }
+  return null
+})
+
+const getHolidayStyle = (unit: TimeaxisUnit, unitType: "upper" | "lower") => {
+  if (!holidayHighlight.value || shouldShowHoliday.value !== unitType || !unit.isHoliday) {
+    return {}
+  }
+
+  return {
+    background: colors.value.holidayHighlight || "#ffebee"
+  }
+}
+
+const hoveredUnit = ref<TimeaxisUnit | undefined>()
+const showTooltip = ref(false)
+const hoveredElement = ref<HTMLElement | null>(null)
+
+const handleUnitMouseEnter = (
+  unit: TimeaxisUnit,
+  unitType: "upper" | "lower",
+  event: MouseEvent
+) => {
+  if (!holidayHighlight.value || shouldShowHoliday.value === unitType || !unit.isHoliday) {
+    hoveredUnit.value = unit
+    hoveredElement.value = event.currentTarget as HTMLElement
+    showTooltip.value = true
+  }
+}
+
+const handleUnitMouseLeave = () => {
+  showTooltip.value = false
+  hoveredUnit.value = undefined
+  hoveredElement.value = null
 }
 
 defineExpose({ timeaxisElement })
@@ -50,37 +93,43 @@ defineExpose({ timeaxisElement })
   >
     <div class="g-timeunits-container">
       <div
-        v-for="({ label, value, date, width }, index) in timeaxisUnits.result.upperUnits"
-        :key="label"
+        v-for="(unit, index) in timeaxisUnits.result.upperUnits"
+        :key="unit.label"
         class="g-upper-timeunit"
         :style="{
           background: index % 2 === 0 ? colors.primary : colors.secondary,
+          ...getHolidayStyle(unit, 'upper'),
           color: colors.text,
-          width
+          width: unit.width
         }"
+        @mouseenter="(e) => handleUnitMouseEnter(unit, 'upper', e)"
+        @mouseleave="handleUnitMouseLeave"
       >
-        <slot name="upper-timeunit" :label="label" :value="value" :date="date">
-          {{ label }}
+        <slot name="upper-timeunit" :label="unit.label" :value="unit.value" :date="unit.date">
+          {{ unit.label }}
         </slot>
       </div>
     </div>
 
     <div class="g-timeunits-container">
       <div
-        v-for="({ label, value, date, width }, index) in timeaxisUnits.result.lowerUnits"
-        :key="label"
+        v-for="(unit, index) in timeaxisUnits.result.lowerUnits"
+        :key="unit.date.toISOString()"
         class="g-timeunit"
         :style="{
           background: index % 2 === 0 ? colors.ternary : colors.quartenary,
+          ...getHolidayStyle(unit, 'lower'),
           color: colors.text,
           flexDirection: precision === 'hour' ? (enableMinutes ? 'column' : 'row-reverse') : 'row',
           alignItems: 'center',
-          width
+          width: unit.width
         }"
+        @mouseenter="(e) => handleUnitMouseEnter(unit, 'lower', e)"
+        @mouseleave="handleUnitMouseLeave"
       >
         <div class="g-timeunit-min">
-          <slot name="timeunit" :label="label" :value="value" :date="date">
-            <div class="label-unit">{{ label }}</div>
+          <slot name="timeunit" :label="unit.label" :value="unit.value" :date="unit.date">
+            <div class="label-unit">{{ unit.label }}</div>
           </slot>
           <div
             v-if="precision === 'hour'"
@@ -91,7 +140,7 @@ defineExpose({ timeaxisElement })
         <div v-if="precision === 'hour' && enableMinutes" class="g-timeunit-step">
           <div
             v-for="step in timeaxisUnits.globalMinuteStep"
-            :key="`${label}-${step}`"
+            :key="`${unit.label}-${step}`"
             :style="{
               background: index % 2 === 0 ? colors.ternary : colors.quartenary,
               color: colors.text,
@@ -107,6 +156,11 @@ defineExpose({ timeaxisElement })
         </div>
       </div>
     </div>
+    <g-gantt-holiday-tooltip
+      :model-value="showTooltip"
+      :unit="hoveredUnit"
+      :target-element="hoveredElement"
+    />
   </div>
 </template>
 
@@ -137,7 +191,6 @@ defineExpose({ timeaxisElement })
   height: 100%;
   font-size: 65%;
   display: flex;
-  flex-direction: column;
   justify-content: center;
 }
 
@@ -163,10 +216,12 @@ defineExpose({ timeaxisElement })
   flex-direction: row-reverse;
   align-items: center;
   width: 100%;
+  line-height: 20px;
 }
 
 .g-timeunit-step {
   display: flex;
   width: 100%;
+  line-height: 20px;
 }
 </style>

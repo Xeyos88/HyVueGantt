@@ -1,6 +1,6 @@
 {
   "name": "hy-vue-gantt",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Evolution of vue-ganttastic package",
   "author": "Eugenio Topa (@Xeyos88)",
   "scripts": {
@@ -54,7 +54,8 @@
   },
   "peerDependencies": {
     "dayjs": "^1.11.13",
-    "vue": "^3.5.13"
+    "vue": "^3.5.13",
+    "date-holidays": "^3.23.14"
   },
   "homepage": "https://xeyos88.github.io/HyVueGantt/",
   "keywords": [

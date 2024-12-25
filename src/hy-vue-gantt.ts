@@ -8,7 +8,7 @@ import weekOfYear from "dayjs/plugin/weekOfYear"
 import advancedFormat from "dayjs/plugin/advancedFormat"
 import customParseFormat from "dayjs/plugin/customParseFormat.js"
 
-import type { ColorScheme } from "./color-schemes"
+import type { ColorScheme } from "./types"
 
 import GGanttChart from "./components/GGanttChart.vue"
 import GGanttRow from "./components/GGanttRow.vue"
@@ -20,7 +20,8 @@ import type {
   LabelColumnConfig,
   ConnectionType,
   ConnectionPattern,
-  ConnectionSpeed
+  ConnectionSpeed,
+  GanttMilestone
 } from "./types"
 
 export function extendDayjs() {
@@ -42,7 +43,8 @@ export type {
   LabelColumnConfig,
   ConnectionType,
   ConnectionPattern,
-  ConnectionSpeed
+  ConnectionSpeed,
+  GanttMilestone
 }
 export { GGanttChart, GGanttRow }
 

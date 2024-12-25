@@ -247,7 +247,6 @@ onMounted(() => {
         :enable-connections="true"
         grid
         label-column-title="Rows"
-
       >
         <g-gantt-row
           v-for="row in rows"
