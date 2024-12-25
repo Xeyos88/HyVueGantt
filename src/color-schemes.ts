@@ -1,20 +1,4 @@
-import type * as CSS from "csstype"
-
-type Color = CSS.DataType.Color
-
-export type ColorScheme = {
-  primary: Color
-  secondary: Color
-  ternary: Color
-  quartenary: Color
-  hoverHighlight: Color
-  markerCurrentTime: Color
-  text: Color
-  background: Color
-  toast?: Color
-  commands?: Color
-  rangeHighlight?: Color
-}
+import type { ColorScheme } from "./types"
 
 export const colorSchemes: Record<string, ColorScheme> = {
   default: {
@@ -27,7 +11,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     text: "#404040",
     background: "white",
     commands: "#eeeeee",
-    rangeHighlight: "#000"
+    rangeHighlight: "#000",
+    holidayHighlight: "rgba(240, 120, 96, 0.8)"
   },
 
   creamy: {
@@ -40,7 +25,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     text: "#542d05",
     background: "white",
     commands: "white",
-    rangeHighlight: "#000"
+    rangeHighlight: "#000",
+    holidayHighlight: "rgba(240, 120, 96, 0.8)"
   },
 
   crimson: {
@@ -53,7 +39,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     text: "white",
     background: "white",
     commands: "white",
-    rangeHighlight: "#000"
+    rangeHighlight: "#000",
+    holidayHighlight: "rgba(240, 120, 96, 0.8)"
   },
   dark: {
     primary: "#404040",
@@ -66,7 +53,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     background: "#525252",
     toast: "#1f1f1f",
     commands: "#525252",
-    rangeHighlight: "#000"
+    rangeHighlight: "#000",
+    holidayHighlight: "#ff9d3b"
   },
 
   flare: {
@@ -78,7 +66,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     markerCurrentTime: "#000",
     text: "white",
     background: "white",
-    rangeHighlight: "#000"
+    rangeHighlight: "#000",
+    holidayHighlight: "rgba(240, 120, 96, 0.8)"
   },
 
   fuchsia: {
@@ -91,7 +80,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     text: "white",
     background: "white",
     commands: "white",
-    rangeHighlight: "#000"
+    rangeHighlight: "#000",
+    holidayHighlight: "rgba(240, 120, 96, 0.8)"
   },
 
   grove: {
@@ -104,7 +94,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     text: "white",
     background: "white",
     commands: "white",
-    rangeHighlight: "#000"
+    rangeHighlight: "#000",
+    holidayHighlight: "rgba(240, 120, 96, 0.8)"
   },
 
   "material-blue": {
@@ -117,7 +108,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     text: "white",
     background: "white",
     commands: "white",
-    rangeHighlight: "#000"
+    rangeHighlight: "#000",
+    holidayHighlight: "rgba(240, 120, 96, 0.8)"
   },
 
   sky: {
@@ -130,7 +122,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     text: "#022c47",
     background: "white",
     commands: "white",
-    rangeHighlight: "#000"
+    rangeHighlight: "#000",
+    holidayHighlight: "rgba(240, 120, 96, 0.8)"
   },
 
   slumber: {
@@ -144,7 +137,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     background: "#38383b",
     toast: "#1f1f1f",
     commands: "#38383b",
-    rangeHighlight: "#000"
+    rangeHighlight: "#000",
+    holidayHighlight: "rgba(240, 120, 96, 0.8)"
   },
 
   vue: {
@@ -157,7 +151,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     text: "white",
     background: "white",
     commands: "white",
-    rangeHighlight: "#000"
+    rangeHighlight: "#000",
+    holidayHighlight: "#f7842d"
   }
 }
 

@@ -22,8 +22,8 @@ const rows = ref([
             }
           ]
         },
-        start: '2024-12-10 09:00',
-        end: '2024-12-10 14:00',
+        start: '2024-12-25 09:00',
+        end: '2024-12-25 14:00',
       },
       {
         ganttBarConfig: {
@@ -39,8 +39,8 @@ const rows = ref([
             }
           ]
         },
-        start: '2024-12-10 15:00',
-        end: '2024-12-11 12:00',
+        start: '2024-12-25 15:00',
+        end: '2024-12-26 12:00',
       },
     ],
   },
@@ -61,8 +61,8 @@ const rows = ref([
             }
           ]
         },
-        start: '2024-12-11 13:00',
-        end: '2024-12-12 12:00',
+        start: '2024-12-26 13:00',
+        end: '2024-12-26 12:00',
       },
       {
         ganttBarConfig: {
@@ -70,8 +70,8 @@ const rows = ref([
           label: 'Testing',
           style: { background: '#D4A5A5' },
         },
-        start: '2024-12-12 13:00',
-        end: '2024-12-12 17:00',
+        start: '2024-12-26 13:00',
+        end: '2024-12-26 17:00',
       },
     ],
   },
@@ -86,14 +86,15 @@ onMounted(() => {
   <ClientOnly>
     <div class="demo-container" v-if="isLibraryReady">
       <g-gantt-chart
-        chart-start="2024-12-10 08:00"
-        chart-end="2024-12-13 23:00"
+        chart-start="2024-12-25 08:00"
+        chart-end="2024-12-27 23:00"
         precision="hour"
         bar-start="start"
         bar-end="end"
         :enable-connections="true"
         :push-on-connect="true"
         color-scheme="dark"
+        :holidayHighlight="'US'"
       >
         <g-gantt-row
           v-for="row in rows"

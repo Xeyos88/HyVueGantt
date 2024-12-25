@@ -14,4 +14,5 @@ export interface ColorScheme {
   toast?: Color
   commands?: Color
   rangeHighlight?: Color
+  holidayHighlight?: Color
 }

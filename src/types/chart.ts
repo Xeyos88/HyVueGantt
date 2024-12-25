@@ -32,6 +32,9 @@ export interface TimeaxisUnit {
   value?: string
   date: Date
   width?: string
+  isHoliday?: boolean
+  holidayName?: string
+  holidayType?: string
 }
 
 export interface GanttMilestone {
@@ -55,4 +58,10 @@ export interface TimeaxisData {
 export interface GGanttTimeaxisInstance {
   timeaxisUnits: TimeaxisData
   timeaxisElement: HTMLElement | null
+}
+
+export interface Holiday {
+  date: Date
+  name: string
+  type: string
 }

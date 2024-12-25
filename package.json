@@ -54,7 +54,8 @@
   },
   "peerDependencies": {
     "dayjs": "^1.11.13",
-    "vue": "^3.5.13"
+    "vue": "^3.5.13",
+    "date-holidays": "^3.23.14"
   },
   "homepage": "https://xeyos88.github.io/HyVueGantt/",
   "keywords": [
