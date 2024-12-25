@@ -202,7 +202,8 @@ const {
     scrollRefs: {
       rowsContainer,
       labelColumn
-    }
+    },
+    updateBarPositions
   },
   props.maxRows
 )

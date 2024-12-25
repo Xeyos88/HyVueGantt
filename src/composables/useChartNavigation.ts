@@ -1,4 +1,4 @@
-import { ref, computed, type Ref } from "vue"
+import { ref, computed, type Ref, nextTick } from "vue"
 
 interface ScrollRefs {
   rowsContainer: Ref<HTMLElement | null>
@@ -8,10 +8,11 @@ interface ChartNavigationOptions {
   diffDays: number
   diffHours: number
   scrollRefs: ScrollRefs
+  updateBarPositions: () => void
 }
 
 export function useChartNavigation(options: ChartNavigationOptions, maxRows: number) {
-  const { diffDays, diffHours, scrollRefs } = options
+  const { diffDays, diffHours, scrollRefs, updateBarPositions } = options
 
   const zoomFactor = ref(diffDays)
   const maxZoom = ref(Math.max(10, 5 * diffDays))
@@ -103,13 +104,24 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
     handleContentScroll(createScrollEvent(scrollRefs.rowsContainer.value))
   }
 
-  const decreaseZoom = () => {
-    if (zoomFactor.value === 1) return
-    zoomFactor.value = zoomFactor.value - 1
+  const handleZoomUpdate = async (newZoomValue: number) => {
+    zoomFactor.value = newZoomValue
+    await nextTick()
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+    updateBarPositions()
   }
-  const increaseZoom = () => {
+
+  const decreaseZoom = async (event?: KeyboardEvent | MouseEvent) => {
+    if (zoomFactor.value === 1) return
+    const step = event?.shiftKey ? 3 : 1
+    const newZoom = Math.max(1, zoomFactor.value - step)
+    await handleZoomUpdate(newZoom)
+  }
+  const increaseZoom = async (event?: KeyboardEvent | MouseEvent) => {
     if (zoomFactor.value === maxZoom.value) return
-    zoomFactor.value = zoomFactor.value + 1
+    const step = event?.shiftKey ? 3 : 1
+    const newZoom = Math.min(maxZoom.value, zoomFactor.value + step)
+    await handleZoomUpdate(newZoom)
   }
 
   return {
