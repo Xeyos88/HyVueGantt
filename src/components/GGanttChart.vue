@@ -44,14 +44,15 @@ import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
 import { useRows } from "../composables/useRows"
 
 // Types and Constants
-import { colorSchemes, type ColorScheme, type ColorSchemeKey } from "../color-schemes"
+import { colorSchemes, type ColorSchemeKey } from "../color-schemes"
 import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
 import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols"
 import type {
   GanttBarObject,
   GGanttChartProps,
   SortDirection,
-  GGanttTimeaxisInstance
+  GGanttTimeaxisInstance,
+  ColorScheme
 } from "../types"
 import type { CSSProperties } from "vue"
 
@@ -86,7 +87,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   multiColumnLabel: () => [],
   sortable: true,
   labelResizable: true,
-  milestones: () => []
+  milestones: () => [],
+  holidayHighlight: ""
 })
 
 const id = ref(crypto.randomUUID())
@@ -202,7 +204,8 @@ const {
     scrollRefs: {
       rowsContainer,
       labelColumn
-    }
+    },
+    updateBarPositions
   },
   props.maxRows
 )

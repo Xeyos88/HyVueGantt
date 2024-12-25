@@ -5,6 +5,7 @@ import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
 import type { TimeaxisResult, TimeaxisUnit, TimeUnit } from "../types"
 import { useElementSize } from "@vueuse/core"
+import { useHolidays } from "./useHolidays"
 
 type ExtendedTimeUnit = TimeUnit | "year" | "isoWeek"
 type DayjsUnitType = ManipulateType
@@ -25,6 +26,7 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
   const { enableMinutes } = provideBooleanConfig()
   const { chartStartDayjs, chartEndDayjs } = useDayjsHelper()
   const { width: containerWidth } = useElementSize(timeaxisRef)
+  const { getHolidayInfo } = useHolidays(config)
 
   const internalPrecision = ref<TimeUnit>(configPrecision.value)
 
@@ -276,12 +278,20 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     return steps
   }
 
-  const createTimeaxisUnit = (moment: Dayjs, format: string, width: string): TimeaxisUnit => ({
-    label: moment.format(format),
-    value: String(moment),
-    date: moment.toDate(),
-    width
-  })
+  const createTimeaxisUnit = (moment: Dayjs, format: string, width: string): TimeaxisUnit => {
+    const date = moment.toDate()
+    const holidayInfo = config.holidayHighlight.value ? getHolidayInfo(date) : null
+
+    return {
+      label: moment.format(format),
+      value: String(moment),
+      date,
+      width,
+      isHoliday: holidayInfo?.isHoliday || false,
+      holidayName: holidayInfo?.holidayName,
+      holidayType: holidayInfo?.holidayType
+    }
+  }
 
   const advanceTimeUnit = (moment: Dayjs, precision: ExtendedTimeUnit): Dayjs => {
     const unit = getDayjsUnit(precision)
@@ -290,6 +300,7 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
   }
 
   return {
-    timeaxisUnits
+    timeaxisUnits,
+    internalPrecision
   }
 }

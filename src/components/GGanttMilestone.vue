@@ -84,20 +84,22 @@ const styleConfig = computed(() => {
     <div class="g-gantt-milestone-marker" :style="styleConfig.marker" />
 
     <teleport to="body">
-      <div
-        v-if="showTooltip"
-        class="g-gantt-milestone-tooltip"
-        :style="{
-          top: `${tooltipPosition.y}px`,
-          left: `${tooltipPosition.x}px`,
-          background: colors.primary,
-          color: colors.text
-        }"
-      >
-        <div class="g-gantt-milestone-tooltip-title">{{ milestone.name }}</div>
-        <div class="g-gantt-milestone-tooltip-date">{{ milestone.date }}</div>
-        <div class="g-gantt-milestone-tooltip-description">{{ milestone.description }}</div>
-      </div>
+      <transition name="g-fade" mode="out-in">
+        <div
+          v-if="showTooltip"
+          class="g-gantt-milestone-tooltip"
+          :style="{
+            top: `${tooltipPosition.y}px`,
+            left: `${tooltipPosition.x}px`,
+            background: colors.primary,
+            color: colors.text
+          }"
+        >
+          <div class="g-gantt-milestone-tooltip-title">{{ milestone.name }}</div>
+          <div class="g-gantt-milestone-tooltip-date">{{ milestone.date }}</div>
+          <div class="g-gantt-milestone-tooltip-description">{{ milestone.description }}</div>
+        </div>
+      </transition>
     </teleport>
   </div>
 </template>
@@ -154,5 +156,15 @@ const styleConfig = computed(() => {
 .g-gantt-milestone-tooltip-description {
   font-size: 0.9em;
   line-height: 1.4;
+}
+
+.g-fade-enter-active,
+.g-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.g-fade-enter-from,
+.g-fade-leave-to {
+  opacity: 0;
 }
 </style>
