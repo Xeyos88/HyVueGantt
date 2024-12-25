@@ -4,6 +4,7 @@ import type {
   ConnectionPattern,
   ConnectionSpeed,
   ConnectionType,
+  GanttMilestone,
   LabelColumnConfig,
   TimeUnit
 } from "./chart"
@@ -45,6 +46,7 @@ export interface GGanttChartProps {
   initialRows?: ChartRow[]
   sortable?: boolean
   labelResizable?: boolean
+  milestones?: GanttMilestone[]
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

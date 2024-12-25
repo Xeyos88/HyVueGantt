@@ -158,7 +158,6 @@ const getRowValue = (row: ChartRow, column: LabelColumnConfig, index: number) =>
 const labelContainer = ref<HTMLElement | null>(null)
 
 const labelContainerStyle = computed<CSSProperties>(() => {
-  console.log(maxRows.value, rows.value.length)
   if (maxRows.value === 0) return {}
   const minRows = Math.min(maxRows.value, rows.value.length)
 

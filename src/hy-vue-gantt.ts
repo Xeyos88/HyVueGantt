@@ -20,7 +20,8 @@ import type {
   LabelColumnConfig,
   ConnectionType,
   ConnectionPattern,
-  ConnectionSpeed
+  ConnectionSpeed,
+  GanttMilestone
 } from "./types"
 
 export function extendDayjs() {
@@ -42,7 +43,8 @@ export type {
   LabelColumnConfig,
   ConnectionType,
   ConnectionPattern,
-  ConnectionSpeed
+  ConnectionSpeed,
+  GanttMilestone
 }
 export { GGanttChart, GGanttRow }
 

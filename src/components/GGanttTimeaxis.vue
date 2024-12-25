@@ -68,7 +68,7 @@ defineExpose({ timeaxisElement })
     <div class="g-timeunits-container">
       <div
         v-for="({ label, value, date, width }, index) in timeaxisUnits.result.lowerUnits"
-        :key="label"
+        :key="date.toISOString()"
         class="g-timeunit"
         :style="{
           background: index % 2 === 0 ? colors.ternary : colors.quartenary,
@@ -137,7 +137,6 @@ defineExpose({ timeaxisElement })
   height: 100%;
   font-size: 65%;
   display: flex;
-  flex-direction: column;
   justify-content: center;
 }
 
@@ -163,10 +162,12 @@ defineExpose({ timeaxisElement })
   flex-direction: row-reverse;
   align-items: center;
   width: 100%;
+  line-height: 20px;
 }
 
 .g-timeunit-step {
   display: flex;
   width: 100%;
+  line-height: 20px;
 }
 </style>
