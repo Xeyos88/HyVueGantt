@@ -151,8 +151,15 @@ const emit = defineEmits<{
 const chartStartDayjs = computed(() => dayjs(props.chartStart, props.dateFormat as string, true))
 const chartEndDayjs = computed(() => dayjs(props.chartEnd, props.dateFormat as string, true))
 
-const diffDays = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "day") + 1)
+//const diffDays = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "day") + 1)
 const diffHours = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "hour"))
+const diffPrecision = computed(
+  () =>
+    chartEndDayjs.value.diff(
+      chartStartDayjs.value,
+      props.precision === "hour" ? "day" : props.precision
+    ) + 1
+)
 
 // Chart Elements Refs
 const ganttChart = ref<HTMLElement | null>(null)
@@ -190,7 +197,7 @@ const {
   isAtBottom
 } = useChartNavigation(
   {
-    diffDays: diffDays.value,
+    diffDays: diffPrecision.value,
     diffHours: diffHours.value,
     scrollRefs: {
       rowsContainer,
@@ -217,31 +224,8 @@ const navigationControls = {
 
 const { handleKeyDown } = useKeyboardNavigation(navigationControls, ganttWrapper, ganttContainer)
 
-// Derived State
-const roundToOptimalWidth = (width: number, numberOfUnits: number): number => {
-  const unitWidth = width / numberOfUnits
-  const roundedUnitWidth = Math.round(unitWidth * 100) / 100
-  const optimalWidth = roundedUnitWidth * numberOfUnits
-  return Math.round(optimalWidth * 100) / 100
-}
-
 // Computed property per timeaxisUnits
-const timeaxisUnits = computed(() => {
-  if (!timeaxisComponent.value) return { result: { upperUnits: [], lowerUnits: [] } }
-  return timeaxisComponent.value.timeaxisUnits
-})
-
-// Aggiorna la computed property widthNumber
-const widthNumber = computed(() => {
-  const baseWidth = zoomFactor.value * 100
-  console.log(timeaxisUnits.value?.result?.lowerUnits?.length)
-
-  if (!timeaxisUnits.value?.result?.lowerUnits?.length) {
-    return baseWidth
-  }
-
-  return roundToOptimalWidth(baseWidth, timeaxisUnits.value.result.lowerUnits.length)
-})
+const widthNumber = computed(() => zoomFactor.value * 100)
 const customWidth = computed(() => `${widthNumber.value}%`)
 
 const { font, colorScheme } = toRefs(props)
