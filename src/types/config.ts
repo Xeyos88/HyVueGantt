@@ -48,6 +48,7 @@ export interface GGanttChartProps {
   labelResizable?: boolean
   milestones?: GanttMilestone[]
   holidayHighlight?: string
+  rowClass?: (row?: ChartRow) => string
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

@@ -17,7 +17,7 @@ const emit = defineEmits<{
   (e: "drop", value: { e: MouseEvent; datetime: string | Date }): void
 }>()
 
-const { rowHeight, colors, labelColumnTitle } = provideConfig()
+const { rowHeight, colors, labelColumnTitle, rowClass } = provideConfig()
 const { highlightOnHover } = toRefs(props)
 const isHovering = ref(false)
 
@@ -26,6 +26,14 @@ const rowStyle = computed(() => {
     height: `${rowHeight.value}px`,
     background: highlightOnHover?.value && isHovering.value ? colors.value.hoverHighlight : null
   } as StyleValue
+})
+
+const rowClasses = computed(() => {
+  const classes = ["g-gantt-row"]
+  if (rowClass.value && props) {
+    classes.push(rowClass.value(props))
+  }
+  return classes
 })
 
 const { mapPositionToTime } = useTimePositionMapping()
@@ -51,7 +59,7 @@ const isBlank = (str: string) => {
 
 <template>
   <div
-    class="g-gantt-row"
+    :class="rowClasses"
     :style="rowStyle"
     @dragover.prevent="isHovering = true"
     @dragleave="isHovering = false"
