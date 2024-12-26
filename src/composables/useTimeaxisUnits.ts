@@ -43,6 +43,7 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
 
   const getNextPrecision = (currentPrecision: TimeUnit): TimeUnit => {
     const currentIndex = precisionHierarchy.indexOf(currentPrecision)
+
     if (currentIndex < precisionHierarchy.length - 1) {
       return precisionHierarchy[currentIndex + 1]!
     }
@@ -51,7 +52,8 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
 
   const getPreviousPrecision = (currentPrecision: TimeUnit): TimeUnit => {
     const currentIndex = precisionHierarchy.indexOf(currentPrecision)
-    if (currentIndex > 0) {
+    const configIndex = precisionHierarchy.indexOf(configPrecision.value)
+    if (currentIndex > 0 && currentIndex > configIndex) {
       return precisionHierarchy[currentIndex - 1]!
     }
     return currentPrecision
@@ -120,6 +122,12 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     [containerWidth, widthNumber, () => configPrecision.value],
     () => {
       if (containerWidth.value > 0) {
+        const currentIndex = precisionHierarchy.indexOf(internalPrecision.value)
+        const configIndex = precisionHierarchy.indexOf(configPrecision.value)
+        if (currentIndex <= configIndex) {
+          internalPrecision.value = configPrecision.value
+        }
+
         const startingPrecision = internalPrecision.value
         const optimalPrecision = findOptimalPrecision(startingPrecision)
 
@@ -218,7 +226,6 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
         : chartEndDayjs.value
 
       const width = calculateWidth(currentLowerUnit, endOfCurrentLower, totalMinutes)
-
       result.lowerUnits.push(
         createTimeaxisUnit(currentLowerUnit, getDisplayFormat(currentPrecision), width)
       )
