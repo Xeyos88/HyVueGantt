@@ -89,7 +89,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   labelResizable: true,
   milestones: () => [],
   holidayHighlight: "",
-  rowClass: () => ""
+  rowClass: () => "",
+  rowLabelClass: () => ""
 })
 
 const id = ref(crypto.randomUUID())
@@ -464,7 +465,11 @@ provide("id", id)
                 :key="row.id || row.label"
                 :label="row.label"
                 :bars="row.bars"
+                :id="row.id"
               >
+                <template #label="slotProps">
+                  <slot name="label" v-bind="slotProps" />
+                </template>
                 <template #bar-label="slotProps">
                   <slot name="bar-label" v-bind="slotProps" />
                 </template>

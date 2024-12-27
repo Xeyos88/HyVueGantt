@@ -11,6 +11,7 @@ const props = defineProps<{
   label: string
   bars: GanttBarObject[]
   highlightOnHover?: boolean
+  id?: string | number
 }>()
 
 const emit = defineEmits<{
