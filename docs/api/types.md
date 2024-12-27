@@ -41,8 +41,10 @@ interface GanttBarObject {
 
 ```typescript
 interface ChartRow {
-  label: string;
-  bars: GanttBarObject[];
+  id?: string | number
+  label: string
+  bars: GanttBarObject[]
+  _originalNode?: any
 }
 
 interface BarConnection {

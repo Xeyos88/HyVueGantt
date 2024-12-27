@@ -4,6 +4,7 @@ export interface ChartRow {
   id?: string | number
   label: string
   bars: GanttBarObject[]
+  _originalNode?: any
 }
 
 export type TimeUnit = "hour" | "day" | "date" | "week" | "month"

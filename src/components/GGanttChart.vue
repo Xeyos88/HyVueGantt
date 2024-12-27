@@ -21,7 +21,8 @@ import {
   toRefs,
   toRef,
   useSlots,
-  watch
+  watch,
+  h
 } from "vue"
 import { useElementSize } from "@vueuse/core"
 import dayjs from "dayjs"
@@ -33,8 +34,8 @@ import GGanttTimeaxis from "./GGanttTimeaxis.vue"
 import GGanttBarTooltip from "./GGanttBarTooltip.vue"
 import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
-import GGanttRow from "./GGanttRow.vue"
 import GGanttMilestone from "./GGanttMilestone.vue"
+import GGanttRow from "./GGanttRow.vue"
 
 // Internal Imports - Composables
 import { useConnections } from "../composables/useConnections"
@@ -52,7 +53,8 @@ import type {
   GGanttChartProps,
   SortDirection,
   GGanttTimeaxisInstance,
-  ColorScheme
+  ColorScheme,
+  ChartRow
 } from "../types"
 import type { CSSProperties } from "vue"
 
@@ -88,7 +90,9 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   sortable: true,
   labelResizable: true,
   milestones: () => [],
-  holidayHighlight: ""
+  holidayHighlight: "",
+  rowClass: () => "",
+  rowLabelClass: () => ""
 })
 
 const id = ref(crypto.randomUUID())
@@ -105,9 +109,31 @@ const rowManager = useRows(
 )
 const rows = computed(() => rowManager.rows.value)
 
+const renderRow = (row: ChartRow) => {
+  if (row._originalNode) {
+    return h(
+      GGanttRow,
+      {
+        ...row._originalNode.props,
+        label: row.label,
+        bars: row.bars,
+        id: row.id,
+        key: row.id || row.label
+      },
+      row._originalNode.children || {}
+    )
+  }
+
+  return h(GGanttRow, {
+    label: row.label,
+    bars: row.bars,
+    id: row.id,
+    key: row.id || row.label
+  })
+}
+
 provide("useRows", rowManager)
 
-// Based on props
 const rowsContainerStyle = computed<CSSProperties>(() => {
   if (props.maxRows === 0) return {}
 
@@ -458,16 +484,9 @@ provide("id", id)
               ref="rowsContainer"
               @scroll="handleContentScroll"
             >
-              <g-gantt-row
-                v-for="row in rows"
-                :key="row.id || row.label"
-                :label="row.label"
-                :bars="row.bars"
-              >
-                <template #bar-label="slotProps">
-                  <slot name="bar-label" v-bind="slotProps" />
-                </template>
-              </g-gantt-row>
+              <template v-for="row in rows" :key="row.id || row.label">
+                <component :is="renderRow(row)" />
+              </template>
               <!-- Connections -->
               <template v-if="enableConnections">
                 <template v-for="conn in connections" :key="`${conn.sourceId}-${conn.targetId}`">

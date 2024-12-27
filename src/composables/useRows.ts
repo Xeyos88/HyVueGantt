@@ -37,13 +37,21 @@ export function useRows(
     defaultSlot.forEach((child) => {
       if (child.props?.bars) {
         const { label, bars } = child.props
-        rows.push({ label, bars })
+        rows.push({
+          label,
+          bars,
+          _originalNode: child
+        })
       } else if (Array.isArray(child.children)) {
         child.children.forEach((grandchild) => {
-          const granchildNode = grandchild as { props?: ChartRow }
-          if (granchildNode?.props?.bars) {
-            const { label, bars } = granchildNode.props
-            rows.push({ label, bars })
+          const grandchildNode = grandchild as { props?: ChartRow }
+          if (grandchildNode?.props?.bars) {
+            const { label, bars } = grandchildNode.props
+            rows.push({
+              label,
+              bars,
+              _originalNode: grandchildNode
+            })
           }
         })
       }
