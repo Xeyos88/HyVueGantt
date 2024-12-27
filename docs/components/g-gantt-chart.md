@@ -66,6 +66,9 @@ Here's a minimal example of using the GGanttChart component:
 | dateFormat | `string \| false` | `'YYYY-MM-DD HH:mm'` | Format for dates |
 | milestones | `GanttMilestone[]` | `[]` | List of milestone |
 | holidayHighlight| `string` | `` | Country Cody of date-holidays |
+| rowClass| `(row: ChartRow) => string` | `` | Method to add classes to data rows |
+| rowLabelClass| `(row: ChartRow) => string` | `` | Method to add classes to label rows |
+
 
 ### Events
 
