@@ -23,6 +23,8 @@ The GGanttRow component represents a single row in the Gantt chart. It manages t
 | label | `string` | Required | Row label |
 | bars | `GanttBarObject[]` | Required | Array of bar objects |
 | highlightOnHover | `boolean` | `false` | Highlight row on hover |
+| id | `string \| number` | `` |Row identifier |
+
 
 ### Events
 
@@ -49,6 +51,7 @@ Bars within the row support the following keyboard controls:
 | Down Arrow | Shrink bar | Shrink 12 units |
 
 The actual unit size depends on the chart's precision setting (hours, days, etc.).
+The step increment or shift is greater if Shift is held down 
 
 ## Bar Configuration
 

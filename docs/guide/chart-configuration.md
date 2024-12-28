@@ -57,6 +57,7 @@ The chart emits various events that you can listen to:
   @dragend-bar="handleDragEnd"
   @mouseenter-bar="handleMouseEnter"
   @mouseleave-bar="handleMouseLeave"
+  @sort="handleSort"
 />
 ```
 

@@ -14,11 +14,12 @@ export interface UseRowsProps {
   barStart: Ref<string>
   barEnd: Ref<string>
   multiColumnLabel: Ref<LabelColumnConfig[]>
+  onSort: (sortState: SortState) => void
 }
 
 export function useRows(
   slots: Slots,
-  { barStart, barEnd, multiColumnLabel }: UseRowsProps,
+  { barStart, barEnd, multiColumnLabel, onSort }: UseRowsProps,
   initialRows?: Ref<ChartRow[]>,
   initialSortColumn: LabelColumnField = "Label"
 ): UseRowsReturn {
@@ -159,6 +160,7 @@ export function useRows(
           break
       }
     }
+    onSort(sortState.value)
     sortChangeCallbacks.value.forEach((callback) => callback())
   }
 

@@ -7,7 +7,7 @@ import isBetween from "dayjs/plugin/isBetween.js"
 import weekOfYear from "dayjs/plugin/weekOfYear"
 import advancedFormat from "dayjs/plugin/advancedFormat"
 import customParseFormat from "dayjs/plugin/customParseFormat.js"
-
+import dayOfYear from "dayjs/plugin/dayOfYear.js"
 import type { ColorScheme } from "./types"
 
 import GGanttChart from "./components/GGanttChart.vue"
@@ -32,6 +32,7 @@ export function extendDayjs() {
   dayjs.extend(weekOfYear)
   dayjs.extend(isoWeek)
   dayjs.extend(advancedFormat)
+  dayjs.extend(dayOfYear)
 }
 
 export type {

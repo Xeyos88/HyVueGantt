@@ -68,6 +68,7 @@ Here's a minimal example of using the GGanttChart component:
 | holidayHighlight| `string` | `` | Country Cody of date-holidays |
 | rowClass| `(row: ChartRow) => string` | `` | Method to add classes to data rows |
 | rowLabelClass| `(row: ChartRow) => string` | `` | Method to add classes to label rows |
+| dayOptionLabel| `DayOptionLabel[]` | `['day']` | Customization for time unit day |
 
 
 ### Events
@@ -81,6 +82,8 @@ Here's a minimal example of using the GGanttChart component:
 | dragstart-bar | `{ bar: GanttBarObject, e: MouseEvent }` | Bar drag started |
 | drag-bar | `{ bar: GanttBarObject, e: MouseEvent }` | Bar being dragged |
 | dragend-bar | `{ bar: GanttBarObject, e: MouseEvent, movedBars?: Map }` | Bar drag ended |
+| sort | `{ direction: SortState }` | Sort rows column and direction |
+
 
 ### Slots
 
