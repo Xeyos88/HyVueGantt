@@ -92,7 +92,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   milestones: () => [],
   holidayHighlight: "",
   rowClass: () => "",
-  rowLabelClass: () => ""
+  rowLabelClass: () => "",
+  dayOptionLabel: () => ["day"]
 })
 
 const id = ref(crypto.randomUUID())

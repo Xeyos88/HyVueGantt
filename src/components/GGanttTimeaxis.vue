@@ -7,8 +7,8 @@ import useDayjsHelper from "../composables/useDayjsHelper"
 import type { TimeaxisUnit } from "@/types"
 import GGanttHolidayTooltip from "./GGanttHolidayTooltip.vue"
 
-const { precision, colors, chartSize, holidayHighlight } = provideConfig()
-const { chartStartDayjs, chartEndDayjs } = useDayjsHelper()
+const { precision, colors, chartSize, holidayHighlight, dayOptionLabel } = provideConfig()
+const { chartStartDayjs, chartEndDayjs, toDayjs } = useDayjsHelper()
 const totalHour = chartEndDayjs.value.diff(chartStartDayjs.value, "hour", true)
 
 const timeaxisElement = ref<HTMLElement | null>(null)
@@ -38,7 +38,7 @@ const handleMouseDown = (e: MouseEvent) => {
   emit("dragStart", e)
 }
 
-const shouldShowHoliday = computed(() => {
+const dayUnitLevel = computed(() => {
   if (internalPrecision.value === "hour") {
     return "upper"
   } else if (internalPrecision.value === "day") {
@@ -48,7 +48,7 @@ const shouldShowHoliday = computed(() => {
 })
 
 const getHolidayStyle = (unit: TimeaxisUnit, unitType: "upper" | "lower") => {
-  if (!holidayHighlight.value || shouldShowHoliday.value !== unitType || !unit.isHoliday) {
+  if (!holidayHighlight.value || dayUnitLevel.value !== unitType || !unit.isHoliday) {
     return {}
   }
 
@@ -66,7 +66,7 @@ const handleUnitMouseEnter = (
   unitType: "upper" | "lower",
   event: MouseEvent
 ) => {
-  if (!holidayHighlight.value || shouldShowHoliday.value === unitType || !unit.isHoliday) {
+  if (!holidayHighlight.value || dayUnitLevel.value === unitType || !unit.isHoliday) {
     hoveredUnit.value = unit
     hoveredElement.value = event.currentTarget as HTMLElement
     showTooltip.value = true
@@ -77,6 +77,35 @@ const handleUnitMouseLeave = () => {
   showTooltip.value = false
   hoveredUnit.value = undefined
   hoveredElement.value = null
+}
+
+const formatTimeUnitLabel = (unit: TimeaxisUnit, unitType: "upper" | "lower") => {
+  if (dayUnitLevel.value !== unitType || !dayOptionLabel.value) {
+    return unit.label
+  }
+
+  let result = ""
+
+  for (const option of dayOptionLabel.value) {
+    if (result) result += " "
+
+    switch (option) {
+      case "day":
+        result += unit.label
+        break
+      case "doy":
+        result += `(${toDayjs(unit.date).dayOfYear()})`
+        break
+      case "name":
+        result += toDayjs(unit.date).format("dd")[0]
+        break
+      case "number":
+        result += toDayjs(unit.date).date()
+        break
+    }
+  }
+
+  return result
 }
 
 defineExpose({ timeaxisElement })
@@ -105,8 +134,13 @@ defineExpose({ timeaxisElement })
         @mouseenter="(e) => handleUnitMouseEnter(unit, 'upper', e)"
         @mouseleave="handleUnitMouseLeave"
       >
-        <slot name="upper-timeunit" :label="unit.label" :value="unit.value" :date="unit.date">
-          {{ unit.label }}
+        <slot
+          name="upper-timeunit"
+          :label="formatTimeUnitLabel(unit, 'upper')"
+          :value="unit.value"
+          :date="unit.date"
+        >
+          {{ formatTimeUnitLabel(unit, "upper") }}
         </slot>
       </div>
     </div>
@@ -128,8 +162,13 @@ defineExpose({ timeaxisElement })
         @mouseleave="handleUnitMouseLeave"
       >
         <div class="g-timeunit-min">
-          <slot name="timeunit" :label="unit.label" :value="unit.value" :date="unit.date">
-            <div class="label-unit">{{ unit.label }}</div>
+          <slot
+            name="timeunit"
+            :label="formatTimeUnitLabel(unit, 'lower')"
+            :value="unit.value"
+            :date="unit.date"
+          >
+            <div class="label-unit">{{ formatTimeUnitLabel(unit, "lower") }}</div>
           </slot>
           <div
             v-if="precision === 'hour'"
