@@ -247,6 +247,7 @@ onMounted(() => {
         :enable-connections="true"
         grid
         label-column-title="Rows"
+        :dayOptionLabel="['day','name','doy']"
       >
         <g-gantt-row
           v-for="row in rows"

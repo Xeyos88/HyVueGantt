@@ -12,6 +12,7 @@ type TimeUnit = 'hour' | 'day' | 'week' | 'month';
 type ConnectionType = 'bezier' | 'straight' | 'squared';
 type ConnectionPattern = 'solid' | 'dot' | 'dash' | 'dashdot';
 type ConnectionSpeed = 'slow' | 'normal' | 'fast';
+type DayOptionLabel = "day" | "doy" | "name" | "number"
 ```
 
 ## Bar Configuration

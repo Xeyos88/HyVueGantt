@@ -51,7 +51,7 @@ import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols
 import type {
   GanttBarObject,
   GGanttChartProps,
-  SortDirection,
+  SortState,
   GGanttTimeaxisInstance,
   ColorScheme,
   ChartRow
@@ -104,7 +104,8 @@ const rowManager = useRows(
   {
     barStart: toRef(props, "barStart"),
     barEnd: toRef(props, "barEnd"),
-    multiColumnLabel: toRef(props, "multiColumnLabel")
+    multiColumnLabel: toRef(props, "multiColumnLabel"),
+    onSort: (sortState) => emit("sort", { sortState }
   },
   props.initialRows ? toRef(props, "initialRows") : undefined
 )
@@ -173,7 +174,7 @@ const emit = defineEmits<{
     e: "contextmenu-bar",
     value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
   ): void
-  (e: "sort", value: { direction: SortDirection }): void
+  (e: "sort", value: { sortState: SortState }): void
 }>()
 
 // Computed Properties
