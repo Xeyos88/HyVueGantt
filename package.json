@@ -1,6 +1,6 @@
 {
   "name": "hy-vue-gantt",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Evolution of vue-ganttastic package",
   "author": "Eugenio Topa (@Xeyos88)",
   "scripts": {
