@@ -30,7 +30,7 @@ export interface GanttBarConfig {
   style?: CSSProperties
   class?: string
   connections?: GanttBarConnection[]
-  milestoneName?: string
+  milestoneId?: string
 }
 
 export interface GanttBarObject {

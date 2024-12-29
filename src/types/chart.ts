@@ -40,6 +40,7 @@ export interface TimeaxisUnit {
 }
 
 export interface GanttMilestone {
+  id: string
   date: string
   name: string
   description?: string

@@ -56,7 +56,7 @@ The GGanttRow component represents a single row in the Gantt chart. It manages t
 | style | `CSSProperties` | `undefined` | Custom CSS styles for the bar |
 | class | `string` | `undefined` | Custom CSS classes for the bar |
 | connections | `GanttBarConnection[]` | `undefined` | Array of connections to other bars |
-| milestoneName | `string` | `undefined` | Name of milestone associated with the bar |
+| milestoneId | `string` | `undefined` | Identifier of milestone associated with the bar |
 
 ### Bar Connection Configuration
 

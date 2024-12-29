@@ -33,11 +33,9 @@ export function useBarMovement(
   }
 
   const checkMilestoneConstraint = (bar: GanttBarObject, newEnd: string): boolean => {
-    if (!bar.ganttBarConfig.milestoneName || !config.milestones.value) return true
+    if (!bar.ganttBarConfig.milestoneId || !config.milestones.value) return true
 
-    const milestone = config.milestones.value.find(
-      (m) => m.name === bar.ganttBarConfig.milestoneName
-    )
+    const milestone = config.milestones.value.find((m) => m.id === bar.ganttBarConfig.milestoneId)
     if (!milestone) return true
     const endDate = dayjsHelper.toDayjs(newEnd)
     const date = dayjs(milestone.date)
