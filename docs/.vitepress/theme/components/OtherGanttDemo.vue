@@ -35,6 +35,7 @@ const rows = ref([
           id: 'fe2',
           label: 'Auth Module',
           style: { background: '#4ECDC4' },
+          milestoneId: '1111',
           connections: [
             { 
               targetId: 'fe3',
@@ -227,6 +228,21 @@ const rows = ref([
   }
 ])
 
+const milestones = ref([
+  {
+    id: '1111',
+    date: '2024-12-10 20:00',
+    name: 'Project Launch',
+    description: 'Official launch of the new platform',
+  },
+  {
+    id: '1112',
+    date: '2024-12-12',
+    name: 'Year End Review',
+    description: 'Final review of project milestones',
+  },
+])
+
 onMounted(() => {
   isLibraryReady.value = true
 })
@@ -247,6 +263,8 @@ onMounted(() => {
         :enable-connections="true"
         grid
         label-column-title="Rows"
+        :dayOptionLabel="['day','name','doy']"
+        :milestones="milestones"
       >
         <g-gantt-row
           v-for="row in rows"

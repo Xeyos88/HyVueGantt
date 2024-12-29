@@ -27,7 +27,8 @@ const {
   precision,
   barStart,
   barEnd,
-  dateFormat
+  dateFormat,
+  rowLabelClass
 } = provideConfig()
 
 const { toDayjs, format } = useDayjsHelper()
@@ -51,6 +52,14 @@ const columns = computed<LabelColumnConfig[]>(() => {
   }
   return multiColumnLabel.value
 })
+
+const rowClasses = (row: ChartRow) => {
+  const classes = ["g-label-column-row"]
+  if (rowLabelClass.value) {
+    classes.push(rowLabelClass.value(row))
+  }
+  return classes
+}
 
 const totalWidth = computed(() => {
   let total = 0
@@ -256,11 +265,11 @@ defineExpose({
       <div
         v-for="(row, index) in rows"
         :key="`${row.id || row.label}_${index}`"
-        class="g-label-column-row"
         :style="{
           background: index % 2 === 0 ? colors.ternary : colors.quartenary,
           height: `${rowHeight}px`
         }"
+        :class="rowClasses(row)"
       >
         <div class="g-label-column-row-inner">
           <template v-for="column in columns" :key="column.field">

@@ -14,11 +14,12 @@ export interface UseRowsProps {
   barStart: Ref<string>
   barEnd: Ref<string>
   multiColumnLabel: Ref<LabelColumnConfig[]>
+  onSort: (sortState: SortState) => void
 }
 
 export function useRows(
   slots: Slots,
-  { barStart, barEnd, multiColumnLabel }: UseRowsProps,
+  { barStart, barEnd, multiColumnLabel, onSort }: UseRowsProps,
   initialRows?: Ref<ChartRow[]>,
   initialSortColumn: LabelColumnField = "Label"
 ): UseRowsReturn {
@@ -37,13 +38,21 @@ export function useRows(
     defaultSlot.forEach((child) => {
       if (child.props?.bars) {
         const { label, bars } = child.props
-        rows.push({ label, bars })
+        rows.push({
+          label,
+          bars,
+          _originalNode: child
+        })
       } else if (Array.isArray(child.children)) {
         child.children.forEach((grandchild) => {
-          const granchildNode = grandchild as { props?: ChartRow }
-          if (granchildNode?.props?.bars) {
-            const { label, bars } = granchildNode.props
-            rows.push({ label, bars })
+          const grandchildNode = grandchild as { props?: ChartRow }
+          if (grandchildNode?.props?.bars) {
+            const { label, bars } = grandchildNode.props
+            rows.push({
+              label,
+              bars,
+              _originalNode: grandchildNode
+            })
           }
         })
       }
@@ -151,6 +160,7 @@ export function useRows(
           break
       }
     }
+    onSort(sortState.value)
     sortChangeCallbacks.value.forEach((callback) => callback())
   }
 

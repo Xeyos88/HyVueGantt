@@ -17,6 +17,7 @@ type ColorScheme = {
   toast?: Color;
   commands?: Color;
   rangeHighlight?: Color;
+  holidayHighlight?: Color;
 };
 
 const availableSchemes = {
@@ -28,7 +29,10 @@ const availableSchemes = {
     hoverHighlight: 'rgba(204, 216, 219, 0.5)',
     markerCurrentTime: '#000',
     text: '#404040',
-    background: 'white'
+    background: 'white',
+    commands: "#eeeeee",
+    rangeHighlight: "#000",
+    holidayHighlight: "rgba(240, 120, 96, 0.8)"
   },
   vue: {
     primary: '#258a5d',
@@ -38,7 +42,10 @@ const availableSchemes = {
     hoverHighlight: 'rgba(160, 219, 171, 0.5)',
     markerCurrentTime: '#000',
     text: 'white',
-    background: 'white'
+    background: 'white',
+    commands: "white",
+    rangeHighlight: "#000",
+    holidayHighlight: "#f7842d"
   }
   // Additional schemes available...
 };

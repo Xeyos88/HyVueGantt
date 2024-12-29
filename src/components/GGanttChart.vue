@@ -21,7 +21,8 @@ import {
   toRefs,
   toRef,
   useSlots,
-  watch
+  watch,
+  h
 } from "vue"
 import { useElementSize } from "@vueuse/core"
 import dayjs from "dayjs"
@@ -33,8 +34,8 @@ import GGanttTimeaxis from "./GGanttTimeaxis.vue"
 import GGanttBarTooltip from "./GGanttBarTooltip.vue"
 import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
-import GGanttRow from "./GGanttRow.vue"
 import GGanttMilestone from "./GGanttMilestone.vue"
+import GGanttRow from "./GGanttRow.vue"
 
 // Internal Imports - Composables
 import { useConnections } from "../composables/useConnections"
@@ -50,9 +51,10 @@ import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols
 import type {
   GanttBarObject,
   GGanttChartProps,
-  SortDirection,
+  SortState,
   GGanttTimeaxisInstance,
-  ColorScheme
+  ColorScheme,
+  ChartRow
 } from "../types"
 import type { CSSProperties } from "vue"
 
@@ -88,7 +90,10 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   sortable: true,
   labelResizable: true,
   milestones: () => [],
-  holidayHighlight: ""
+  holidayHighlight: "",
+  rowClass: () => "",
+  rowLabelClass: () => "",
+  dayOptionLabel: () => ["day"]
 })
 
 const id = ref(crypto.randomUUID())
@@ -99,15 +104,38 @@ const rowManager = useRows(
   {
     barStart: toRef(props, "barStart"),
     barEnd: toRef(props, "barEnd"),
-    multiColumnLabel: toRef(props, "multiColumnLabel")
+    multiColumnLabel: toRef(props, "multiColumnLabel"),
+    onSort: (sortState) => emit("sort", { sortState })
   },
   props.initialRows ? toRef(props, "initialRows") : undefined
 )
 const rows = computed(() => rowManager.rows.value)
 
+const renderRow = (row: ChartRow) => {
+  if (row._originalNode) {
+    return h(
+      GGanttRow,
+      {
+        ...row._originalNode.props,
+        label: row.label,
+        bars: row.bars,
+        id: row.id,
+        key: row.id || row.label
+      },
+      row._originalNode.children || {}
+    )
+  }
+
+  return h(GGanttRow, {
+    label: row.label,
+    bars: row.bars,
+    id: row.id,
+    key: row.id || row.label
+  })
+}
+
 provide("useRows", rowManager)
 
-// Based on props
 const rowsContainerStyle = computed<CSSProperties>(() => {
   if (props.maxRows === 0) return {}
 
@@ -146,7 +174,7 @@ const emit = defineEmits<{
     e: "contextmenu-bar",
     value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
   ): void
-  (e: "sort", value: { direction: SortDirection }): void
+  (e: "sort", value: { sortState: SortState }): void
 }>()
 
 // Computed Properties
@@ -449,7 +477,14 @@ provide("id", id)
               v-for="milestone in milestones"
               :key="milestone.date.toString()"
               :milestone="milestone"
-            />
+            >
+              <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
+                <slot
+                  :name="name"
+                  v-bind="slotData"
+                  v-if="(name as string).startsWith('milestone-') || name === 'milestone'"
+                /> </template
+            ></g-gantt-milestone>
 
             <!-- Rows Container -->
             <div
@@ -458,16 +493,9 @@ provide("id", id)
               ref="rowsContainer"
               @scroll="handleContentScroll"
             >
-              <g-gantt-row
-                v-for="row in rows"
-                :key="row.id || row.label"
-                :label="row.label"
-                :bars="row.bars"
-              >
-                <template #bar-label="slotProps">
-                  <slot name="bar-label" v-bind="slotProps" />
-                </template>
-              </g-gantt-row>
+              <template v-for="row in rows" :key="row.id || row.label">
+                <component :is="renderRow(row)" />
+              </template>
               <!-- Connections -->
               <template v-if="enableConnections">
                 <template v-for="conn in connections" :key="`${conn.sourceId}-${conn.targetId}`">

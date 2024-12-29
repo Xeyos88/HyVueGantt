@@ -4,6 +4,7 @@ import type {
   ConnectionPattern,
   ConnectionSpeed,
   ConnectionType,
+  DayOptionLabel,
   GanttMilestone,
   LabelColumnConfig,
   TimeUnit
@@ -48,6 +49,9 @@ export interface GGanttChartProps {
   labelResizable?: boolean
   milestones?: GanttMilestone[]
   holidayHighlight?: string
+  rowClass?: (row?: ChartRow) => string
+  rowLabelClass?: (row?: ChartRow) => string
+  dayOptionLabel?: DayOptionLabel[]
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

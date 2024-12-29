@@ -12,6 +12,7 @@ type TimeUnit = 'hour' | 'day' | 'week' | 'month';
 type ConnectionType = 'bezier' | 'straight' | 'squared';
 type ConnectionPattern = 'solid' | 'dot' | 'dash' | 'dashdot';
 type ConnectionSpeed = 'slow' | 'normal' | 'fast';
+type DayOptionLabel = "day" | "doy" | "name" | "number"
 ```
 
 ## Bar Configuration
@@ -41,8 +42,10 @@ interface GanttBarObject {
 
 ```typescript
 interface ChartRow {
-  label: string;
-  bars: GanttBarObject[];
+  id?: string | number
+  label: string
+  bars: GanttBarObject[]
+  _originalNode?: any
 }
 
 interface BarConnection {
@@ -56,6 +59,7 @@ interface BarConnection {
 }
 
 export interface GanttMilestone {
+  id: string
   date: string
   name: string
   description?: string
