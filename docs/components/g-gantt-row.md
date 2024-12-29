@@ -39,6 +39,38 @@ The GGanttRow component represents a single row in the Gantt chart. It manages t
 | label | None | Custom row label content |
 | bar-label | `{ bar: GanttBarObject }` | Custom bar label content |
 
+### Bar Configuration (ganttBarConfig)
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| id | `string` | Required | Unique identifier for the bar |
+| label | `string` | `undefined` | Label displayed on the bar |
+| html | `string` | `undefined` | Custom HTML content for the bar |
+| hasHandles | `boolean` | `false` | Shows resize handles on the bar |
+| immobile | `boolean` | `false` | When true, bar cannot be moved |
+| bundle | `string` | `undefined` | Identifier to group multiple bars |
+| pushOnOverlap | `boolean` | `undefined` | If true, pushes other bars when overlapping |
+| pushOnConnect | `boolean` | `undefined` | If true, pushes connected bars when moving |
+| dragLimitLeft | `number` | `undefined` | Left limit for dragging |
+| dragLimitRight | `number` | `undefined` | Right limit for dragging |
+| style | `CSSProperties` | `undefined` | Custom CSS styles for the bar |
+| class | `string` | `undefined` | Custom CSS classes for the bar |
+| connections | `GanttBarConnection[]` | `undefined` | Array of connections to other bars |
+| milestoneName | `string` | `undefined` | Name of milestone associated with the bar |
+
+### Bar Connection Configuration
+
+The `connections` property in `ganttBarConfig` accepts an array of `GanttBarConnection` objects. Each connection has the following properties:
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| targetId | `string` | Required | ID of the target bar to connect to |
+| type | `'bezier' \| 'straight' \| 'squared'` | `'straight'` | Visual style of the connection line |
+| color | `string` | `'#ff0000'` | Color of the connection line |
+| pattern | `'solid' \| 'dot' \| 'dash' \| 'dashdot'` | `'solid'` | Line pattern style |
+| animated | `boolean` | `false` | Whether the connection should be animated |
+| animationSpeed | `'slow' \| 'normal' \| 'fast'` | `'normal'` | Speed of the connection animation |
+
 # Keyboard Controls
 
 Bars within the row support the following keyboard controls:
@@ -66,9 +98,15 @@ interface GanttBarObject {
     html?: string;
     hasHandles?: boolean;
     immobile?: boolean;
+    bundle?: string
+    pushOnOverlap?: boolean
+    pushOnConnect?: boolean
+    dragLimitLeft?: number
+    dragLimitRight?: number
     style?: CSSProperties;
     class?: string;
     connections?: GanttBarConnection[];
+    milestoneName?: string
   }
 }
 ```

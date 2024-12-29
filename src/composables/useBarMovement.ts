@@ -1,6 +1,6 @@
 import { type GanttBarObject } from "../types/bar"
 import type { GGanttChartConfig } from "../types/config"
-import type dayjs from "dayjs"
+import dayjs from "dayjs"
 import type { UseRowsReturn } from "./useRows"
 
 export interface MovementResult {
@@ -32,6 +32,23 @@ export function useBarMovement(
     return typeof result === "string" ? result : result.toISOString()
   }
 
+  const checkMilestoneConstraint = (bar: GanttBarObject, newEnd: string): boolean => {
+    if (!bar.ganttBarConfig.milestoneName || !config.milestones.value) return true
+
+    const milestone = config.milestones.value.find(
+      (m) => m.name === bar.ganttBarConfig.milestoneName
+    )
+    if (!milestone) return true
+    const endDate = dayjsHelper.toDayjs(newEnd)
+    const date = dayjs(milestone.date)
+    let milestoneDate = date
+    if (!date.hour() && !date.minute()) {
+      milestoneDate = dayjsHelper.toDayjs(date.hour(23).minute(59).format("YYYY-MM-DD HH:mm"))
+    }
+
+    return endDate.isSameOrBefore(milestoneDate)
+  }
+
   const moveBar = (
     bar: GanttBarObject,
     newStart: string,
@@ -40,6 +57,10 @@ export function useBarMovement(
   ): MovementResult => {
     if (processedBars.has(bar.ganttBarConfig.id)) {
       return { success: true, affectedBars: new Set() }
+    }
+
+    if (!checkMilestoneConstraint(bar, newEnd)) {
+      return { success: false, affectedBars: new Set() }
     }
 
     processedBars.add(bar.ganttBarConfig.id)
@@ -95,6 +116,10 @@ export function useBarMovement(
           ? dayjsHelper.toDayjs(impactedBar[barEnd.value]).subtract(minutesToMove, "minutes")
           : dayjsHelper.toDayjs(impactedBar[barEnd.value]).add(minutesToMove, "minutes")
       )
+
+      if (!checkMilestoneConstraint(impactedBar, newEnd)) {
+        return { success: false }
+      }
 
       const result = moveBar(impactedBar, newStart, newEnd, false)
       if (!result.success) {

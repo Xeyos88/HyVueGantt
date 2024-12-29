@@ -105,7 +105,7 @@ const rowManager = useRows(
     barStart: toRef(props, "barStart"),
     barEnd: toRef(props, "barEnd"),
     multiColumnLabel: toRef(props, "multiColumnLabel"),
-    onSort: (sortState) => emit("sort", { sortState }
+    onSort: (sortState) => emit("sort", { sortState })
   },
   props.initialRows ? toRef(props, "initialRows") : undefined
 )
