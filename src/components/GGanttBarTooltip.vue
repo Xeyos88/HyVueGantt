@@ -21,7 +21,7 @@ const props = defineProps<{
 }>()
 
 const { bar } = toRefs(props)
-const { precision, font, barStart, barEnd, rowHeight } = provideConfig()
+const { precision, font, barStart, barEnd, rowHeight, milestones } = provideConfig()
 
 const tooltipTop = ref("0px")
 const tooltipLeft = ref("0px")
@@ -58,13 +58,13 @@ const tooltipContent = computed(() => {
   if (!bar?.value) {
     return ""
   }
+  const milestone = milestones.value.find((m) => m.id === bar.value?.ganttBarConfig.milestoneId)
+
   const format = TOOLTIP_FORMATS[precision.value]
   const barStartFormatted = toDayjs(barStartRaw.value).format(format)
   const barEndFormatted = toDayjs(barEndRaw.value).format(format)
-  const milestone = bar.value.ganttBarConfig.milestoneName
-    ? ` - (${bar.value.ganttBarConfig.milestoneName})`
-    : ""
-  return `${barStartFormatted} \u2013 ${barEndFormatted}${milestone}`
+  const milestoneName = milestone ? ` - (${milestone.name})` : ""
+  return `${barStartFormatted} \u2013 ${barEndFormatted}${milestoneName}`
 })
 </script>
 

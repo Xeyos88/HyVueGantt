@@ -77,9 +77,23 @@ const styleConfig = computed(() => {
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
   >
-    <div class="g-gantt-milestone-label" :style="styleConfig.label">
-      {{ milestone.name }}
-    </div>
+    <slot
+      :name="`milestone-${milestone.id}`"
+      :milestone="milestone"
+      :style-config="styleConfig"
+      :position="xPosition"
+    >
+      <slot
+        name="milestone"
+        :milestone="milestone"
+        :style-config="styleConfig"
+        :position="xPosition"
+      >
+        <div class="g-gantt-milestone-label" :style="styleConfig.label">
+          {{ milestone.name }}
+        </div>
+      </slot>
+    </slot>
 
     <div class="g-gantt-milestone-marker" :style="styleConfig.marker" />
 

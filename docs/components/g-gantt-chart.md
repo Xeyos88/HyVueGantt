@@ -92,6 +92,9 @@ Here's a minimal example of using the GGanttChart component:
 | default | None | Main content slot for GGanttRow components |
 | label-column-title | None | Custom label column header |
 | current-time-label | None | Custom current time indicator label |
+| bar-label | `{ bar: GanttBarObject }` | Custom bars label content |
+| milestone | `{ bar: GanttBarObject }` | Custom milestones content |
+| milestone-{milestoneId} | `{ bar: GanttBarObject }` | Custom specific milestone content |
 
 ## Advanced Features
 

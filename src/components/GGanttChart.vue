@@ -477,7 +477,14 @@ provide("id", id)
               v-for="milestone in milestones"
               :key="milestone.date.toString()"
               :milestone="milestone"
-            />
+            >
+              <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
+                <slot
+                  :name="name"
+                  v-bind="slotData"
+                  v-if="(name as string).startsWith('milestone-') || name === 'milestone'"
+                /> </template
+            ></g-gantt-milestone>
 
             <!-- Rows Container -->
             <div
