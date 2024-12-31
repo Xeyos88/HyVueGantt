@@ -1,6 +1,6 @@
 # Sample workflow for building and deploying a VitePress site to GitHub Pages
 #
-name: Deploy VitePress site to Pages
+name: Release, Documentation and Publish
 
 on:
   # Runs on pushes targeting the `main` branch. Change this to `master` if you're
@@ -15,9 +15,11 @@ on:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: read
+  contents: write
+  issues: write
   pages: write
   id-token: write
+
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
@@ -46,10 +48,27 @@ jobs:
         uses: actions/configure-pages@v4
       - name: Install dependencies
         run: npm ci # or pnpm install / yarn install / bun install
+      - name: Run Tests
+        run: npm run test	
       - name: Build package
         run: npm run build
+      - name: Build with VitePress
+        run: npm run docs:build # or pnpm docs:build / yarn docs:build / bun run docs:build
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
+      - name: Setup Git Identity
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
       - name: Publish to NPM
-        if: github.event_name == 'release'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -57,12 +76,6 @@ jobs:
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
           cat ~/.npmrc
           npm publish
-      - name: Build with VitePress
-        run: npm run docs:build # or pnpm docs:build / yarn docs:build / bun run docs:build
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs/.vitepress/dist
 
   # Deployment job
   deploy:
