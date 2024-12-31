@@ -1,0 +1,47 @@
+{
+  "branches": ["feature/update_core_info_and_management"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "angular",
+        "writerOpts": {
+          "mainTemplate": "## [v{{version}}](https://github.com/Xeyos88/HyVueGantt/tree/v{{version}}) ({{date}})\n\n[Full Changelog](https://github.com/Xeyos88/HyVueGantt/{{previousTag}}...v{{version}})\n\n{{> header}}\n\n{{#each commitGroups}}\n{{#if title}}\n### {{title}}\n\n{{/if}}\n{{#each commits}}\n{{> commit root=@root}}\n{{/each}}\n{{/each}}\n\n{{> footer}}",
+          "headerPartial": "",
+          "commitPartial": "- {{#if scope}}**{{scope}}:** {{/if}}{{subject}}\n",
+          "footerPartial": "{{> noteGroups}}"
+        },
+        "presetConfig": {
+          "types": [
+            { "type": "feat", "section": "✨ New Feature" },
+            { "type": "fix", "section": "🐛 Fix" },
+            { "type": "perf", "section": "⚡️ Performance" },
+            { "type": "docs", "section": "📚 Documentation" },
+            { "type": "style", "section": "💄 Style" },
+            { "type": "refactor", "section": "♻️ Refactoring" },
+            { "type": "test", "section": "✅ Test" },
+            { "type": "build", "section": "👷 Build" },
+            { "type": "ci", "section": "🔧 CI" }
+          ]
+        }
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogTitle": "# Changelog\n\nAll notable changes to this project will be documented in this file.\n\n---"
+      }
+    ],
+    "@semantic-release/npm",
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["package.json", "CHANGELOG.md"],
+        "message": "chore(release): {{nextRelease.version}} [skip ci]\n\n{{nextRelease.notes}}"
+      }
+    ],
+    "@semantic-release/github"
+  ],
+  "repositoryUrl": "https://github.com/Xeyos88/HyVueGantt"
+}

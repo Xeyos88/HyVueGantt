@@ -62,6 +62,14 @@ We use GitHub issues to track public bugs. Report a bug by opening a new issue. 
    git checkout -b feature/my-new-feature
    ```
 
+## Testing
+
+We use Vitest for unit testing. All tests should pass before submitting a pull request.
+
+```sh
+npm run test
+```
+
 ## Code Style and Linting
 
 We use ESLint and Prettier to maintain code quality and consistency.

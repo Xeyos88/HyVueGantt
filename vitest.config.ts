@@ -9,7 +9,7 @@ export default defineConfig(() =>
       test: {
         globals: true,
         environment: "jsdom",
-        setupFiles: ["./test/vitestSetup.ts"],
+        setupFiles: ["./tests/vitestSetup.ts"],
         reporters: ["default", "junit"],
         outputFile: {
           junit: "./coverage/junit.xml"
@@ -20,7 +20,7 @@ export default defineConfig(() =>
           exclude: [
             "env.d.ts",
             "src/**/*.d.ts",
-            "test/**",
+            "tests/**",
             "node_modules/**",
             "dist/**",
             "docs/**",
@@ -28,12 +28,13 @@ export default defineConfig(() =>
             "lib_types/**",
             ".vitepress/**",
             "**/{vite,vitest,eslint}.config.{js,cjs,mjs,ts}",
-            "src/hy-vue-gantt.ts"
+            "src/hy-vue-gantt.ts",
+            "src/types/**",
           ],
           reportsDirectory: "./coverage",
-          clean: true
+          clean: true,
         },
-        include: ["test/**/*.test.ts"],
+        include: ["tests/**/*.test.ts"],
         pool: "vmThreads",
         poolOptions: {
           threads: {
