@@ -200,7 +200,7 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
 
     const result: TimeaxisResult = {
       upperUnits: [],
-      lowerUnits: []
+      lowerUnits: [],
     }
 
     let currentUpperUnit = chartStartDayjs.value.clone()
