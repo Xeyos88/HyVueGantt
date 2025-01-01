@@ -43,6 +43,9 @@ const MultiColumnDemo= defineClientComponent(() => {
   return import('./components/MultiColumnDemo.vue')
 })
 
+const HolidayGanttDemo = defineClientComponent(() => {
+  return import('./components/HolidayGanttDemo.vue')
+})
 
 
 export default {
@@ -55,5 +58,6 @@ export default {
     app.component('AdvancedGanttDemo', AdvancedGanttDemo)
     app.component('OtherGanttDemo', OtherGanttDemo)
     app.component('MultiColumnDemo', MultiColumnDemo)
+    app.component('HolidayGanttDemo', HolidayGanttDemo)
   }
 }

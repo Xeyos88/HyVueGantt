@@ -28,15 +28,23 @@ Props that control the visual appearance:
 
 ```typescript
 interface VisualProps {
-  width?: string;                   // Chart width
-  rowHeight?: number;               // Height of each row
-  grid?: boolean;                   // Show background grid
-  hideTimeaxis?: boolean;           // Hide the time axis
-  colorScheme?: string | ColorScheme; // Color scheme
-  font?: string;                    // Font family
-  labelColumnTitle?: string;        // Label column title
-  labelColumnWidth?: number;        // Label column width
-  highlightedUnits?: number[];      // Highlighted time units
+  width?: string;                            // Chart width
+  rowHeight?: number;                        // Height of each row
+  grid?: boolean;                            // Show background grid
+  hideTimeaxis?: boolean;                    // Hide the time axis
+  colorScheme?: string | ColorScheme;        // Color scheme
+  font?: string;                             // Font family
+  labelColumnTitle?: string;                 // Label column title
+  labelColumnWidth?: number;                 // Label column width
+  holidayHighlight?: string;                 // Country code for date-holidays
+  rowClass?: (row: ChartRow) => string;      // Method to add classes to data rows
+  rowLabelClass?: (row: ChartRow) => string; // Method to add classes to label rows
+  dayOptionLabel?: DayOptionLabel[];         // Customization for time unit day
+  highlightedHours?: number[];               // Array of hours to highlight (0-23)
+  highlightedDaysInWeek?: number[];          // Array of days to highlight (0-6, 0 is Sunday)
+  highlightedDaysInMonth?: number[];         // Array of days to highlight (1-31)
+  highlightedMonths?: number[];              // Array of months to highlight (0-11, 0 is January)
+  highlightedWeek?: number[];                // Array of weeks to highlight (1-53)
 }
 ```
 

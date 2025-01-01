@@ -44,7 +44,6 @@ Here's a minimal example of using the GGanttChart component:
 | pushOnConnect | `boolean` | `false` | Push connected bars when moving |
 | noOverlap | `boolean` | `false` | Prevent bars from overlapping |
 | rowHeight | `number` | `40` | Height of each row in pixels |
-| highlightedUnits | `number[]` | `[]` | Array of time units to highlight |
 | font | `string` | `'inherit'` | Font family for the chart |
 | labelColumnTitle | `string` | `''` | Title for the label column |
 | labelColumnWidth | `string` | `'150px'` | Width of the label column |
