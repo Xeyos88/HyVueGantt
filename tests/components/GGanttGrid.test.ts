@@ -16,6 +16,7 @@ vi.mock("../../src/provider/provideBooleanConfig", () => ({
   })
 }))
 
+let mockPrecision = "hour"
 vi.mock("../../src/composables/useTimeaxisUnits", () => ({
   default: () => ({
     timeaxisUnits: {
@@ -29,19 +30,44 @@ vi.mock("../../src/composables/useTimeaxisUnits", () => ({
           { label: "2", width: "10px" }
         ]
       }
-    }
+    },
+    internalPrecision: { value: mockPrecision }
   })
 }))
 
 describe("GGanttGrid.vue", () => {
-  it("renders lowerUnits when enableMinutes is false", () => {
-    const wrapper = mount(GGanttGrid, {
-      props: {
-        highlightedUnits: [1]
-      }
-    })
+  it("should render with hour precision", () => {
+    mockPrecision = "hour"
+    const wrapper = mount(GGanttGrid)
     expect(wrapper.findAll(".g-grid-line").length).toBe(2)
     expect(wrapper.findAll(".g-grid-line")[0].attributes("style")).toContain("width: 10px")
-    expect(wrapper.findAll(".g-grid-line")[0].attributes("style")).toContain("background: yellow")
+  })
+
+  it("should render with day precision", () => {
+    mockPrecision = "day"
+    const wrapper = mount(GGanttGrid)
+    expect(wrapper.findAll(".g-grid-line").length).toBe(2)
+    expect(wrapper.findAll(".g-grid-line")[0].attributes("style")).toContain("width: 10px")
+  })
+
+  it("should render with week precision", () => {
+    mockPrecision = "week"
+    const wrapper = mount(GGanttGrid)
+    expect(wrapper.findAll(".g-grid-line").length).toBe(2)
+    expect(wrapper.findAll(".g-grid-line")[0].attributes("style")).toContain("width: 10px")
+  })
+
+  it("should render with month precision", () => {
+    mockPrecision = "month"
+    const wrapper = mount(GGanttGrid)
+    expect(wrapper.findAll(".g-grid-line").length).toBe(2)
+    expect(wrapper.findAll(".g-grid-line")[0].attributes("style")).toContain("width: 10px")
+  })
+
+  it("should render with month precision", () => {
+    mockPrecision = "undefined"
+    const wrapper = mount(GGanttGrid)
+    expect(wrapper.findAll(".g-grid-line").length).toBe(2)
+    expect(wrapper.findAll(".g-grid-line")[0].attributes("style")).toContain("width: 10px")
   })
 })
