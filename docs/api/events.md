@@ -17,6 +17,7 @@ interface BarClickEvent {
 // Usage
 @click-bar="(event: BarClickEvent) => void"
 @dblclick-bar="(event: BarClickEvent) => void"
+@contextmenu-bar="(event: BarClickEvent) => void"
 ```
 
 ### Drag Events
@@ -28,6 +29,7 @@ interface BarDragEvent {
     oldStart: string;
     oldEnd: string;
   }>;
+  datetime?: string | Date;
 }
 
 // Usage

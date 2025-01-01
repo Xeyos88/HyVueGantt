@@ -35,7 +35,7 @@ interface VisualProps {
   colorScheme?: string | ColorScheme; // Color scheme
   font?: string;                    // Font family
   labelColumnTitle?: string;        // Label column title
-  labelColumnWidth?: string;        // Label column width
+  labelColumnWidth?: number;        // Label column width
   highlightedUnits?: number[];      // Highlighted time units
 }
 ```
