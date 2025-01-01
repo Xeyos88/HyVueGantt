@@ -9,11 +9,10 @@ All notable changes to this project will be documented in this file.
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v1.3.0...v1.4.0)
 
 
-### Features
+**New Features:**
 
-- 'release/1.4.0 - Refactoring release process and added test'
+- release/1.4.0 - Refactoring release process and added test
 
-# Changelog
 
 ## [v1.3.0](https://github.com/Xeyos88/HyVueGantt/tree/v1.3.0) (2024-12-29)
 

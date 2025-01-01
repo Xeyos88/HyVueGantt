@@ -3,42 +3,91 @@ import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
 import useTimeaxisUnits from "../composables/useTimeaxisUnits"
 import { ref } from "vue"
+import useDayjsHelper from "../composables/useDayjsHelper"
 
-defineProps<{
-  highlightedUnits?: number[]
-}>()
+const { toDayjs } = useDayjsHelper()
 
-const { colors } = provideConfig()
+const {
+  colors,
+  highlightedHours,
+  highlightedDaysInWeek,
+  highlightedDaysInMonth,
+  highlightedMonths,
+  highlightedWeek
+} = provideConfig()
 const { enableMinutes } = provideBooleanConfig()
 
-const time = ref(null)
+const time = ref<HTMLElement | null>(null)
 
-const { timeaxisUnits } = useTimeaxisUnits(time)
+const { timeaxisUnits, internalPrecision } = useTimeaxisUnits(time)
+
+const highlightLine = (date: Date) => {
+  if (internalPrecision.value === "hour") {
+    return (
+      isHighlightedHour(date) ||
+      isHighlightedDay(date) ||
+      isHighlightedMonth(date) ||
+      isHighlightedWeek(date)
+    )
+  }
+
+  if (internalPrecision.value === "day" || internalPrecision.value === "date") {
+    return isHighlightedDay(date) || isHighlightedMonth(date) || isHighlightedWeek(date)
+  }
+
+  if (internalPrecision.value === "week") {
+    return isHighlightedWeek(date) || isHighlightedMonth(date)
+  }
+
+  if (internalPrecision.value === "month") {
+    return isHighlightedMonth(date)
+  }
+
+  return false
+}
+
+const isHighlightedHour = (date: Date) => highlightedHours?.value.includes(date.getHours())
+
+const isHighlightedDay = (date: Date) => {
+  return (
+    highlightedDaysInWeek?.value.includes(date.getDay()) ||
+    highlightedDaysInMonth?.value.includes(date.getDate())
+  )
+}
+
+const isHighlightedWeek = (date: Date) => highlightedWeek?.value.includes(toDayjs(date).week())
+
+const isHighlightedMonth = (date: Date) => highlightedMonths?.value.includes(date.getMonth())
 </script>
 
 <template>
-  <div class="g-grid-container">
+  <div class="g-grid-container" ref="time">
     <template v-if="!enableMinutes">
       <div
-        v-for="{ label, value, width } in timeaxisUnits.result.lowerUnits"
-        :key="label"
+        v-for="({ label, date, width }, index) in timeaxisUnits.result.lowerUnits"
+        :key="`${label}_${index}`"
         class="g-grid-line"
         :style="{
           width,
-          background: highlightedUnits?.includes(Number(value)) ? colors.hoverHighlight : undefined
+          background: highlightLine(date) ? colors.hoverHighlight : undefined
         }"
       />
     </template>
     <template v-else>
-      <div
-        v-for="({ label, width }, index) in timeaxisUnits.result.minutesUnits"
-        :key="`${label}-${index}`"
-        class="g-grid-line"
-        :style="{
-          width,
-          background: highlightedUnits?.includes(Number(label)) ? colors.hoverHighlight : undefined
-        }"
-      />
+      <template
+        v-for="({ label, date, width }, index) in timeaxisUnits.result.lowerUnits"
+        :key="`${label}_${index}`"
+      >
+        <div
+          v-for="step in timeaxisUnits.globalMinuteStep"
+          :key="`${date}-${step}`"
+          :class="step"
+          class="g-grid-line step"
+          :style="{
+            width,
+            background: highlightLine(date) ? colors.hoverHighlight : undefined
+          }"
+      /></template>
     </template>
   </div>
 </template>

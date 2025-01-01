@@ -71,7 +71,6 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   pushOnConnect: false,
   noOverlap: false,
   rowHeight: 40,
-  highlightedUnits: () => [],
   font: "inherit",
   labelColumnTitle: "",
   labelColumnWidth: 120,
@@ -93,7 +92,12 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   holidayHighlight: "",
   rowClass: () => "",
   rowLabelClass: () => "",
-  dayOptionLabel: () => ["day"]
+  dayOptionLabel: () => ["day"],
+  highlightedHours: () => [],
+  highlightedDaysInWeek: () => [],
+  highlightedDaysInMonth: () => [],
+  highlightedMonths: () => [],
+  highlightedWeek: () => []
 })
 
 const id = ref(crypto.randomUUID())
@@ -466,7 +470,7 @@ provide("id", id)
             </g-gantt-timeaxis>
 
             <!-- Optional Components -->
-            <g-gantt-grid v-if="grid" :highlighted-units="highlightedUnits" />
+            <g-gantt-grid v-if="grid" />
             <g-gantt-current-time v-if="currentTime">
               <template #current-time-label>
                 <slot name="current-time-label" />

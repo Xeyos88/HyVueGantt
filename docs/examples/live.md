@@ -47,3 +47,11 @@ Other Features Live Demo for Hyper Vue Gantt:
 <ClientOnly>
   <OtherGanttDemo />
 </ClientOnly>
+
+## Holiday Demo 
+
+Holiday Live Demo for Hyper Vue Gantt:
+
+<ClientOnly>
+  <HolidayGanttDemo />
+</ClientOnly>

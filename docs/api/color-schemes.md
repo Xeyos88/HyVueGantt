@@ -70,7 +70,10 @@ const customScheme: ColorScheme = {
   hoverHighlight: 'rgba(r, g, b, a)',
   markerCurrentTime: '#your-color',
   text: '#your-color',
-  background: '#your-color'
+  background: '#your-color',
+  commands: "#your-color",
+  rangeHighlight: "#your-color",
+  holidayHighlight: "#your-color"
 };
 
 <g-gantt-chart :color-scheme="customScheme" />

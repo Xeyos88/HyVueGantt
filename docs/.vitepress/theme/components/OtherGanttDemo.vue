@@ -209,6 +209,15 @@ const rows = ref([
         },
         start: '2024-12-13 09:00',
         end: '2024-12-13 12:00',
+      },
+            {
+        ganttBarConfig: {
+          id: 'deploy2',
+          label: 'Production Deploy',
+          style: { background: '#FF8A65' },
+        },
+        start: '2025-01-01 14:00',
+        end: '2025-01-01 17:00',
       }
     ]
   },
@@ -221,8 +230,8 @@ const rows = ref([
           label: 'Production Deploy',
           style: { background: '#FF8A65' },
         },
-        start: '2024-12-13 14:00',
-        end: '2024-12-13 17:00',
+        start: '2025-01-01 14:00',
+        end: '2025-01-01 17:00',
       }
     ]
   }
@@ -253,7 +262,7 @@ onMounted(() => {
     <div class="demo-container" v-if="isLibraryReady">
       <g-gantt-chart
         chart-start="2024-12-10 08:00"
-        chart-end="2024-12-13 18:00"
+        chart-end="2025-01-01 18:00"
         precision="hour"
         bar-start="start"
         bar-end="end"
@@ -265,6 +274,7 @@ onMounted(() => {
         label-column-title="Rows"
         :dayOptionLabel="['day','name','doy']"
         :milestones="milestones"
+        
       >
         <g-gantt-row
           v-for="row in rows"
