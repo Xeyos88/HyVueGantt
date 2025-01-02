@@ -15,17 +15,17 @@ export interface UseRowsProps {
   barEnd: Ref<string>
   multiColumnLabel: Ref<LabelColumnConfig[]>
   onSort: (sortState: SortState) => void
+  initialSort?: SortState
 }
 
 export function useRows(
   slots: Slots,
-  { barStart, barEnd, multiColumnLabel, onSort }: UseRowsProps,
-  initialRows?: Ref<ChartRow[]>,
-  initialSortColumn: LabelColumnField = "Label"
+  { barStart, barEnd, multiColumnLabel, onSort, initialSort }: UseRowsProps,
+  initialRows?: Ref<ChartRow[]>
 ): UseRowsReturn {
   const sortState = ref<SortState>({
-    column: initialSortColumn,
-    direction: "none"
+    column: initialSort!.column,
+    direction: initialSort!.direction
   })
   const sortChangeCallbacks = ref<Set<() => void>>(new Set())
 

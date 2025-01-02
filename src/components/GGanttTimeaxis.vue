@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
-import useTimeaxisUnits from "../composables/useTimeaxisUnits"
+import useTimeaxisUnits, { capitalizeWords } from "../composables/useTimeaxisUnits"
 import { computed, ref, watch } from "vue"
 import useDayjsHelper from "../composables/useDayjsHelper"
 import type { TimeaxisUnit } from "@/types"
@@ -97,7 +97,7 @@ const formatTimeUnitLabel = (unit: TimeaxisUnit, unitType: "upper" | "lower") =>
         result += `(${toDayjs(unit.date).dayOfYear()})`
         break
       case "name":
-        result += toDayjs(unit.date).format("dd")[0]
+        result += capitalizeWords(toDayjs(unit.date).format("dd")[0]!)
         break
       case "number":
         result += toDayjs(unit.date).date()

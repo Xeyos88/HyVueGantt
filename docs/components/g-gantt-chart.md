@@ -44,7 +44,6 @@ Here's a minimal example of using the GGanttChart component:
 | pushOnConnect | `boolean` | `false` | Push connected bars when moving |
 | noOverlap | `boolean` | `false` | Prevent bars from overlapping |
 | rowHeight | `number` | `40` | Height of each row in pixels |
-| highlightedUnits | `number[]` | `[]` | Array of time units to highlight |
 | font | `string` | `'inherit'` | Font family for the chart |
 | labelColumnTitle | `string` | `''` | Title for the label column |
 | labelColumnWidth | `string` | `'150px'` | Width of the label column |
@@ -59,7 +58,7 @@ Here's a minimal example of using the GGanttChart component:
 | defaultConnectionAnimated | `boolean` | `false` | Enable connection animations |
 | defaultConnectionAnimationSpeed | `ConnectionSpeed` | `'normal'` | Speed of connection animations |
 | maxRows | `number` | `0` | Maximum number of visible rows |
-| initialSortDirection | `SortDirection` | `'none'` | Initial sorting direction |
+| initialSort | `SortState` | `'none'` | Initial sorting column and direction |
 | initialRows | `ChartRow[]` | `[]` | Initial rows data |
 | currentTime | `boolean` | `false` | Show current time indicator |
 | currentTimeLabel | `string` | `''` | Label for current time indicator |
@@ -69,6 +68,7 @@ Here's a minimal example of using the GGanttChart component:
 | rowClass| `(row: ChartRow) => string` | `` | Method to add classes to data rows |
 | rowLabelClass| `(row: ChartRow) => string` | `` | Method to add classes to label rows |
 | dayOptionLabel| `DayOptionLabel[]` | `['day']` | Customization for time unit day |
+| locale| `string` | `'en'` | Locale for dayjs |
 
 
 ### Events

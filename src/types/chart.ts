@@ -50,7 +50,6 @@ export interface GanttMilestone {
 export interface TimeaxisResult {
   upperUnits: TimeaxisUnit[]
   lowerUnits: TimeaxisUnit[]
-  minutesUnits?: TimeaxisUnit[]
 }
 
 export interface TimeaxisData {

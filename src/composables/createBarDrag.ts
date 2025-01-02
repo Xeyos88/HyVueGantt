@@ -3,14 +3,17 @@ import type { GanttBarObject, GGanttChartConfig } from "../types"
 import useDayjsHelper from "./useDayjsHelper"
 import useTimePositionMapping from "./useTimePositionMapping"
 import type { MovementAPI } from "./useBarMovement"
+import useBarSelector from "./useBarSelector"
 
 export default function createBarDrag(
   bar: GanttBarObject,
   onDrag: (e: MouseEvent, bar: GanttBarObject) => void = () => null,
   onEndDrag: (e: MouseEvent, bar: GanttBarObject) => void = () => null,
   config: GGanttChartConfig,
-  movementAPI: MovementAPI
+  movementAPI: MovementAPI,
+  ganttId: string
 ) {
+  const { findBarElement } = useBarSelector()
   const { barStart, barEnd } = config
   const isDragging = ref(false)
   let cursorOffsetX = 0
@@ -23,7 +26,7 @@ export default function createBarDrag(
     if (bar.ganttBarConfig.immobile) {
       return
     }
-    const barElement = document.getElementById(bar.ganttBarConfig.id)
+    const barElement = findBarElement(ganttId!, bar.ganttBarConfig.id)
     if (!barElement) {
       return
     }
@@ -48,7 +51,7 @@ export default function createBarDrag(
   }
 
   const getBarElements = () => {
-    const barElement = document.getElementById(bar.ganttBarConfig.id)
+    const barElement = findBarElement(ganttId!, bar.ganttBarConfig.id)
     const barContainer = barElement?.closest(".g-gantt-row-bars-container")?.getBoundingClientRect()
     return { barElement, barContainer }
   }

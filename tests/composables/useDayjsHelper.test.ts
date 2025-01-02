@@ -9,12 +9,14 @@ vi.mock("dayjs", () => {
     format: vi.fn().mockReturnValue(input || "2024-01-01"),
     diff: vi.fn().mockReturnValue(60),
     add: vi.fn().mockImplementation((value, unit) => mockDayjs("2024-01-02")),
-    subtract: vi.fn().mockImplementation((value, unit) => mockDayjs("2023-12-31"))
+    subtract: vi.fn().mockImplementation((value, unit) => mockDayjs("2023-12-31")),
+    locale: vi.fn().mockReturnValue(mockDayjs)
   }))
 
   // Add static methods and properties that dayjs uses
   mockDayjs.extend = vi.fn()
-  
+  mockDayjs.locale = vi.fn()
+
   return {
     default: mockDayjs,
     __esModule: true
@@ -28,7 +30,8 @@ vi.mock("../../src/provider/provideConfig", () => ({
     chartEnd: ref("2024-12-31"),
     barStart: ref("start"),
     barEnd: ref("end"),
-    dateFormat: ref("YYYY-MM-DD HH:mm")
+    dateFormat: ref("YYYY-MM-DD HH:mm"),
+    locale: ref("en")
   })
 }))
 
@@ -38,14 +41,15 @@ describe("useDayjsHelper", () => {
     chartEnd: ref("2024-12-31"),
     barStart: ref("start"),
     barEnd: ref("end"),
-    dateFormat: ref("YYYY-MM-DD HH:mm")
+    dateFormat: ref("YYYY-MM-DD HH:mm"),
+    locale: ref("en")
   }
 
   describe("toDayjs", () => {
     it("should convert string date to dayjs object", () => {
       const { toDayjs } = useDayjsHelper(mockConfig)
       const result = toDayjs("2024-01-01")
-      expect(dayjs).toHaveBeenCalledWith("2024-01-01", "YYYY-MM-DD HH:mm",  true)
+      expect(dayjs).toHaveBeenCalledWith("2024-01-01", "YYYY-MM-DD HH:mm", true)
     })
 
     it("should convert Date object to dayjs object", () => {
@@ -63,7 +67,7 @@ describe("useDayjsHelper", () => {
         ganttBarConfig: { id: "1" }
       }
       const result = toDayjs(bar, "start")
-      expect(dayjs).toHaveBeenCalledWith("2024-01-01", "YYYY-MM-DD HH:mm",  true)
+      expect(dayjs).toHaveBeenCalledWith("2024-01-01", "YYYY-MM-DD HH:mm", true)
     })
 
     it("should handle bar object with end property", () => {
@@ -74,7 +78,7 @@ describe("useDayjsHelper", () => {
         ganttBarConfig: { id: "1" }
       }
       const result = toDayjs(bar, "end")
-      expect(dayjs).toHaveBeenCalledWith("2024-01-02", "YYYY-MM-DD HH:mm",  true)
+      expect(dayjs).toHaveBeenCalledWith("2024-01-02", "YYYY-MM-DD HH:mm", true)
     })
   })
 
@@ -84,7 +88,6 @@ describe("useDayjsHelper", () => {
       const result = format("2024-01-01")
       expect(result).toBe("2024-01-01")
     })
-
 
     it("should return Date object when pattern is false", () => {
       const { format } = useDayjsHelper(mockConfig)

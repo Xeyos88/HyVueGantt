@@ -20,6 +20,23 @@ type PrecisionMapType = {
 
 const MIN_UNIT_WIDTH_PX = 24
 
+const capitalizeString = (str: string): string => {
+  if (!str) return str
+  return str.normalize("NFD").replace(/^\p{L}/u, (letter) => letter.toLocaleUpperCase())
+}
+
+export const capitalizeWords = (str: string): string => {
+  return str
+    .split(/(\s+|\.|\,)/)
+    .map((word) => {
+      if (/^\p{L}/u.test(word)) {
+        return capitalizeString(word)
+      }
+      return word
+    })
+    .join("")
+}
+
 export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
   const config = provideConfig()
   const { precision: configPrecision, widthNumber } = config
@@ -288,9 +305,11 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
   const createTimeaxisUnit = (moment: Dayjs, format: string, width: string): TimeaxisUnit => {
     const date = moment.toDate()
     const holidayInfo = config.holidayHighlight.value ? getHolidayInfo(date) : null
+    const formattedLabel = moment.format(format)
+    const capitalizedLabel = capitalizeWords(formattedLabel)
 
     return {
-      label: moment.format(format),
+      label: capitalizedLabel,
       value: String(moment),
       date,
       width,

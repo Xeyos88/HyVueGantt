@@ -253,3 +253,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 This project is based on [vue-ganttastic](https://github.com/zunnzunn/vue-ganttastic) and has been completely rewritten with update TypeScript and enhanced features. Special thanks to the original authors and all contributors.
+
+## Screenshots
+
+<img src="https://github.com/Xeyos88/HyVueGantt/blob/main/docs/.vitepress/public/Gantt1.PNG?raw=true" alt="screenshot HyVueGantt" witdh="300" height="200">
+
+<img src="https://github.com/Xeyos88/HyVueGantt/blob/main/docs/.vitepress/public/Gantt2.PNG?raw=true" alt="screenshot HyVueGantt" witdh="300" height="200">
+
+<img src="https://github.com/Xeyos88/HyVueGantt/blob/main/docs/.vitepress/public/Gantt3.PNG?raw=true" alt="screenshot HyVueGantt" witdh="300" height="200">

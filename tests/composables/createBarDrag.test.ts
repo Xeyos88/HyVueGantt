@@ -1,3 +1,4 @@
+import { mount } from "@vue/test-utils"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { nextTick, ref } from "vue"
 import createBarDrag from "../../src/composables/createBarDrag"
@@ -5,6 +6,21 @@ import type { GanttBarObject } from "../../src/types"
 
 const mockMapTimeToPosition = vi.fn().mockReturnValue(100)
 const mockMapPositionToTime = vi.fn().mockReturnValue("2024-01-01")
+
+// Mock per useBarSelector
+vi.mock("../../src/composables/useBarSelector", () => ({
+  default: () => ({
+    findBarElement: vi.fn().mockImplementation((ganttId, barId) => {
+      const element = document.createElement("div")
+      element.className = "g-gantt-bar"
+      element.getBoundingClientRect = vi.fn().mockReturnValue({
+        left: 100,
+        width: 200
+      })
+      return element
+    })
+  })
+}))
 
 vi.mock("../composables/useTimePositionMapping", () => ({
   default: () => ({
@@ -32,7 +48,6 @@ vi.mock("../../src/composables/useDayjsHelper", () => ({
 }))
 
 describe("createBarDrag", () => {
-
   const mockConfig = {
     barStart: ref("start"),
     barEnd: ref("end"),
@@ -58,40 +73,42 @@ describe("createBarDrag", () => {
     end: "2024-01-15"
   }
 
-  const mockBarElement = document.createElement("div")
-  const mockBarContainer = document.createElement("div")
-  
+  const mockGanttId = "test-gantt"
+
   const createBarElement = () => {
     const element = document.createElement("div")
     element.className = "g-gantt-bar"
-    
+
     const leftHandle = document.createElement("div")
     leftHandle.className = "g-gantt-bar-handle-left"
-    
+
     const rightHandle = document.createElement("div")
     rightHandle.className = "g-gantt-bar-handle-right"
-    
+
     element.appendChild(leftHandle)
     element.appendChild(rightHandle)
-    
+
     element.getBoundingClientRect = vi.fn().mockReturnValue({
       left: 100,
       width: 200
     })
-    
+
     return element
   }
 
-  const createMouseEvent = (type: string, options: { 
-    clientX: number, 
-    target?: Element,
-    currentTarget?: Element 
-  }) => {
-    const event = new MouseEvent(type, { 
+  const createMouseEvent = (
+    type: string,
+    options: {
+      clientX: number
+      target?: Element
+      currentTarget?: Element
+    }
+  ) => {
+    const event = new MouseEvent(type, {
       clientX: options.clientX,
-      bubbles: true 
+      bubbles: true
     })
-    
+
     Object.defineProperties(event, {
       target: {
         get: () => options.target
@@ -100,61 +117,16 @@ describe("createBarDrag", () => {
         get: () => options.currentTarget
       }
     })
-    
+
     return event
   }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
-    mockBarElement.getBoundingClientRect = vi.fn().mockReturnValue({
-      left: 100,
-      width: 200
-    })
-    
-    mockBarContainer.getBoundingClientRect = vi.fn().mockReturnValue({
-      left: 0
-    })
-    
-    document.getElementById = vi.fn().mockReturnValue(mockBarElement)
     document.body.style.cursor = ""
   })
 
-  const createDOMStructure = () => {
-    const container = document.createElement("div")
-    container.className = "g-gantt-row-bars-container"
-    
-    container.getBoundingClientRect = vi.fn().mockReturnValue({
-      left: 50,  
-      width: 1000,
-      right: 1050
-    })
-
-    const barElement = document.createElement("div")
-    barElement.id = "test-bar"
-    barElement.className = "g-gantt-bar"
-    barElement.getBoundingClientRect = vi.fn().mockReturnValue({
-      left: 100,
-      width: 200
-    })
-    
-    container.appendChild(barElement)
-
-    barElement.closest = vi.fn((selector) => {
-      if (selector === '.g-gantt-row-bars-container') {
-        return container
-      }
-      return null
-    })
-
-    return { barElement, container }
-  }
-
-
   describe("initDrag", () => {
-    
-  
-
     it("should not initialize dragging if the bar is immobile", () => {
       const immobileBar = {
         ...mockBar,
@@ -166,7 +138,8 @@ describe("createBarDrag", () => {
         vi.fn(),
         vi.fn(),
         mockConfig as any,
-        mockMovementAPI
+        mockMovementAPI,
+        mockGanttId
       )
 
       const mockEvent = new MouseEvent("mousedown")
@@ -176,14 +149,15 @@ describe("createBarDrag", () => {
     })
 
     it("should initialize normal bar dragging", () => {
-      const { barElement } = createDOMStructure()
+      const barElement = createBarElement()
 
       const { initDrag, isDragging } = createBarDrag(
         mockBar,
         vi.fn(),
         vi.fn(),
         mockConfig as any,
-        mockMovementAPI
+        mockMovementAPI,
+        mockGanttId
       )
 
       const mouseEvent = new MouseEvent("mousedown", { clientX: 150 })
@@ -196,23 +170,22 @@ describe("createBarDrag", () => {
       expect(isDragging.value).toBe(true)
     })
 
-
     it("should handle left edge dragging", () => {
-      
       const { initDrag } = createBarDrag(
         mockBar,
         vi.fn(),
         vi.fn(),
         mockConfig as any,
-        mockMovementAPI
+        mockMovementAPI,
+        mockGanttId
       )
 
       const mockTarget = document.createElement("div")
       mockTarget.className = "g-gantt-bar-handle-left"
-      
+
       const mockEvent = new MouseEvent("mousedown")
       Object.defineProperty(mockEvent, "target", { value: mockTarget })
-      
+
       initDrag(mockEvent)
 
       expect(document.body.style.cursor).toBe("ew-resize")
@@ -224,15 +197,16 @@ describe("createBarDrag", () => {
         vi.fn(),
         vi.fn(),
         mockConfig as any,
-        mockMovementAPI
+        mockMovementAPI,
+        mockGanttId
       )
 
       const mockTarget = document.createElement("div")
       mockTarget.className = "g-gantt-bar-handle-right"
-      
+
       const mockEvent = new MouseEvent("mousedown")
       Object.defineProperty(mockEvent, "target", { value: mockTarget })
-      
+
       initDrag(mockEvent)
 
       expect(document.body.style.cursor).toBe("ew-resize")
@@ -243,35 +217,33 @@ describe("createBarDrag", () => {
     it("should call onDrag during dragging", async () => {
       const mockOnDrag = vi.fn()
       const barElement = createBarElement()
-      document.getElementById = vi.fn().mockReturnValue(barElement)
-  
+
       const { initDrag } = createBarDrag(
         mockBar,
         mockOnDrag,
         vi.fn(),
         mockConfig as any,
-        mockMovementAPI
+        mockMovementAPI,
+        mockGanttId
       )
-  
+
       const mousedownEvent = new MouseEvent("mousedown", { clientX: 150 })
       Object.defineProperty(mousedownEvent, "target", {
         get: () => barElement
       })
       initDrag(mousedownEvent)
-  
+
       const firstMouseMoveEvent = new MouseEvent("mousemove", { clientX: 151 })
       window.dispatchEvent(firstMouseMoveEvent)
-      
+
       await nextTick()
-  
+
       const secondMouseMoveEvent = new MouseEvent("mousemove", { clientX: 200 })
       window.dispatchEvent(secondMouseMoveEvent)
-  
     })
 
     it("should call onEndDrag when dragging ends", async () => {
       const barElement = createBarElement()
-      document.getElementById = vi.fn().mockReturnValue(barElement)
       const leftHandle = barElement.querySelector(".g-gantt-bar-handle-left")!
 
       const { initDrag } = createBarDrag(
@@ -279,47 +251,53 @@ describe("createBarDrag", () => {
         vi.fn(),
         vi.fn(),
         mockConfig as any,
-        mockMovementAPI
+        mockMovementAPI,
+        mockGanttId
       )
 
-      initDrag(createMouseEvent("mousedown", {
-        clientX: 150,
-        target: leftHandle,
-        currentTarget: barElement
-      }))
+      initDrag(
+        createMouseEvent("mousedown", {
+          clientX: 150,
+          target: leftHandle,
+          currentTarget: barElement
+        })
+      )
 
       expect(document.body.style.cursor).toBe("ew-resize")
     })
-
 
     it("should restore state if movement is not allowed", async () => {
       const failingMovementAPI = {
         moveBar: vi.fn().mockReturnValue({ success: false })
       }
-  
+
       const barElement = createBarElement()
-      document.getElementById = vi.fn().mockReturnValue(barElement)
-  
+
       const { initDrag } = createBarDrag(
         mockBar,
         vi.fn(),
         vi.fn(),
         mockConfig as any,
-        failingMovementAPI
+        failingMovementAPI,
+        mockGanttId
       )
-  
-      initDrag(createMouseEvent("mousedown", {
-        clientX: 150,
-        target: barElement,
-        currentTarget: barElement
-      }))
-  
-      window.dispatchEvent(createMouseEvent("mousemove", {
-        clientX: 200,
-        target: barElement,
-        currentTarget: barElement
-      }))
-  
+
+      initDrag(
+        createMouseEvent("mousedown", {
+          clientX: 150,
+          target: barElement,
+          currentTarget: barElement
+        })
+      )
+
+      window.dispatchEvent(
+        createMouseEvent("mousemove", {
+          clientX: 200,
+          target: barElement,
+          currentTarget: barElement
+        })
+      )
+
       expect(document.body.style.cursor).toBe("")
     })
 
@@ -329,7 +307,8 @@ describe("createBarDrag", () => {
         vi.fn(),
         vi.fn(),
         mockConfig as any,
-        mockMovementAPI
+        mockMovementAPI,
+        mockGanttId
       )
 
       const leftHandle = document.createElement("div")
@@ -346,102 +325,5 @@ describe("createBarDrag", () => {
       initDrag(mockEventRight)
       expect(document.body.style.cursor).toBe("ew-resize")
     })
-
-    /*it("should handle normal dragging", async () => {
-      const mockOnDrag = vi.fn()
-      const { barElement } = createDOMStructure()
-      document.getElementById = vi.fn().mockReturnValue(barElement)
-
-      const { initDrag } = createBarDrag(
-        mockBar,
-        mockOnDrag,
-        vi.fn(),
-        mockConfig as any,
-        mockMovementAPI
-      )
-
-      const mousedownEvent = new MouseEvent("mousedown", { 
-        clientX: 150
-      })
-      Object.defineProperty(mousedownEvent, "target", {
-        get: () => barElement
-      })
-      
-      initDrag(mousedownEvent)
-
-      const mousemoveEvent = new MouseEvent("mousemove", { 
-        clientX: 200
-      })
-      window.dispatchEvent(mousemoveEvent)
-
-      expect(mockOnDrag).toHaveBeenCalled()
-      expect(mockMovementAPI.moveBar).toHaveBeenCalled()
-    })
-
-    it("should handle left edge dragging", async () => {
-      const { barElement } = createDOMStructure()
-      document.getElementById = vi.fn().mockReturnValue(barElement)
-
-      const { initDrag } = createBarDrag(
-        mockBar,
-        vi.fn(),
-        vi.fn(),
-        mockConfig as any,
-        mockMovementAPI
-      )
-
-      const leftHandle = document.createElement("div")
-      leftHandle.className = "g-gantt-bar-handle-left"
-      barElement.appendChild(leftHandle)
-
-      const mousedownEvent = new MouseEvent("mousedown", {
-        clientX: 150
-      })
-      Object.defineProperty(mousedownEvent, "target", {
-        get: () => leftHandle
-      })
-
-      initDrag(mousedownEvent)
-
-      const mousemoveEvent = new MouseEvent("mousemove", {
-        clientX: 100
-      })
-      window.dispatchEvent(mousemoveEvent)
-
-      expect(mockMovementAPI.moveBar).toHaveBeenCalled()
-    })
-
-    it("should handle right edge dragging", async () => {
-      const { barElement } = createDOMStructure()
-      document.getElementById = vi.fn().mockReturnValue(barElement)
-
-      const { initDrag } = createBarDrag(
-        mockBar,
-        vi.fn(),
-        vi.fn(),
-        mockConfig as any,
-        mockMovementAPI
-      )
-
-      const rightHandle = document.createElement("div")
-      rightHandle.className = "g-gantt-bar-handle-right"
-      barElement.appendChild(rightHandle)
-
-      const mousedownEvent = new MouseEvent("mousedown", {
-        clientX: 150
-      })
-      Object.defineProperty(mousedownEvent, "target", {
-        get: () => rightHandle
-      })
-
-      initDrag(mousedownEvent)
-
-      const mousemoveEvent = new MouseEvent("mousemove", {
-        clientX: 300
-      })
-      window.dispatchEvent(mousemoveEvent)
-
-      expect(mockMovementAPI.moveBar).toHaveBeenCalled()
-    })*/
   })
 })

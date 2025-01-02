@@ -5,7 +5,8 @@ import {
   CONFIG_KEY,
   BOOLEAN_KEY,
   EMIT_BAR_EVENT_KEY,
-  BAR_CONTAINER_KEY
+  BAR_CONTAINER_KEY,
+  GANTT_ID_KEY
 } from "../src/provider/symbols"
 import type { ColorScheme } from "../src/types"
 
@@ -45,6 +46,7 @@ barContainerElement.getBoundingClientRect = vi.fn(() => ({
 
 beforeAll(() => {
   config.global.provide = {
+    [GANTT_ID_KEY]: "test-id",
     [CONFIG_KEY]: {
       rowHeight: ref(40),
       colors: ref(defaultColors),
@@ -72,16 +74,20 @@ beforeAll(() => {
       },
       widthNumber: ref(100),
       milestones: ref([]),
-      multiColumnLabel: ref([{field: 'Label', sortable: true}, {field: 'ID', sortable: false}]),
+      multiColumnLabel: ref([
+        { field: "Label", sortable: true },
+        { field: "ID", sortable: false }
+      ]),
       holidayHighlight: ref(""),
-      dayOptionLabel: ref(["day",  "name", "number"]),
+      dayOptionLabel: ref(["day", "name", "number"]),
       maxRows: ref(0),
       labelColumnWidth: ref(200),
       defaultConnectionPattern: ref("solid"),
       defaultConnectionType: ref("bezier"),
       defaultConnectionColor: ref("#ff0000"),
       defaultConnectionAnimated: ref(false),
-      defaultConnectionAnimationSpeed: ref(1000)
+      defaultConnectionAnimationSpeed: ref(1000),
+      locale: ref("en")
     },
     [BOOLEAN_KEY]: {
       commands: true,
@@ -103,7 +109,7 @@ beforeAll(() => {
         { id: "1", label: "Task 1" },
         { id: "2", label: "Task 2" },
         { id: "3", label: "Task 3" }
-      ]    
+      ]
     },
     id: "test-id",
     milestones: ref([

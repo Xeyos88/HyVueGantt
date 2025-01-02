@@ -6,6 +6,7 @@ import createBarDrag from "./createBarDrag"
 import { useBarMovement } from "./useBarMovement"
 import { inject } from "vue"
 import type { UseRowsReturn } from "./useRows"
+import { GANTT_ID_KEY } from "../provider/symbols"
 
 type DragState = {
   movedBars: Map<GanttBarObject, { oldStart: string; oldEnd: string }>
@@ -18,7 +19,7 @@ const useBarDragManagement = () => {
   const dayjs = useDayjsHelper(config)
   const { barStart, barEnd } = config
   const rowManager = inject<UseRowsReturn>("useRows")!
-
+  const ganttId = inject<string>(GANTT_ID_KEY)
   const movement = useBarMovement(config, rowManager, dayjs)
 
   const dragState: DragState = {
@@ -58,7 +59,8 @@ const useBarDragManagement = () => {
         (e) => handleDrag(e, bar),
         isMainBar ? handleDragEnd : () => null,
         config,
-        movement
+        movement,
+        ganttId!
       )
       initDrag(e)
     }

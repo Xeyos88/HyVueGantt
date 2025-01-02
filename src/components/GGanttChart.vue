@@ -47,7 +47,7 @@ import { useRows } from "../composables/useRows"
 // Types and Constants
 import { colorSchemes, type ColorSchemeKey } from "../color-schemes"
 import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
-import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols"
+import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY, GANTT_ID_KEY } from "../provider/symbols"
 import type {
   GanttBarObject,
   GGanttChartProps,
@@ -71,7 +71,6 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   pushOnConnect: false,
   noOverlap: false,
   rowHeight: 40,
-  highlightedUnits: () => [],
   font: "inherit",
   labelColumnTitle: "",
   labelColumnWidth: 120,
@@ -84,7 +83,10 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   defaultConnectionAnimated: false,
   defaultConnectionAnimationSpeed: "normal",
   maxRows: 0,
-  initialSortDirection: "none",
+  initialSort: () => ({
+    column: "Label",
+    direction: "none"
+  }),
   initialRows: () => [],
   multiColumnLabel: () => [],
   sortable: true,
@@ -93,7 +95,13 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   holidayHighlight: "",
   rowClass: () => "",
   rowLabelClass: () => "",
-  dayOptionLabel: () => ["day"]
+  dayOptionLabel: () => ["day"],
+  highlightedHours: () => [],
+  highlightedDaysInWeek: () => [],
+  highlightedDaysInMonth: () => [],
+  highlightedMonths: () => [],
+  highlightedWeek: () => [],
+  locale: "en"
 })
 
 const id = ref(crypto.randomUUID())
@@ -105,7 +113,8 @@ const rowManager = useRows(
     barStart: toRef(props, "barStart"),
     barEnd: toRef(props, "barEnd"),
     multiColumnLabel: toRef(props, "multiColumnLabel"),
-    onSort: (sortState) => emit("sort", { sortState })
+    onSort: (sortState) => emit("sort", { sortState }),
+    initialSort: props.initialSort
   },
   props.initialRows ? toRef(props, "initialRows") : undefined
 )
@@ -406,7 +415,7 @@ provide(CONFIG_KEY, {
 })
 provide(EMIT_BAR_EVENT_KEY, emitBarEvent)
 provide(BOOLEAN_KEY, { ...props })
-provide("id", id)
+provide(GANTT_ID_KEY, id.value)
 </script>
 
 <template>
@@ -466,7 +475,7 @@ provide("id", id)
             </g-gantt-timeaxis>
 
             <!-- Optional Components -->
-            <g-gantt-grid v-if="grid" :highlighted-units="highlightedUnits" />
+            <g-gantt-grid v-if="grid" />
             <g-gantt-current-time v-if="currentTime">
               <template #current-time-label>
                 <slot name="current-time-label" />

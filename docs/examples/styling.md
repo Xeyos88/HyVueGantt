@@ -90,3 +90,21 @@ const rows = ref([
 ])
 </script>
 ```
+
+## Time Unit Highlighting
+
+You can highlight specific time units and holidays:
+
+```vue
+<template>
+  <g-gantt-chart
+    :highlighted-hours="[9, 12, 17]"        
+    :highlighted-days-in-week="[0, 6]"       
+    :highlighted-days-in-month="[1, 15, 30]" 
+    :highlighted-months="[0, 6]"             
+    :highlighted-week="[1, 52]"              
+    :holiday-highlight="'US'"
+  >
+    <!-- chart content -->
+  </g-gantt-chart>
+</template>

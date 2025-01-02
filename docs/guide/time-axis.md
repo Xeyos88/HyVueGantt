@@ -35,27 +35,12 @@ You can customize the time scale appearance:
 
 ```typescript
 <g-gantt-chart
-  :highlight-today="true"
-  :highlight-weekends="true"
-  :custom-timeaxis-format="customFormat"
+  :day-option-label="['day', 'name', 'doy']"
+  :highlighted-hours="[9, 10, 11, 12, 13, 14, 15, 16, 17]"
+  :highlighted-days-in-week="[0, 6]"  
+  :highlighted-days-in-month="[1, 15, 30]"
+  :highlighted-months="[0, 6]"  
+  :holiday-highlight="'US'"
+  :locale="'en'"
 />
-
-const customFormat = (date: Date, precision: TimeUnit) => {
-  // Your custom formatting logic
-  return formattedDate;
-};
-```
-
-## Working with Time Zones
-
-The time axis respects the local time zone by default. For specific time zone handling:
-
-```typescript
-// Using day.js for time zone support
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 ```
