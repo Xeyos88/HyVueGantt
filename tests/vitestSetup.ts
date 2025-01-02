@@ -5,7 +5,8 @@ import {
   CONFIG_KEY,
   BOOLEAN_KEY,
   EMIT_BAR_EVENT_KEY,
-  BAR_CONTAINER_KEY
+  BAR_CONTAINER_KEY,
+  GANTT_ID_KEY
 } from "../src/provider/symbols"
 import type { ColorScheme } from "../src/types"
 
@@ -45,6 +46,7 @@ barContainerElement.getBoundingClientRect = vi.fn(() => ({
 
 beforeAll(() => {
   config.global.provide = {
+    [GANTT_ID_KEY]: "test-id",
     [CONFIG_KEY]: {
       rowHeight: ref(40),
       colors: ref(defaultColors),

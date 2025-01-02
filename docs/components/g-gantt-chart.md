@@ -58,7 +58,7 @@ Here's a minimal example of using the GGanttChart component:
 | defaultConnectionAnimated | `boolean` | `false` | Enable connection animations |
 | defaultConnectionAnimationSpeed | `ConnectionSpeed` | `'normal'` | Speed of connection animations |
 | maxRows | `number` | `0` | Maximum number of visible rows |
-| initialSortDirection | `SortDirection` | `'none'` | Initial sorting direction |
+| initialSort | `SortState` | `'none'` | Initial sorting column and direction |
 | initialRows | `ChartRow[]` | `[]` | Initial rows data |
 | currentTime | `boolean` | `false` | Show current time indicator |
 | currentTimeLabel | `string` | `''` | Label for current time indicator |

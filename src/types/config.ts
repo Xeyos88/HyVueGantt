@@ -7,10 +7,10 @@ import type {
   DayOptionLabel,
   GanttMilestone,
   LabelColumnConfig,
+  SortState,
   TimeUnit
 } from "./chart"
 import type { ColorScheme } from "./style"
-import type { SortDirection } from "./chart"
 
 export interface GGanttChartProps {
   chartStart: string | Date
@@ -42,7 +42,7 @@ export interface GGanttChartProps {
   defaultConnectionAnimated?: boolean
   defaultConnectionAnimationSpeed?: ConnectionSpeed
   maxRows?: number
-  initialSortDirection?: SortDirection
+  initialSort?: SortState
   initialRows?: ChartRow[]
   sortable?: boolean
   labelResizable?: boolean

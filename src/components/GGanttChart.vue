@@ -83,7 +83,10 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   defaultConnectionAnimated: false,
   defaultConnectionAnimationSpeed: "normal",
   maxRows: 0,
-  initialSortDirection: "none",
+  initialSort: () => ({
+    column: "Label",
+    direction: "none"
+  }),
   initialRows: () => [],
   multiColumnLabel: () => [],
   sortable: true,
@@ -110,7 +113,8 @@ const rowManager = useRows(
     barStart: toRef(props, "barStart"),
     barEnd: toRef(props, "barEnd"),
     multiColumnLabel: toRef(props, "multiColumnLabel"),
-    onSort: (sortState) => emit("sort", { sortState })
+    onSort: (sortState) => emit("sort", { sortState }),
+    initialSort: props.initialSort
   },
   props.initialRows ? toRef(props, "initialRows") : undefined
 )
