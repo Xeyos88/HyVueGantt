@@ -7,10 +7,11 @@ import provideConfig from "../provider/provideConfig"
 export const DEFAULT_DATE_FORMAT = "YYYY-MM-DD HH:mm"
 
 export default function useDayjsHelper(config: GGanttChartConfig = provideConfig()) {
-  const { chartStart, chartEnd, barStart, barEnd, dateFormat } = config
+  const { chartStart, chartEnd, barStart, barEnd, dateFormat, locale } = config
 
   const chartStartDayjs = computed(() => toDayjs(chartStart.value))
   const chartEndDayjs = computed(() => toDayjs(chartEnd.value))
+  dayjs.locale(locale.value)
 
   const toDayjs = (input: string | Date | GanttBarObject, startOrEnd?: "start" | "end") => {
     let value

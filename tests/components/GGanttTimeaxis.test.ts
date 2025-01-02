@@ -16,10 +16,11 @@ vi.mock("../../src/composables/useTimeaxisUnits", () => ({
           { label: "1", width: "10px" },
           { label: "2", width: "10px" }
         ]
-      }, 
-    }, 
+      }
+    },
     internalPrecision: ref("day")
-  })
+  }),
+  capitalizeWords: vi.fn()
 }))
 
 describe("GGanttTimeaxis", () => {
@@ -61,5 +62,4 @@ describe("GGanttTimeaxis", () => {
       expect(wrapper.exists()).toBe(true)
     })
   })
-
-}) 
+})

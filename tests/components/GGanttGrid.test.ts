@@ -1,12 +1,14 @@
 import { mount } from "@vue/test-utils"
 import { describe, it, expect, vi } from "vitest"
 import GGanttGrid from "../../src/components/GGanttGrid.vue"
+import { ref } from "vue"
 
 vi.mock("../../src/provider/provideConfig", () => ({
   default: () => ({
     colors: {
       hoverHighlight: "yellow"
-    }
+    },
+    locale: ref("en")
   })
 }))
 

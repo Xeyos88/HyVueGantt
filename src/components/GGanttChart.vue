@@ -97,11 +97,11 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   highlightedDaysInWeek: () => [],
   highlightedDaysInMonth: () => [],
   highlightedMonths: () => [],
-  highlightedWeek: () => []
+  highlightedWeek: () => [],
+  locale: "en"
 })
 
 const id = ref(crypto.randomUUID())
-provide(GANTT_ID_KEY, id.value)
 const slots = useSlots()
 
 const rowManager = useRows(
@@ -411,7 +411,7 @@ provide(CONFIG_KEY, {
 })
 provide(EMIT_BAR_EVENT_KEY, emitBarEvent)
 provide(BOOLEAN_KEY, { ...props })
-provide("id", id)
+provide(GANTT_ID_KEY, id.value)
 </script>
 
 <template>

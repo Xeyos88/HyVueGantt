@@ -56,6 +56,7 @@ export interface GGanttChartProps {
   highlightedDaysInMonth?: number[]
   highlightedMonths?: number[]
   highlightedWeek?: number[]
+  locale?: string
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

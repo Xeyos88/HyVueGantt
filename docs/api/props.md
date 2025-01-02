@@ -45,6 +45,7 @@ interface VisualProps {
   highlightedDaysInMonth?: number[];         // Array of days to highlight (1-31)
   highlightedMonths?: number[];              // Array of months to highlight (0-11, 0 is January)
   highlightedWeek?: number[];                // Array of weeks to highlight (1-53)
+  locale?: string;                          // Locale for dayjs
 }
 ```
 

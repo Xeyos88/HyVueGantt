@@ -68,6 +68,7 @@ Here's a minimal example of using the GGanttChart component:
 | rowClass| `(row: ChartRow) => string` | `` | Method to add classes to data rows |
 | rowLabelClass| `(row: ChartRow) => string` | `` | Method to add classes to label rows |
 | dayOptionLabel| `DayOptionLabel[]` | `['day']` | Customization for time unit day |
+| locale| `string` | `'en'` | Locale for dayjs |
 
 
 ### Events
