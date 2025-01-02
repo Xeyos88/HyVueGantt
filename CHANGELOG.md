@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v1.5.0](https://github.com/Xeyos88/HyVueGantt/tree/v1.5.0) (2025-01-02)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v1.4.0...v1.5.0)
+
+
+**Bug Fixes:**
+
+- Corrected bar management in case of multiple Gantt
+- Corrected the functionality of the initial sorting property
+- **grid:** Grid visualization with minutes
+**Features:**
+
+- added different modes to highlight different vertical grid units
+- Added localization for timeaxis
+
 ## [v1.4.0](https://github.com/Xeyos88/HyVueGantt/tree/v1.4.0) (2024-12-31)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v1.3.0...v1.4.0)
