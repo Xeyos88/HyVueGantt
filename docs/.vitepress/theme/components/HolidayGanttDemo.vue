@@ -32,7 +32,7 @@ const rows = ref([
     bars: [
       {
         ganttBarConfig: {
-          id: 'task100',
+          id: 'task1',
           label: 'Planning',
           style: { background: '#42b883' }
         },
@@ -41,7 +41,7 @@ const rows = ref([
       },
       {
         ganttBarConfig: {
-          id: 'task200',
+          id: 'task2',
           label: 'Implementation',
           style: { background: '#35495e' }
         },
@@ -50,7 +50,7 @@ const rows = ref([
       },
       {
         ganttBarConfig: {
-          id: 'task300',
+          id: 'task3',
           label: 'Review',
           style: { background: '#ff7e67' }
         },

@@ -14,11 +14,11 @@ jobs:
       matrix:
         node-version: [20.x, 22.x]
       fail-fast: false
-    
-    permissions: 
+
+    permissions:
       contents: read
       security-events: write
-      
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -27,14 +27,14 @@ jobs:
         uses: actions/setup-node@v4.1.0
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install Dependencies
         run: npm ci
-        
+
       - name: Build
         run: npm run build
-        
+
       - name: Run Tests
         run: npm run test
 
@@ -43,9 +43,9 @@ jobs:
         continue-on-error: true
         uses: dependency-check/Dependency-Check_Action@main
         with:
-          project: 'HyVueGantt'
-          path: '.'
-          format: 'HTML'
+          project: "HyVueGantt"
+          path: "."
+          format: "HTML"
           args: >
             --failOnCVSS 7
             --enableRetired
@@ -55,6 +55,7 @@ jobs:
         with:
           format: spdx-json
           file: package-lock.json
+          artifact-name: sbom-${{ github.event.repository.name }}-${{ matrix.node-version }}.spdx.json
           output-file: sbom-${{ github.event.repository.name }}-${{ matrix.node-version }}.spdx.json
 
       - name: Run Grype

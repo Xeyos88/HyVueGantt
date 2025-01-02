@@ -15,3 +15,4 @@ export const EMIT_BAR_EVENT_KEY = Symbol("EMIT_BAR_EVENT_KEY") as InjectionKey<E
 export const BAR_CONTAINER_KEY = Symbol("BAR_CONTAINER_KEY") as InjectionKey<
   Ref<HTMLElement | null>
 >
+export const GANTT_ID_KEY = Symbol("GANTT_ID_KEY") as InjectionKey<string>

@@ -47,7 +47,7 @@ import { useRows } from "../composables/useRows"
 // Types and Constants
 import { colorSchemes, type ColorSchemeKey } from "../color-schemes"
 import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
-import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY } from "../provider/symbols"
+import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY, GANTT_ID_KEY } from "../provider/symbols"
 import type {
   GanttBarObject,
   GGanttChartProps,
@@ -101,6 +101,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
 })
 
 const id = ref(crypto.randomUUID())
+provide(GANTT_ID_KEY, id.value)
 const slots = useSlots()
 
 const rowManager = useRows(
