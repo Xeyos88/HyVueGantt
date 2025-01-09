@@ -5,9 +5,19 @@ import { ref, computed, inject, reactive, onMounted } from "vue"
 import type { CSSProperties } from "vue"
 import type { LabelColumnField, ChartRow, GanttBarObject, LabelColumnConfig } from "../types"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
-import { faArrowDownAZ, faArrowDownZA, faSort } from "@fortawesome/free-solid-svg-icons"
+import {
+  faArrowDownAZ,
+  faArrowDownZA,
+  faSort,
+  faChevronRight,
+  faChevronDown
+} from "@fortawesome/free-solid-svg-icons"
 import useDayjsHelper from "../composables/useDayjsHelper"
 import type { UseRowsReturn } from "../composables/useRows"
+
+interface LabelColumnRowProps extends ChartRow {
+  indentLevel?: number
+}
 
 const rowManager = inject<UseRowsReturn>("useRows")
 if (!rowManager) {
@@ -52,14 +62,61 @@ const columns = computed<LabelColumnConfig[]>(() => {
   }
   return multiColumnLabel.value
 })
+const getVisibleColumns = (row: ChartRow) => {
+  console.log(row)
+  if (row.children && row.children.length > 0) {
+    return [{ field: "Label", sortable: true }]
+  }
+  console.log(columns.value)
+  return columns.value
+}
 
-const rowClasses = (row: ChartRow) => {
+const rowClasses = (row: LabelColumnRowProps) => {
   const classes = ["g-label-column-row"]
   if (rowLabelClass.value) {
     classes.push(rowLabelClass.value(row))
   }
+  if (row.children?.length) {
+    classes.push("g-label-column-group")
+  }
   return classes
 }
+
+const getRowStyle = (row: LabelColumnRowProps): CSSProperties => {
+  const style: CSSProperties = {}
+  if (row.indentLevel) {
+    style.paddingLeft = `${row.indentLevel * 20}px`
+  }
+  return style
+}
+
+const handleGroupToggle = (row: ChartRow, event: Event) => {
+  event.stopPropagation()
+  if (row.id) {
+    rowManager.toggleGroupExpansion(row.id)
+  }
+}
+
+const getProcessedRows = computed(() => {
+  const processRows = (rows: ChartRow[], level = 0): LabelColumnRowProps[] => {
+    return rows.flatMap((row) => {
+      const processedRow: LabelColumnRowProps = {
+        ...row,
+        indentLevel: level
+      }
+
+      const isExpanded = row.id ? rowManager.isGroupExpanded(row.id) : false
+
+      if (row.children?.length && isExpanded) {
+        return [processedRow, ...processRows(row.children, level + 1)]
+      }
+
+      return [processedRow]
+    })
+  }
+
+  return processRows(rows.value)
+})
 
 const totalWidth = computed(() => {
   let total = 0
@@ -263,24 +320,39 @@ defineExpose({
       @scroll="handleLabelScroll"
     >
       <div
-        v-for="(row, index) in rows"
+        v-for="(row, index) in getProcessedRows"
         :key="`${row.id || row.label}_${index}`"
         :style="{
           background: index % 2 === 0 ? colors.ternary : colors.quartenary,
-          height: `${rowHeight}px`
+          height: `${rowHeight}px`,
+          ...getRowStyle(row)
         }"
         :class="rowClasses(row)"
       >
         <div class="g-label-column-row-inner">
-          <template v-for="column in columns" :key="column.field">
+          <template v-for="column in getVisibleColumns(row)" :key="column.field">
             <template v-if="isValidColumn(column.field) || column.valueGetter">
               <slot
                 :name="`label-column-${column.field.toLowerCase()}`"
                 :row="row"
-                :value="getRowValue(row, column, index)"
+                :value="getRowValue(row, column, Number(row.id) || 0)"
               >
                 <div class="g-label-column-cell" :style="getColumnStyle(column.field)">
                   <div class="cell-content">
+                    <button
+                      v-if="column.field === 'Label' && row.children && row.children.length > 0"
+                      class="group-toggle-button"
+                      @click="handleGroupToggle(row, $event)"
+                    >
+                      <FontAwesomeIcon
+                        :icon="
+                          row.id && rowManager.isGroupExpanded(row.id)
+                            ? faChevronDown
+                            : faChevronRight
+                        "
+                        class="group-icon"
+                      />
+                    </button>
                     <span class="text-ellipsis">
                       {{ getRowValue(row, column, index) }}
                     </span>
@@ -431,5 +503,46 @@ defineExpose({
 
 .g-label-column.dragging {
   cursor: col-resize;
+}
+
+.g-label-column-group {
+  font-weight: 600;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.group-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-right: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.group-toggle-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.group-icon {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s ease;
+}
+
+.group-label {
+  font-weight: 600;
+}
+
+.cell-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 4px;
 }
 </style>
