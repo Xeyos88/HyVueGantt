@@ -90,26 +90,23 @@ onMounted(() => {
 
       xStart.value = newXStart
       xEnd.value = newXEnd
-
     },
     { deep: true, immediate: true }
   )
 })
 const isGroupBar = computed(() => {
-  return bar.value.ganttBarConfig.id.startsWith('group-')
+  return bar.value.ganttBarConfig.id.startsWith("group-")
 })
 
 const getGroupBarPath = (width: number, height: number) => {
-  const bottomSpike = height * 0.7    
-  const mainBarHeight = height * 0.5  
-  const spikeWidth = width * 0.1      
-  
+  const mainBarHeight = height * 0.6
+
   return `
     M 0 0
-    L 0 ${bottomSpike}
-    L ${spikeWidth} ${mainBarHeight}
-    L ${width - spikeWidth} ${mainBarHeight}
-    L ${width} ${bottomSpike}
+    L 0 ${height}
+    L ${15} ${mainBarHeight}
+    L ${width - 15} ${mainBarHeight}
+    L ${width} ${height}
     L ${width} 0
     L 0 0
   `
@@ -143,16 +140,21 @@ const getGroupBarPath = (width: number, height: number) => {
     tabindex="0"
     :aria-describedby="`tooltip-${barConfig.id}`"
   >
-  <svg v-if="isGroupBar" class="group-bar-decoration" :width="xEnd - xStart" :height="rowHeight * 0.8">
+    <svg
+      v-if="isGroupBar"
+      class="group-bar-decoration"
+      :width="xEnd - xStart"
+      :height="rowHeight * 0.8"
+    >
       <path
         :d="getGroupBarPath(xEnd - xStart, rowHeight * 0.8)"
-        fill="#e0e0e0"
+        :fill="config.colors.value.barContainer"
         opacity="0.7"
       />
     </svg>
     <div class="g-gantt-bar-label">
       <slot :bar="bar">
-        <div>
+        <div v-if="!isGroupBar">
           {{ barConfig.label || "" }}
         </div>
         <div v-if="barConfig.html" v-html="barConfig.html" />

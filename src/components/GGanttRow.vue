@@ -49,7 +49,7 @@ const rowStyle = computed(() => {
   if (isGroup.value) {
     return {
       ...baseStyle,
-      background: colors.value.ternary
+      background: colors.value.rowContainer
     }
   }
 
@@ -118,17 +118,10 @@ const visibleChildRows = computed(() => {
       class="g-gantt-row-label"
       :class="{ 'g-gantt-row-group-label': isGroup }"
       :style="{ background: colors.primary, color: colors.text }"
-       @click="isGroup ? handleGroupToggle($event) : undefined"
+      @click="isGroup ? handleGroupToggle($event) : undefined"
     >
-      <button
-        v-if="isGroup"
-        class="group-toggle-button"
-        @click="handleGroupToggle($event)"
-      >
-        <FontAwesomeIcon    
-          :icon="isExpanded ? faChevronDown : faChevronRight"
-          class="group-icon"
-        />
+      <button v-if="isGroup" class="group-toggle-button" @click="handleGroupToggle($event)">
+        <FontAwesomeIcon :icon="isExpanded ? faChevronDown : faChevronRight" class="group-icon" />
       </button>
       <slot name="label">
         {{ label }}
@@ -186,7 +179,6 @@ const visibleChildRows = computed(() => {
   z-index: 3;
   box-shadow: 0px 1px 4px 0px rgba(0, 0, 0, 0.6);
 }
-
 
 .g-gantt-row-group-label {
   font-weight: bold;

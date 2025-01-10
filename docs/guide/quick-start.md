@@ -122,12 +122,10 @@ Let's enhance our chart with some interactive features:
     @drag-bar="handleBarDrag"
     @dragend-bar="handleBarDragEnd"
   >
-    <!-- Previous content remains the same -->
   </g-gantt-chart>
 </template>
 
 <script setup lang="ts">
-// Previous code remains the same
 
 const chartConfig = {
   chartStart: chartStart.value,

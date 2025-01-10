@@ -77,7 +77,7 @@ export function useRows(
     return rows
   }
 
- const calculateGroupBars = (row: ChartRow): GanttBarObject[] => {
+  const calculateGroupBars = (row: ChartRow): GanttBarObject[] => {
     if (!row.children?.length) return row.bars || []
 
     const allChildBars = row.children.flatMap((child): GanttBarObject[] => {
@@ -133,45 +133,68 @@ export function useRows(
     return dayjs()
   }
 
-  const calculateDuration = (row: ChartRow): number => {
+  const getStartDate = (row: ChartRow): dayjs.Dayjs | null => {
     if (row.children?.length) {
-      const allBars = row.children.flatMap((child) =>
-        child.children ? calculateGroupBars(child) : child.bars
-      )
-      if (!allBars.length) return 0
+      const childDates = row.children
+        .map((child) => getStartDate(child))
+        .filter((date): date is dayjs.Dayjs => date !== null)
 
-      const minStart = allBars.reduce(
-        (min, bar) => {
-          const currentStart = toDayjs(bar[barStart.value])
-          return !min || currentStart.isBefore(min) ? currentStart : min
-        },
-        null as dayjs.Dayjs | null
-      )
+      if (childDates.length === 0) {
+        return getBarsStartDate(row.bars)
+      }
 
-      const maxEnd = allBars.reduce(
-        (max, bar) => {
-          const currentEnd = toDayjs(bar[barEnd.value])
-          return !max || currentEnd.isAfter(max) ? currentEnd : max
-        },
-        null as dayjs.Dayjs | null
-      )
-
-      return minStart && maxEnd ? maxEnd.diff(minStart) : 0
+      return childDates.reduce((min, date) => (!min || date.isBefore(min) ? date : min))
     }
 
-    if (!row.bars.length) return 0
-    const start = toDayjs(row.bars[0]![barStart.value])
-    const end = toDayjs(row.bars[0]![barEnd.value])
-    return end.diff(start)
+    return getBarsStartDate(row.bars)
+  }
+
+  const getBarsStartDate = (bars: GanttBarObject[]): dayjs.Dayjs | null => {
+    if (bars.length === 0) return null
+
+    return bars.reduce((min: dayjs.Dayjs | null, bar) => {
+      const currentStart = toDayjs(bar[barStart.value])
+      return !min || currentStart.isBefore(min) ? currentStart : min
+    }, null)
+  }
+
+  const getEndDate = (row: ChartRow): dayjs.Dayjs | null => {
+    if (row.children?.length) {
+      const childDates = row.children
+        .map((child) => getEndDate(child))
+        .filter((date): date is dayjs.Dayjs => date !== null)
+
+      if (childDates.length === 0) {
+        return getBarsEndDate(row.bars)
+      }
+
+      return childDates.reduce((max, date) => (!max || date.isAfter(max) ? date : max))
+    }
+
+    return getBarsEndDate(row.bars)
+  }
+
+  const getBarsEndDate = (bars: GanttBarObject[]): dayjs.Dayjs | null => {
+    if (bars.length === 0) return null
+
+    return bars.reduce((max: dayjs.Dayjs | null, bar) => {
+      const currentEnd = toDayjs(bar[barEnd.value])
+      return !max || currentEnd.isAfter(max) ? currentEnd : max
+    }, null)
+  }
+
+  const calculateDuration = (row: ChartRow): number => {
+    const startDate = getStartDate(row)
+    const endDate = getEndDate(row)
+
+    if (!startDate || !endDate) return 0
+    return endDate.diff(startDate, "minutes")
   }
 
   const compareValues = (a: ChartRow, b: ChartRow, column: LabelColumnField | string): number => {
-    if (a.children && b.children) {
-      return a.label.localeCompare(b.label)
+    if ((a.children?.length || 0) !== (b.children?.length || 0)) {
+      return (b.children?.length || 0) - (a.children?.length || 0)
     }
-
-    if (a.children) return -1
-    if (b.children) return 1
 
     const columnConfig = multiColumnLabel.value?.find((conf) => conf.field === column)
 
@@ -190,16 +213,20 @@ export function useRows(
           sensitivity: "base"
         })
       case "StartDate": {
-        if (!a.bars.length || !b.bars.length) return 0
-        const aStartDate = toDayjs(a.bars[0]![barStart.value]).valueOf()
-        const bStartDate = toDayjs(b.bars[0]![barStart.value]).valueOf()
-        return aStartDate - bStartDate
+        const aStartDate = getStartDate(a)
+        const bStartDate = getStartDate(b)
+        if (!aStartDate && !bStartDate) return 0
+        if (!aStartDate) return 1
+        if (!bStartDate) return -1
+        return aStartDate.valueOf() - bStartDate.valueOf()
       }
       case "EndDate": {
-        if (!a.bars.length || !b.bars.length) return 0
-        const aEndDate = toDayjs(a.bars[0]![barEnd.value]).valueOf()
-        const bEndDate = toDayjs(b.bars[0]![barEnd.value]).valueOf()
-        return aEndDate - bEndDate
+        const aEndDate = getEndDate(a)
+        const bEndDate = getEndDate(b)
+        if (!aEndDate && !bEndDate) return 0
+        if (!aEndDate) return 1
+        if (!bEndDate) return -1
+        return aEndDate.valueOf() - bEndDate.valueOf()
       }
       case "Duration": {
         const aDuration = calculateDuration(a)
@@ -229,7 +256,7 @@ export function useRows(
     }
 
     const processRowsWithGroupBars = (rows: ChartRow[]): ChartRow[] => {
-      return rows.map(row => {
+      return rows.map((row) => {
         if (row.children?.length) {
           const processedChildren = processRowsWithGroupBars(row.children)
           return {
@@ -245,10 +272,7 @@ export function useRows(
     sourceRows = processRowsWithGroupBars(sourceRows)
 
     if (sortState.value.direction !== "none") {
-      return sourceRows.sort((a, b) => {
-        const comparison = compareValues(a, b, sortState.value.column)
-        return sortState.value.direction === "asc" ? comparison : -comparison
-      })
+      return sortRows(sourceRows, sortState.value.column, sortState.value.direction)
     }
 
     return sourceRows

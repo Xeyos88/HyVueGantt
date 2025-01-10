@@ -15,4 +15,6 @@ export interface ColorScheme {
   commands?: Color
   rangeHighlight?: Color
   holidayHighlight?: Color
+  barContainer?: Color
+  rowContainer?: Color
 }

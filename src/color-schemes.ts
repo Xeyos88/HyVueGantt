@@ -12,7 +12,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     background: "white",
     commands: "#eeeeee",
     rangeHighlight: "#000",
-    holidayHighlight: "rgba(240, 120, 96, 0.8)"
+    holidayHighlight: "rgba(240, 120, 96, 0.8)",
+    barContainer: "rgba(0, 0, 0, 0.7)",
+    rowContainer: "rgba(255, 255, 255, 1)"
   },
 
   creamy: {
@@ -26,7 +28,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     background: "white",
     commands: "white",
     rangeHighlight: "#000",
-    holidayHighlight: "rgba(240, 120, 96, 0.8)"
+    holidayHighlight: "rgba(240, 120, 96, 0.8)",
+    barContainer: "#fcdcc5",
+    rowContainer: "rgba(255, 255, 255, 1)"
   },
 
   crimson: {
@@ -36,12 +40,15 @@ export const colorSchemes: Record<string, ColorScheme> = {
     quartenary: "#ce5f64",
     hoverHighlight: "rgba(196, 141, 141, 0.5)",
     markerCurrentTime: "#000",
-    text: "white",
+    text: "black",
     background: "white",
     commands: "white",
     rangeHighlight: "#000",
-    holidayHighlight: "rgba(240, 120, 96, 0.8)"
+    holidayHighlight: "rgba(240, 120, 96, 0.8)",
+    barContainer: "#c41238",
+    rowContainer: "rgba(255, 255, 255, 1)"
   },
+
   dark: {
     primary: "#404040",
     secondary: "#303030",
@@ -54,7 +61,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     toast: "#1f1f1f",
     commands: "#525252",
     rangeHighlight: "#000",
-    holidayHighlight: "#ff9d3b"
+    holidayHighlight: "#ff9d3b",
+    barContainer: "#525252",
+    rowContainer: "rgba(0, 0, 0, 1)"
   },
 
   flare: {
@@ -67,7 +76,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     text: "white",
     background: "white",
     rangeHighlight: "#000",
-    holidayHighlight: "rgba(240, 120, 96, 0.8)"
+    holidayHighlight: "rgba(240, 120, 96, 0.8)",
+    barContainer: "#e08a38",
+    rowContainer: "rgba(0, 0, 0, 1)"
   },
 
   fuchsia: {
@@ -81,7 +92,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     background: "white",
     commands: "white",
     rangeHighlight: "#000",
-    holidayHighlight: "rgba(240, 120, 96, 0.8)"
+    holidayHighlight: "rgba(240, 120, 96, 0.8)",
+    barContainer: "#de1d5a",
+    rowContainer: "rgba(0, 0, 0, 1)"
   },
 
   grove: {
@@ -95,7 +108,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     background: "white",
     commands: "white",
     rangeHighlight: "#000",
-    holidayHighlight: "rgba(240, 120, 96, 0.8)"
+    holidayHighlight: "rgba(240, 120, 96, 0.8)",
+    barContainer: "#3d9960",
+    rowContainer: "rgba(0, 0, 0, 1)"
   },
 
   "material-blue": {
@@ -109,7 +124,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     background: "white",
     commands: "white",
     rangeHighlight: "#000",
-    holidayHighlight: "rgba(240, 120, 96, 0.8)"
+    holidayHighlight: "rgba(240, 120, 96, 0.8)",
+    barContainer: "#0D47A1",
+    rowContainer: "rgba(0, 0, 0, 1)"
   },
 
   sky: {
@@ -123,7 +140,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     background: "white",
     commands: "white",
     rangeHighlight: "#000",
-    holidayHighlight: "rgba(240, 120, 96, 0.8)"
+    holidayHighlight: "rgba(240, 120, 96, 0.8)",
+    barContainer: "rgb(20,20,20)",
+    rowContainer: "#a1d6f7"
   },
 
   slumber: {
@@ -138,7 +157,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     toast: "#1f1f1f",
     commands: "#38383b",
     rangeHighlight: "#000",
-    holidayHighlight: "rgba(240, 120, 96, 0.8)"
+    holidayHighlight: "rgba(240, 120, 96, 0.8)",
+    barContainer: "#2a2f42",
+    rowContainer: "rgba(0, 0, 0, 1)"
   },
 
   vue: {
@@ -152,7 +173,9 @@ export const colorSchemes: Record<string, ColorScheme> = {
     background: "white",
     commands: "white",
     rangeHighlight: "#000",
-    holidayHighlight: "#f7842d"
+    holidayHighlight: "#f7842d",
+    barContainer: "#258a5d",
+    rowContainer: "rgba(0, 0, 0, 1)"
   }
 }
 

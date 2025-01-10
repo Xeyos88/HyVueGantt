@@ -10,7 +10,30 @@ describe("GGanttLabelColumn", () => {
       props: {
         ...props
       },
-     
+      global: {
+        stubs: {
+          FontAwesomeIcon: true
+        },
+        provide: {
+          useRows: {
+            rows: ref([
+              { id: 1, label: "Row 1", bars: [] },
+              { id: 2, label: "Row 2", bars: [] },
+              { id: 3, label: "Row 3", bars: [] }
+            ]),
+            sortState: ref({ column: "Label", direction: "none" }),
+            toggleSort: () => {},
+            isGroupExpanded: () => false,
+            toggleGroupExpansion: () => {},
+            getFlattenedRows: () => [
+              { id: 1, label: "Row 1", bars: [] },
+              { id: 2, label: "Row 2", bars: [] },
+              { id: 3, label: "Row 3", bars: [] }
+            ]
+          },
+          ...customProvide
+        }
+      }
     })
   }
 
@@ -30,6 +53,7 @@ describe("GGanttLabelColumn", () => {
       const wrapper = createWrapper()
       const labelContainer = wrapper.find(".g-label-column")
       expect(labelContainer.exists()).toBe(true)
+      expect(labelContainer.attributes("style")).toContain("width")
     })
   })
 
@@ -37,9 +61,8 @@ describe("GGanttLabelColumn", () => {
     it("should handle row click", async () => {
       const wrapper = createWrapper()
       const label = wrapper.find(".g-label-column-header-cell")
-      expect(label.exists()).toBe(true)
       await label.trigger("click")
       expect(wrapper.emitted()).toBeTruthy()
     })
   })
-}) 
+})

@@ -31,9 +31,9 @@ vi.mock("../../src/composables/useTooltip", () => ({
 }))
 
 const mockDomElements = () => {
-  const mockElement = document.createElement('div')
-  const mockScroller = document.createElement('input')
-  mockScroller.className = 'g-gantt-scroller'
+  const mockElement = document.createElement("div")
+  const mockScroller = document.createElement("input")
+  mockScroller.className = "g-gantt-scroller"
   mockElement.appendChild(mockScroller)
 
   document.getElementById = vi.fn().mockReturnValue(mockElement)
@@ -46,7 +46,6 @@ const mockDomElements = () => {
 }
 
 describe("GGanttChart", () => {
-
   let domElements: { mockElement: HTMLElement; mockScroller: HTMLElement }
 
   beforeEach(() => {
@@ -89,7 +88,11 @@ describe("GGanttChart", () => {
       global: {
         stubs: {
           FontAwesomeIcon: true,
-          GGanttRow: true,
+          GGanttRow: {
+            name: "GGanttRow",
+            props: ["label", "bars", "id", "highlightOnHover"],
+            template: '<div class="g-gantt-row g-gantt-row-stub"><slot /></div>'
+          },
           GGanttTimeaxis: true,
           GGanttLabelColumn: true
         }
@@ -212,14 +215,13 @@ describe("GGanttChart", () => {
   describe("time indicator", () => {
     it("should render current time indicator when currentTime is true", async () => {
       const wrapper = createWrapper({ currentTime: true })
-      expect(wrapper.findComponent({ name: 'GGanttCurrentTime' }).exists()).toBe(true)
+      expect(wrapper.findComponent({ name: "GGanttCurrentTime" }).exists()).toBe(true)
     })
-  
+
     it("should not render current time indicator when currentTime is false", () => {
       const wrapper = createWrapper({ currentTime: false })
-      expect(wrapper.findComponent({ name: 'GGanttCurrentTime' }).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: "GGanttCurrentTime" }).exists()).toBe(false)
     })
-  
   })
 
   describe("renderRow", () => {
@@ -246,7 +248,7 @@ describe("GGanttChart", () => {
         label: "Test Label",
         bars: [],
         id: "test-id",
-        key: "test-id",
+        key: "test-id"
       })
     })
 
@@ -282,9 +284,9 @@ describe("GGanttChart", () => {
 
     it("should handle mouse movement during dragging", async () => {
       const wrapper = createWrapper()
-      
+
       await wrapper.vm.handleTimeaxisMouseDown(new MouseEvent("mousedown", { clientX: 100 }))
-      
+
       const moveEvent = new MouseEvent("mousemove", { clientX: 150 })
       await wrapper.vm.handleTimeaxisMouseMove(moveEvent)
 
@@ -302,10 +304,12 @@ describe("GGanttChart", () => {
 
       wrapper.vm.emitBarEvent(mockEvent, mockBar)
       expect(wrapper.emitted("click-bar")).toBeTruthy()
-      expect(wrapper.emitted("click-bar")[0]).toEqual([{
-        bar: mockBar,
-        e: mockEvent
-      }])
+      expect(wrapper.emitted("click-bar")[0]).toEqual([
+        {
+          bar: mockBar,
+          e: mockEvent
+        }
+      ])
     })
 
     it("should emit dragstart-bar event and update dragging state", () => {
@@ -346,12 +350,16 @@ describe("GGanttChart", () => {
 
       await wrapper.unmount()
 
-      expect(removeEventListenerSpy).toHaveBeenCalledWith("mousemove", wrapper.vm.handleTimeaxisMouseMove)
-      expect(removeEventListenerSpy).toHaveBeenCalledWith("mouseup", wrapper.vm.handleTimeaxisMouseUp)
+      expect(removeEventListenerSpy).toHaveBeenCalledWith(
+        "mousemove",
+        wrapper.vm.handleTimeaxisMouseMove
+      )
+      expect(removeEventListenerSpy).toHaveBeenCalledWith(
+        "mouseup",
+        wrapper.vm.handleTimeaxisMouseUp
+      )
       expect(removeEventListenerSpy).toHaveBeenCalledWith("resize", wrapper.vm.updateBarPositions)
       expect(resizeObserverDisconnectSpy).toHaveBeenCalled()
     })
-
-    
   })
 })
