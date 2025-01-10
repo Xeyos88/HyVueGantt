@@ -42,9 +42,7 @@ export function useRows(
   const expandedGroups = ref<Set<string | number>>(new Set())
 
   const extractRowsFromSlots = () => {
-    console.log("Slots disponibili:", slots) // Vediamo cosa arriva dagli slots
     const defaultSlot = slots.default?.()
-    console.log("Default slot:", defaultSlot) // Vediamo il contenuto dello slot
     const rows: ChartRow[] = []
 
     if (!defaultSlot) return rows
@@ -76,7 +74,6 @@ export function useRows(
       }
     })
 
-    console.log("Rows estratte:", rows)
     return rows
   }
 
@@ -295,7 +292,6 @@ export function useRows(
     } else {
       expandedGroups.value.add(rowId)
     }
-    console.log(expandedGroups.value)
   }
 
   const isGroupExpanded = (rowId: string | number): boolean => {

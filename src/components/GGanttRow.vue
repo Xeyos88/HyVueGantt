@@ -48,7 +48,6 @@ const rowStyle = computed(() => {
   if (isGroup.value) {
     return {
       ...baseStyle,
-      borderLeft: "3px solid #666",
       background: colors.value.ternary
     }
   }
@@ -129,7 +128,7 @@ const visibleChildRows = computed(() => {
       </transition-group>
     </div>
   </div>
-  <div v-if="isGroup && isExpanded" class="g-gantt-row-children" :style="{ marginLeft: '20px' }">
+  <div v-if="isGroup && isExpanded" class="g-gantt-row-children">
     <g-gantt-row v-for="child in visibleChildRows" :key="child.id || child.label" v-bind="child">
       <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps: SlotData">
         <slot :name="name" v-bind="slotProps" />
@@ -169,9 +168,6 @@ const visibleChildRows = computed(() => {
   box-shadow: 0px 1px 4px 0px rgba(0, 0, 0, 0.6);
 }
 
-.g-gantt-row-group {
-  border-left: 3px solid #666;
-}
 
 .g-gantt-row-group-label {
   font-weight: bold;

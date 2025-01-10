@@ -63,11 +63,9 @@ const columns = computed<LabelColumnConfig[]>(() => {
   return multiColumnLabel.value
 })
 const getVisibleColumns = (row: ChartRow) => {
-  console.log(row)
   if (row.children && row.children.length > 0) {
     return [{ field: "Label", sortable: true }]
   }
-  console.log(columns.value)
   return columns.value
 }
 
@@ -82,13 +80,13 @@ const rowClasses = (row: LabelColumnRowProps) => {
   return classes
 }
 
-const getRowStyle = (row: LabelColumnRowProps): CSSProperties => {
+/*const getRowStyle = (row: LabelColumnRowProps): CSSProperties => {
   const style: CSSProperties = {}
   if (row.indentLevel) {
     style.paddingLeft = `${row.indentLevel * 20}px`
   }
   return style
-}
+}*/
 
 const handleGroupToggle = (row: ChartRow, event: Event) => {
   event.stopPropagation()
@@ -225,7 +223,7 @@ const labelContainer = ref<HTMLElement | null>(null)
 
 const labelContainerStyle = computed<CSSProperties>(() => {
   if (maxRows.value === 0) return {}
-  const minRows = Math.min(maxRows.value, rows.value.length)
+  const minRows = Math.min(maxRows.value, getProcessedRows.value.length)
 
   return {
     height: `${minRows * rowHeight.value}px`,
@@ -325,7 +323,6 @@ defineExpose({
         :style="{
           background: index % 2 === 0 ? colors.ternary : colors.quartenary,
           height: `${rowHeight}px`,
-          ...getRowStyle(row)
         }"
         :class="rowClasses(row)"
       >

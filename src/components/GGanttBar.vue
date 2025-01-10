@@ -90,6 +90,7 @@ onMounted(() => {
 
       xStart.value = newXStart
       xEnd.value = newXEnd
+
     },
     { deep: true, immediate: true }
   )
