@@ -77,14 +77,12 @@ export function useRows(
     return rows
   }
 
-  const calculateGroupBars = (row: ChartRow): GanttBarObject[] => {
+ const calculateGroupBars = (row: ChartRow): GanttBarObject[] => {
     if (!row.children?.length) return row.bars || []
 
     const allChildBars = row.children.flatMap((child): GanttBarObject[] => {
-      if (child.children?.length) {
-        return calculateGroupBars(child)
-      }
-      return child.bars
+      const childGroupBars = calculateGroupBars(child)
+      return [...childGroupBars, ...(child.bars || [])]
     })
 
     if (!allChildBars.length) return []
@@ -118,7 +116,7 @@ export function useRows(
           immobile: true,
           label: row.label,
           style: {
-            background: "#e0e0e0",
+            background: "transparent",
             opacity: "0.7"
           }
         }
@@ -230,11 +228,21 @@ export function useRows(
       sourceRows = extractRowsFromSlots()
     }
 
-    sourceRows.forEach((row) => {
-      if (row.children?.length) {
-        row.bars = calculateGroupBars(row)
-      }
-    })
+    const processRowsWithGroupBars = (rows: ChartRow[]): ChartRow[] => {
+      return rows.map(row => {
+        if (row.children?.length) {
+          const processedChildren = processRowsWithGroupBars(row.children)
+          return {
+            ...row,
+            children: processedChildren,
+            bars: calculateGroupBars(row)
+          }
+        }
+        return row
+      })
+    }
+
+    sourceRows = processRowsWithGroupBars(sourceRows)
 
     if (sortState.value.direction !== "none") {
       return sourceRows.sort((a, b) => {

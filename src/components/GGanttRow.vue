@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, type Ref, toRefs, computed, provide, inject, type CSSProperties } from "vue"
-
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
+import { faChevronRight, faChevronDown } from "@fortawesome/free-solid-svg-icons"
 import useTimePositionMapping from "../composables/useTimePositionMapping"
 import provideConfig from "../provider/provideConfig"
 import type { GanttBarObject } from "../types"
@@ -88,6 +89,13 @@ const isBlank = (str: string) => {
   return !str || /^\s*$/.test(str)
 }
 
+const handleGroupToggle = (event: Event) => {
+  event.stopPropagation()
+  if (props.id) {
+    rowManager.toggleGroupExpansion(props.id)
+  }
+}
+
 const visibleChildRows = computed(() => {
   if (!isGroup.value || !isExpanded.value) return []
   return props.children || []
@@ -110,7 +118,18 @@ const visibleChildRows = computed(() => {
       class="g-gantt-row-label"
       :class="{ 'g-gantt-row-group-label': isGroup }"
       :style="{ background: colors.primary, color: colors.text }"
+       @click="isGroup ? handleGroupToggle($event) : undefined"
     >
+      <button
+        v-if="isGroup"
+        class="group-toggle-button"
+        @click="handleGroupToggle($event)"
+      >
+        <FontAwesomeIcon    
+          :icon="isExpanded ? faChevronDown : faChevronRight"
+          class="group-icon"
+        />
+      </button>
       <slot name="label">
         {{ label }}
       </slot>

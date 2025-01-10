@@ -56,12 +56,19 @@ const initializeColumnWidths = () => {
   })
 }
 
+/*const hasGroupRows = computed(() => {
+  return getProcessedRows.value.some(row => row.children && row.children.length > 0)
+})*/
+
 const columns = computed<LabelColumnConfig[]>(() => {
   if (!multiColumnLabel.value?.length || !labelColumnTitle.value) {
     return [{ field: "Label", sortable: true }]
   }
-  return multiColumnLabel.value
+  const filteredColumns = multiColumnLabel.value.filter(col => col.field !== "Label")
+  const labelColumn = { field: "Label", sortable: true }
+  return [labelColumn, ...filteredColumns]
 })
+
 const getVisibleColumns = (row: ChartRow) => {
   if (row.children && row.children.length > 0) {
     return [{ field: "Label", sortable: true }]
@@ -80,13 +87,50 @@ const rowClasses = (row: LabelColumnRowProps) => {
   return classes
 }
 
-/*const getRowStyle = (row: LabelColumnRowProps): CSSProperties => {
-  const style: CSSProperties = {}
-  if (row.indentLevel) {
-    style.paddingLeft = `${row.indentLevel * 20}px`
+const INDENT_WIDTH = 22    
+
+const getRowStyle = (row: LabelColumnRowProps, isLabelColumn: boolean): CSSProperties => {
+  if (!isLabelColumn) {
+    return {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%'
+    }
   }
+
+    const style: CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+    position: 'relative'
+  }
+
+  if (!row.children?.length && !row.indentLevel) {
+    style.paddingLeft = `${INDENT_WIDTH}px`
+  } 
+  else if (row.indentLevel) {
+    style.paddingLeft = `${row.indentLevel * INDENT_WIDTH}px`
+  }
+
+
   return style
-}*/
+}
+
+const getCellStyle = (isLabelColumn: boolean): CSSProperties => {
+  const style: CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%'
+  }
+
+  if (!isLabelColumn) {
+    style.justifyContent = 'center'
+    style.paddingLeft = '0'
+  }
+
+  return style
+}
 
 const handleGroupToggle = (row: ChartRow, event: Event) => {
   event.stopPropagation()
@@ -148,14 +192,27 @@ const handleDragEnd = () => {
   document.removeEventListener("mouseup", handleDragEnd)
 }
 
-const getColumnStyle = (column: string): CSSProperties => ({
-  width: `${columnWidths.get(column) || labelColumnWidth.value}px`,
-  minWidth: `${columnWidths.get(column) || labelColumnWidth.value}px`,
-  maxWidth: `${columnWidths.get(column) || labelColumnWidth.value}px`,
-  position: "relative",
-  flexShrink: 0,
-  flexGrow: 0
-})
+const getColumnStyle = (column: string, isGroup: boolean): CSSProperties => {
+  if (isGroup && column === "Label") {
+    return {
+      width: "100%",
+      minWidth: "100%",
+      maxWidth: "100%",
+      position: "relative",
+      flexShrink: 0,
+      flexGrow: 0
+    }
+  }
+
+  return {
+    width: `${columnWidths.get(column) || labelColumnWidth.value}px`,
+    minWidth: `${columnWidths.get(column) || labelColumnWidth.value}px`,
+    maxWidth: `${columnWidths.get(column) || labelColumnWidth.value}px`,
+    position: "relative",
+    flexShrink: 0,
+    flexGrow: 0
+  }
+}
 
 const calculateDuration = (startDate: string, endDate: string) => {
   const start = toDayjs(startDate)
@@ -290,7 +347,7 @@ defineExpose({
             class="g-label-column-header-cell"
             :class="{ sortable: isSortable(column) }"
             role="columnheader"
-            :style="getColumnStyle(column.field)"
+            :style="getColumnStyle(column.field, false)"
           >
             <div
               class="header-content"
@@ -334,8 +391,9 @@ defineExpose({
                 :row="row"
                 :value="getRowValue(row, column, Number(row.id) || 0)"
               >
-                <div class="g-label-column-cell" :style="getColumnStyle(column.field)">
-                  <div class="cell-content">
+                <div class="g-label-column-cell" :style="getColumnStyle(column.field, Boolean(row.children?.length))">
+                  <div :style="getCellStyle(column.field === 'Label')">
+                    <div :style="getRowStyle(row, column.field === 'Label')" class="cell-content">
                     <button
                       v-if="column.field === 'Label' && row.children && row.children.length > 0"
                       class="group-toggle-button"
@@ -350,9 +408,10 @@ defineExpose({
                         class="group-icon"
                       />
                     </button>
-                    <span class="text-ellipsis">
+                    <span class="text-ellipsis-value">
                       {{ getRowValue(row, column, index) }}
                     </span>
+                  </div>
                   </div>
                 </div>
               </slot>
@@ -403,6 +462,9 @@ defineExpose({
   height: 100%;
   gap: 0.5rem;
   box-sizing: border-box;
+  position: relative;
+  overflow: visible;
+  text-align: center;
 }
 
 .g-label-column-cell {
@@ -417,8 +479,7 @@ defineExpose({
   flex: none;
 }
 
-.header-content,
-.cell-content {
+.header-content {
   width: 100%;
   display: flex;
   align-items: center;
@@ -427,12 +488,28 @@ defineExpose({
   padding: 0 4px;
 }
 
+.cell-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 4px;
+}
+
 .text-ellipsis {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
 }
+
+.text-ellipsis-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 
 .g-label-column-header-cell.sortable {
   cursor: pointer;
@@ -489,11 +566,6 @@ defineExpose({
   background: rgba(0, 0, 0, 0.1);
 }
 
-.g-label-column-header-cell {
-  position: relative;
-  overflow: visible;
-}
-
 .g-label-column {
   user-select: none;
 }
@@ -508,13 +580,13 @@ defineExpose({
 }
 
 .group-toggle-button {
+  flex: 0 0 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 20px;
   height: 20px;
   padding: 0;
-  margin-right: 4px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -534,12 +606,5 @@ defineExpose({
 
 .group-label {
   font-weight: 600;
-}
-
-.cell-content {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  gap: 4px;
 }
 </style>

@@ -95,6 +95,25 @@ onMounted(() => {
     { deep: true, immediate: true }
   )
 })
+const isGroupBar = computed(() => {
+  return bar.value.ganttBarConfig.id.startsWith('group-')
+})
+
+const getGroupBarPath = (width: number, height: number) => {
+  const bottomSpike = height * 0.7    
+  const mainBarHeight = height * 0.5  
+  const spikeWidth = width * 0.1      
+  
+  return `
+    M 0 0
+    L 0 ${bottomSpike}
+    L ${spikeWidth} ${mainBarHeight}
+    L ${width - spikeWidth} ${mainBarHeight}
+    L ${width} ${bottomSpike}
+    L ${width} 0
+    L 0 0
+  `
+}
 </script>
 
 <template>
@@ -124,6 +143,13 @@ onMounted(() => {
     tabindex="0"
     :aria-describedby="`tooltip-${barConfig.id}`"
   >
+  <svg v-if="isGroupBar" class="group-bar-decoration" :width="xEnd - xStart" :height="rowHeight * 0.8">
+      <path
+        :d="getGroupBarPath(xEnd - xStart, rowHeight * 0.8)"
+        fill="#e0e0e0"
+        opacity="0.7"
+      />
+    </svg>
     <div class="g-gantt-bar-label">
       <slot :bar="bar">
         <div>
@@ -181,6 +207,19 @@ onMounted(() => {
 }
 
 .g-gantt-bar-label img {
+  pointer-events: none;
+}
+
+.is-group-bar {
+  background: transparent !important;
+}
+
+.group-bar-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 </style>
