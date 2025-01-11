@@ -7,12 +7,12 @@ HyVue Gantt exposes several TypeScript types and interfaces for use in your appl
 ```typescript
 // Time Units
 type TimeUnit = 'hour' | 'day' | 'week' | 'month';
+type DayOptionLabel = "day" | "doy" | "name" | "number"
 
 // Connection Types
 type ConnectionType = 'bezier' | 'straight' | 'squared';
 type ConnectionPattern = 'solid' | 'dot' | 'dash' | 'dashdot';
 type ConnectionSpeed = 'slow' | 'normal' | 'fast';
-type DayOptionLabel = "day" | "doy" | "name" | "number"
 ```
 
 ## Bar Configuration
@@ -45,6 +45,7 @@ interface ChartRow {
   id?: string | number
   label: string
   bars: GanttBarObject[]
+  children?: ChartRow[]
   _originalNode?: any
 }
 

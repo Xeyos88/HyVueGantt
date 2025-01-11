@@ -112,6 +112,7 @@ const rowManager = useRows(
   {
     barStart: toRef(props, "barStart"),
     barEnd: toRef(props, "barEnd"),
+    dateFormat: toRef(props, "dateFormat"),
     multiColumnLabel: toRef(props, "multiColumnLabel"),
     onSort: (sortState) => emit("sort", { sortState }),
     initialSort: props.initialSort
@@ -128,6 +129,7 @@ const renderRow = (row: ChartRow) => {
         ...row._originalNode.props,
         label: row.label,
         bars: row.bars,
+        children: row.children,
         id: row.id,
         key: row.id || row.label
       },

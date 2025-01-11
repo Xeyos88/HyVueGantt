@@ -1,38 +1,68 @@
 <script setup lang="ts">
-import { ref, type Ref, toRefs, computed, type StyleValue, provide } from "vue"
-
+import { ref, type Ref, toRefs, computed, provide, inject, type CSSProperties } from "vue"
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
+import { faChevronRight, faChevronDown } from "@fortawesome/free-solid-svg-icons"
 import useTimePositionMapping from "../composables/useTimePositionMapping"
 import provideConfig from "../provider/provideConfig"
 import type { GanttBarObject } from "../types"
 import GGanttBar from "./GGanttBar.vue"
 import { BAR_CONTAINER_KEY } from "../provider/symbols"
+import type { UseRowsReturn } from "../composables/useRows"
+
+interface SlotData {
+  bar?: GanttBarObject
+  label?: string
+  [key: string]: any
+}
 
 const props = defineProps<{
   label: string
   bars: GanttBarObject[]
   highlightOnHover?: boolean
   id?: string | number
+  children?: { id: string | number; label: string; bars: GanttBarObject[] }[]
 }>()
 
 const emit = defineEmits<{
   (e: "drop", value: { e: MouseEvent; datetime: string | Date }): void
 }>()
 
+const rowManager = inject<UseRowsReturn>("useRows")!
 const { rowHeight, colors, labelColumnTitle, rowClass } = provideConfig()
 const { highlightOnHover } = toRefs(props)
 const isHovering = ref(false)
 
+const isGroup = computed(() => Boolean(props.children?.length))
+
+const isExpanded = computed(() => {
+  if (!isGroup.value || !props.id) return false
+  return rowManager.isGroupExpanded(props.id)
+})
+
 const rowStyle = computed(() => {
-  return {
+  const baseStyle: CSSProperties = {
     height: `${rowHeight.value}px`,
-    background: highlightOnHover?.value && isHovering.value ? colors.value.hoverHighlight : null
-  } as StyleValue
+    background:
+      highlightOnHover?.value && isHovering.value ? colors.value.hoverHighlight : undefined
+  }
+
+  if (isGroup.value) {
+    return {
+      ...baseStyle,
+      background: colors.value.rowContainer
+    }
+  }
+
+  return baseStyle
 })
 
 const rowClasses = computed(() => {
   const classes = ["g-gantt-row"]
   if (rowClass.value && props) {
     classes.push(rowClass.value(props))
+  }
+  if (isGroup.value) {
+    classes.push("g-gantt-row-group")
   }
   return classes
 })
@@ -43,6 +73,8 @@ const barContainer: Ref<HTMLElement | null> = ref(null)
 provide(BAR_CONTAINER_KEY, barContainer)
 
 const onDrop = (e: MouseEvent) => {
+  if (isGroup.value) return
+
   const container = barContainer.value?.getBoundingClientRect()
   if (!container) {
     console.error("Hyper Vue Gantt: failed to find bar container element for row.")
@@ -56,6 +88,18 @@ const onDrop = (e: MouseEvent) => {
 const isBlank = (str: string) => {
   return !str || /^\s*$/.test(str)
 }
+
+const handleGroupToggle = (event: Event) => {
+  event.stopPropagation()
+  if (props.id) {
+    rowManager.toggleGroupExpansion(props.id)
+  }
+}
+
+const visibleChildRows = computed(() => {
+  if (!isGroup.value || !isExpanded.value) return []
+  return props.children || []
+})
 </script>
 
 <template>
@@ -72,19 +116,36 @@ const isBlank = (str: string) => {
     <div
       v-if="!isBlank(label) && !labelColumnTitle"
       class="g-gantt-row-label"
+      :class="{ 'g-gantt-row-group-label': isGroup }"
       :style="{ background: colors.primary, color: colors.text }"
+      @click="isGroup ? handleGroupToggle($event) : undefined"
     >
+      <button v-if="isGroup" class="group-toggle-button" @click="handleGroupToggle($event)">
+        <FontAwesomeIcon :icon="isExpanded ? faChevronDown : faChevronRight" class="group-icon" />
+      </button>
       <slot name="label">
         {{ label }}
       </slot>
     </div>
     <div ref="barContainer" class="g-gantt-row-bars-container" v-bind="$attrs">
       <transition-group name="bar-transition" tag="div">
-        <g-gantt-bar v-for="bar in bars" :key="bar.ganttBarConfig.id" :bar="bar">
+        <g-gantt-bar
+          v-for="bar in bars"
+          :key="bar.ganttBarConfig.id"
+          :bar="bar"
+          :class="{ 'g-gantt-group-bar': isGroup }"
+        >
           <slot name="bar-label" :bar="bar" />
         </g-gantt-bar>
       </transition-group>
     </div>
+  </div>
+  <div v-if="isGroup && isExpanded" class="g-gantt-row-children">
+    <g-gantt-row v-for="child in visibleChildRows" :key="child.id || child.label" v-bind="child">
+      <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps: SlotData">
+        <slot :name="name" v-bind="slotProps" />
+      </template>
+    </g-gantt-row>
   </div>
 </template>
 
@@ -117,6 +178,20 @@ const isBlank = (str: string) => {
   background: #f2f2f2;
   z-index: 3;
   box-shadow: 0px 1px 4px 0px rgba(0, 0, 0, 0.6);
+}
+
+.g-gantt-row-group-label {
+  font-weight: bold;
+  background: #e0e0e0 !important;
+}
+
+.g-gantt-group-bar {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.g-gantt-row-children {
+  transition: max-height 0.3s ease-in-out;
 }
 
 .bar-transition-leave-active,

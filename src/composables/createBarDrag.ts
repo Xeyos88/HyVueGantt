@@ -52,13 +52,22 @@ export default function createBarDrag(
 
   const getBarElements = () => {
     const barElement = findBarElement(ganttId!, bar.ganttBarConfig.id)
-    const barContainer = barElement?.closest(".g-gantt-row-bars-container")?.getBoundingClientRect()
+    let currentElement = barElement
+    let barContainer = null
+    while (currentElement && !barContainer) {
+      const container = currentElement.closest('.g-gantt-row-bars-container')
+      if (container) {
+        barContainer = container.getBoundingClientRect()
+      }
+      currentElement = currentElement.parentElement
+    }
     return { barElement, barContainer }
   }
 
   const drag = (e: MouseEvent) => {
     const { barElement, barContainer } = getBarElements()
     if (!barElement || !barContainer) {
+      console.warn('Missing elements:', { barElement, barContainer })
       return
     }
 
