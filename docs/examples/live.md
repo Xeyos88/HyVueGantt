@@ -55,3 +55,11 @@ Holiday Live Demo for Hyper Vue Gantt:
 <ClientOnly>
   <HolidayGanttDemo />
 </ClientOnly>
+
+## Grouping Demo 
+
+Grouping Live Demo for Hyper Vue Gantt:
+
+<ClientOnly>
+  <GroupingGanttDemo />
+</ClientOnly>
