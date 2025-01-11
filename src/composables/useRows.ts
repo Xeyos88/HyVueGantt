@@ -9,6 +9,10 @@ import type {
 } from "../types"
 import dayjs from "dayjs"
 
+/**
+ * Interface defining the return object from the useRows composable
+ * Provides methods and reactive references for managing Gantt chart rows
+ */
 export interface UseRowsReturn {
   rows: Ref<ChartRow[]>
   sortState: Ref<SortState>
@@ -20,6 +24,9 @@ export interface UseRowsReturn {
   getFlattenedRows: () => ChartRow[]
 }
 
+/**
+ * Interface defining the required properties for the useRows composable
+ */
 export interface UseRowsProps {
   barStart: Ref<string>
   barEnd: Ref<string>
@@ -29,6 +36,13 @@ export interface UseRowsProps {
   initialSort?: SortState
 }
 
+/**
+ * A composable that manages rows in a Gantt chart, providing sorting, grouping, and row manipulation functionality
+ * @param slots - Vue slots object for accessing slot content
+ * @param props - Configuration properties for the rows
+ * @param initialRows - Optional initial rows data
+ * @returns UseRowsReturn object containing row management methods and state
+ */
 export function useRows(
   slots: Slots,
   { barStart, barEnd, dateFormat, multiColumnLabel, onSort, initialSort }: UseRowsProps,
@@ -41,6 +55,10 @@ export function useRows(
   const sortChangeCallbacks = ref<Set<() => void>>(new Set())
   const expandedGroups = ref<Set<string | number>>(new Set())
 
+  /**
+   * Extracts rows data from slots, processing both direct and nested slot contents
+   * @returns Array of ChartRow objects
+   */
   const extractRowsFromSlots = () => {
     const defaultSlot = slots.default?.()
     const rows: ChartRow[] = []
@@ -77,6 +95,12 @@ export function useRows(
     return rows
   }
 
+  /**
+   * Calculates synthetic bars for a group based on its children's bars
+   * Creates a bar that spans the entire group's timeline
+   * @param row - The row to calculate group bars for
+   * @returns Array of calculated group bars
+   */
   const calculateGroupBars = (row: ChartRow): GanttBarObject[] => {
     if (!row.children?.length) return row.bars || []
 
@@ -124,6 +148,11 @@ export function useRows(
     ]
   }
 
+  /**
+   * Converts a date string or Date object to a dayjs object
+   * @param input - Date string or Date object to convert
+   * @returns Dayjs object
+   */
   const toDayjs = (input: string | Date) => {
     if (typeof input === "string") {
       return dayjs(input)
@@ -133,6 +162,11 @@ export function useRows(
     return dayjs()
   }
 
+  /**
+   * Retrieves the start date of a row, considering its children's start dates
+   * @param row - The row to get the start date for
+   * @returns Dayjs object or null if no start date is found
+   */
   const getStartDate = (row: ChartRow): dayjs.Dayjs | null => {
     if (row.children?.length) {
       const childDates = row.children
@@ -149,6 +183,11 @@ export function useRows(
     return getBarsStartDate(row.bars)
   }
 
+  /**
+   * Retrieves the start date of a row's bars
+   * @param bars - The bars to get the start date for
+   * @returns Dayjs object or null if no bars are found
+   */
   const getBarsStartDate = (bars: GanttBarObject[]): dayjs.Dayjs | null => {
     if (bars.length === 0) return null
 
@@ -158,6 +197,11 @@ export function useRows(
     }, null)
   }
 
+  /**
+   * Retrieves the end date of a row, considering its children's end dates
+   * @param row - The row to get the end date for
+   * @returns Dayjs object or null if no end date is found
+   */
   const getEndDate = (row: ChartRow): dayjs.Dayjs | null => {
     if (row.children?.length) {
       const childDates = row.children
@@ -174,6 +218,11 @@ export function useRows(
     return getBarsEndDate(row.bars)
   }
 
+  /**
+   * Retrieves the end date of a row's bars
+   * @param bars - The bars to get the end date for
+   * @returns Dayjs object or null if no bars are found
+   */
   const getBarsEndDate = (bars: GanttBarObject[]): dayjs.Dayjs | null => {
     if (bars.length === 0) return null
 
@@ -183,6 +232,12 @@ export function useRows(
     }, null)
   }
 
+  /**
+   * Calculates the duration of a row's bars
+   * For groups, calculates the total span of all child bars
+   * @param row - Row to calculate duration for
+   * @returns Duration in milliseconds
+   */
   const calculateDuration = (row: ChartRow): number => {
     const startDate = getStartDate(row)
     const endDate = getEndDate(row)
@@ -191,6 +246,13 @@ export function useRows(
     return endDate.diff(startDate, "minutes")
   }
 
+  /**
+   * Compares two rows for sorting based on specified column
+   * @param a - First row to compare
+   * @param b - Second row to compare
+   * @param column - Column to sort by
+   * @returns Comparison result (-1, 0, or 1)
+   */
   const compareValues = (a: ChartRow, b: ChartRow, column: LabelColumnField | string): number => {
     if ((a.children?.length || 0) !== (b.children?.length || 0)) {
       return (b.children?.length || 0) - (a.children?.length || 0)
@@ -243,10 +305,18 @@ export function useRows(
     }
   }
 
+  /**
+   * Checks if a field is one of the standard Gantt chart fields
+   * @param field - Field name to check
+   * @returns Boolean indicating if field is standard
+   */
   const isStandardField = (field: string): field is LabelColumnField => {
     return ["Id", "Label", "StartDate", "EndDate", "Duration"].includes(field)
   }
 
+  /**
+   * Computed property that returns the current rows with proper sorting applied
+   */
   const rows = computed(() => {
     let sourceRows: ChartRow[]
     if (initialRows?.value?.length) {
@@ -278,6 +348,13 @@ export function useRows(
     return sourceRows
   })
 
+  /**
+   * Sorts rows recursively, maintaining group hierarchy
+   * @param rows - Rows to sort
+   * @param column - Column to sort by
+   * @param direction - Sort direction
+   * @returns Sorted array of rows
+   */
   const sortRows = (rows: ChartRow[], column: string, direction: SortDirection): ChartRow[] => {
     return rows
       .map((row) => {
@@ -295,6 +372,10 @@ export function useRows(
       })
   }
 
+  /**
+   * Toggles sort state for a column
+   * @param column - Column to toggle sort for
+   */
   const toggleSort = (column: string) => {
     if (sortState.value.column !== column) {
       sortState.value = {
@@ -318,6 +399,10 @@ export function useRows(
     sortChangeCallbacks.value.forEach((callback) => callback())
   }
 
+  /**
+   * Toggles expansion state of a group row
+   * @param rowId - ID of the row to toggle
+   */
   const toggleGroupExpansion = (rowId: string | number) => {
     if (expandedGroups.value.has(rowId)) {
       expandedGroups.value.delete(rowId)
@@ -326,10 +411,19 @@ export function useRows(
     }
   }
 
+  /**
+   * Checks if a group row is expanded
+   * @param rowId - ID of the row to check
+   * @returns Boolean indicating expansion state
+   */
   const isGroupExpanded = (rowId: string | number): boolean => {
     return expandedGroups.value.has(rowId)
   }
 
+  /**
+   * Returns a flattened array of rows, respecting group expansion state
+   * @returns Flattened array of rows
+   */
   const getFlattenedRows = (): ChartRow[] => {
     const flatten = (rows: ChartRow[]): ChartRow[] => {
       return rows.flatMap((row) => {
@@ -342,6 +436,11 @@ export function useRows(
     return flatten(rows.value)
   }
 
+  /**
+   * Registers a callback to be called when sort state changes
+   * @param callback - Function to call on sort change
+   * @returns Cleanup function to remove the callback
+   */
   const onSortChange = (callback: () => void) => {
     sortChangeCallbacks.value.add(callback)
     return () => {
@@ -349,6 +448,10 @@ export function useRows(
     }
   }
 
+  /**
+   * Returns the current chart rows
+   * @returns Array of current chart rows
+   */
   const getChartRows = () => rows.value
 
   return {
