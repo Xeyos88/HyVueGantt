@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v1.6.0](https://github.com/Xeyos88/HyVueGantt/tree/v1.6.0) (2025-01-11)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v1.5.0...v1.6.0)
+
+
+**Features:**
+
+- Row grouping
+**Bug Fixes:**
+
+- sort for rows children
+- Sorting problem
+
 ## [v1.5.0](https://github.com/Xeyos88/HyVueGantt/tree/v1.5.0) (2025-01-02)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v1.4.0...v1.5.0)
