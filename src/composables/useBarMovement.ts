@@ -3,22 +3,39 @@ import type { GGanttChartConfig } from "../types/config"
 import dayjs from "dayjs"
 import type { UseRowsReturn } from "./useRows"
 
+/**
+ * Interface defining the result of a bar movement operation
+ */
 export interface MovementResult {
   success: boolean
   affectedBars: Set<GanttBarObject>
 }
 
+/**
+ * Interface defining the API for bar movement operations
+ */
 export interface MovementAPI {
   moveBar: (bar: GanttBarObject, newStart: string, newEnd: string) => MovementResult
   findOverlappingBars: (bar: GanttBarObject) => GanttBarObject[]
   findConnectedBars: (bar: GanttBarObject) => GanttBarObject[]
 }
 
+/**
+ * Interface defining the dayjs helper functions required for bar movement
+ */
 interface DayjsHelper {
   toDayjs: (input: string | Date | GanttBarObject, startOrEnd?: "start" | "end") => dayjs.Dayjs
   format: (input: string | Date | dayjs.Dayjs, pattern?: string | false) => string | Date
 }
 
+/**
+ * A composable that manages bar movement operations in the Gantt chart
+ * Handles validation, collision detection, and connected bar movement
+ * @param config - Gantt chart configuration
+ * @param rowManager - Row management utilities
+ * @param dayjsHelper - Date manipulation utilities
+ * @returns MovementAPI object for managing bar movements
+ */
 export function useBarMovement(
   config: GGanttChartConfig,
   rowManager: UseRowsReturn,
@@ -27,11 +44,22 @@ export function useBarMovement(
   const { barStart, barEnd, dateFormat, pushOnOverlap, pushOnConnect } = config
   const processedBars = new Set<string>()
 
+  /**
+   * Formats a dayjs date according to chart configuration
+   * @param date - Date to format
+   * @returns Formatted date string
+   */
   const formatDate = (date: dayjs.Dayjs): string => {
     const result = dayjsHelper.format(date, dateFormat.value)
     return typeof result === "string" ? result : result.toISOString()
   }
 
+  /**
+   * Validates if a bar movement respects milestone constraints
+   * @param bar - Bar being moved
+   * @param newEnd - Proposed new end date
+   * @returns Boolean indicating if movement is allowed
+   */
   const checkMilestoneConstraint = (bar: GanttBarObject, newEnd: string): boolean => {
     if (!bar.ganttBarConfig.milestoneId || !config.milestones.value) return true
 
@@ -47,6 +75,15 @@ export function useBarMovement(
     return endDate.isSameOrBefore(milestoneDate)
   }
 
+  /**
+   * Moves a bar to new start and end positions
+   * Handles validation and affected bar movement
+   * @param bar - Bar to move
+   * @param newStart - New start date
+   * @param newEnd - New end date
+   * @param initialMove - Whether this is the initial movement
+   * @returns MovementResult indicating success and affected bars
+   */
   const moveBar = (
     bar: GanttBarObject,
     newStart: string,
@@ -86,6 +123,13 @@ export function useBarMovement(
     return { success: true, affectedBars }
   }
 
+  /**
+   * Handles interactions between bars during movement
+   * Manages overlapping and connected bars
+   * @param bar - Bar being moved
+   * @param affectedBars - Set of bars affected by movement
+   * @returns Object indicating success of interactions
+   */
   const handleBarInteractions = (
     bar: GanttBarObject,
     affectedBars: Set<GanttBarObject>
@@ -131,6 +175,12 @@ export function useBarMovement(
     return { success: true }
   }
 
+  /**
+   * Calculates how much a bar needs to move based on interaction with another bar
+   * @param sourceBar - Bar initiating movement
+   * @param targetBar - Bar being impacted
+   * @returns Movement calculation details
+   */
   const calculateMovement = (sourceBar: GanttBarObject, targetBar: GanttBarObject) => {
     const sourceStart = dayjsHelper.toDayjs(sourceBar[barStart.value])
     const sourceEnd = dayjsHelper.toDayjs(sourceBar[barEnd.value])
@@ -165,6 +215,11 @@ export function useBarMovement(
     }
   }
 
+  /**
+   * Finds all bars that overlap with the given bar
+   * @param bar - Bar to check for overlaps
+   * @returns Array of overlapping bars
+   */
   const findOverlappingBars = (bar: GanttBarObject): GanttBarObject[] => {
     const currentRow = rowManager.rows.value.find((row) => row.bars.includes(bar))
     if (!currentRow) return []
@@ -184,6 +239,11 @@ export function useBarMovement(
     })
   }
 
+  /**
+   * Finds all bars connected to the given bar
+   * @param bar - Bar to check for connections
+   * @returns Array of connected bars
+   */
   const findConnectedBars = (bar: GanttBarObject): GanttBarObject[] => {
     const allBars = rowManager.rows.value.flatMap((row) => row.bars)
     const connectedBars: GanttBarObject[] = []

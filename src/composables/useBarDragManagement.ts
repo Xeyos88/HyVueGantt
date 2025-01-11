@@ -8,11 +8,19 @@ import { inject } from "vue"
 import type { UseRowsReturn } from "./useRows"
 import { GANTT_ID_KEY } from "../provider/symbols"
 
+/**
+ * Interface representing the current state of drag operations
+ */
 type DragState = {
   movedBars: Map<GanttBarObject, { oldStart: string; oldEnd: string }>
   isDragging: boolean
 }
 
+/**
+ * A composable that manages bar drag operations in the Gantt chart
+ * Handles initialization, movement, and state management for drag operations
+ * @returns Object containing methods to manage bar dragging
+ */
 const useBarDragManagement = () => {
   const config = provideConfig()
   const emitBarEvent = provideEmitBarEvent()
@@ -22,11 +30,19 @@ const useBarDragManagement = () => {
   const ganttId = inject<string>(GANTT_ID_KEY)
   const movement = useBarMovement(config, rowManager, dayjs)
 
+  /**
+   * State object tracking currently dragged bars and their original positions
+   */
   const dragState: DragState = {
     movedBars: new Map(),
     isDragging: false
   }
 
+  /**
+   * Initializes drag operation for a single bar
+   * @param bar - Bar to initialize drag for
+   * @param e - Mouse event that triggered the drag
+   */
   const initDragOfBar = (bar: GanttBarObject, e: MouseEvent) => {
     const dragHandler = createDragHandler(bar)
     dragHandler.initiateDrag(e)
@@ -34,6 +50,12 @@ const useBarDragManagement = () => {
     emitBarEvent({ ...e, type: "dragstart" }, bar)
   }
 
+  /**
+   * Initializes drag operation for a bundle of bars
+   * All bars in the bundle will move together
+   * @param mainBar - Primary bar triggering the bundle drag
+   * @param e - Mouse event that triggered the drag
+   */
   const initDragOfBundle = (mainBar: GanttBarObject, e: MouseEvent) => {
     const bundle = mainBar.ganttBarConfig.bundle
     if (!bundle) return
@@ -52,6 +74,12 @@ const useBarDragManagement = () => {
     emitBarEvent({ ...e, type: "dragstart" }, mainBar)
   }
 
+  /**
+   * Creates a drag handler for a specific bar
+   * @param bar - Bar to create handler for
+   * @param isMainBar - Whether this is the primary bar in a bundle
+   * @returns Object containing drag initialization method
+   */
   const createDragHandler = (bar: GanttBarObject, isMainBar = true) => ({
     initiateDrag: (e: MouseEvent) => {
       const { initDrag } = createBarDrag(
@@ -66,6 +94,12 @@ const useBarDragManagement = () => {
     }
   })
 
+  /**
+   * Handles ongoing drag operations
+   * Updates bar positions and emits drag events
+   * @param e - Mouse event during drag
+   * @param bar - Bar being dragged
+   */
   const handleDrag = (e: MouseEvent, bar: GanttBarObject) => {
     emitBarEvent({ ...e, type: "drag" }, bar)
     const result = movement.moveBar(bar, bar[barStart.value], bar[barEnd.value])
@@ -80,12 +114,23 @@ const useBarDragManagement = () => {
     }
   }
 
+  /**
+   * Handles the end of drag operations
+   * Finalizes positions and emits dragend events
+   * @param e - Mouse event at drag end
+   * @param bar - Bar that was dragged
+   */
   const handleDragEnd = (e: MouseEvent, bar: GanttBarObject) => {
     emitBarEvent({ ...e, type: "dragend" }, bar, undefined, new Map(dragState.movedBars))
     dragState.movedBars.clear()
     dragState.isDragging = false
   }
 
+  /**
+   * Adds a bar to the tracking map of moved bars
+   * Stores original position for potential rollback
+   * @param bar - Bar to track
+   */
   const addBarToMovedBars = (bar: GanttBarObject) => {
     if (!dragState.movedBars.has(bar)) {
       dragState.movedBars.set(bar, {
@@ -95,6 +140,10 @@ const useBarDragManagement = () => {
     }
   }
 
+  /**
+   * Reverts all moved bars to their original positions
+   * Used when a drag operation fails
+   */
   const snapBackMovedBars = () => {
     dragState.movedBars.forEach(({ oldStart, oldEnd }, bar) => {
       bar[barStart.value] = oldStart

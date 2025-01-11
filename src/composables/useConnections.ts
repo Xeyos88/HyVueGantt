@@ -1,7 +1,21 @@
 import { computed, ref, type Ref } from "vue"
-import type { BarConnection, BarPosition, ChartRow, GanttBarObject, GGanttChartProps } from "../types"
+import type {
+  BarConnection,
+  BarPosition,
+  ChartRow,
+  GanttBarObject,
+  GGanttChartProps
+} from "../types"
 import type { UseRowsReturn } from "./useRows"
 
+/**
+ * A composable that manages connections between bars in the Gantt chart
+ * Handles connection rendering, positioning, and updates
+ * @param rowManager - Row management utilities
+ * @param props - Gantt chart properties
+ * @param id - Unique identifier for the chart instance
+ * @returns Object containing connection state and management methods
+ */
 export function useConnections(
   rowManager: UseRowsReturn,
   props: GGanttChartProps,
@@ -10,6 +24,10 @@ export function useConnections(
   const connections = ref<BarConnection[]>([])
   const barPositions = ref<Map<string, BarPosition>>(new Map())
 
+  /**
+   * Computed property that generates connector properties for rendering
+   * Merges default and custom connection properties
+   */
   const getConnectorProps = computed(() => (conn: BarConnection) => {
     const sourceBar = barPositions.value.get(conn.sourceId)
     const targetBar = barPositions.value.get(conn.targetId)
@@ -42,9 +60,13 @@ export function useConnections(
     }
   })
 
+  /**
+   * Initializes connections by processing all bars and their connection configurations
+   * Extracts and normalizes connection data from bar configurations
+   */
   const initializeConnections = () => {
     const getAllBars = (rows: ChartRow[]): GanttBarObject[] => {
-      return rows.flatMap(row => {
+      return rows.flatMap((row) => {
         const bars = [...row.bars]
         if (row.children?.length) {
           return [...bars, ...getAllBars(row.children)]
@@ -72,6 +94,10 @@ export function useConnections(
     })
   }
 
+  /**
+   * Updates the positions of all bars in the chart
+   * Calculates and stores positions accounting for scroll offsets
+   */
   const updateBarPositions = async () => {
     await new Promise((resolve) => requestAnimationFrame(resolve))
 

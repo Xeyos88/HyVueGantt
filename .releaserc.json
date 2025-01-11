@@ -7,22 +7,22 @@
       {
         "preset": "angular",
         "releaseRules": [
-          {"type": "major", "release": "major"},
-          {"type": "minor", "release": "minor"},
-          {"type": "patch", "release": "patch"},
-          {"type": "feat", "release": false},
-          {"type": "fix", "release": false},
-          {"type": "docs", "release": false},
-          {"type": "style", "release": false},
-          {"type": "refactor", "release": false},
-          {"type": "test", "release": false},
-          {"type": "ci", "release": false}
-          ],
+          { "type": "major", "release": "major" },
+          { "type": "minor", "release": "minor" },
+          { "type": "patch", "release": "patch" },
+          { "type": "feat", "release": false },
+          { "type": "fix", "release": false },
+          { "type": "docs", "release": false },
+          { "type": "style", "release": false },
+          { "type": "refactor", "release": false },
+          { "type": "test", "release": false },
+          { "type": "ci", "release": false }
+        ],
         "writerOpts": {
           "groupBy": "type",
           "commitGroupsSort": ["feat", "fix", "perf", "docs"],
           "commitsSort": "header",
-          "mainTemplate": "## [v{{version}}](https://github.com/Xeyos88/HyVueGantt/tree/v{{version}}) ({{date}})\n\n[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/{{previousTag}}...v{{version}})\n\n{{> header}}\n\n{{#each commitGroups}}\n{{#if title}}\n**{{title}}:**\n\n{{/if}}\n{{#each commits}}\n{{> commit root=@root}}\n{{/each}}\n{{/each}}\n\n{{> footer}}",
+          "mainTemplate": "## [v{{version}}](https://github.com/Xeyos88/HyVueGantt/tree/v{{version}}) ({{date}})\n\n[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/{{previousTag}}...v{{version}})\n\n{{> header}}\n\n{{#each commitGroups}}\n{{#if title}}\n\n**{{title}}:**\n\n{{/if}}\n{{#each commits}}\n{{> commit root=@root}}\n{{/each}}\n{{/each}}\n\n{{> footer}}",
           "headerPartial": "",
           "commitPartial": "- {{#if scope}}**{{scope}}:** {{/if}}{{subject}}\n",
           "footerPartial": "{{#if noteGroups}}### Note\n\n{{#each noteGroups}}\n#### {{title}}\n{{#each notes}}\n* {{text}}\n{{/each}}\n{{/each}}{{/if}}",
@@ -32,7 +32,11 @@
           "types": [
             { "type": "feat", "section": "✨ New Features", "hidden": false },
             { "type": "fix", "section": "🐛 Fix", "hidden": false },
-            { "type": "break", "section": "⚠ BREAKING CHANGES", "hidden": false },
+            {
+              "type": "break",
+              "section": "⚠ BREAKING CHANGES",
+              "hidden": false
+            },
             { "type": "perf", "section": "⚡️ Performance", "hidden": false },
             { "type": "docs", "section": "📚 Documentation", "hidden": false },
             { "type": "style", "section": "💄 Style", "hidden": true },

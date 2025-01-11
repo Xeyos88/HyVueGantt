@@ -91,3 +91,7 @@
 .VPDoc.has-aside .content-container {
   max-width: 900px !important;
 }
+
+.VPNavBar {
+  background-color: var(--vp-nav-bg-color);
+}
