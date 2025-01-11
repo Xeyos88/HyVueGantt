@@ -24,6 +24,7 @@ The GGanttRow component represents a single row in the Gantt chart. It manages t
 | bars | `GanttBarObject[]` | Required | Array of bar objects |
 | highlightOnHover | `boolean` | `false` | Highlight row on hover |
 | id | `string \| number` | `` |Row identifier |
+| children | `ChartRow[]` | `[]` | Array of child rows |
 
 
 ### Events

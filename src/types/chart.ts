@@ -4,6 +4,7 @@ export interface ChartRow {
   id?: string | number
   label: string
   bars: GanttBarObject[]
+  children?: ChartRow[]
   _originalNode?: any
 }
 

@@ -5,9 +5,19 @@ import { ref, computed, inject, reactive, onMounted } from "vue"
 import type { CSSProperties } from "vue"
 import type { LabelColumnField, ChartRow, GanttBarObject, LabelColumnConfig } from "../types"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
-import { faArrowDownAZ, faArrowDownZA, faSort } from "@fortawesome/free-solid-svg-icons"
+import {
+  faArrowDownAZ,
+  faArrowDownZA,
+  faSort,
+  faChevronRight,
+  faChevronDown
+} from "@fortawesome/free-solid-svg-icons"
 import useDayjsHelper from "../composables/useDayjsHelper"
 import type { UseRowsReturn } from "../composables/useRows"
+
+interface LabelColumnRowProps extends ChartRow {
+  indentLevel?: number
+}
 
 const rowManager = inject<UseRowsReturn>("useRows")
 if (!rowManager) {
@@ -46,20 +56,107 @@ const initializeColumnWidths = () => {
   })
 }
 
+/*const hasGroupRows = computed(() => {
+  return getProcessedRows.value.some(row => row.children && row.children.length > 0)
+})*/
+
 const columns = computed<LabelColumnConfig[]>(() => {
   if (!multiColumnLabel.value?.length || !labelColumnTitle.value) {
     return [{ field: "Label", sortable: true }]
   }
-  return multiColumnLabel.value
+  const filteredColumns = multiColumnLabel.value.filter((col) => col.field !== "Label")
+  const labelColumn = { field: "Label", sortable: true }
+  return [labelColumn, ...filteredColumns]
 })
 
-const rowClasses = (row: ChartRow) => {
+const getVisibleColumns = (row: ChartRow) => {
+  if (row.children && row.children.length > 0) {
+    return [{ field: "Label", sortable: true }]
+  }
+  return columns.value
+}
+
+const rowClasses = (row: LabelColumnRowProps) => {
   const classes = ["g-label-column-row"]
   if (rowLabelClass.value) {
     classes.push(rowLabelClass.value(row))
   }
+  if (row.children?.length) {
+    classes.push("g-label-column-group")
+  }
   return classes
 }
+
+const INDENT_WIDTH = 24
+
+const getRowStyle = (row: LabelColumnRowProps, isLabelColumn: boolean): CSSProperties => {
+  if (!isLabelColumn) {
+    return {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%"
+    }
+  }
+
+  const style: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    width: "100%",
+    position: "relative"
+  }
+
+  if (!row.children?.length && !row.indentLevel) {
+    style.paddingLeft = `${INDENT_WIDTH}px`
+  } else if (row.indentLevel) {
+    style.paddingLeft = `${row.indentLevel * INDENT_WIDTH}px`
+  }
+
+  return style
+}
+
+const getCellStyle = (isLabelColumn: boolean): CSSProperties => {
+  const style: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    width: "100%"
+  }
+
+  if (!isLabelColumn) {
+    style.justifyContent = "center"
+    style.paddingLeft = "0"
+  }
+
+  return style
+}
+
+const handleGroupToggle = (row: ChartRow, event: Event) => {
+  event.stopPropagation()
+  if (row.id) {
+    rowManager.toggleGroupExpansion(row.id)
+  }
+}
+
+const getProcessedRows = computed(() => {
+  const processRows = (rows: ChartRow[], level = 0): LabelColumnRowProps[] => {
+    return rows.flatMap((row) => {
+      const processedRow: LabelColumnRowProps = {
+        ...row,
+        indentLevel: level
+      }
+
+      const isExpanded = row.id ? rowManager.isGroupExpanded(row.id) : false
+
+      if (row.children?.length && isExpanded) {
+        return [processedRow, ...processRows(row.children, level + 1)]
+      }
+
+      return [processedRow]
+    })
+  }
+
+  return processRows(rows.value)
+})
 
 const totalWidth = computed(() => {
   let total = 0
@@ -93,14 +190,27 @@ const handleDragEnd = () => {
   document.removeEventListener("mouseup", handleDragEnd)
 }
 
-const getColumnStyle = (column: string): CSSProperties => ({
-  width: `${columnWidths.get(column) || labelColumnWidth.value}px`,
-  minWidth: `${columnWidths.get(column) || labelColumnWidth.value}px`,
-  maxWidth: `${columnWidths.get(column) || labelColumnWidth.value}px`,
-  position: "relative",
-  flexShrink: 0,
-  flexGrow: 0
-})
+const getColumnStyle = (column: string, isGroup: boolean): CSSProperties => {
+  if (isGroup && column === "Label") {
+    return {
+      width: "100%",
+      minWidth: "100%",
+      maxWidth: "100%",
+      position: "relative",
+      flexShrink: 0,
+      flexGrow: 0
+    }
+  }
+
+  return {
+    width: `${columnWidths.get(column) || labelColumnWidth.value}px`,
+    minWidth: `${columnWidths.get(column) || labelColumnWidth.value}px`,
+    maxWidth: `${columnWidths.get(column) || labelColumnWidth.value}px`,
+    position: "relative",
+    flexShrink: 0,
+    flexGrow: 0
+  }
+}
 
 const calculateDuration = (startDate: string, endDate: string) => {
   const start = toDayjs(startDate)
@@ -168,7 +278,7 @@ const labelContainer = ref<HTMLElement | null>(null)
 
 const labelContainerStyle = computed<CSSProperties>(() => {
   if (maxRows.value === 0) return {}
-  const minRows = Math.min(maxRows.value, rows.value.length)
+  const minRows = Math.min(maxRows.value, getProcessedRows.value.length)
 
   return {
     height: `${minRows * rowHeight.value}px`,
@@ -235,7 +345,7 @@ defineExpose({
             class="g-label-column-header-cell"
             :class="{ sortable: isSortable(column) }"
             role="columnheader"
-            :style="getColumnStyle(column.field)"
+            :style="getColumnStyle(column.field, false)"
           >
             <div
               class="header-content"
@@ -263,27 +373,50 @@ defineExpose({
       @scroll="handleLabelScroll"
     >
       <div
-        v-for="(row, index) in rows"
+        v-for="(row, index) in getProcessedRows"
         :key="`${row.id || row.label}_${index}`"
         :style="{
-          background: index % 2 === 0 ? colors.ternary : colors.quartenary,
+          background: row.children?.length
+            ? colors.rowContainer
+            : index % 2 === 0
+              ? colors.ternary
+              : colors.quartenary,
           height: `${rowHeight}px`
         }"
         :class="rowClasses(row)"
       >
         <div class="g-label-column-row-inner">
-          <template v-for="column in columns" :key="column.field">
+          <template v-for="column in getVisibleColumns(row)" :key="column.field">
             <template v-if="isValidColumn(column.field) || column.valueGetter">
               <slot
                 :name="`label-column-${column.field.toLowerCase()}`"
                 :row="row"
-                :value="getRowValue(row, column, index)"
+                :value="getRowValue(row, column, Number(row.id) || 0)"
               >
-                <div class="g-label-column-cell" :style="getColumnStyle(column.field)">
-                  <div class="cell-content">
-                    <span class="text-ellipsis">
-                      {{ getRowValue(row, column, index) }}
-                    </span>
+                <div
+                  class="g-label-column-cell"
+                  :style="getColumnStyle(column.field, Boolean(row.children?.length))"
+                >
+                  <div :style="getCellStyle(column.field === 'Label')">
+                    <div :style="getRowStyle(row, column.field === 'Label')" class="cell-content">
+                      <button
+                        v-if="column.field === 'Label' && row.children && row.children.length > 0"
+                        class="group-toggle-button"
+                        @click="handleGroupToggle(row, $event)"
+                      >
+                        <FontAwesomeIcon
+                          :icon="
+                            row.id && rowManager.isGroupExpanded(row.id)
+                              ? faChevronDown
+                              : faChevronRight
+                          "
+                          class="group-icon"
+                        />
+                      </button>
+                      <span class="text-ellipsis-value">
+                        {{ getRowValue(row, column, index) }}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </slot>
@@ -334,6 +467,9 @@ defineExpose({
   height: 100%;
   gap: 0.5rem;
   box-sizing: border-box;
+  position: relative;
+  overflow: visible;
+  text-align: center;
 }
 
 .g-label-column-cell {
@@ -348,8 +484,7 @@ defineExpose({
   flex: none;
 }
 
-.header-content,
-.cell-content {
+.header-content {
   width: 100%;
   display: flex;
   align-items: center;
@@ -358,11 +493,26 @@ defineExpose({
   padding: 0 4px;
 }
 
+.cell-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 4px;
+}
+
 .text-ellipsis {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
+}
+
+.text-ellipsis-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .g-label-column-header-cell.sortable {
@@ -420,16 +570,45 @@ defineExpose({
   background: rgba(0, 0, 0, 0.1);
 }
 
-.g-label-column-header-cell {
-  position: relative;
-  overflow: visible;
-}
-
 .g-label-column {
   user-select: none;
 }
 
 .g-label-column.dragging {
   cursor: col-resize;
+}
+
+.g-label-column-group {
+  font-weight: 600;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.group-toggle-button {
+  flex: 0 0 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.group-toggle-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.group-icon {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s ease;
+}
+
+.group-label {
+  font-weight: 600;
 }
 </style>
