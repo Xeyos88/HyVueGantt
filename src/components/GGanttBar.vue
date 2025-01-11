@@ -180,7 +180,7 @@ const getGroupBarPath = (width: number, height: number) => {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  padding: 0 14px 0 14px; /* 14px is the width of the handle */
+  padding: 0 14px 0 14px;
   display: flex;
   justify-content: center;
   align-items: center;
