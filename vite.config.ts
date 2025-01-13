@@ -4,6 +4,7 @@ import { defineConfig } from "vite"
 import vue from "@vitejs/plugin-vue"
 import postcssPresetEnv from "postcss-preset-env"
 import styleInject from "@senojs/rollup-plugin-style-inject"
+import { visualizer } from "rollup-plugin-visualizer"
 
 // https://vitejs.dev/config/
 export default () => {
@@ -12,6 +13,10 @@ export default () => {
       vue(),
       styleInject({
         insertAt: "top"
+      }),
+      visualizer({
+        filename: "stats.html",
+        gzipSize: true
       })
     ],
     css: {
@@ -32,15 +37,46 @@ export default () => {
       rollupOptions: {
         // make sure to externalize deps that shouldn't be bundled
         // into the library
-        external: ["vue", "dayjs"],
+        external: [
+          "vue",
+          "dayjs",
+          "date-holidays",
+          /^dayjs\/plugin/,
+          /^dayjs\/locale/,
+          "@fortawesome/vue-fontawesome",
+          "@fortawesome/free-solid-svg-icons",
+          "@vueuse/core"
+        ],
         output: {
           // Provide global variables to use in the UMD build
           // for externalized deps
           globals: {
             vue: "Vue",
-            dayjs: "dayjs"
+            dayjs: "dayjs",
+            "date-holidays": "date-holidays"
           },
           exports: "named"
+        }
+      },
+      minify: "terser",
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+          pure_funcs: ["console.log", "console.info", "console.debug"],
+          passes: 2,
+          pure_getters: true,
+          unsafe_math: true,
+          unsafe_methods: true
+        },
+        mangle: {
+          safari10: true,
+          properties: {
+            regex: /^_/
+          }
+        },
+        format: {
+          comments: false
         }
       }
     }

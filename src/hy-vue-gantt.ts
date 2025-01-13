@@ -105,7 +105,8 @@ export type {
   ConnectionType,
   ConnectionPattern,
   ConnectionSpeed,
-  GanttMilestone
+  GanttMilestone,
+  GanttBarEvent
 }
 export { GGanttChart, GGanttRow }
 

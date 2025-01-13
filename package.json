@@ -56,7 +56,9 @@
     "postcss": "^8.4.17",
     "postcss-preset-env": "^10.1.1",
     "prettier": "^3.4.1",
+    "rollup-plugin-visualizer": "^5.14.0",
     "semantic-release": "^24.2.0",
+    "terser": "^5.37.0",
     "typescript": "~5.4.3",
     "vite": "^6.0.2",
     "vitepress": "^1.5.0",
@@ -66,7 +68,12 @@
   "peerDependencies": {
     "date-holidays": "^3.23.14",
     "dayjs": "^1.11.13",
-    "vue": "^3.5.13"
+    "vue": "^3.5.13",
+    "@fortawesome/free-brands-svg-icons": "^6.7.1",
+    "@fortawesome/free-regular-svg-icons": "^6.7.1",
+    "@fortawesome/free-solid-svg-icons": "^6.7.1",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
+    "@vueuse/core": "^12.0.0"
   },
   "homepage": "https://xeyos88.github.io/HyVueGantt/",
   "keywords": [
@@ -84,11 +91,6 @@
     "url": "https://github.com/Xeyos88/HyVueGantt"
   },
   "dependencies": {
-    "@fortawesome/free-brands-svg-icons": "^6.7.1",
-    "@fortawesome/free-regular-svg-icons": "^6.7.1",
-    "@fortawesome/free-solid-svg-icons": "^6.7.1",
-    "@fortawesome/vue-fontawesome": "^3.0.8",
-    "@tsconfig/node22": "^22.0.0",
-    "@vueuse/core": "^12.0.0"
+    "@tsconfig/node22": "^22.0.0"
   }
 }
