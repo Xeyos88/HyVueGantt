@@ -22,7 +22,9 @@ import type {
   ConnectionType,
   ConnectionPattern,
   ConnectionSpeed,
-  GanttMilestone
+  GanttMilestone,
+  GanttBarDragEvent,
+  GanttBarEvent
 } from "./types"
 
 import "dayjs/locale/it"
@@ -105,7 +107,9 @@ export type {
   ConnectionType,
   ConnectionPattern,
   ConnectionSpeed,
-  GanttMilestone
+  GanttMilestone,
+  GanttBarDragEvent,
+  GanttBarEvent
 }
 export { GGanttChart, GGanttRow }
 
