@@ -118,7 +118,7 @@ defineExpose({ timeaxisElement })
     @mousedown="handleMouseDown"
     role="tablist"
     aria-label="Time Axis"
-    :style="{ maxWidth: maxWidth }"
+    :style="{ maxWidth: maxWidth, borderBottom: `1px solid ${colors.gridAndBorder}` }"
   >
     <div class="g-timeunits-container">
       <div

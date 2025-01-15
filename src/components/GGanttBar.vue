@@ -99,7 +99,7 @@ const isGroupBar = computed(() => {
 })
 
 const getGroupBarPath = (width: number, height: number) => {
-  const mainBarHeight = height * 0.6
+  const mainBarHeight = height * 0.5
 
   return `
     M 0 0
@@ -120,10 +120,10 @@ const getGroupBarPath = (width: number, height: number) => {
     :style="{
       ...barConfig.style,
       position: 'absolute',
-      top: `${rowHeight * 0.1}px`,
+      top: `${rowHeight * 0.15}px`,
       left: `${xStart}px`,
       width: `${xEnd - xStart}px`,
-      height: `${rowHeight * 0.8}px`,
+      height: `${rowHeight * 0.7}px`,
       zIndex: isDragging ? 3 : 2,
       cursor: bar.ganttBarConfig.immobile ? '' : 'grab'
     }"
@@ -144,12 +144,11 @@ const getGroupBarPath = (width: number, height: number) => {
       v-if="isGroupBar"
       class="group-bar-decoration"
       :width="xEnd - xStart"
-      :height="rowHeight * 0.8"
+      :height="rowHeight * 0.7"
     >
       <path
-        :d="getGroupBarPath(xEnd - xStart, rowHeight * 0.8)"
+        :d="getGroupBarPath(xEnd - xStart, rowHeight * 0.65)"
         :fill="config.colors.value.barContainer"
-        opacity="0.7"
       />
     </svg>
     <div class="g-gantt-bar-label">

@@ -35,24 +35,35 @@ const pathData = computed(() => {
   const targetX = props.targetBar.x
   const targetY = props.targetBar.y + props.targetBar.height / 2
 
+  const OFFSET = 20
+  const isGoingBack = targetX < sourceX
+
   switch (props.type) {
     case "straight":
-      return `M ${sourceX},${sourceY} L ${targetX},${targetY}`
+      return `M ${sourceX},${sourceY} L ${targetX - 4},${targetY}`
 
     case "squared":
-      const middleX = (sourceX + targetX) / 2
-      return `M ${sourceX},${sourceY} 
-              L ${middleX},${sourceY} 
-              L ${middleX},${targetY} 
-              L ${targetX},${targetY}`
+      if (isGoingBack) {
+        return `M ${sourceX},${sourceY}
+                h ${OFFSET}
+                v ${(targetY - sourceY) / 2}
+                h -${Math.abs(targetX - sourceX) + OFFSET * 2}
+                v ${(targetY - sourceY) / 2}
+                h ${OFFSET - 4}`
+      }
+
+      return `M ${sourceX},${sourceY}
+              h ${OFFSET}
+              v ${targetY - sourceY}
+              h ${targetX - sourceX - OFFSET - 4}`
 
     case "bezier":
     default:
       const controlPointX = (sourceX + targetX) / 2
-      return `M ${sourceX},${sourceY} 
-              C ${controlPointX},${sourceY} 
-                ${controlPointX},${targetY} 
-                ${targetX},${targetY}`
+      return `M ${sourceX},${sourceY}
+              C ${controlPointX},${sourceY}
+                ${controlPointX},${targetY}
+                ${targetX - 4},${targetY}`
   }
 })
 
@@ -70,6 +81,8 @@ const nonAnimatedDashArray = computed(() => {
       return ""
   }
 })
+
+const markerId = computed(() => `marker-start-${props.sourceBar.id}-${props.targetBar.id}`)
 </script>
 
 <template>
@@ -87,6 +100,17 @@ const nonAnimatedDashArray = computed(() => {
     }"
   >
     <defs>
+      <marker
+        :id="markerId"
+        viewBox="0 0 10 10"
+        refX="5"
+        refY="5"
+        markerWidth="6"
+        markerHeight="6"
+        orient="auto-start-reverse"
+      >
+        <path d="M 0 0 L 10 5 L 0 10 z" :fill="color" />
+      </marker>
       <linearGradient
         v-if="animated && pattern === 'solid'"
         :id="`gradient-${sourceBar.id}-${targetBar.id}`"
@@ -127,6 +151,10 @@ const nonAnimatedDashArray = computed(() => {
       :stroke-width="strokeWidth"
       :stroke-dasharray="nonAnimatedDashArray"
       :class="['connector-path', animationClass]"
+      :style="{
+        markerStart: 'none',
+        markerEnd: `url(#${markerId})`
+      }"
     />
   </svg>
 </template>
@@ -171,6 +199,13 @@ const nonAnimatedDashArray = computed(() => {
 }
 .connector-animated-dashdot-fast {
   animation: dashdotFlow 1s linear infinite;
+}
+
+.connector-path {
+  marker-start: none;
+  transition:
+    d 0.3s ease,
+    marker-start 0.3s ease;
 }
 
 @keyframes dashFlow {

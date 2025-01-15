@@ -56,10 +56,6 @@ const initializeColumnWidths = () => {
   })
 }
 
-/*const hasGroupRows = computed(() => {
-  return getProcessedRows.value.some(row => row.children && row.children.length > 0)
-})*/
-
 const columns = computed<LabelColumnConfig[]>(() => {
   if (!multiColumnLabel.value?.length || !labelColumnTitle.value) {
     return [{ field: "Label", sortable: true }]
@@ -334,11 +330,15 @@ defineExpose({
       color: colors.text,
       width: `${totalWidth}px`,
       minWidth: `${totalWidth}px`,
-      flex: `0 0 ${totalWidth}px`
+      flex: `0 0 ${totalWidth}px`,
+      borderRight: `1px solid ${colors.gridAndBorder}`
     }"
   >
     <slot name="label-column-title">
-      <div class="g-label-column-header" :style="{ background: colors.primary }">
+      <div
+        class="g-label-column-header"
+        :style="{ background: colors.primary, borderBottom: `1px solid ${colors.gridAndBorder}` }"
+      >
         <template v-for="column in columns" :key="column">
           <div
             v-if="isValidColumn(column.field) || column.valueGetter"
@@ -381,7 +381,8 @@ defineExpose({
             : index % 2 === 0
               ? colors.ternary
               : colors.quartenary,
-          height: `${rowHeight}px`
+          height: `${rowHeight}px`,
+          borderBottom: `1px solid ${colors.gridAndBorder}`
         }"
         :class="rowClasses(row)"
       >
@@ -541,6 +542,10 @@ defineExpose({
   align-items: center;
   flex-wrap: nowrap;
 }
+
+/*.g-label-column-row:last-child {
+  border-bottom: 0px !important;
+}*/
 
 .sort-icon {
   display: inline-flex;

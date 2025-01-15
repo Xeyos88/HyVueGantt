@@ -14,7 +14,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     rangeHighlight: "#000",
     holidayHighlight: "rgba(240, 120, 96, 0.8)",
     barContainer: "rgba(0, 0, 0, 0.7)",
-    rowContainer: "rgba(255, 255, 255, 1)"
+    rowContainer: "rgba(255, 255, 255, 1)",
+    gridAndBorder: "#eaeaea"
   },
 
   creamy: {
@@ -30,7 +31,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     rangeHighlight: "#000",
     holidayHighlight: "rgba(240, 120, 96, 0.8)",
     barContainer: "#fcdcc5",
-    rowContainer: "rgba(255, 255, 255, 1)"
+    rowContainer: "rgba(255, 255, 255, 1)",
+    gridAndBorder: "#eaeaea"
   },
 
   crimson: {
@@ -46,7 +48,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     rangeHighlight: "#000",
     holidayHighlight: "rgba(240, 120, 96, 0.8)",
     barContainer: "#c41238",
-    rowContainer: "rgba(255, 255, 255, 1)"
+    rowContainer: "rgba(255, 255, 255, 1)",
+    gridAndBorder: "#eaeaea"
   },
 
   dark: {
@@ -63,7 +66,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     rangeHighlight: "#000",
     holidayHighlight: "#ff9d3b",
     barContainer: "#525252",
-    rowContainer: "rgba(0, 0, 0, 1)"
+    rowContainer: "rgba(0, 0, 0, 1)",
+    gridAndBorder: "#eaeaea"
   },
 
   flare: {
@@ -78,7 +82,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     rangeHighlight: "#000",
     holidayHighlight: "rgba(240, 120, 96, 0.8)",
     barContainer: "#e08a38",
-    rowContainer: "rgba(0, 0, 0, 1)"
+    rowContainer: "rgba(0, 0, 0, 1)",
+    gridAndBorder: "#eaeaea"
   },
 
   fuchsia: {
@@ -94,7 +99,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     rangeHighlight: "#000",
     holidayHighlight: "rgba(240, 120, 96, 0.8)",
     barContainer: "#de1d5a",
-    rowContainer: "rgba(0, 0, 0, 1)"
+    rowContainer: "rgba(0, 0, 0, 1)",
+    gridAndBorder: "#eaeaea"
   },
 
   grove: {
@@ -110,7 +116,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     rangeHighlight: "#000",
     holidayHighlight: "rgba(240, 120, 96, 0.8)",
     barContainer: "#3d9960",
-    rowContainer: "rgba(0, 0, 0, 1)"
+    rowContainer: "rgba(0, 0, 0, 1)",
+    gridAndBorder: "#eaeaea"
   },
 
   "material-blue": {
@@ -126,7 +133,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     rangeHighlight: "#000",
     holidayHighlight: "rgba(240, 120, 96, 0.8)",
     barContainer: "#0D47A1",
-    rowContainer: "rgba(0, 0, 0, 1)"
+    rowContainer: "rgba(0, 0, 0, 1)",
+    gridAndBorder: "#eaeaea"
   },
 
   sky: {
@@ -142,7 +150,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     rangeHighlight: "#000",
     holidayHighlight: "rgba(240, 120, 96, 0.8)",
     barContainer: "rgb(20,20,20)",
-    rowContainer: "#a1d6f7"
+    rowContainer: "#a1d6f7",
+    gridAndBorder: "#eaeaea"
   },
 
   slumber: {
@@ -159,7 +168,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     rangeHighlight: "#000",
     holidayHighlight: "rgba(240, 120, 96, 0.8)",
     barContainer: "#2a2f42",
-    rowContainer: "rgba(0, 0, 0, 1)"
+    rowContainer: "rgba(0, 0, 0, 1)",
+    gridAndBorder: "#eaeaea"
   },
 
   vue: {
@@ -175,7 +185,8 @@ export const colorSchemes: Record<string, ColorScheme> = {
     rangeHighlight: "#000",
     holidayHighlight: "#f7842d",
     barContainer: "#258a5d",
-    rowContainer: "rgba(0, 0, 0, 1)"
+    rowContainer: "rgba(0, 0, 0, 1)",
+    gridAndBorder: "#eaeaea"
   }
 }
 

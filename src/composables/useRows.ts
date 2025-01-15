@@ -151,8 +151,7 @@ export function useRows(
           immobile: true,
           label: row.label,
           style: {
-            background: "transparent",
-            opacity: "0.7"
+            background: "transparent"
           }
         }
       }

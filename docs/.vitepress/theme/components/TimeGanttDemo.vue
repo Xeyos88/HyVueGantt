@@ -92,6 +92,7 @@ onMounted(() => {
           :key="row.label"
           :label="row.label"
           :bars="row.bars"
+          highlightOnHover
         />
       </g-gantt-chart>
     </div>
