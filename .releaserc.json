@@ -10,6 +10,7 @@
           { "type": "major", "release": "major" },
           { "type": "minor", "release": "minor" },
           { "type": "patch", "release": "patch" },
+          { "type": "break", "release": false },
           { "type": "feat", "release": false },
           { "type": "fix", "release": false },
           { "type": "docs", "release": false },
@@ -26,7 +27,7 @@
         "preset": "angular",
         "writerOpts": {
           "groupBy": "type",
-          "commitGroupsSort": ["feat", "fix", "perf", "docs"],
+          "commitGroupsSort": ["feat", "fix", "perf", "docs", "break"],
           "commitsSort": "header",
           "mainTemplate": "## [v{{version}}](https://github.com/Xeyos88/HyVueGantt/tree/v{{version}}) ({{date}})\n\n[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/{{previousTag}}...v{{version}})\n\n{{> header}}\n\n{{#each commitGroups}}\n{{#if title}}\n\n**{{title}}:**\n\n{{/if}}\n{{#each commits}}\n{{> commit root=@root}}\n{{/each}}\n{{/each}}\n\n{{> footer}}",
           "headerPartial": "",
