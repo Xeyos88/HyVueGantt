@@ -104,6 +104,12 @@ const rows = ref([
       sortable
       color-scheme="slumber"
     >
+      <template #label-column-label="{ value }">
+        <div class="custom-label">
+          <span class="label-icon">📋</span>
+          <span>{{ value }}</span>
+        </div>
+      </template>
       <g-gantt-row
         v-for="row in rows"
         :key="row.label"
