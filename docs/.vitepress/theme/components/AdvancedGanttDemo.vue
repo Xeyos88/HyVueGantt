@@ -84,7 +84,7 @@ onMounted(() => {
           :key="row.label"
           :label="row.label"
           :bars="row.bars"
-          :highlight-on-hover="true"
+          highlightOnHover
         >
           <template #bar-label="{ bar }">
             <div class="custom-bar-label">

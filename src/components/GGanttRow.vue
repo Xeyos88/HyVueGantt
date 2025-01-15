@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, type Ref, toRefs, computed, provide, inject, type CSSProperties } from "vue"
+import { ref, type Ref, toRefs, computed, provide, inject, type StyleValue } from "vue"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import { faChevronRight, faChevronDown } from "@fortawesome/free-solid-svg-icons"
 import useTimePositionMapping from "../composables/useTimePositionMapping"
@@ -40,8 +40,9 @@ const isExpanded = computed(() => {
 })
 
 const rowStyle = computed(() => {
-  const baseStyle: CSSProperties = {
+  const baseStyle: StyleValue = {
     height: `${rowHeight.value}px`,
+    borderBottom: `1px solid ${colors.value.gridAndBorder}`,
     background:
       highlightOnHover?.value && isHovering.value ? colors.value.hoverHighlight : undefined
   }
@@ -49,7 +50,8 @@ const rowStyle = computed(() => {
   if (isGroup.value) {
     return {
       ...baseStyle,
-      background: colors.value.rowContainer
+      background:
+        highlightOnHover?.value && isHovering.value ? colors.value.hoverHighlight : undefined
     }
   }
 
@@ -141,7 +143,12 @@ const visibleChildRows = computed(() => {
     </div>
   </div>
   <div v-if="isGroup && isExpanded" class="g-gantt-row-children">
-    <g-gantt-row v-for="child in visibleChildRows" :key="child.id || child.label" v-bind="child">
+    <g-gantt-row
+      v-for="child in visibleChildRows"
+      :key="child.id || child.label"
+      v-bind="child"
+      :highlightOnHover="highlightOnHover"
+    >
       <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps: SlotData">
         <slot :name="name" v-bind="slotProps" />
       </template>
@@ -156,11 +163,13 @@ const visibleChildRows = computed(() => {
   position: relative;
 }
 
+/*.g-gantt-row:last-child {
+  border-bottom: 0px !important;
+}*/
+
 .g-gantt-row > .g-gantt-row-bars-container {
   position: relative;
-  border-top: 1px solid #eaeaea;
   width: 100%;
-  border-bottom: 1px solid #eaeaea;
 }
 
 .g-gantt-row-label {
@@ -186,7 +195,6 @@ const visibleChildRows = computed(() => {
 }
 
 .g-gantt-group-bar {
-  opacity: 0.7;
   pointer-events: none;
 }
 

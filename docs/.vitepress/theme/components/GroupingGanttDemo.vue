@@ -18,7 +18,8 @@ const customColorScheme: ColorScheme = {
   rangeHighlight: '#42b883',
   holidayHighlight: 'rgba(142, 68, 173, 0.3)',
   barContainer: '#42FC83',
-  rowContainer: '#1A1A1A'
+  rowContainer: '#1A1A1A',
+  gridAndBorder: '#eaeaea'
 }
 
 const rows = ref([
@@ -538,7 +539,7 @@ onMounted(() => {
           :label="row.label"
           :bars="row.bars || []"
           :children="row.children"
-          :highlight-on-hover="true"
+          highlightOnHover
         />
       </g-gantt-chart>
     </div>

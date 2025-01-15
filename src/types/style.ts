@@ -17,4 +17,5 @@ export interface ColorScheme {
   holidayHighlight?: Color
   barContainer?: Color
   rowContainer?: Color
+  gridAndBorder?: Color
 }
