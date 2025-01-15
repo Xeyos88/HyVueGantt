@@ -4,32 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [v1.7.0](https://github.com/Xeyos88/HyVueGantt/tree/v1.7.0) (2025-01-15)
-
-[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v1.6.0...v1.7.0)
-
-
-
-**Bug Fixes:**
-
-- border, interaction between grid and hover on highlight
-- Exposed event interface
-- Slot label-column-title
-- Update positions of bar connections with groups
-
-**Features:**
-
-- Added slot for column label row value
-
 ## [v1.6.0](https://github.com/Xeyos88/HyVueGantt/tree/v1.6.0) (2025-01-11)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v1.5.0...v1.6.0)
 
-
 **Features:**
 
 - Row grouping
-**Bug Fixes:**
+  **Bug Fixes:**
 
 - sort for rows children
 - Sorting problem
@@ -53,11 +35,9 @@ All notable changes to this project will be documented in this file.
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v1.3.0...v1.4.0)
 
-
 **New Features:**
 
 - release/1.4.0 - Refactoring release process and added test
-
 
 ## [v1.3.0](https://github.com/Xeyos88/HyVueGantt/tree/v1.3.0) (2024-12-29)
 

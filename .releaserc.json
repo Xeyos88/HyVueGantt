@@ -3,7 +3,7 @@
   "plugins": [
     "@semantic-release/commit-analyzer",
     [
-      "@semantic-release/release-notes-generator",
+      "@semantic-release/commit-analyzer",
       {
         "preset": "angular",
         "releaseRules": [
@@ -17,7 +17,13 @@
           { "type": "refactor", "release": false },
           { "type": "test", "release": false },
           { "type": "ci", "release": false }
-        ],
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "angular",
         "writerOpts": {
           "groupBy": "type",
           "commitGroupsSort": ["feat", "fix", "perf", "docs"],
