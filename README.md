@@ -261,3 +261,5 @@ This project is based on [vue-ganttastic](https://github.com/zunnzunn/vue-gantta
 <img src="https://github.com/Xeyos88/HyVueGantt/blob/main/docs/.vitepress/public/Gantt2.PNG?raw=true" alt="screenshot HyVueGantt" width="800" height="200">
 
 <img src="https://github.com/Xeyos88/HyVueGantt/blob/main/docs/.vitepress/public/Gantt3.PNG?raw=true" alt="screenshot HyVueGantt" width="800" height="200">
+
+<img src="https://github.com/Xeyos88/HyVueGantt/blob/main/docs/.vitepress/public/Gantt4.png?raw=true" alt="screenshot HyVueGantt" width="800" height="200">

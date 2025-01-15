@@ -22,6 +22,7 @@ export interface UseRowsReturn {
   toggleGroupExpansion: (rowId: string | number) => void
   isGroupExpanded: (rowId: string | number) => boolean
   getFlattenedRows: () => ChartRow[]
+  onGroupExpansionChange: (callback: () => void) => () => void
 }
 
 /**
@@ -34,6 +35,7 @@ export interface UseRowsProps {
   multiColumnLabel: Ref<LabelColumnConfig[]>
   onSort: (sortState: SortState) => void
   initialSort?: SortState
+  onGroupExpansion: (rowId: string | number) => void
 }
 
 /**
@@ -45,7 +47,15 @@ export interface UseRowsProps {
  */
 export function useRows(
   slots: Slots,
-  { barStart, barEnd, dateFormat, multiColumnLabel, onSort, initialSort }: UseRowsProps,
+  {
+    barStart,
+    barEnd,
+    dateFormat,
+    multiColumnLabel,
+    onSort,
+    initialSort,
+    onGroupExpansion
+  }: UseRowsProps,
   initialRows?: Ref<ChartRow[]>
 ): UseRowsReturn {
   const sortState = ref<SortState>({
@@ -54,6 +64,7 @@ export function useRows(
   })
   const sortChangeCallbacks = ref<Set<() => void>>(new Set())
   const expandedGroups = ref<Set<string | number>>(new Set())
+  const groupExpansionCallbacks = ref<Set<() => void>>(new Set())
 
   /**
    * Extracts rows data from slots, processing both direct and nested slot contents
@@ -140,8 +151,7 @@ export function useRows(
           immobile: true,
           label: row.label,
           style: {
-            background: "transparent",
-            opacity: "0.7"
+            background: "transparent"
           }
         }
       }
@@ -409,6 +419,9 @@ export function useRows(
     } else {
       expandedGroups.value.add(rowId)
     }
+
+    onGroupExpansion(rowId)
+    groupExpansionCallbacks.value.forEach((callback) => callback())
   }
 
   /**
@@ -449,6 +462,18 @@ export function useRows(
   }
 
   /**
+   * Registers a callback to be called when group expansion state changes
+   * @param callback - Function to call on group expansion change
+   * @returns Cleanup function to remove the callback
+   */
+  const onGroupExpansionChange = (callback: () => void) => {
+    groupExpansionCallbacks.value.add(callback)
+    return () => {
+      groupExpansionCallbacks.value.delete(callback)
+    }
+  }
+
+  /**
    * Returns the current chart rows
    * @returns Array of current chart rows
    */
@@ -462,6 +487,7 @@ export function useRows(
     onSortChange,
     toggleGroupExpansion,
     isGroupExpanded,
-    getFlattenedRows
+    getFlattenedRows,
+    onGroupExpansionChange
   }
 }

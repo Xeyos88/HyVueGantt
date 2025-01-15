@@ -5,6 +5,14 @@ import { useBarMovement } from "./useBarMovement"
 import { inject } from "vue"
 import type { UseRowsReturn } from "./useRows"
 
+/**
+ * Manages keyboard controls for Gantt chart bars
+ * Handles arrow key navigation for moving and resizing bars
+ * @param bar - Bar to control with keyboard
+ * @param config - Gantt chart configuration
+ * @param emitBarEvent - Function to emit bar events
+ * @returns Object containing keyboard event handler
+ */
 export function useBarKeyboardControl(
   bar: GanttBarObject,
   config: GGanttChartConfig,
@@ -16,6 +24,10 @@ export function useBarKeyboardControl(
 
   const movement = useBarMovement(config, rowManager, dayjs)
 
+  /**
+   * Time step configurations for different precision levels
+   * Defines how many minutes to move for each precision unit
+   */
   const TIME_STEP = {
     hour: 5,
     day: 120,
@@ -23,11 +35,21 @@ export function useBarKeyboardControl(
     month: 3600
   }
 
+  /**
+   * Calculates the time step based on precision and shift key state
+   * @param isShiftPressed - Whether shift key is pressed
+   * @returns Number of minutes to move
+   */
   const getTimeStep = (isShiftPressed: boolean): number => {
     const baseStep = TIME_STEP[precision.value as keyof typeof TIME_STEP] || TIME_STEP.hour
     return isShiftPressed ? baseStep * 12 : baseStep
   }
 
+  /**
+   * Moves bar position forward or backward
+   * @param direction - Direction to move ('forward' or 'backward')
+   * @param isShiftPressed - Whether shift key is pressed
+   */
   const moveBarPosition = (direction: "forward" | "backward", isShiftPressed: boolean) => {
     const multiplier = direction === "forward" ? 1 : -1
     const minutesToMove = getTimeStep(isShiftPressed)
@@ -51,6 +73,11 @@ export function useBarKeyboardControl(
     }
   }
 
+  /**
+   * Expands or shrinks bar from both ends
+   * @param type - Action to perform ('expand' or 'shrink')
+   * @param isShiftPressed - Whether shift key is pressed
+   */
   const resizeBar = (type: "expand" | "shrink", isShiftPressed: boolean) => {
     const currentStart = dayjs.toDayjs(bar[barStart.value])
     const currentEnd = dayjs.toDayjs(bar[barEnd.value])
@@ -92,6 +119,10 @@ export function useBarKeyboardControl(
     }
   }
 
+  /**
+   * Emits drag events to simulate mouse drag operations
+   * Used to maintain consistency with mouse-based interactions
+   */
   const emitDragEvents = () => {
     const mockEvent = new MouseEvent("drag", { bubbles: true })
     emitBarEvent(mockEvent, bar)
@@ -100,6 +131,11 @@ export function useBarKeyboardControl(
     emitBarEvent(mockEndEvent, bar)
   }
 
+  /**
+   * Handles keyboard events for bar control
+   * Maps arrow keys to movement and resize actions
+   * @param event - Keyboard event
+   */
   const onBarKeyDown = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement
 

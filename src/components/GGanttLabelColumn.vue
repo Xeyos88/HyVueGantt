@@ -56,10 +56,6 @@ const initializeColumnWidths = () => {
   })
 }
 
-/*const hasGroupRows = computed(() => {
-  return getProcessedRows.value.some(row => row.children && row.children.length > 0)
-})*/
-
 const columns = computed<LabelColumnConfig[]>(() => {
   if (!multiColumnLabel.value?.length || !labelColumnTitle.value) {
     return [{ field: "Label", sortable: true }]
@@ -334,38 +330,44 @@ defineExpose({
       color: colors.text,
       width: `${totalWidth}px`,
       minWidth: `${totalWidth}px`,
-      flex: `0 0 ${totalWidth}px`
+      flex: `0 0 ${totalWidth}px`,
+      borderRight: `1px solid ${colors.gridAndBorder}`
     }"
   >
-    <slot name="label-column-title">
-      <div class="g-label-column-header" :style="{ background: colors.primary }">
-        <template v-for="column in columns" :key="column">
+    <div
+      class="g-label-column-header"
+      :style="{ background: colors.primary, borderBottom: `1px solid ${colors.gridAndBorder}` }"
+    >
+      <template v-for="column in columns" :key="column">
+        <div
+          v-if="isValidColumn(column.field) || column.valueGetter"
+          class="g-label-column-header-cell"
+          :class="{ sortable: isSortable(column) }"
+          role="columnheader"
+          :style="getColumnStyle(column.field, false)"
+        >
           <div
-            v-if="isValidColumn(column.field) || column.valueGetter"
-            class="g-label-column-header-cell"
-            :class="{ sortable: isSortable(column) }"
-            role="columnheader"
-            :style="getColumnStyle(column.field, false)"
+            class="header-content"
+            @click="isSortable(column) ? toggleSort(column.field) : undefined"
           >
-            <div
-              class="header-content"
-              @click="isSortable(column) ? toggleSort(column.field) : undefined"
-            >
-              <span class="text-ellipsis">{{ column.field }}</span>
-              <span v-if="isSortable(column)" class="sort-icon">
-                <FontAwesomeIcon :icon="getSortIcon(column.field)" />
-              </span>
-            </div>
-            <div
-              v-if="labelResizable"
-              class="column-resizer"
-              @mousedown="(e) => handleDragStart(e, column.field)"
-              :class="{ 'is-dragging': isDragging && draggedColumn === column.field }"
-            ></div>
+            <span class="text-ellipsis">
+              <slot name="label-column-title">
+                {{ column.field }}
+              </slot>
+            </span>
+            <span v-if="isSortable(column)" class="sort-icon">
+              <FontAwesomeIcon :icon="getSortIcon(column.field)" />
+            </span>
           </div>
-        </template>
-      </div>
-    </slot>
+          <div
+            v-if="labelResizable"
+            class="column-resizer"
+            @mousedown="(e) => handleDragStart(e, column.field)"
+            :class="{ 'is-dragging': isDragging && draggedColumn === column.field }"
+          ></div>
+        </div>
+      </template>
+    </div>
     <div
       class="g-label-column-rows"
       :style="labelContainerStyle"
@@ -381,45 +383,46 @@ defineExpose({
             : index % 2 === 0
               ? colors.ternary
               : colors.quartenary,
-          height: `${rowHeight}px`
+          height: `${rowHeight}px`,
+          borderBottom: `1px solid ${colors.gridAndBorder}`
         }"
         :class="rowClasses(row)"
       >
         <div class="g-label-column-row-inner">
           <template v-for="column in getVisibleColumns(row)" :key="column.field">
             <template v-if="isValidColumn(column.field) || column.valueGetter">
-              <slot
-                :name="`label-column-${column.field.toLowerCase()}`"
-                :row="row"
-                :value="getRowValue(row, column, Number(row.id) || 0)"
+              <div
+                class="g-label-column-cell"
+                :style="getColumnStyle(column.field, Boolean(row.children?.length))"
               >
-                <div
-                  class="g-label-column-cell"
-                  :style="getColumnStyle(column.field, Boolean(row.children?.length))"
-                >
-                  <div :style="getCellStyle(column.field === 'Label')">
-                    <div :style="getRowStyle(row, column.field === 'Label')" class="cell-content">
-                      <button
-                        v-if="column.field === 'Label' && row.children && row.children.length > 0"
-                        class="group-toggle-button"
-                        @click="handleGroupToggle(row, $event)"
+                <div :style="getCellStyle(column.field === 'Label')">
+                  <div :style="getRowStyle(row, column.field === 'Label')" class="cell-content">
+                    <button
+                      v-if="column.field === 'Label' && row.children && row.children.length > 0"
+                      class="group-toggle-button"
+                      @click="handleGroupToggle(row, $event)"
+                    >
+                      <FontAwesomeIcon
+                        :icon="
+                          row.id && rowManager.isGroupExpanded(row.id)
+                            ? faChevronDown
+                            : faChevronRight
+                        "
+                        class="group-icon"
+                      />
+                    </button>
+                    <span class="text-ellipsis-value">
+                      <slot
+                        :name="`label-column-${column.field.toLowerCase()}`"
+                        :row="row"
+                        :value="getRowValue(row, column, index)"
                       >
-                        <FontAwesomeIcon
-                          :icon="
-                            row.id && rowManager.isGroupExpanded(row.id)
-                              ? faChevronDown
-                              : faChevronRight
-                          "
-                          class="group-icon"
-                        />
-                      </button>
-                      <span class="text-ellipsis-value">
                         {{ getRowValue(row, column, index) }}
-                      </span>
-                    </div>
+                      </slot>
+                    </span>
                   </div>
                 </div>
-              </slot>
+              </div>
             </template>
           </template>
         </div>
@@ -541,6 +544,10 @@ defineExpose({
   align-items: center;
   flex-wrap: nowrap;
 }
+
+/*.g-label-column-row:last-child {
+  border-bottom: 0px !important;
+}*/
 
 .sort-icon {
   display: inline-flex;

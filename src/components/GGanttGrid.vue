@@ -69,6 +69,7 @@ const isHighlightedMonth = (date: Date) => highlightedMonths?.value.includes(dat
         class="g-grid-line"
         :style="{
           width,
+          borderLeft: `1px solid ${colors.gridAndBorder}`,
           background: highlightLine(date) ? colors.hoverHighlight : undefined
         }"
       />
@@ -85,6 +86,7 @@ const isHighlightedMonth = (date: Date) => highlightedMonths?.value.includes(dat
           class="g-grid-line step"
           :style="{
             width,
+            borderLeft: `1px solid ${colors.gridAndBorder}`,
             background: highlightLine(date) ? colors.hoverHighlight : undefined
           }"
       /></template>
@@ -106,6 +108,9 @@ const isHighlightedMonth = (date: Date) => highlightedMonths?.value.includes(dat
 .g-grid-line {
   width: 1px;
   height: 100%;
-  border-left: 1px solid #eaeaea;
+}
+
+.g-grid-line:first-child {
+  border-left: 0px !important;
 }
 </style>

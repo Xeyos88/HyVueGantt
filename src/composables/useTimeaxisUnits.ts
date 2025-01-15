@@ -7,24 +7,50 @@ import type { TimeaxisResult, TimeaxisUnit, TimeUnit } from "../types"
 import { useElementSize } from "@vueuse/core"
 import { useHolidays } from "./useHolidays"
 
+/**
+ * Extended time unit type including year and ISO week
+ */
 type ExtendedTimeUnit = TimeUnit | "year" | "isoWeek"
+
+/**
+ * Type alias for dayjs unit type
+ */
 type DayjsUnitType = ManipulateType
 
+/**
+ * Display format configuration for different time units
+ */
 type DisplayFormat = {
   [key in TimeUnit | "year"]: string
 }
 
+/**
+ * Mapping of time units to their parent units
+ */
 type PrecisionMapType = {
   [key in TimeUnit]: ExtendedTimeUnit
 }
 
+/**
+ * Minimum width in pixels for a time unit element
+ */
 const MIN_UNIT_WIDTH_PX = 24
 
+/**
+ * Capitalizes first letter of a string, handling Unicode characters
+ * @param str - String to capitalize
+ * @returns Capitalized string
+ */
 const capitalizeString = (str: string): string => {
   if (!str) return str
   return str.normalize("NFD").replace(/^\p{L}/u, (letter) => letter.toLocaleUpperCase())
 }
 
+/**
+ * Capitalizes first letter of each word in a string
+ * @param str - String to process
+ * @returns String with capitalized words
+ */
 export const capitalizeWords = (str: string): string => {
   return str
     .split(/(\s+|\.|\,)/)
@@ -37,6 +63,11 @@ export const capitalizeWords = (str: string): string => {
     .join("")
 }
 
+/**
+ * A composable that manages time axis units generation and display
+ * @param timeaxisRef - Reference to timeaxis DOM element
+ * @returns Object containing timeaxis units and precision state
+ */
 export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
   const config = provideConfig()
   const { precision: configPrecision, widthNumber } = config
@@ -47,6 +78,9 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
 
   const internalPrecision = ref<TimeUnit>(configPrecision.value)
 
+  /**
+   * Display format configuration for each time unit
+   */
   const displayFormats: DisplayFormat = {
     hour: "HH",
     date: "DD.MMM",
@@ -56,8 +90,16 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     year: "YYYY"
   }
 
+  /**
+   * Hierarchy of precision levels from finest to coarsest
+   */
   const precisionHierarchy: TimeUnit[] = ["hour", "day", "week", "month"]
 
+  /**
+   * Gets the next coarser precision level
+   * @param currentPrecision - Current precision level
+   * @returns Next coarser precision level
+   */
   const getNextPrecision = (currentPrecision: TimeUnit): TimeUnit => {
     const currentIndex = precisionHierarchy.indexOf(currentPrecision)
 
@@ -67,6 +109,11 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     return currentPrecision
   }
 
+  /**
+   * Gets the next finer precision level
+   * @param currentPrecision - Current precision level
+   * @returns Next finer precision level
+   */
   const getPreviousPrecision = (currentPrecision: TimeUnit): TimeUnit => {
     const currentIndex = precisionHierarchy.indexOf(currentPrecision)
     const configIndex = precisionHierarchy.indexOf(configPrecision.value)
@@ -76,11 +123,21 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     return currentPrecision
   }
 
+  /**
+   * Calculates the width of a time unit based on total available width
+   * @param totalUnits - Total number of units
+   * @returns Width of each unit in pixels
+   */
   const calculateUnitWidth = (totalUnits: number): number => {
     if (!containerWidth.value) return 0
     return containerWidth.value / totalUnits
   }
 
+  /**
+   * Counts the number of units for a given precision level
+   * @param precision - Precision level to count units for
+   * @returns Total number of units
+   */
   const getUnitsCountForPrecision = (precision: TimeUnit): number => {
     let current = chartStartDayjs.value.clone()
     let count = 0
@@ -106,6 +163,11 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     return count
   }
 
+  /**
+   * Finds the optimal precision level based on available space
+   * @param desiredPrecision - Desired precision level
+   * @returns Optimal precision level
+   */
   const findOptimalPrecision = (desiredPrecision: TimeUnit): TimeUnit => {
     let currentPrecision = desiredPrecision
     let unitWidth = calculateUnitWidth(getUnitsCountForPrecision(currentPrecision))
@@ -135,6 +197,9 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     return currentPrecision
   }
 
+  /**
+   * Watches container width changes and updates precision accordingly
+   */
   watch(
     [containerWidth, widthNumber, () => configPrecision.value],
     () => {
@@ -160,6 +225,9 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     { immediate: true }
   )
 
+  /**
+   * Computes the upper precision level
+   */
   const upperPrecision = computed(() => {
     const precisionMap: PrecisionMapType = {
       hour: "day",
@@ -177,6 +245,11 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     return upperUnit
   })
 
+  /**
+   * Gets the lower precision level for a given unit
+   * @param precision - Current precision
+   * @returns Lower precision unit
+   */
   const getLowerPrecision = (precision: TimeUnit): ExtendedTimeUnit => {
     const precisionMap: PrecisionMapType = {
       date: "day",
@@ -189,6 +262,11 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     return precisionMap[precision]
   }
 
+  /**
+   * Maps extended time units to dayjs unit types
+   * @param unit - Extended time unit
+   * @returns Dayjs unit type
+   */
   const getDayjsUnit = (unit: ExtendedTimeUnit): DayjsUnitType => {
     const unitMap: Record<ExtendedTimeUnit, DayjsUnitType> = {
       hour: "hour",
@@ -202,16 +280,31 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     return unitMap[unit]
   }
 
+  /**
+   * Gets display format for a time unit
+   * @param unit - Time unit
+   * @returns Format string
+   */
   const getDisplayFormat = (unit: ExtendedTimeUnit): string => {
     if (unit === "isoWeek") return displayFormats.week
     return displayFormats[unit as keyof DisplayFormat] || displayFormats.day
   }
 
+  /**
+   * Calculates width percentage for a time span
+   * @param start - Start date
+   * @param end - End date
+   * @param total - Total minutes in chart
+   * @returns Width percentage string
+   */
   const calculateWidth = (start: Dayjs, end: Dayjs, total: number): string => {
     const width = (end.diff(start, "minutes", true) / total) * 100
     return `${width}%`
   }
 
+  /**
+   * Computes time axis units based on current configuration
+   */
   const timeaxisUnits = computed(() => {
     const totalMinutes = chartEndDayjs.value.diff(chartStartDayjs.value, "minutes", true)
 
@@ -270,6 +363,11 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     return { result, globalMinuteStep }
   })
 
+  /**
+   * Calculates cell width in pixels from percentage width
+   * @param percentageWidth - Width as percentage string
+   * @returns Width in pixels
+   */
   const calculateCellWidth = (percentageWidth: string): number => {
     if (!timeaxisRef.value) {
       return 0
@@ -282,6 +380,11 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     return cellWidth
   }
 
+  /**
+   * Determines minute step size based on cell width
+   * @param cellWidth - Width of cell in pixels
+   * @returns Array of minute values
+   */
   const getMinutesStepFromCellWidth = (cellWidth: number): string[] => {
     const minCellWidth = 16
     const possibleDivisions = Math.floor(cellWidth / minCellWidth)
@@ -302,6 +405,13 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     return steps
   }
 
+  /**
+   * Creates a time axis unit object
+   * @param moment - Dayjs date object
+   * @param format - Display format
+   * @param width - Unit width
+   * @returns TimeaxisUnit object
+   */
   const createTimeaxisUnit = (moment: Dayjs, format: string, width: string): TimeaxisUnit => {
     const date = moment.toDate()
     const holidayInfo = config.holidayHighlight.value ? getHolidayInfo(date) : null
@@ -319,6 +429,12 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     }
   }
 
+  /**
+   * Advances a time unit by one unit
+   * @param moment - Dayjs date object
+   * @param precision - Precision level
+   * @returns New Dayjs date object
+   */
   const advanceTimeUnit = (moment: Dayjs, precision: ExtendedTimeUnit): Dayjs => {
     const unit = getDayjsUnit(precision)
     const startOf = precision === "isoWeek" ? "isoWeek" : unit

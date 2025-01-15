@@ -6,6 +6,11 @@ import type { UseRowsReturn } from "./useRows"
 import { GANTT_ID_KEY } from "../provider/symbols"
 import useBarSelector from "./useBarSelector"
 
+/**
+ * A composable that manages drag limits for Gantt chart bars
+ * Handles constraints for bar movement based on surrounding bars and connections
+ * @returns Object containing methods to manage bar drag limits
+ */
 export default function useBarDragLimit() {
   const { pushOnOverlap, pushOnConnect } = provideConfig()
   const { getConnectedBars } = useBarDragManagement()
@@ -13,6 +18,11 @@ export default function useBarDragLimit() {
   const ganttId = inject(GANTT_ID_KEY)!
   const { findBarElement } = useBarSelector()
 
+  /**
+   * Retrieves all bars that belong to the same bundle
+   * @param bundle - Bundle identifier
+   * @returns Array of bars in the bundle
+   */
   const getBarsFromBundle = (bundle?: string) => {
     const res: GanttBarObject[] = []
     if (bundle != null) {
@@ -27,6 +37,10 @@ export default function useBarDragLimit() {
     return res
   }
 
+  /**
+   * Sets drag limits for a Gantt bar based on its surroundings and connections
+   * @param bar - Bar to set limits for
+   */
   const setDragLimitsOfGanttBar = (bar: GanttBarObject) => {
     if (
       !pushOnOverlap.value ||
@@ -78,7 +92,6 @@ export default function useBarDragLimit() {
           barElem.offsetLeft + barElem.offsetWidth + totalGapDistance
       }
     }
-    // all bars from the bundle of the clicked bar need to have the same drag limit:
     const barsFromBundleOfClickedBar = getBarsFromBundle(bar.ganttBarConfig.bundle)
     barsFromBundleOfClickedBar.forEach((barFromBundle) => {
       barFromBundle.ganttBarConfig.dragLimitLeft = bar.ganttBarConfig.dragLimitLeft
@@ -86,9 +99,14 @@ export default function useBarDragLimit() {
     })
   }
 
-  // returns the gap distance to the next immobile bar
-  // in the row where the given bar (parameter) is (added to gapDistanceSoFar)
-  // and a list of all bars on that path that belong to a bundle
+  /**
+   * Calculates the gap distance to the next immobile bar in a specific direction
+   * Also tracks bundled bars encountered along the path
+   * @param bar - Bar to calculate distance from
+   * @param gapDistanceSoFar - Accumulated gap distance
+   * @param side - Direction to check ('left' or 'right')
+   * @returns Object containing gap distance and affected bundled bars
+   */
   const countGapDistanceToNextImmobileBar = (
     bar: GanttBarObject,
     gapDistanceSoFar = 0,
@@ -99,7 +117,6 @@ export default function useBarDragLimit() {
       : []
     let currentBar = bar
     let nextBar = getNextGanttBar(currentBar, side)
-    // left side:
     if (side === "left") {
       while (nextBar) {
         const currentBarElem = findBarElement(ganttId, currentBar.ganttBarConfig.id) as HTMLElement
@@ -139,6 +156,13 @@ export default function useBarDragLimit() {
     return { gapDistanceSoFar: null, bundleBarsAndGapDist }
   }
 
+  /**
+   * Finds the next bar in a specified direction
+   * Takes into account connected bars and row boundaries
+   * @param bar - Starting bar
+   * @param side - Direction to search ('left' or 'right')
+   * @returns Next bar found or null
+   */
   const getNextGanttBar = (bar: GanttBarObject, side: "left" | "right") => {
     const barElem = findBarElement(ganttId, bar.ganttBarConfig.id) as HTMLElement
     let allBarsInRow: GanttBarObject[] = []

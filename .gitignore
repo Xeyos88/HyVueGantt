@@ -34,5 +34,6 @@ docs/.vitepress/dist
 junit.xml
 
 #temporary
-hy-vue-gantt-1.0.0.tgz
+hy-vue-gantt-*.tgz
+stats.html
 

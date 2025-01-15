@@ -115,7 +115,8 @@ const rowManager = useRows(
     dateFormat: toRef(props, "dateFormat"),
     multiColumnLabel: toRef(props, "multiColumnLabel"),
     onSort: (sortState) => emit("sort", { sortState }),
-    initialSort: props.initialSort
+    initialSort: props.initialSort,
+    onGroupExpansion: (rowId) => emit("group-expansion", { rowId })
   },
   props.initialRows ? toRef(props, "initialRows") : undefined
 )
@@ -186,6 +187,7 @@ const emit = defineEmits<{
     value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
   ): void
   (e: "sort", value: { sortState: SortState }): void
+  (e: "group-expansion", value: { rowId: string | number }): void
 }>()
 
 // Computed Properties
@@ -368,7 +370,10 @@ let resizeObserver: ResizeObserver
 // Lifecycle Hooks
 onMounted(() => {
   const cleanup = rowManager.onSortChange(updateBarPositions)
+  const cleanupGroup = rowManager.onGroupExpansionChange(updateBarPositions)
+
   onUnmounted(cleanup)
+  onUnmounted(cleanupGroup)
   if (ganttWrapper.value) {
     ganttWrapper.value.addEventListener("wheel", (e) => handleWheel(e, ganttWrapper.value!))
   }
@@ -440,6 +445,9 @@ provide(GANTT_ID_KEY, id.value)
           </template>
           <template #label-column-row="slotProps">
             <slot name="label-column-row" v-bind="slotProps" />
+          </template>
+          <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
+            <slot :name="name" v-bind="slotData" />
           </template>
         </g-gantt-label-column>
 
