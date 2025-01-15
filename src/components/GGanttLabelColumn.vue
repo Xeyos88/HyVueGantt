@@ -389,38 +389,38 @@ defineExpose({
         <div class="g-label-column-row-inner">
           <template v-for="column in getVisibleColumns(row)" :key="column.field">
             <template v-if="isValidColumn(column.field) || column.valueGetter">
-              <slot
-                :name="`label-column-${column.field.toLowerCase()}`"
-                :row="row"
-                :value="getRowValue(row, column, Number(row.id) || 0)"
+              <div
+                class="g-label-column-cell"
+                :style="getColumnStyle(column.field, Boolean(row.children?.length))"
               >
-                <div
-                  class="g-label-column-cell"
-                  :style="getColumnStyle(column.field, Boolean(row.children?.length))"
-                >
-                  <div :style="getCellStyle(column.field === 'Label')">
-                    <div :style="getRowStyle(row, column.field === 'Label')" class="cell-content">
-                      <button
-                        v-if="column.field === 'Label' && row.children && row.children.length > 0"
-                        class="group-toggle-button"
-                        @click="handleGroupToggle(row, $event)"
+                <div :style="getCellStyle(column.field === 'Label')">
+                  <div :style="getRowStyle(row, column.field === 'Label')" class="cell-content">
+                    <button
+                      v-if="column.field === 'Label' && row.children && row.children.length > 0"
+                      class="group-toggle-button"
+                      @click="handleGroupToggle(row, $event)"
+                    >
+                      <FontAwesomeIcon
+                        :icon="
+                          row.id && rowManager.isGroupExpanded(row.id)
+                            ? faChevronDown
+                            : faChevronRight
+                        "
+                        class="group-icon"
+                      />
+                    </button>
+                    <span class="text-ellipsis-value">
+                      <slot
+                        :name="`label-column-${column.field.toLowerCase()}`"
+                        :row="row"
+                        :value="getRowValue(row, column, index)"
                       >
-                        <FontAwesomeIcon
-                          :icon="
-                            row.id && rowManager.isGroupExpanded(row.id)
-                              ? faChevronDown
-                              : faChevronRight
-                          "
-                          class="group-icon"
-                        />
-                      </button>
-                      <span class="text-ellipsis-value">
                         {{ getRowValue(row, column, index) }}
-                      </span>
-                    </div>
+                      </slot>
+                    </span>
                   </div>
                 </div>
-              </slot>
+              </div>
             </template>
           </template>
         </div>

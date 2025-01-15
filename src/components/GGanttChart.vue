@@ -446,6 +446,9 @@ provide(GANTT_ID_KEY, id.value)
           <template #label-column-row="slotProps">
             <slot name="label-column-row" v-bind="slotProps" />
           </template>
+          <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
+            <slot :name="name" v-bind="slotData" />
+          </template>
         </g-gantt-label-column>
 
         <!-- Chart Wrapper -->
