@@ -40,7 +40,6 @@ const isExpanded = computed(() => {
 })
 
 const rowStyle = computed(() => {
-  console.log(colors.value.hoverHighlight)
   const baseStyle: StyleValue = {
     height: `${rowHeight.value}px`,
     borderBottom: `1px solid ${colors.value.gridAndBorder}`,

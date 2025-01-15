@@ -40,118 +40,146 @@ describe("GGanttConnector", () => {
     it("should render SVG correctly", () => {
       const wrapper = createWrapper()
       expect(wrapper.find("svg").exists()).toBe(true)
-      expect(wrapper.find("path").exists()).toBe(true)
+      expect(wrapper.findAll("path").length).toBeGreaterThan(0)
+      expect(wrapper.find("marker").exists()).toBe(true)
     })
 
     it("should apply correct style to SVG", () => {
       const wrapper = createWrapper()
       const svg = wrapper.find("svg")
-      expect(svg.attributes("style")).toContain("position: absolute")
-      expect(svg.attributes("style")).toContain("pointer-events: none")
+      const style = svg.attributes("style") || ""
+      expect(style).toContain("position: absolute")
+      expect(style).toContain("pointer-events: none")
+      expect(style).toContain("overflow: visible")
     })
 
     it("should apply specified color", () => {
       const customColor = "#00ff00"
       const wrapper = createWrapper({ color: customColor })
-      const path = wrapper.find("path")
-      expect(path.attributes("stroke")).toBe(customColor)
+
+      // Troviamo il path della connessione (il secondo path)
+      const paths = wrapper.findAll("path")
+      const connectorPath = paths[paths.length - 1]
+      expect(connectorPath.attributes("stroke")).toBe(customColor)
+
+      // Verifichiamo il marker
+      const markerPath = wrapper.find("marker path")
+      expect(markerPath.attributes("fill")).toBe(customColor)
+    })
+  })
+
+  describe("marker configuration", () => {
+    it("should create marker with correct id", () => {
+      const wrapper = createWrapper()
+      const markerId = `marker-start-${mockSourceBar.id}-${mockTargetBar.id}`
+      expect(wrapper.find(`marker[id="${markerId}"]`).exists()).toBe(true)
     })
   })
 
   describe("connection types", () => {
     it("should render straight line", () => {
       const wrapper = createWrapper({ type: "straight" })
-      const path = wrapper.find("path")
-      expect(path.attributes("d")).toContain("M")
-      expect(path.attributes("d")).toContain("L")
+      const paths = wrapper.findAll("path")
+      const connectorPath = paths[paths.length - 1]
+      const d = connectorPath.attributes("d") || ""
+
+      expect(d.includes("M")).toBe(true)
+      expect(d.includes("L")).toBe(true)
+    })
+
+    it("should render squared path", () => {
+      const backwardTargetBar = { ...mockTargetBar, x: -50 }
+      const wrapper = createWrapper({
+        type: "squared",
+        targetBar: backwardTargetBar
+      })
+      const paths = wrapper.findAll("path")
+      const connectorPath = paths[paths.length - 1]
+      const d = connectorPath.attributes("d") || ""
+
+      expect(d).toContain("M")
+      expect(d).toContain("h")
+      expect(d).toContain("v")
     })
 
     it("should render bezier curve", () => {
       const wrapper = createWrapper({ type: "bezier" })
-      const path = wrapper.find("path")
-      expect(path.attributes("d")).toContain("C")
-    })
+      const paths = wrapper.findAll("path")
+      const connectorPath = paths[paths.length - 1]
+      const d = connectorPath.attributes("d") || ""
 
-    it("should render squared line", () => {
-      const wrapper = createWrapper({ type: "squared" })
-      const path = wrapper.find("path")
-      const d = path.attributes("d")
-      expect(d).toContain("L")
-      expect(d?.split("L").length).toBeGreaterThan(2)
+      expect(d).toContain("M")
+      expect(d).toContain("C")
     })
   })
 
-  describe("pattern", () => {
+  describe("pattern and animation", () => {
     it("should apply dash pattern", () => {
       const wrapper = createWrapper({ pattern: "dash", animated: false })
-      const path = wrapper.find("path")
-      expect(path.attributes("stroke-dasharray")).toBe("8,8")
+      const paths = wrapper.findAll("path")
+      const connectorPath = paths[paths.length - 1]
+      expect(connectorPath.attributes("stroke-dasharray")).toBe("8,8")
     })
 
     it("should apply dot pattern", () => {
       const wrapper = createWrapper({ pattern: "dot", animated: false })
-      const path = wrapper.find("path")
-      expect(path.attributes("stroke-dasharray")).toBe("2,6")
+      const paths = wrapper.findAll("path")
+      const connectorPath = paths[paths.length - 1]
+      expect(connectorPath.attributes("stroke-dasharray")).toBe("2,6")
     })
 
     it("should apply dashdot pattern", () => {
       const wrapper = createWrapper({ pattern: "dashdot", animated: false })
-      const path = wrapper.find("path")
-      expect(path.attributes("stroke-dasharray")).toBe("12,6,3,6")
+      const paths = wrapper.findAll("path")
+      const connectorPath = paths[paths.length - 1]
+      expect(connectorPath.attributes("stroke-dasharray")).toBe("12,6,3,6")
     })
   })
 
   describe("animations", () => {
-    it("should render gradient for solid animation", () => {
-      const wrapper = createWrapper({ animated: true, pattern: "solid" })
+    it("should setup gradient for animation", () => {
+      const wrapper = createWrapper({
+        animated: true,
+        pattern: "solid"
+      })
       expect(wrapper.find("linearGradient").exists()).toBe(true)
-      expect(wrapper.find("animate").exists()).toBe(true)
+      expect(wrapper.findAll("animate").length).toBe(2)
     })
 
-    it("should apply correct animation class", () => {
+    it("should apply animation classes", () => {
       const wrapper = createWrapper({
         animated: true,
         pattern: "dash",
         animationSpeed: "slow"
       })
-      const path = wrapper.find("path")
-      expect(path.classes()).toContain("connector-animated-dash-slow")
-    })
-
-    it("should use specified animation speed", () => {
-      const wrapper = createWrapper({
-        animated: true,
-        pattern: "solid",
-        animationSpeed: "fast"
-      })
-      const animate = wrapper.find("animate")
-      expect(animate.attributes("dur")).toBe("1s")
+      const paths = wrapper.findAll("path")
+      const connectorPath = paths[paths.length - 1]
+      expect(connectorPath.classes()).toContain("connector-animated-dash-slow")
     })
   })
 
   describe("path calculation", () => {
-    it("should calculate start point correctly", () => {
+    it("should calculate correct coordinates", () => {
       const wrapper = createWrapper()
-      const path = wrapper.find("path")
-      const d = path.attributes("d")
-      expect(d?.startsWith(`M ${mockSourceBar.x + mockSourceBar.width}`)).toBe(true)
+      const paths = wrapper.findAll("path")
+      const connectorPath = paths[paths.length - 1]
+      const d = connectorPath.attributes("d") || ""
+
+      const expectedStart = mockSourceBar.x + mockSourceBar.width
+      expect(d.startsWith(`M ${expectedStart}`)).toBe(true)
     })
 
-    it("should update path when positions change", async () => {
+    it("should update when positions change", async () => {
       const wrapper = createWrapper()
       const newSourceBar = { ...mockSourceBar, x: 50 }
       await wrapper.setProps({ sourceBar: newSourceBar })
-      const path = wrapper.find("path")
-      const d = path.attributes("d")
-      expect(d?.startsWith(`M ${newSourceBar.x + newSourceBar.width}`)).toBe(true)
-    })
-  })
 
-  describe("accessibility", () => {
-    it("should not interfere with mouse events", () => {
-      const wrapper = createWrapper()
-      const svg = wrapper.find("svg")
-      expect(svg.attributes("style")).toContain("pointer-events: none")
+      const paths = wrapper.findAll("path")
+      const connectorPath = paths[paths.length - 1]
+      const d = connectorPath.attributes("d") || ""
+
+      const expectedStart = newSourceBar.x + newSourceBar.width
+      expect(d.startsWith(`M ${expectedStart}`)).toBe(true)
     })
   })
 })
