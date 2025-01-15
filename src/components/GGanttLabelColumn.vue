@@ -334,38 +334,40 @@ defineExpose({
       borderRight: `1px solid ${colors.gridAndBorder}`
     }"
   >
-    <slot name="label-column-title">
-      <div
-        class="g-label-column-header"
-        :style="{ background: colors.primary, borderBottom: `1px solid ${colors.gridAndBorder}` }"
-      >
-        <template v-for="column in columns" :key="column">
+    <div
+      class="g-label-column-header"
+      :style="{ background: colors.primary, borderBottom: `1px solid ${colors.gridAndBorder}` }"
+    >
+      <template v-for="column in columns" :key="column">
+        <div
+          v-if="isValidColumn(column.field) || column.valueGetter"
+          class="g-label-column-header-cell"
+          :class="{ sortable: isSortable(column) }"
+          role="columnheader"
+          :style="getColumnStyle(column.field, false)"
+        >
           <div
-            v-if="isValidColumn(column.field) || column.valueGetter"
-            class="g-label-column-header-cell"
-            :class="{ sortable: isSortable(column) }"
-            role="columnheader"
-            :style="getColumnStyle(column.field, false)"
+            class="header-content"
+            @click="isSortable(column) ? toggleSort(column.field) : undefined"
           >
-            <div
-              class="header-content"
-              @click="isSortable(column) ? toggleSort(column.field) : undefined"
-            >
-              <span class="text-ellipsis">{{ column.field }}</span>
-              <span v-if="isSortable(column)" class="sort-icon">
-                <FontAwesomeIcon :icon="getSortIcon(column.field)" />
-              </span>
-            </div>
-            <div
-              v-if="labelResizable"
-              class="column-resizer"
-              @mousedown="(e) => handleDragStart(e, column.field)"
-              :class="{ 'is-dragging': isDragging && draggedColumn === column.field }"
-            ></div>
+            <span class="text-ellipsis">
+              <slot name="label-column-title">
+                {{ column.field }}
+              </slot>
+            </span>
+            <span v-if="isSortable(column)" class="sort-icon">
+              <FontAwesomeIcon :icon="getSortIcon(column.field)" />
+            </span>
           </div>
-        </template>
-      </div>
-    </slot>
+          <div
+            v-if="labelResizable"
+            class="column-resizer"
+            @mousedown="(e) => handleDragStart(e, column.field)"
+            :class="{ 'is-dragging': isDragging && draggedColumn === column.field }"
+          ></div>
+        </div>
+      </template>
+    </div>
     <div
       class="g-label-column-rows"
       :style="labelContainerStyle"
