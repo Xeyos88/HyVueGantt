@@ -65,7 +65,6 @@ export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
     width: Ref<number>
     height: Ref<number>
   }
-  widthNumber: Ref<number>
 }
 
 export type GGanttBooleanConfig = {

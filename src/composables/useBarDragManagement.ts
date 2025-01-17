@@ -7,6 +7,7 @@ import { useBarMovement } from "./useBarMovement"
 import { inject } from "vue"
 import type { UseRowsReturn } from "./useRows"
 import { GANTT_ID_KEY } from "../provider/symbols"
+import provideBooleanConfig from "../provider/provideBooleanConfig"
 
 /**
  * Interface representing the current state of drag operations
@@ -29,6 +30,7 @@ const useBarDragManagement = () => {
   const rowManager = inject<UseRowsReturn>("useRows")!
   const ganttId = inject<string>(GANTT_ID_KEY)
   const movement = useBarMovement(config, rowManager, dayjs)
+  const booleanConfig = provideBooleanConfig()
 
   /**
    * State object tracking currently dragged bars and their original positions
@@ -88,7 +90,8 @@ const useBarDragManagement = () => {
         isMainBar ? handleDragEnd : () => null,
         config,
         movement,
-        ganttId!
+        ganttId!,
+        booleanConfig
       )
       initDrag(e)
     }
