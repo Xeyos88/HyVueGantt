@@ -1,5 +1,5 @@
 import { ref } from "vue"
-import type { GanttBarObject, GGanttBooleanConfig, GGanttChartConfig } from "../types"
+import type { GanttBarObject, GGanttChartConfig } from "../types"
 import useDayjsHelper from "./useDayjsHelper"
 import useTimePositionMapping from "./useTimePositionMapping"
 import type { MovementAPI } from "./useBarMovement"
@@ -22,8 +22,7 @@ export default function createBarDrag(
   onEndDrag: (e: MouseEvent, bar: GanttBarObject) => void = () => null,
   config: GGanttChartConfig,
   movementAPI: MovementAPI,
-  ganttId: string,
-  booleanConfig: GGanttBooleanConfig
+  ganttId: string
 ) {
   const { findBarElement } = useBarSelector()
   const { barStart, barEnd } = config
@@ -32,7 +31,7 @@ export default function createBarDrag(
   let initialBarLeft = 0
   let dragCallBack: (e: MouseEvent) => void
 
-  const { mapPositionToTime } = useTimePositionMapping(config, booleanConfig)
+  const { mapPositionToTime } = useTimePositionMapping(config)
   const { toDayjs } = useDayjsHelper(config)
 
   /**

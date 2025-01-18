@@ -1,13 +1,24 @@
-// useKeyboardNavigation.ts
-
 import { type Ref } from "vue"
 
+/**
+ * Interface defining the navigation control methods and state
+ * Contains the essential methods and values needed for keyboard-based navigation
+ */
 interface NavigationControls {
   scrollPosition: Ref<number>
   handleStep: (value: number, wrapper: HTMLElement) => void
   handleZoomUpdate: (increase: boolean) => void
 }
 
+/**
+ * A composable that provides keyboard navigation functionality for the Gantt chart
+ * Allows users to navigate and control the chart using keyboard shortcuts
+ *
+ * @param chartNavigation - Object containing navigation control methods
+ * @param wrapperRef - Reference to the chart wrapper element
+ * @param ganttContainerRef - Reference to the main Gantt container
+ * @returns Object containing keyboard event handler
+ */
 export function useKeyboardNavigation(
   chartNavigation: NavigationControls,
   wrapperRef: Ref<HTMLElement | null>,
@@ -15,6 +26,16 @@ export function useKeyboardNavigation(
 ) {
   const { handleStep, handleZoomUpdate, scrollPosition } = chartNavigation
 
+  /**
+   * Handles keyboard events for chart navigation
+   * Implements the following controls:
+   * - ArrowLeft/Right: Moves chart view left/right
+   * - +/-: Zooms in/out
+   * - Home/End: Jumps to start/end
+   * - PageUp/Down: Moves chart view by larger increments
+   *
+   * @param event - Keyboard event to handle
+   */
   const handleKeyDown = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement
 

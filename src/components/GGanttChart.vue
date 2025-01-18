@@ -208,7 +208,6 @@ const { showTooltip, tooltipBar, initTooltip, clearTooltip } = useTooltip()
 
 const rowsContainer = ref<HTMLElement | null>(null)
 const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
-const timeaxisRef = ref<HTMLElement | null>(null)
 const { font, colorScheme } = toRefs(props)
 
 const getColorScheme = (scheme: string | ColorScheme): ColorScheme =>
@@ -218,13 +217,27 @@ const getColorScheme = (scheme: string | ColorScheme): ColorScheme =>
 
 const colors = computed(() => getColorScheme(colorScheme.value))
 const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision } = useTimeaxisUnits(
-  timeaxisRef,
   {
     ...toRefs(props),
     colors,
     chartSize
   },
   props.enableMinutes
+)
+
+const totalWidth = computed(() => {
+  const lowerUnits = timeaxisUnits.value!.result.lowerUnits
+  return lowerUnits.reduce((total, unit) => {
+    return total + parseInt(unit.width!)
+  }, 0)
+})
+
+watch(
+  () => totalWidth.value,
+  () => {
+    ganttWidth.value = totalWidth.value
+  },
+  { immediate: true }
 )
 
 const {
@@ -445,7 +458,7 @@ provide(GANTT_ID_KEY, id.value)
             ref="ganttChart"
             class="g-gantt-chart"
             :style="{
-              width: `${ganttWidth}px`,
+              width: `${totalWidth}px`,
               background: colors.background,
               fontFamily: font
             }"
@@ -455,6 +468,8 @@ provide(GANTT_ID_KEY, id.value)
               v-if="!hideTimeaxis"
               ref="timeaxisComponent"
               @drag-start="handleTimeaxisMouseDown"
+              :timeaxisUnits="timeaxisUnits"
+              :internalPrecision="internalPrecision"
             >
               <template #upper-timeunit="slotProps">
                 <slot name="upper-timeunit" v-bind="slotProps" />
@@ -465,7 +480,11 @@ provide(GANTT_ID_KEY, id.value)
             </g-gantt-timeaxis>
 
             <!-- Optional Components -->
-            <g-gantt-grid v-if="grid" />
+            <g-gantt-grid
+              v-if="grid"
+              :timeaxisUnits="timeaxisUnits"
+              :internalPrecision="internalPrecision"
+            />
             <g-gantt-current-time v-if="currentTime">
               <template #current-time-label>
                 <slot name="current-time-label" />
@@ -579,14 +598,14 @@ provide(GANTT_ID_KEY, id.value)
           <button
             @click="() => handleZoomUpdate(false)"
             aria-label="Zoom-out Gantt"
-            :disabled="zoomLevel === 0"
+            :disabled="zoomLevel === 1 && internalPrecision === 'month'"
           >
             <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
           </button>
           <button
             @click="() => handleZoomUpdate(true)"
             aria-label="Zoom-out Gantt"
-            :disabled="zoomLevel === 10"
+            :disabled="zoomLevel === 10 && internalPrecision === precision"
           >
             <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
           </button>

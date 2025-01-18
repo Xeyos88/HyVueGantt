@@ -62,7 +62,7 @@ const rows = ref([
           ]
         },
         start: '2024-12-26 13:00',
-        end: '2024-12-26 12:00',
+        end: '2024-12-26 14:00',
       },
       {
         ganttBarConfig: {

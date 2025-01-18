@@ -42,14 +42,14 @@ const multiColumnLabel = ref<LabelColumnConfig[]>([
 
 const rows = ref([
   {
-    id: 1,
+    id: '1',
     label: 'Design Phase',
     bars: [
       {
         start: '2024-01-05',
         end: '2024-01-20',
         ganttBarConfig: {
-          id: '1',
+          id: 'a1',
           label: 'UI/UX Design',
           style: { background: '#42b883' }
         }
@@ -57,14 +57,14 @@ const rows = ref([
     ]
   },
   {
-    id: 2,
+    id: '2',
     label: 'Development',
     bars: [
       {
         start: '2024-01-21',
         end: '2024-02-15',
         ganttBarConfig: {
-          id: '2',
+          id: 'a2',
           label: 'Frontend Implementation',
           style: { background: '#35495e' }
         }
@@ -72,14 +72,14 @@ const rows = ref([
     ]
   },
   {
-    id: 3,
+    id: '3',
     label: 'Testing',
     bars: [
       {
         start: '2024-02-10',
         end: '2024-02-28',
         ganttBarConfig: {
-          id: '3',
+          id: 'a3',
           label: 'QA and Testing',
           style: { background: '#ff7e67' }
         }
