@@ -75,7 +75,6 @@ export default defineConfig({
           items: [
             { text: "Base", link: "/live/base" },
             { text: "Connections", link: "/live/connection" },
-            { text: "Time Precision", link: "/live/timeprecision" },
             { text: "Multi Columns", link: "/live/multicolumn" },
             { text: "Advanced", link: "/live/advanced" },
             { text: "Holiday", link: "/live/holiday" },
@@ -90,7 +89,7 @@ export default defineConfig({
 
     footer: {
       message: "Released under the MIT License.",
-      copyright: "Copyright © 2024"
+      copyright: "Copyright © 2025"
     }
   }
 })

@@ -98,6 +98,7 @@ const rows = ref([
       :bar-start="barStart"
       :bar-end="barEnd"
       :row-height="40"
+      :labelColumnWidth="100"
       grid
       label-column-title="Project Details"
       :multi-column-label="multiColumnLabel"
