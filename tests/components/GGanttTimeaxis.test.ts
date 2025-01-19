@@ -5,27 +5,26 @@ import { ref } from "vue"
 import { CONFIG_KEY } from "../../src/provider/symbols"
 
 vi.mock("../../src/composables/useTimeaxisUnits", () => ({
-  default: () => ({
-    timeaxisUnits: {
-      result: {
-        lowerUnits: [
-          { label: "1", value: "1", width: "10px", date: new Date() },
-          { label: "2", value: "2", width: "10px", date: new Date() }
-        ],
-        minutesUnits: [
-          { label: "1", width: "10px" },
-          { label: "2", width: "10px" }
-        ]
-      }
-    },
-    internalPrecision: ref("day")
-  }),
   capitalizeWords: vi.fn()
 }))
 
 describe("GGanttTimeaxis", () => {
   const createWrapper = (customProvide = {}) => {
-    return mount(GGanttTimeaxis)
+    return mount(GGanttTimeaxis, {
+      props: {
+        timeaxisUnits: {
+          result: {
+            lowerUnits: [
+              { label: "1", value: "1", width: "10px", date: new Date() },
+              { label: "2", value: "2", width: "10px", date: new Date() }
+            ],
+            upperUnits: []
+          },
+          globalMinuteStep: []
+        },
+        internalPrecision: "day"
+      }
+    })
   }
 
   describe("rendering", () => {

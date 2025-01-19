@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
-import useTimeaxisUnits from "../composables/useTimeaxisUnits"
-import { ref } from "vue"
 import useDayjsHelper from "../composables/useDayjsHelper"
+import type { TimeaxisData, TimeUnit } from "../types"
+
+const props = defineProps<{
+  timeaxisUnits: TimeaxisData
+  internalPrecision: TimeUnit
+}>()
 
 const { toDayjs } = useDayjsHelper()
 
@@ -17,12 +21,8 @@ const {
 } = provideConfig()
 const { enableMinutes } = provideBooleanConfig()
 
-const time = ref<HTMLElement | null>(null)
-
-const { timeaxisUnits, internalPrecision } = useTimeaxisUnits(time)
-
 const highlightLine = (date: Date) => {
-  if (internalPrecision.value === "hour") {
+  if (props.internalPrecision === "hour") {
     return (
       isHighlightedHour(date) ||
       isHighlightedDay(date) ||
@@ -31,15 +31,15 @@ const highlightLine = (date: Date) => {
     )
   }
 
-  if (internalPrecision.value === "day" || internalPrecision.value === "date") {
+  if (props.internalPrecision === "day" || props.internalPrecision === "date") {
     return isHighlightedDay(date) || isHighlightedMonth(date) || isHighlightedWeek(date)
   }
 
-  if (internalPrecision.value === "week") {
+  if (props.internalPrecision === "week") {
     return isHighlightedWeek(date) || isHighlightedMonth(date)
   }
 
-  if (internalPrecision.value === "month") {
+  if (props.internalPrecision === "month") {
     return isHighlightedMonth(date)
   }
 

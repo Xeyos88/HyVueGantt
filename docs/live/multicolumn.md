@@ -1,3 +1,16 @@
+# Multi-Column Demo
+
+Demo showcasing multi-column display with sorting capabilities:
+
+## Live
+
+<ClientOnly>
+  <MultiColumnDemo />
+</ClientOnly>
+
+## Code
+
+```vue
 <script setup lang="ts">
 import { ref } from 'vue'
 import { GGanttChart, GGanttRow, type ChartRow, type LabelColumnConfig } from 'hy-vue-gantt'
@@ -17,7 +30,6 @@ const sortN = (a: ChartRow, b: ChartRow) => {
   const bId = b.bars.length ?? 0
   return aId < bId ? -1 : aId > bId ? 1 : 0
 }
-
 
 const multiColumnLabel = ref<LabelColumnConfig[]>([
   {
@@ -121,17 +133,4 @@ const rows = ref([
     </g-gantt-chart>
   </div>
 </template>
-
-<style scoped>
-.demo-container {
-  padding: 20px;
-  border: 1px solid #eaeaea;
-  border-radius: 8px;
-  margin: 20px 0;
-}
-
-h3 {
-  margin-bottom: 20px;
-  color: #42b883;
-}
-</style>
+```
