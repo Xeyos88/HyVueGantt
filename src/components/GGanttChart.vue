@@ -25,7 +25,6 @@ import {
   h
 } from "vue"
 import { useElementSize } from "@vueuse/core"
-import dayjs from "dayjs"
 
 // Internal Imports - Components
 import GGanttGrid from "./GGanttGrid.vue"
@@ -54,9 +53,12 @@ import type {
   SortState,
   GGanttTimeaxisInstance,
   ColorScheme,
-  ChartRow
+  ChartRow,
+  RowDragEvent
 } from "../types"
 import type { CSSProperties } from "vue"
+import useTimeaxisUnits from "../composables/useTimeaxisUnits"
+import { ganttWidth } from "../composables/useSimpleStore"
 
 // Props & Emits Definition
 const props = withDefaults(defineProps<GGanttChartProps>(), {
@@ -101,7 +103,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   highlightedDaysInMonth: () => [],
   highlightedMonths: () => [],
   highlightedWeek: () => [],
-  locale: "en"
+  locale: "en",
+  enableRowDragAndDrop: false
 })
 
 const id = ref(crypto.randomUUID())
@@ -188,21 +191,16 @@ const emit = defineEmits<{
   ): void
   (e: "sort", value: { sortState: SortState }): void
   (e: "group-expansion", value: { rowId: string | number }): void
+  (
+    e: "row-drop",
+    value: {
+      sourceRow: ChartRow
+      targetRow?: ChartRow
+      newIndex: number
+      parentId?: string | number
+    }
+  ): void
 }>()
-
-// Computed Properties
-const chartStartDayjs = computed(() => dayjs(props.chartStart, props.dateFormat as string, true))
-const chartEndDayjs = computed(() => dayjs(props.chartEnd, props.dateFormat as string, true))
-
-//const diffDays = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "day") + 1)
-const diffHours = computed(() => chartEndDayjs.value.diff(chartStartDayjs.value, "hour"))
-const diffPrecision = computed(
-  () =>
-    chartEndDayjs.value.diff(
-      chartStartDayjs.value,
-      props.precision === "hour" ? "day" : props.precision
-    ) + 1
-)
 
 // Chart Elements Refs
 const ganttChart = ref<HTMLElement | null>(null)
@@ -221,57 +219,6 @@ const { showTooltip, tooltipBar, initTooltip, clearTooltip } = useTooltip()
 
 const rowsContainer = ref<HTMLElement | null>(null)
 const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
-
-const {
-  zoomFactor,
-  maxZoom,
-  ganttPosition,
-  ganttStep,
-  handleStep,
-  handleScroll,
-  handleWheel,
-  handleContentScroll,
-  handleLabelScroll,
-  decreaseZoom,
-  increaseZoom,
-  scrollRowUp,
-  scrollRowDown,
-  isAtTop,
-  isAtBottom
-} = useChartNavigation(
-  {
-    diffDays: diffPrecision.value,
-    diffHours: diffHours.value,
-    scrollRefs: {
-      rowsContainer,
-      labelColumn
-    },
-    updateBarPositions
-  },
-  props.maxRows
-)
-
-const navigationControls = {
-  zoomFactor,
-  ganttPosition,
-  ganttStep,
-  handleStep,
-  handleScroll,
-  handleWheel,
-  handleContentScroll,
-  handleLabelScroll,
-  decreaseZoom,
-  increaseZoom,
-  scrollRowUp,
-  scrollRowDown
-}
-
-const { handleKeyDown } = useKeyboardNavigation(navigationControls, ganttWrapper, ganttContainer)
-
-// Computed property per timeaxisUnits
-const widthNumber = computed(() => zoomFactor.value * 100)
-const customWidth = computed(() => `${widthNumber.value}%`)
-
 const { font, colorScheme } = toRefs(props)
 
 const getColorScheme = (scheme: string | ColorScheme): ColorScheme =>
@@ -280,6 +227,64 @@ const getColorScheme = (scheme: string | ColorScheme): ColorScheme =>
     : ((colorSchemes[scheme as ColorSchemeKey] || colorSchemes.default) as ColorScheme)
 
 const colors = computed(() => getColorScheme(colorScheme.value))
+const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision } = useTimeaxisUnits(
+  {
+    ...toRefs(props),
+    colors,
+    chartSize
+  },
+  props.enableMinutes
+)
+
+const totalWidth = computed(() => {
+  const lowerUnits = timeaxisUnits.value!.result.lowerUnits
+  return lowerUnits.reduce((total, unit) => {
+    return total + parseInt(unit.width!)
+  }, 0)
+})
+
+watch(
+  () => totalWidth.value,
+  () => {
+    ganttWidth.value = totalWidth.value
+  },
+  { immediate: true }
+)
+
+const {
+  scrollPosition,
+  handleStep,
+  handleScroll,
+  handleWheel,
+  handleContentScroll,
+  handleLabelScroll,
+  handleZoomUpdate,
+  scrollRowUp,
+  scrollRowDown,
+  isAtTop,
+  isAtBottom
+} = useChartNavigation(
+  {
+    scrollRefs: {
+      rowsContainer,
+      labelColumn
+    },
+    updateBarPositions,
+    timeaxisUnits: { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision }
+  },
+  props.maxRows
+)
+
+const { handleKeyDown } = useKeyboardNavigation(
+  {
+    scrollPosition,
+    handleStep,
+    handleZoomUpdate
+  },
+  ganttWrapper,
+  ganttContainer
+)
+// Computed property per timeaxisUnits
 
 // Time Axis Interaction State
 const isDragging = ref(false)
@@ -300,7 +305,7 @@ const handleTimeaxisMouseMove = (e: MouseEvent) => {
 
   ganttWrapper.value.scrollLeft -= deltaX
   const maxScroll = ganttWrapper.value.scrollWidth - ganttWrapper.value.clientWidth
-  ganttPosition.value = (ganttWrapper.value.scrollLeft / maxScroll) * 100
+  scrollPosition.value = (ganttWrapper.value.scrollLeft / maxScroll) * 100
 }
 
 const handleTimeaxisMouseUp = () => {
@@ -355,12 +360,17 @@ const emitBarEvent = (
   }
 }
 
+const dropRow = (event: RowDragEvent) => {
+  emit("row-drop", event)
+  updateBarPositions()
+}
+
 // Style Updates
 const updateRangeBackground = () => {
   const parentElement = document.getElementById(id.value)
   const slider = parentElement!.querySelector(".g-gantt-scroller") as HTMLInputElement
   if (slider) {
-    slider.style.setProperty("--value", `${ganttPosition.value}%`)
+    slider.style.setProperty("--value", `${scrollPosition.value}%`)
   }
 }
 
@@ -395,7 +405,7 @@ onMounted(() => {
   })
 
   // Watchers
-  watch(ganttPosition, updateRangeBackground, { immediate: true })
+  watch(scrollPosition, updateRangeBackground, { immediate: true })
 })
 
 onUnmounted(() => {
@@ -417,8 +427,7 @@ onUnmounted(() => {
 provide(CONFIG_KEY, {
   ...toRefs(props),
   colors,
-  chartSize,
-  widthNumber
+  chartSize
 })
 provide(EMIT_BAR_EVENT_KEY, emitBarEvent)
 provide(BOOLEAN_KEY, { ...props })
@@ -439,7 +448,12 @@ provide(GANTT_ID_KEY, id.value)
       <!-- Chart Layout Section -->
       <div :class="[{ 'labels-in-column': !!labelColumnTitle }]" aria-controls="gantt-controls">
         <!-- Label Column -->
-        <g-gantt-label-column v-if="labelColumnTitle" ref="labelColumn" @scroll="handleLabelScroll">
+        <g-gantt-label-column
+          v-if="labelColumnTitle"
+          ref="labelColumn"
+          @scroll="handleLabelScroll"
+          @row-drop="dropRow"
+        >
           <template #label-column-title>
             <slot name="label-column-title" />
           </template>
@@ -465,7 +479,7 @@ provide(GANTT_ID_KEY, id.value)
             ref="ganttChart"
             class="g-gantt-chart"
             :style="{
-              width: customWidth,
+              width: `${totalWidth}px`,
               background: colors.background,
               fontFamily: font
             }"
@@ -475,6 +489,8 @@ provide(GANTT_ID_KEY, id.value)
               v-if="!hideTimeaxis"
               ref="timeaxisComponent"
               @drag-start="handleTimeaxisMouseDown"
+              :timeaxisUnits="timeaxisUnits"
+              :internalPrecision="internalPrecision"
             >
               <template #upper-timeunit="slotProps">
                 <slot name="upper-timeunit" v-bind="slotProps" />
@@ -485,7 +501,11 @@ provide(GANTT_ID_KEY, id.value)
             </g-gantt-timeaxis>
 
             <!-- Optional Components -->
-            <g-gantt-grid v-if="grid" />
+            <g-gantt-grid
+              v-if="grid"
+              :timeaxisUnits="timeaxisUnits"
+              :internalPrecision="internalPrecision"
+            />
             <g-gantt-current-time v-if="currentTime">
               <template #current-time-label>
                 <slot name="current-time-label" />
@@ -548,15 +568,15 @@ provide(GANTT_ID_KEY, id.value)
         <div class="g-gantt-command-fixed">
           <div class="g-gantt-command-slider">
             <button
-              :disabled="ganttPosition === 0"
+              :disabled="scrollPosition === 0"
               @click="handleStep(0, ganttWrapper!)"
               aria-label="Scroll to start"
             >
               <FontAwesomeIcon :icon="faAnglesLeft" class="command-icon" />
             </button>
             <button
-              :disabled="ganttPosition === 0"
-              @click="handleStep(ganttPosition - ganttStep, ganttWrapper!)"
+              :disabled="scrollPosition === 0"
+              @click="handleStep(scrollPosition - 10, ganttWrapper!)"
               aria-label="Scroll back"
             >
               <FontAwesomeIcon :icon="faAngleLeft" class="command-icon" />
@@ -564,28 +584,28 @@ provide(GANTT_ID_KEY, id.value)
 
             <!-- Position Slider -->
             <input
-              v-model="ganttPosition"
+              v-model="scrollPosition"
               type="range"
               min="0"
               max="100"
               class="g-gantt-scroller"
-              :style="{ '--value': `${ganttPosition}%` }"
+              :style="{ '--value': `${scrollPosition}%` }"
               @input="handleScroll(ganttWrapper!)"
               :aria-valuemin="0"
               :aria-valuemax="100"
-              :aria-valuenow="ganttPosition"
+              :aria-valuenow="scrollPosition"
               aria-label="Gantt scroll position"
             />
 
             <button
-              :disabled="ganttPosition === 100"
-              @click="handleStep(Number(ganttPosition) + Number(ganttStep), ganttWrapper!)"
+              :disabled="scrollPosition === 100"
+              @click="handleStep(scrollPosition + 10, ganttWrapper!)"
               aria-label="Scroll up"
             >
               <FontAwesomeIcon :icon="faAngleRight" class="command-icon" />
             </button>
             <button
-              :disabled="ganttPosition === 100"
+              :disabled="scrollPosition === 100"
               @click="handleStep(100, ganttWrapper!)"
               aria-label="Scroll to end"
             >
@@ -596,13 +616,17 @@ provide(GANTT_ID_KEY, id.value)
 
         <!-- Zoom Controls -->
         <div class="g-gantt-command-zoom">
-          <button @click="decreaseZoom" aria-label="Zoom-out Gantt" :disabled="zoomFactor === 1">
+          <button
+            @click="() => handleZoomUpdate(false)"
+            aria-label="Zoom-out Gantt"
+            :disabled="zoomLevel === 1 && internalPrecision === 'month'"
+          >
             <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
           </button>
           <button
-            @click="increaseZoom"
+            @click="() => handleZoomUpdate(true)"
             aria-label="Zoom-out Gantt"
-            :disabled="zoomFactor === maxZoom"
+            :disabled="zoomLevel === 10 && internalPrecision === precision"
           >
             <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
           </button>

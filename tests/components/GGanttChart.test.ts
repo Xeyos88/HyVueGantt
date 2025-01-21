@@ -142,7 +142,7 @@ describe("GGanttChart", () => {
       const wrapper = createWrapper()
       const zoomInButton = wrapper.find('[aria-label="Zoom-out Gantt"]')
       await zoomInButton.trigger("click")
-      expect(wrapper.vm.zoomFactor).toBeDefined()
+      expect(wrapper.vm.zoomLevel).toBeDefined()
     })
   })
 

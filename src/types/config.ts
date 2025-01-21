@@ -57,6 +57,7 @@ export interface GGanttChartProps {
   highlightedMonths?: number[]
   highlightedWeek?: number[]
   locale?: string
+  enableRowDragAndDrop?: boolean
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
@@ -65,7 +66,6 @@ export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
     width: Ref<number>
     height: Ref<number>
   }
-  widthNumber: Ref<number>
 }
 
 export type GGanttBooleanConfig = {
@@ -73,4 +73,5 @@ export type GGanttBooleanConfig = {
   enableMinutes?: boolean
   sortable?: boolean
   labelResizable?: boolean
+  enableRowDragAndDrop?: boolean
 }

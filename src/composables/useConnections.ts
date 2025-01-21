@@ -100,7 +100,6 @@ export function useConnections(
    */
   const updateBarPositions = async () => {
     await new Promise((resolve) => requestAnimationFrame(resolve))
-
     const parentElement = document.getElementById(id.value)
     const rowsContainer = parentElement!.querySelector(".g-gantt-rows-container")
     if (!rowsContainer) return

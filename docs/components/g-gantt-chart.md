@@ -69,21 +69,26 @@ Here's a minimal example of using the GGanttChart component:
 | rowLabelClass| `(row: ChartRow) => string` | `` | Method to add classes to label rows |
 | dayOptionLabel| `DayOptionLabel[]` | `['day']` | Customization for time unit day |
 | locale| `string` | `'en'` | Locale for dayjs |
+| enableRowDragAndDrop| `boolean` | `false` | Enable drag and drop of rows |
 
 
 ### Events
 
 | Event Name | Payload | Description |
 |------------|---------|-------------|
-| click-bar | `{ bar: GanttBarObject, e: MouseEvent }` | Bar clicked |
-| mousedown-bar | `{ bar: GanttBarObject, e: MouseEvent }` | Mouse down on bar |
-| mouseup-bar | `{ bar: GanttBarObject, e: MouseEvent }` | Mouse up on bar |
+| click-bar | `{ bar: GanttBarObject, e: MouseEvent, datetime?: string \| Date }` | Bar clicked |
+| mousedown-bar | `{ bar: GanttBarObject, e: MouseEvent, datetime?: string \| Date }` | Mouse down on bar |
+| mouseup-bar | `{ bar: GanttBarObject, e: MouseEvent, datetime?: string \| Date }` | Mouse up on bar |
+| mouseenter-bar | `{ bar: GanttBarObject, e: MouseEvent }` | Mouse enter bar |
+| mouseleave-bar | `{ bar: GanttBarObject, e: MouseEvent }` | Mouse leave bar |
 | dblclick-bar | `{ bar: GanttBarObject, e: MouseEvent }` | Bar double clicked |
 | dragstart-bar | `{ bar: GanttBarObject, e: MouseEvent }` | Bar drag started |
 | drag-bar | `{ bar: GanttBarObject, e: MouseEvent }` | Bar being dragged |
-| dragend-bar | `{ bar: GanttBarObject, e: MouseEvent, movedBars?: Map }` | Bar drag ended |
+| dragend-bar | `{ bar: GanttBarObject, e: MouseEvent, movedBars?: Map<GanttBarObject, { oldStart: string; oldEnd: string } }` | Bar drag ended |
 | sort | `{ direction: SortState }` | Sort rows column and direction |
-
+| contextmenu-bar | `{ bar: GanttBarObject; e: MouseEvent; datetime?: string \| Date }`| Contextmenu click|
+| group-expansion | `{ rowId: string \| number }` | Open close group bar |
+| row-drop | `{ sourceRow: ChartRow; targetRow?: ChartRow; newIndex: number; parentId string \|number }` | Row drop after drag |
 
 ### Slots
 

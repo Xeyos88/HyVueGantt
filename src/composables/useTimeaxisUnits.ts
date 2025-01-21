@@ -1,54 +1,81 @@
-import { computed, ref, watch, type Ref } from "vue"
-import type { Dayjs, ManipulateType, UnitType } from "dayjs"
+import { computed, ref, watch } from "vue"
+import type { Dayjs, ManipulateType } from "dayjs"
 import useDayjsHelper from "./useDayjsHelper"
 import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
-import type { TimeaxisResult, TimeaxisUnit, TimeUnit } from "../types"
-import { useElementSize } from "@vueuse/core"
+import type { GGanttChartConfig, TimeaxisUnit, TimeUnit } from "../types"
 import { useHolidays } from "./useHolidays"
 
 /**
- * Extended time unit type including year and ISO week
+ * Base width for time unit elements (in pixels)
+ * Used as the foundation for calculating actual widths with zoom
+ */
+const BASE_UNIT_WIDTH = 24
+
+/**
+ * Zoom level constraints and defaults
+ * Used to maintain readability and performance
+ */
+const MAX_ZOOM = 10
+const MIN_ZOOM = 1
+const DEFAULT_ZOOM = 3
+
+/**
+ * Cache time-to-live in milliseconds
+ * Entries older than this will be automatically removed
+ */
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+/**
+ * Extended time unit type that includes additional granularities
+ * beyond the base TimeUnit type
  */
 type ExtendedTimeUnit = TimeUnit | "year" | "isoWeek"
 
 /**
- * Type alias for dayjs unit type
- */
-type DayjsUnitType = ManipulateType
-
-/**
- * Display format configuration for different time units
+ * Display format mapping for each time unit type
+ * Defines how each unit should be formatted when displayed
  */
 type DisplayFormat = {
   [key in TimeUnit | "year"]: string
 }
 
 /**
- * Mapping of time units to their parent units
+ * Mapping between time units for precision adjustments
  */
 type PrecisionMapType = {
   [key in TimeUnit]: ExtendedTimeUnit
 }
 
 /**
- * Minimum width in pixels for a time unit element
+ * Cache entry structure for storing calculated units
  */
-const MIN_UNIT_WIDTH_PX = 24
+interface CacheEntry {
+  timestamp: number
+  units: TimeaxisUnit[]
+}
 
 /**
- * Capitalizes first letter of a string, handling Unicode characters
- * @param str - String to capitalize
+ * Cache structure for both lower and upper units
+ */
+interface TimeaxisCache {
+  lower: Map<string, CacheEntry>
+  upper: Map<string, CacheEntry>
+}
+
+/**
+ * Capitalizes the first letter of a string, handling Unicode characters
+ * @param str - Input string to capitalize
  * @returns Capitalized string
  */
-const capitalizeString = (str: string): string => {
+export const capitalizeString = (str: string): string => {
   if (!str) return str
   return str.normalize("NFD").replace(/^\p{L}/u, (letter) => letter.toLocaleUpperCase())
 }
 
 /**
- * Capitalizes first letter of each word in a string
- * @param str - String to process
+ * Capitalizes the first letter of each word in a string
+ * @param str - Input string to process
  * @returns String with capitalized words
  */
 export const capitalizeWords = (str: string): string => {
@@ -64,22 +91,38 @@ export const capitalizeWords = (str: string): string => {
 }
 
 /**
- * A composable that manages time axis units generation and display
- * @param timeaxisRef - Reference to timeaxis DOM element
- * @returns Object containing timeaxis units and precision state
+ * A composable that manages time axis units generation and display with optimized performance.
+ * Features include:
+ * - Efficient caching system for calculated units
+ * - Dynamic zoom level management
+ * - Automatic precision adjustment
+ * - Performance optimizations for large datasets
+ * - Timestamp-based calculations for week handling
+ *
+ * @param config - Optional Gantt chart configuration
+ * @param enableMinutes - Flag to enable minute-level precision
+ * @returns Object containing timeaxis state and control methods
  */
-export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
-  const config = provideConfig()
-  const { precision: configPrecision, widthNumber } = config
-  const { enableMinutes } = provideBooleanConfig()
-  const { chartStartDayjs, chartEndDayjs } = useDayjsHelper()
-  const { width: containerWidth } = useElementSize(timeaxisRef)
+export default function useTimeaxisUnits(
+  config: GGanttChartConfig = provideConfig(),
+  enableMinutes = provideBooleanConfig().enableMinutes
+) {
   const { getHolidayInfo } = useHolidays(config)
+  const { precision: configPrecision, holidayHighlight } = config
+  const { chartStartDayjs, chartEndDayjs } = useDayjsHelper(config)
 
+  // Internal state
   const internalPrecision = ref<TimeUnit>(configPrecision.value)
+  const zoomLevel = ref(DEFAULT_ZOOM)
+
+  // Cache initialization
+  const cache: TimeaxisCache = {
+    lower: new Map(),
+    upper: new Map()
+  }
 
   /**
-   * Display format configuration for each time unit
+   * Display format configuration for time units
    */
   const displayFormats: DisplayFormat = {
     hour: "HH",
@@ -88,196 +131,6 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
     week: "WW",
     month: "MMMM YYYY",
     year: "YYYY"
-  }
-
-  /**
-   * Hierarchy of precision levels from finest to coarsest
-   */
-  const precisionHierarchy: TimeUnit[] = ["hour", "day", "week", "month"]
-
-  /**
-   * Gets the next coarser precision level
-   * @param currentPrecision - Current precision level
-   * @returns Next coarser precision level
-   */
-  const getNextPrecision = (currentPrecision: TimeUnit): TimeUnit => {
-    const currentIndex = precisionHierarchy.indexOf(currentPrecision)
-
-    if (currentIndex < precisionHierarchy.length - 1) {
-      return precisionHierarchy[currentIndex + 1]!
-    }
-    return currentPrecision
-  }
-
-  /**
-   * Gets the next finer precision level
-   * @param currentPrecision - Current precision level
-   * @returns Next finer precision level
-   */
-  const getPreviousPrecision = (currentPrecision: TimeUnit): TimeUnit => {
-    const currentIndex = precisionHierarchy.indexOf(currentPrecision)
-    const configIndex = precisionHierarchy.indexOf(configPrecision.value)
-    if (currentIndex > 0 && currentIndex > configIndex) {
-      return precisionHierarchy[currentIndex - 1]!
-    }
-    return currentPrecision
-  }
-
-  /**
-   * Calculates the width of a time unit based on total available width
-   * @param totalUnits - Total number of units
-   * @returns Width of each unit in pixels
-   */
-  const calculateUnitWidth = (totalUnits: number): number => {
-    if (!containerWidth.value) return 0
-    return containerWidth.value / totalUnits
-  }
-
-  /**
-   * Counts the number of units for a given precision level
-   * @param precision - Precision level to count units for
-   * @returns Total number of units
-   */
-  const getUnitsCountForPrecision = (precision: TimeUnit): number => {
-    let current = chartStartDayjs.value.clone()
-    let count = 0
-
-    while (current.isBefore(chartEndDayjs.value)) {
-      count++
-      switch (precision) {
-        case "hour":
-          current = current.add(1, "hour")
-          break
-        case "day":
-          current = current.add(1, "day")
-          break
-        case "week":
-          current = current.add(1, "week")
-          break
-        case "month":
-          current = current.add(1, "month")
-          break
-      }
-    }
-
-    return count
-  }
-
-  /**
-   * Finds the optimal precision level based on available space
-   * @param desiredPrecision - Desired precision level
-   * @returns Optimal precision level
-   */
-  const findOptimalPrecision = (desiredPrecision: TimeUnit): TimeUnit => {
-    let currentPrecision = desiredPrecision
-    let unitWidth = calculateUnitWidth(getUnitsCountForPrecision(currentPrecision))
-
-    while (unitWidth > MIN_UNIT_WIDTH_PX * 2 && currentPrecision !== "hour") {
-      const previousPrecision = getPreviousPrecision(currentPrecision)
-      const previousWidth = calculateUnitWidth(getUnitsCountForPrecision(previousPrecision))
-
-      if (previousWidth < MIN_UNIT_WIDTH_PX || previousPrecision === currentPrecision) break
-
-      currentPrecision = previousPrecision
-      unitWidth = previousWidth
-    }
-    while (unitWidth <= MIN_UNIT_WIDTH_PX && currentPrecision !== "month") {
-      const nextPrecision = getNextPrecision(currentPrecision)
-      if (nextPrecision === currentPrecision) break
-
-      const nextWidth = calculateUnitWidth(getUnitsCountForPrecision(nextPrecision))
-
-      if (nextWidth >= MIN_UNIT_WIDTH_PX) {
-        currentPrecision = nextPrecision
-        unitWidth = nextWidth
-      } else {
-        break
-      }
-    }
-    return currentPrecision
-  }
-
-  /**
-   * Watches container width changes and updates precision accordingly
-   */
-  watch(
-    [containerWidth, widthNumber, () => configPrecision.value],
-    () => {
-      if (containerWidth.value > 0) {
-        const currentIndex = precisionHierarchy.indexOf(internalPrecision.value)
-        const configIndex = precisionHierarchy.indexOf(configPrecision.value)
-        if (currentIndex <= configIndex) {
-          internalPrecision.value = configPrecision.value
-        }
-
-        const startingPrecision = internalPrecision.value
-        const optimalPrecision = findOptimalPrecision(startingPrecision)
-
-        if (optimalPrecision !== internalPrecision.value) {
-          internalPrecision.value = optimalPrecision
-          const event = new CustomEvent("precision-update", {
-            detail: optimalPrecision
-          })
-          window.dispatchEvent(event)
-        }
-      }
-    },
-    { immediate: true }
-  )
-
-  /**
-   * Computes the upper precision level
-   */
-  const upperPrecision = computed(() => {
-    const precisionMap: PrecisionMapType = {
-      hour: "day",
-      day: "month",
-      date: "month",
-      week: "month",
-      month: "year"
-    }
-
-    const upperUnit = precisionMap[internalPrecision.value]
-    if (!upperUnit) {
-      throw new Error("Precision must be one of: 'hour', 'day', 'date', 'week', 'month'")
-    }
-
-    return upperUnit
-  })
-
-  /**
-   * Gets the lower precision level for a given unit
-   * @param precision - Current precision
-   * @returns Lower precision unit
-   */
-  const getLowerPrecision = (precision: TimeUnit): ExtendedTimeUnit => {
-    const precisionMap: PrecisionMapType = {
-      date: "day",
-      week: "isoWeek",
-      hour: "hour",
-      day: "day",
-      month: "month"
-    }
-
-    return precisionMap[precision]
-  }
-
-  /**
-   * Maps extended time units to dayjs unit types
-   * @param unit - Extended time unit
-   * @returns Dayjs unit type
-   */
-  const getDayjsUnit = (unit: ExtendedTimeUnit): DayjsUnitType => {
-    const unitMap: Record<ExtendedTimeUnit, DayjsUnitType> = {
-      hour: "hour",
-      day: "day",
-      date: "day",
-      week: "week",
-      month: "month",
-      year: "year",
-      isoWeek: "week"
-    }
-    return unitMap[unit]
   }
 
   /**
@@ -291,130 +144,110 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
   }
 
   /**
-   * Calculates width percentage for a time span
-   * @param start - Start date
-   * @param end - End date
-   * @param total - Total minutes in chart
-   * @returns Width percentage string
+   * Precision hierarchy from finest to coarsest
    */
-  const calculateWidth = (start: Dayjs, end: Dayjs, total: number): string => {
-    const width = (end.diff(start, "minutes", true) / total) * 100
-    return `${width}%`
+  const precisionHierarchy: TimeUnit[] = ["hour", "day", "week", "month"]
+
+  /**
+   * Current unit width based on base width and zoom level
+   */
+  const unitWidth = computed(() => BASE_UNIT_WIDTH * zoomLevel.value)
+
+  /**
+   * Gets the next coarser precision level
+   * @param currentPrecision - Time current precition
+   * @returns Next precision
+   */
+  const getNextPrecision = (currentPrecision: TimeUnit): TimeUnit => {
+    const currentIndex = precisionHierarchy.indexOf(currentPrecision)
+    if (currentIndex < precisionHierarchy.length - 1) {
+      return precisionHierarchy[currentIndex + 1]!
+    }
+    return currentPrecision
   }
 
   /**
-   * Computes time axis units based on current configuration
+   * Gets the next finer precision level
+   * @param currentPrecision - Time current precition
+   * @returns Previous precision
    */
-  const timeaxisUnits = computed(() => {
-    const totalMinutes = chartEndDayjs.value.diff(chartStartDayjs.value, "minutes", true)
-
-    const result: TimeaxisResult = {
-      upperUnits: [],
-      lowerUnits: []
+  const getPreviousPrecision = (currentPrecision: TimeUnit): TimeUnit => {
+    const currentIndex = precisionHierarchy.indexOf(currentPrecision)
+    const configIndex = precisionHierarchy.indexOf(configPrecision.value)
+    if (currentIndex > 0 && currentIndex > configIndex) {
+      return precisionHierarchy[currentIndex - 1]!
     }
+    return currentPrecision
+  }
 
-    let currentUpperUnit = chartStartDayjs.value.clone()
-    let currentLowerUnit = chartStartDayjs.value.clone()
-
-    const currentPrecision = internalPrecision.value
-
-    let globalMinuteStep: string[] = []
-    if (currentPrecision === "hour" && enableMinutes) {
-      const sampleWidth = calculateWidth(
-        currentLowerUnit,
-        currentLowerUnit.clone().add(1, "hour"),
-        totalMinutes
-      )
-      const cellWidth = calculateCellWidth(sampleWidth)
-      globalMinuteStep = widthNumber.value >= 100 ? getMinutesStepFromCellWidth(cellWidth) : ["00"]
+  /**
+   * Upper precision level based on current precision
+   */
+  const upperPrecision = computed(() => {
+    const precisionMap: PrecisionMapType = {
+      hour: "day",
+      day: "month",
+      date: "month",
+      week: "month",
+      month: "year"
     }
-
-    while (currentLowerUnit.isBefore(chartEndDayjs.value)) {
-      const nextLowerUnit = advanceTimeUnit(currentLowerUnit, getLowerPrecision(currentPrecision))
-      const endOfCurrentLower = nextLowerUnit.isBefore(chartEndDayjs.value)
-        ? nextLowerUnit
-        : chartEndDayjs.value
-
-      const width = calculateWidth(currentLowerUnit, endOfCurrentLower, totalMinutes)
-      result.lowerUnits.push(
-        createTimeaxisUnit(currentLowerUnit, getDisplayFormat(currentPrecision), width)
-      )
-
-      currentLowerUnit = nextLowerUnit
-    }
-
-    while (currentUpperUnit.isSameOrBefore(chartEndDayjs.value)) {
-      const endOfCurrentUpper = currentUpperUnit.endOf(getDayjsUnit(upperPrecision.value))
-      const isLastItem = endOfCurrentUpper.isAfter(chartEndDayjs.value)
-
-      const width = calculateWidth(
-        currentUpperUnit,
-        isLastItem ? chartEndDayjs.value : endOfCurrentUpper,
-        totalMinutes
-      )
-
-      result.upperUnits.push(
-        createTimeaxisUnit(currentUpperUnit, getDisplayFormat(upperPrecision.value), width)
-      )
-
-      currentUpperUnit = advanceTimeUnit(endOfCurrentUpper, upperPrecision.value)
-    }
-
-    return { result, globalMinuteStep }
+    return precisionMap[internalPrecision.value] || "month"
   })
 
   /**
-   * Calculates cell width in pixels from percentage width
-   * @param percentageWidth - Width as percentage string
-   * @returns Width in pixels
+   * Generates cache key for unit storage
    */
-  const calculateCellWidth = (percentageWidth: string): number => {
-    if (!timeaxisRef.value) {
-      return 0
-    }
-
-    const containerWidth = timeaxisRef.value.offsetWidth
-    const numericWidth = parseFloat(percentageWidth)
-    const cellWidth = (containerWidth * numericWidth) / 100
-
-    return cellWidth
+  const getCacheKey = (startDate: Dayjs, endDate: Dayjs, precision: TimeUnit, zoom: number) => {
+    return `${startDate.valueOf()}-${endDate.valueOf()}-${precision}-${zoom}`
   }
 
   /**
-   * Determines minute step size based on cell width
-   * @param cellWidth - Width of cell in pixels
-   * @returns Array of minute values
+   * Retrieves units from cache if available and valid
    */
-  const getMinutesStepFromCellWidth = (cellWidth: number): string[] => {
-    const minCellWidth = 16
-    const possibleDivisions = Math.floor(cellWidth / minCellWidth)
+  const getFromCache = (cacheMap: Map<string, CacheEntry>, key: string): TimeaxisUnit[] | null => {
+    const entry = cacheMap.get(key)
+    if (!entry) return null
 
-    let step: number
-    if (possibleDivisions >= 60) step = 1
-    else if (possibleDivisions >= 12) step = 5
-    else if (possibleDivisions >= 6) step = 10
-    else if (possibleDivisions >= 4) step = 15
-    else if (possibleDivisions >= 2) step = 30
-    else return ["00"]
-
-    const steps: string[] = []
-    for (let i = 0; i < 60; i += step) {
-      steps.push(i.toString().padStart(2, "0"))
+    if (Date.now() - entry.timestamp > CACHE_TTL) {
+      cacheMap.delete(key)
+      return null
     }
 
-    return steps
+    return entry.units
+  }
+
+  /**
+   * Stores units in cache with timestamp
+   */
+  const setInCache = (cacheMap: Map<string, CacheEntry>, key: string, units: TimeaxisUnit[]) => {
+    cacheMap.set(key, {
+      timestamp: Date.now(),
+      units
+    })
+  }
+
+  /**
+   * Maps time units to dayjs unit types
+   */
+  const getDayjsUnit = (unit: ExtendedTimeUnit): ManipulateType => {
+    const unitMap: Record<ExtendedTimeUnit, ManipulateType> = {
+      hour: "hour",
+      day: "day",
+      date: "day",
+      week: "week",
+      month: "month",
+      year: "year",
+      isoWeek: "week"
+    }
+    return unitMap[unit]
   }
 
   /**
    * Creates a time axis unit object
-   * @param moment - Dayjs date object
-   * @param format - Display format
-   * @param width - Unit width
-   * @returns TimeaxisUnit object
    */
   const createTimeaxisUnit = (moment: Dayjs, format: string, width: string): TimeaxisUnit => {
     const date = moment.toDate()
-    const holidayInfo = config.holidayHighlight.value ? getHolidayInfo(date) : null
+    const holidayInfo = holidayHighlight.value ? getHolidayInfo(date) : null
     const formattedLabel = moment.format(format)
     const capitalizedLabel = capitalizeWords(formattedLabel)
 
@@ -430,19 +263,186 @@ export default function useTimeaxisUnits(timeaxisRef: Ref<HTMLElement | null>) {
   }
 
   /**
-   * Advances a time unit by one unit
-   * @param moment - Dayjs date object
-   * @param precision - Precision level
-   * @returns New Dayjs date object
+   * Main computed property for time axis units
+   * Implements caching and optimized calculations
    */
-  const advanceTimeUnit = (moment: Dayjs, precision: ExtendedTimeUnit): Dayjs => {
-    const unit = getDayjsUnit(precision)
-    const startOf = precision === "isoWeek" ? "isoWeek" : unit
-    return moment.add(1, unit).startOf(startOf as UnitType)
+  const timeaxisUnits = computed(() => {
+    const lowerCacheKey = getCacheKey(
+      chartStartDayjs.value,
+      chartEndDayjs.value,
+      internalPrecision.value,
+      zoomLevel.value
+    )
+
+    let lowerUnits = getFromCache(cache.lower, lowerCacheKey)
+    const lowerUnitsByStartTime = new Map<number, TimeaxisUnit>()
+
+    if (!lowerUnits) {
+      lowerUnits = []
+      let currentLower = chartStartDayjs.value.clone()
+
+      while (currentLower.isBefore(chartEndDayjs.value)) {
+        const unit = createTimeaxisUnit(
+          currentLower,
+          getDisplayFormat(internalPrecision.value),
+          `${unitWidth.value}px`
+        )
+        lowerUnits.push(unit)
+        lowerUnitsByStartTime.set(currentLower.valueOf(), unit)
+        currentLower = currentLower.add(1, getDayjsUnit(internalPrecision.value))
+      }
+
+      setInCache(cache.lower, lowerCacheKey, lowerUnits)
+    }
+
+    const upperCacheKey = getCacheKey(
+      chartStartDayjs.value,
+      chartEndDayjs.value,
+      upperPrecision.value as TimeUnit, // Cast to TimeUnit type
+      zoomLevel.value
+    )
+
+    let upperUnits = getFromCache(cache.upper, upperCacheKey)
+
+    if (!upperUnits) {
+      upperUnits = []
+
+      let currentUpper = chartStartDayjs.value.startOf(getDayjsUnit(upperPrecision.value))
+
+      while (currentUpper.isBefore(chartEndDayjs.value)) {
+        const nextUpper = currentUpper.add(1, getDayjsUnit(upperPrecision.value))
+
+        const effectiveStart = currentUpper.isBefore(chartStartDayjs.value)
+          ? chartStartDayjs.value
+          : currentUpper
+
+        const effectiveEnd = nextUpper.isAfter(chartEndDayjs.value)
+          ? chartEndDayjs.value
+          : nextUpper
+
+        let unitsInPeriod = 0
+
+        if (internalPrecision.value === "day") {
+          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "day", true))
+        } else if (internalPrecision.value === "month") {
+          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "month", true))
+        } else if (internalPrecision.value === "week") {
+          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "week", true))
+        } else {
+          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "hour", true))
+        }
+
+        const totalWidth = unitsInPeriod * unitWidth.value
+
+        if (totalWidth > 0) {
+          upperUnits.push(
+            createTimeaxisUnit(
+              currentUpper,
+              getDisplayFormat(upperPrecision.value),
+              `${totalWidth}px`
+            )
+          )
+        }
+
+        currentUpper = nextUpper
+      }
+
+      setInCache(cache.upper, upperCacheKey, upperUnits)
+    }
+
+    const minuteSteps = calculateMinuteSteps()
+
+    cleanExpiredCache()
+
+    return {
+      result: {
+        upperUnits,
+        lowerUnits
+      },
+      globalMinuteStep: minuteSteps
+    }
+  })
+
+  /**
+   * Calculates minute steps based on current settings
+   */
+  const calculateMinuteSteps = () => {
+    if (!enableMinutes || internalPrecision.value !== "hour") {
+      return []
+    }
+
+    const cellWidth = unitWidth.value
+    const minCellWidth = 16
+    const possibleDivisions = Math.floor(cellWidth / minCellWidth)
+
+    let step: number
+    if (possibleDivisions >= 60) step = 1
+    else if (possibleDivisions >= 12) step = 5
+    else if (possibleDivisions >= 6) step = 10
+    else if (possibleDivisions >= 4) step = 15
+    else if (possibleDivisions >= 2) step = 30
+    else return ["00"]
+
+    return Array.from({ length: 60 / step }, (_, i) => (i * step).toString().padStart(2, "0"))
   }
+
+  /**
+   * Removes expired entries from cache
+   */
+  const cleanExpiredCache = () => {
+    const now = Date.now()
+    for (const [key, entry] of cache.lower.entries()) {
+      if (now - entry.timestamp > CACHE_TTL) {
+        cache.lower.delete(key)
+      }
+    }
+    for (const [key, entry] of cache.upper.entries()) {
+      if (now - entry.timestamp > CACHE_TTL) {
+        cache.upper.delete(key)
+      }
+    }
+  }
+
+  /**
+   * Handles zoom level adjustments
+   */
+  const adjustZoomAndPrecision = (increase: boolean) => {
+    if (increase) {
+      if (zoomLevel.value === MAX_ZOOM) {
+        const previousPrecision = getPreviousPrecision(internalPrecision.value)
+        if (previousPrecision !== internalPrecision.value) {
+          internalPrecision.value = previousPrecision
+          zoomLevel.value = MIN_ZOOM
+        }
+      } else {
+        zoomLevel.value += 1
+      }
+    } else {
+      if (zoomLevel.value === MIN_ZOOM) {
+        const nextPrecision = getNextPrecision(internalPrecision.value)
+        if (nextPrecision !== internalPrecision.value) {
+          internalPrecision.value = nextPrecision
+          zoomLevel.value = MAX_ZOOM
+        }
+      } else {
+        zoomLevel.value -= 1
+      }
+    }
+  }
+
+  // Clear cache when main dependencies change
+  watch(
+    [() => config.chartStart.value, () => config.chartEnd.value, internalPrecision, zoomLevel],
+    () => {
+      cache.lower.clear()
+      cache.upper.clear()
+    }
+  )
 
   return {
     timeaxisUnits,
-    internalPrecision
+    internalPrecision,
+    zoomLevel,
+    adjustZoomAndPrecision
   }
 }

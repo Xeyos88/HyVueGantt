@@ -1,18 +1,16 @@
 {
   "branches": ["main"],
   "plugins": [
-    "@semantic-release/commit-analyzer",
     [
       "@semantic-release/commit-analyzer",
       {
-        "preset": "angular",
+        "preset": "conventionalcommits",
         "releaseRules": [
-          { "type": "major", "release": "major" },
-          { "type": "minor", "release": "minor" },
-          { "type": "patch", "release": "patch" },
-          { "type": "break", "release": false },
-          { "type": "feat", "release": false },
-          { "type": "fix", "release": false },
+          { "type": "feat", "breaking": true, "release": "major" },
+          { "type": "fix", "breaking": true, "release": "major" },
+          { "breaking": true, "release": "major" },
+          { "type": "feat", "release": "minor" },
+          { "type": "fix", "release": "patch" },
           { "type": "docs", "release": false },
           { "type": "style", "release": false },
           { "type": "refactor", "release": false },
@@ -24,10 +22,10 @@
     [
       "@semantic-release/release-notes-generator",
       {
-        "preset": "angular",
+        "preset": "conventionalcommits",
         "writerOpts": {
           "groupBy": "type",
-          "commitGroupsSort": ["feat", "fix", "perf", "docs", "break"],
+          "commitGroupsSort": ["feat", "fix", "perf", "docs", "breaking"],
           "commitsSort": "header",
           "mainTemplate": "## [v{{version}}](https://github.com/Xeyos88/HyVueGantt/tree/v{{version}}) ({{date}})\n\n[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/{{previousTag}}...v{{version}})\n\n{{> header}}\n\n{{#each commitGroups}}\n{{#if title}}\n\n**{{title}}:**\n\n{{/if}}\n{{#each commits}}\n{{> commit root=@root}}\n{{/each}}\n{{/each}}\n\n{{> footer}}",
           "headerPartial": "",
@@ -40,7 +38,7 @@
             { "type": "feat", "section": "✨ New Features", "hidden": false },
             { "type": "fix", "section": "🐛 Fix", "hidden": false },
             {
-              "type": "break",
+              "type": "breaking",
               "section": "⚠ BREAKING CHANGES",
               "hidden": false
             },
@@ -51,6 +49,15 @@
             { "type": "test", "section": "✅ Test", "hidden": true },
             { "type": "build", "section": "👷 Build", "hidden": true },
             { "type": "ci", "section": "🔧 CI", "hidden": true }
+          ]
+        },
+        "parserOpts": {
+          "noteKeywords": [
+            "BREAKING CHANGE",
+            "BREAKING CHANGES",
+            "BREAKING",
+            "RELEASE NOTE",
+            "Note"
           ]
         }
       }

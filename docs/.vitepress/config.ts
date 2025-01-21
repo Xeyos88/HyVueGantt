@@ -68,8 +68,19 @@ export default defineConfig({
             { text: "Bar Connections", link: "/examples/connections" },
             { text: "Time Management", link: "/examples/time" },
             { text: "Advanced Features", link: "/examples/advanced" },
-            { text: "Live Demo", link: "/examples/live" }
-
+          ]
+        },
+        {
+          text: "Live Demo",
+          items: [
+            { text: "Base", link: "/live/base" },
+            { text: "Connections", link: "/live/connection" },
+            { text: "Multi Columns", link: "/live/multicolumn" },
+            { text: "Advanced", link: "/live/advanced" },
+            { text: "Holiday", link: "/live/holiday" },
+            { text: "Other", link: "/live/others" },
+            { text: "Grouping", link: "/live/grouping" },
+            { text: "Events", link: "/live/events" }
           ]
         }
       ],
@@ -79,7 +90,7 @@ export default defineConfig({
 
     footer: {
       message: "Released under the MIT License.",
-      copyright: "Copyright © 2024"
+      copyright: "Copyright © 2025"
     }
   }
 })

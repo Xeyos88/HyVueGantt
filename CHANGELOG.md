@@ -8,7 +8,9 @@ All notable changes to this project will be documented in this file.
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v1.6.0...v2.0.0)
 
+**Features:**
 
+- Added slot for column label row value
 
 **Bug Fixes:**
 
@@ -17,10 +19,6 @@ All notable changes to this project will be documented in this file.
 - Slot label-column-title
 - Update positions of bar connections with groups
 
-**Features:**
-
-- Added slot for column label row value
-
 ## [v1.6.0](https://github.com/Xeyos88/HyVueGantt/tree/v1.6.0) (2025-01-11)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v1.5.0...v1.6.0)
@@ -28,7 +26,8 @@ All notable changes to this project will be documented in this file.
 **Features:**
 
 - Row grouping
-  **Bug Fixes:**
+
+**Bug Fixes:**
 
 - sort for rows children
 - Sorting problem

@@ -2,50 +2,66 @@
 
 HyVue Gantt components emit various events that you can listen to for interactivity. Below is a comprehensive list of available events.
 
-## Bar Events
 
-Events related to bar interactions:
-
-### Click Events
 ```typescript
-interface BarClickEvent {
+interface GanttBarEvent {
   bar: GanttBarObject;
   e: MouseEvent;
   datetime?: string | Date;
 }
 
-// Usage
-@click-bar="(event: BarClickEvent) => void"
-@dblclick-bar="(event: BarClickEvent) => void"
-@contextmenu-bar="(event: BarClickEvent) => void"
+interface GanttBarDragEvent extends GanttBarEvent {
+  movedBars?: Map<
+    GanttBarObject,
+    {
+      oldStart: string
+      oldEnd: string
+    }
+  >
+}
+
+type BarMouseEvent = Omit<GanttBarEvent, "datetime">
+
+interface GanttBarDragEvent extends GanttBarEvent {
+  movedBars?: Map<
+    GanttBarObject,
+    {
+      oldStart: string
+      oldEnd: string
+    }
+  >
+}
+
+interface RowExpansion {
+  rowId: string | number
+}
+
+interface SortState {
+  column: string
+  direction: SortDirection
+}
+
+```
+
+### Click Events
+
+```typescript
+@click-bar="(event: GanttBarEvent) => void"
+@dblclick-bar="(event: GanttBarEvent) => void"
+@contextmenu-bar="(event: GanttBarEvent) => void"
 ```
 
 ### Drag Events
-```typescript
-interface BarDragEvent {
-  bar: GanttBarObject;
-  e: MouseEvent;
-  movedBars?: Map<GanttBarObject, {
-    oldStart: string;
-    oldEnd: string;
-  }>;
-  datetime?: string | Date;
-}
 
-// Usage
-@dragstart-bar="(event: BarDragEvent) => void"
-@drag-bar="(event: BarDragEvent) => void"
-@dragend-bar="(event: BarDragEvent) => void"
+```typescript
+@dragstart-bar="(event: BarMouseEvent) => void"
+@drag-bar="(event: BarMouseEvent) => void"
+@dragend-bar="(event: GanttBarDragEvent) => void"
 ```
 
 ### Mouse Events
-```typescript
-interface BarMouseEvent {
-  bar: GanttBarObject;
-  e: MouseEvent;
-}
 
-// Usage
+```typescript
 @mouseenter-bar="(event: BarMouseEvent) => void"
 @mouseleave-bar="(event: BarMouseEvent) => void"
 @mousedown-bar="(event: BarMouseEvent) => void"
@@ -55,22 +71,12 @@ interface BarMouseEvent {
 ## Row Events
 
 ```typescript
-interface RowDropEvent {
-  e: MouseEvent;
-  datetime: string | Date;
-}
-
-// Usage
-@drop="(event: RowDropEvent) => void"
+@row-drop="(event: RowDragEvent)"
+@group-expansion="(event: RowExpansion)"
 ```
 
 ## Chart Events
 
 ```typescript
-interface SortEvent {
-  direction: SortDirection;
-}
-
-// Usage
-@sort="(event: SortEvent) => void"
+@sort="(event: SortState) => void"
 ```

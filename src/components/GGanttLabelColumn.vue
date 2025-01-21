@@ -3,7 +3,13 @@ import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
 import { ref, computed, inject, reactive, onMounted } from "vue"
 import type { CSSProperties } from "vue"
-import type { LabelColumnField, ChartRow, GanttBarObject, LabelColumnConfig } from "../types"
+import type {
+  LabelColumnField,
+  ChartRow,
+  GanttBarObject,
+  LabelColumnConfig,
+  RowDragEvent
+} from "../types"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import {
   faArrowDownAZ,
@@ -14,10 +20,16 @@ import {
 } from "@fortawesome/free-solid-svg-icons"
 import useDayjsHelper from "../composables/useDayjsHelper"
 import type { UseRowsReturn } from "../composables/useRows"
+import { useRowDragAndDrop } from "../composables/useRowDragAndDrop"
 
 interface LabelColumnRowProps extends ChartRow {
   indentLevel?: number
 }
+
+const emit = defineEmits<{
+  (e: "scroll", value: number): void
+  (e: "row-drop", value: RowDragEvent): void
+}>()
 
 const rowManager = inject<UseRowsReturn>("useRows")
 if (!rowManager) {
@@ -25,7 +37,7 @@ if (!rowManager) {
 }
 
 const { rows, sortState, toggleSort } = rowManager
-const { sortable, labelResizable } = provideBooleanConfig()
+const { sortable, labelResizable, enableRowDragAndDrop } = provideBooleanConfig()
 const {
   font,
   colors,
@@ -42,6 +54,18 @@ const {
 } = provideConfig()
 
 const { toDayjs, format } = useDayjsHelper()
+
+const {
+  dragState,
+  handleDragStart: handleRowDragStart,
+  handleDragOver,
+  handleDrop
+} = useRowDragAndDrop(
+  rows,
+  computed(() => sortState.value.direction !== "none"),
+  rowManager.updateRows,
+  (_event, payload) => emit("row-drop", payload)
+)
 
 const columnWidths = reactive<Map<string, number>>(new Map())
 const isDragging = ref(false)
@@ -130,6 +154,20 @@ const handleGroupToggle = (row: ChartRow, event: Event) => {
   event.stopPropagation()
   if (row.id) {
     rowManager.toggleGroupExpansion(row.id)
+  }
+}
+
+const getDragClasses = (row: ChartRow) => {
+  if (!enableRowDragAndDrop) return {}
+
+  const isTarget = dragState.value.dropTarget.row === row
+  const isDragged = dragState.value.draggedRow === row
+
+  return {
+    "g-label-column-row-draggable": true,
+    "g-label-column-row-dragging": isDragged,
+    "g-label-column-row-drop-target": isTarget,
+    [`g-label-column-row-drop-${dragState.value.dropTarget.position}`]: isTarget
   }
 }
 
@@ -300,10 +338,6 @@ const isSortable = (column: LabelColumnConfig) => {
   )
 }
 
-const emit = defineEmits<{
-  (e: "scroll", value: number): void
-}>()
-
 const handleLabelScroll = (e: Event) => {
   const target = e.target as HTMLElement
   emit("scroll", target.scrollTop)
@@ -386,7 +420,11 @@ defineExpose({
           height: `${rowHeight}px`,
           borderBottom: `1px solid ${colors.gridAndBorder}`
         }"
-        :class="rowClasses(row)"
+        :class="[rowClasses(row), getDragClasses(row)]"
+        :draggable="enableRowDragAndDrop"
+        @dragstart="handleRowDragStart(row, $event)"
+        @dragover="handleDragOver(row, $event)"
+        @drop="handleDrop()"
       >
         <div class="g-label-column-row-inner">
           <template v-for="column in getVisibleColumns(row)" :key="column.field">
@@ -617,5 +655,41 @@ defineExpose({
 
 .group-label {
   font-weight: 600;
+}
+
+.g-label-column-row-draggable {
+  cursor: move;
+}
+
+.g-label-column-row-dragging {
+  opacity: 0.5;
+  background: var(--dragging-background, #f0f0f0) !important;
+}
+
+.g-label-column-row-drop-target {
+  position: relative;
+}
+
+.g-label-column-row-drop-before::before,
+.g-label-column-row-drop-after::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--drop-indicator-color, #4a9eff);
+  z-index: 1;
+}
+
+.g-label-column-row-drop-before::before {
+  top: 0;
+}
+
+.g-label-column-row-drop-after::after {
+  bottom: 0;
+}
+
+.g-label-column-row-drop-child {
+  background: var(--drop-child-background, rgba(74, 158, 255, 0.1)) !important;
 }
 </style>

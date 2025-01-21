@@ -1,32 +1,23 @@
 <script setup lang="ts">
 import provideConfig from "../provider/provideConfig"
 import provideBooleanConfig from "../provider/provideBooleanConfig"
-import useTimeaxisUnits, { capitalizeWords } from "../composables/useTimeaxisUnits"
-import { computed, ref, watch } from "vue"
+import { capitalizeWords } from "../composables/useTimeaxisUnits"
+import { computed, ref } from "vue"
 import useDayjsHelper from "../composables/useDayjsHelper"
-import type { TimeaxisUnit } from "@/types"
+import type { TimeaxisData, TimeaxisUnit, TimeUnit } from "@/types"
 import GGanttHolidayTooltip from "./GGanttHolidayTooltip.vue"
 
-const { precision, colors, chartSize, holidayHighlight, dayOptionLabel } = provideConfig()
-const { chartStartDayjs, chartEndDayjs, toDayjs } = useDayjsHelper()
-const totalHour = chartEndDayjs.value.diff(chartStartDayjs.value, "hour", true)
+const { precision, colors, holidayHighlight, dayOptionLabel } = provideConfig()
+const { toDayjs } = useDayjsHelper()
 
 const timeaxisElement = ref<HTMLElement | null>(null)
 
-const maxWidth = ref()
-watch(
-  () => chartSize.width.value,
-  () => {
-    if (chartSize.width.value / totalHour >= 12) {
-      maxWidth.value = `${Math.floor(chartSize.width.value)}px`
-    } else {
-      maxWidth.value = `${totalHour * 12}px`
-    }
-  }
-)
+const props = defineProps<{
+  timeaxisUnits: TimeaxisData
+  internalPrecision: TimeUnit
+}>()
 
 const { enableMinutes } = provideBooleanConfig()
-const { timeaxisUnits, internalPrecision } = useTimeaxisUnits(timeaxisElement)
 
 const emit = defineEmits<{
   (e: "dragStart", value: MouseEvent): void
@@ -39,9 +30,9 @@ const handleMouseDown = (e: MouseEvent) => {
 }
 
 const dayUnitLevel = computed(() => {
-  if (internalPrecision.value === "hour") {
+  if (props.internalPrecision === "hour") {
     return "upper"
-  } else if (internalPrecision.value === "day") {
+  } else if (props.internalPrecision === "day") {
     return "lower"
   }
   return null
@@ -118,7 +109,7 @@ defineExpose({ timeaxisElement })
     @mousedown="handleMouseDown"
     role="tablist"
     aria-label="Time Axis"
-    :style="{ maxWidth: maxWidth, borderBottom: `1px solid ${colors.gridAndBorder}` }"
+    :style="{ borderBottom: `1px solid ${colors.gridAndBorder}` }"
   >
     <div class="g-timeunits-container">
       <div

@@ -1,7 +1,8 @@
 import { ref, computed, type Ref, nextTick } from "vue"
+import type useTimeaxisUnits from "./useTimeaxisUnits"
 
 /**
- * Interface defining scroll-related elements references
+ * Interface defining DOM references needed for scrolling functionality
  */
 interface ScrollRefs {
   rowsContainer: Ref<HTMLElement | null>
@@ -9,70 +10,65 @@ interface ScrollRefs {
 }
 
 /**
- * Interface for chart navigation options
+ * Interface defining chart navigation configuration options
  */
 interface ChartNavigationOptions {
-  diffDays: number
-  diffHours: number
   scrollRefs: ScrollRefs
   updateBarPositions: () => void
+  timeaxisUnits: ReturnType<typeof useTimeaxisUnits>
 }
 
 /**
- * A composable that manages navigation within the Gantt chart
- * Handles zooming, scrolling, and position tracking
- * @param options - Navigation configuration options
- * @param maxRows - Maximum number of visible rows
+ * Composable that manages navigation within the Gantt chart.
+ * Provides functionality for horizontal/vertical scrolling and zoom controls.
+ *
+ * @param options - Configuration options for navigation
+ * @param maxRows - Maximum number of rows that can be displayed simultaneously
  * @returns Object containing navigation state and methods
  */
 export function useChartNavigation(options: ChartNavigationOptions, maxRows: number) {
-  const { diffDays, diffHours, scrollRefs, updateBarPositions } = options
+  const { scrollRefs, updateBarPositions, timeaxisUnits } = options
+  const { adjustZoomAndPrecision } = timeaxisUnits
 
-  const zoomFactor = ref(diffDays)
-  const maxZoom = ref(Math.max(10, 5 * diffDays))
-  const ganttPosition = ref(0)
-  const ganttStep = computed(() => 100 / diffHours)
+  const scrollPosition = ref(0)
   const isAtTop = ref(true)
   const isAtBottom = ref(false)
 
   /**
-   * Updates the vertical scroll state indicators
-   * Tracks when the view is at top or bottom
+   * Calculates total width of viewable content
    */
-  const updateVerticalScrollState = () => {
-    if (!scrollRefs.rowsContainer.value) return
+  const totalWidth = computed(() => {
+    return timeaxisUnits.timeaxisUnits.value.result.lowerUnits.reduce((total, unit) => {
+      return total + parseInt(unit.width!)
+    }, 0)
+  })
 
-    const { scrollTop, scrollHeight, clientHeight } = scrollRefs.rowsContainer.value
-    isAtTop.value = scrollTop === 0
-    isAtBottom.value = Math.ceil(scrollTop + clientHeight) >= scrollHeight
+  /**
+   * Handles moving to a specific position
+   * @param newPosition - New percentage position (0-100)
+   * @param wrapper - Container DOM element
+   */
+  const handleStep = (newPosition: number, wrapper: HTMLElement) => {
+    const maxScroll = totalWidth.value - wrapper.clientWidth
+    const targetScroll = (maxScroll * newPosition) / 100
+    wrapper.scrollLeft = targetScroll
+    scrollPosition.value = newPosition
   }
 
   /**
-   * Handles moving to a specific position in the chart
-   * @param value - Position value (0-100)
-   * @param wrapper - Chart wrapper element
-   */
-  const handleStep = (value: number, wrapper: HTMLElement) => {
-    ganttPosition.value = value
-    const maxScroll = wrapper.scrollWidth - wrapper.clientWidth
-    const scrollValue = (maxScroll * ganttPosition.value) / 100
-    wrapper.scrollLeft = scrollValue
-  }
-
-  /**
-   * Handles scroll position updates
-   * @param wrapper - Chart wrapper element
+   * Handles manual scrolling through the slider
+   * @param wrapper - Container DOM element
    */
   const handleScroll = (wrapper: HTMLElement) => {
-    const maxScroll = wrapper.scrollWidth - wrapper.clientWidth
-    const scrollValue = (maxScroll * ganttPosition.value) / 100
-    wrapper.scrollLeft = scrollValue
+    const maxScroll = totalWidth.value - wrapper.clientWidth
+    const targetScroll = (maxScroll * scrollPosition.value) / 100
+    wrapper.scrollLeft = targetScroll
   }
 
   /**
-   * Handles mouse wheel events for chart navigation
-   * @param e - Wheel event
-   * @param wrapper - Chart wrapper element
+   * Handles mouse wheel event for scrolling
+   * @param e - Mouse wheel event
+   * @param wrapper - Container DOM element
    */
   const handleWheel = (e: WheelEvent, wrapper: HTMLElement) => {
     if (maxRows !== 0) {
@@ -83,13 +79,23 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
     }
 
     wrapper.scrollLeft += e.deltaX || e.deltaY
-    const maxScroll = wrapper.scrollWidth - wrapper.clientWidth
-    ganttPosition.value = (wrapper.scrollLeft / maxScroll) * 100
+    const maxScroll = totalWidth.value - wrapper.clientWidth
+    scrollPosition.value = (wrapper.scrollLeft / maxScroll) * 100
   }
 
   /**
-   * Handles content area scrolling
-   * Synchronizes label column scroll position
+   * Handles zoom level updates
+   * @param increase - If true increases zoom, otherwise decreases
+   */
+  const handleZoomUpdate = async (increase: boolean) => {
+    adjustZoomAndPrecision(increase)
+    await nextTick()
+    updateBarPositions()
+  }
+
+  /**
+   * Handles main content scrolling
+   * Synchronizes scroll with label column
    * @param e - Scroll event
    */
   const handleContentScroll = (e: Event) => {
@@ -102,7 +108,7 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
 
   /**
    * Handles label column scrolling
-   * Synchronizes content area scroll position
+   * Synchronizes scroll with main content
    * @param scrollTop - Vertical scroll position
    */
   const handleLabelScroll = (scrollTop: number) => {
@@ -113,24 +119,19 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
   }
 
   /**
-   * Creates a synthetic scroll event
-   * @param target - Target element for the event
-   * @returns Constructed scroll event
+   * Updates vertical scroll state
+   * Checks if view is at top or bottom
    */
-  const createScrollEvent = (target: HTMLElement): Event => {
-    const event = new Event("scroll", {
-      bubbles: true,
-      cancelable: true
-    })
-    Object.defineProperty(event, "target", {
-      value: target,
-      enumerable: true
-    })
-    return event
+  const updateVerticalScrollState = () => {
+    if (!scrollRefs.rowsContainer.value) return
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollRefs.rowsContainer.value
+    isAtTop.value = scrollTop === 0
+    isAtBottom.value = Math.ceil(scrollTop + clientHeight) >= scrollHeight
   }
 
   /**
-   * Scrolls up by one row height
+   * Scrolls one row up
    */
   const scrollRowUp = () => {
     if (!scrollRefs.rowsContainer.value) return
@@ -143,7 +144,7 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
   }
 
   /**
-   * Scrolls down by one row height
+   * Scrolls one row down
    */
   const scrollRowDown = () => {
     if (!scrollRefs.rowsContainer.value) return
@@ -158,53 +159,33 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
   }
 
   /**
-   * Updates zoom level and refreshes bar positions
-   * @param newZoomValue - New zoom level
+   * Creates a synthetic scroll event
+   * @param target - Target element for the event
+   * @returns Scroll event
    */
-  const handleZoomUpdate = async (newZoomValue: number) => {
-    zoomFactor.value = newZoomValue
-    await nextTick()
-    await new Promise((resolve) => requestAnimationFrame(resolve))
-    updateBarPositions()
-  }
-
-  /**
-   * Decreases zoom level
-   * @param event - Optional keyboard or mouse event
-   */
-  const decreaseZoom = async (event?: KeyboardEvent | MouseEvent) => {
-    if (zoomFactor.value === 1) return
-    const step = event?.shiftKey ? 3 : 1
-    const newZoom = Math.max(1, zoomFactor.value - step)
-    await handleZoomUpdate(newZoom)
-  }
-
-  /**
-   * Increases zoom level
-   * @param event - Optional keyboard or mouse event
-   */
-  const increaseZoom = async (event?: KeyboardEvent | MouseEvent) => {
-    if (zoomFactor.value === maxZoom.value) return
-    const step = event?.shiftKey ? 3 : 1
-    const newZoom = Math.min(maxZoom.value, zoomFactor.value + step)
-    await handleZoomUpdate(newZoom)
+  const createScrollEvent = (target: HTMLElement): Event => {
+    const event = new Event("scroll", {
+      bubbles: true,
+      cancelable: true
+    })
+    Object.defineProperty(event, "target", {
+      value: target,
+      enumerable: true
+    })
+    return event
   }
 
   return {
-    zoomFactor,
-    maxZoom,
-    ganttPosition,
-    ganttStep,
+    scrollPosition,
+    isAtTop,
+    isAtBottom,
     handleStep,
     handleScroll,
     handleWheel,
-    decreaseZoom,
-    increaseZoom,
     handleContentScroll,
     handleLabelScroll,
+    handleZoomUpdate,
     scrollRowUp,
-    scrollRowDown,
-    isAtTop,
-    isAtBottom
+    scrollRowDown
   }
 }

@@ -1,4 +1,4 @@
-import { ref, computed, type Ref, type Slots } from "vue"
+import { ref, computed, type Ref, type Slots, watch } from "vue"
 import type {
   ChartRow,
   GanttBarObject,
@@ -15,6 +15,7 @@ import dayjs from "dayjs"
  */
 export interface UseRowsReturn {
   rows: Ref<ChartRow[]>
+  updateRows: (newRows: ChartRow[]) => void
   sortState: Ref<SortState>
   toggleSort: (column: string) => void
   getChartRows: () => ChartRow[]
@@ -23,6 +24,8 @@ export interface UseRowsReturn {
   isGroupExpanded: (rowId: string | number) => boolean
   getFlattenedRows: () => ChartRow[]
   onGroupExpansionChange: (callback: () => void) => () => void
+  customOrder: Ref<Map<string | number, number>>
+  resetCustomOrder: () => void
 }
 
 /**
@@ -65,6 +68,8 @@ export function useRows(
   const sortChangeCallbacks = ref<Set<() => void>>(new Set())
   const expandedGroups = ref<Set<string | number>>(new Set())
   const groupExpansionCallbacks = ref<Set<() => void>>(new Set())
+  const customOrder = ref<Map<string | number, number>>(new Map())
+  const reorderedRows = ref<ChartRow[]>([])
 
   /**
    * Extracts rows data from slots, processing both direct and nested slot contents
@@ -105,6 +110,22 @@ export function useRows(
 
     return rows
   }
+
+  const getSourceRows = () => {
+    if (initialRows?.value?.length) {
+      return initialRows.value
+    }
+    return extractRowsFromSlots()
+  }
+
+  reorderedRows.value = getSourceRows()
+
+  watch(
+    () => getSourceRows(),
+    (newRows) => {
+      reorderedRows.value = newRows
+    }
+  )
 
   /**
    * Calculates synthetic bars for a group based on its children's bars
@@ -324,16 +345,25 @@ export function useRows(
     return ["Id", "Label", "StartDate", "EndDate", "Duration"].includes(field)
   }
 
+  const applyCustomOrder = (rowsToSort: ChartRow[]): ChartRow[] => {
+    if (customOrder.value.size === 0 || sortState.value.direction !== "none") {
+      return rowsToSort
+    }
+
+    return [...rowsToSort].sort((a, b) => {
+      const orderA = a.id ? (customOrder.value.get(a.id) ?? Number.MAX_VALUE) : Number.MAX_VALUE
+      const orderB = b.id ? (customOrder.value.get(b.id) ?? Number.MAX_VALUE) : Number.MAX_VALUE
+      return orderA - orderB
+    })
+  }
+
   /**
    * Computed property that returns the current rows with proper sorting applied
    */
   const rows = computed(() => {
-    let sourceRows: ChartRow[]
-    if (initialRows?.value?.length) {
-      sourceRows = [...initialRows.value]
-    } else {
-      sourceRows = extractRowsFromSlots()
-    }
+    let sourceRows = [...reorderedRows.value]
+
+    if (!sourceRows.length) return sourceRows
 
     const processRowsWithGroupBars = (rows: ChartRow[]): ChartRow[] => {
       return rows.map((row) => {
@@ -355,8 +385,20 @@ export function useRows(
       return sortRows(sourceRows, sortState.value.column, sortState.value.direction)
     }
 
+    if (customOrder.value.size > 0) {
+      return sourceRows.sort((a, b) => {
+        const orderA = a.id ? (customOrder.value.get(a.id) ?? Number.MAX_VALUE) : Number.MAX_VALUE
+        const orderB = b.id ? (customOrder.value.get(b.id) ?? Number.MAX_VALUE) : Number.MAX_VALUE
+        return orderA - orderB
+      })
+    }
+
     return sourceRows
   })
+
+  const resetCustomOrder = () => {
+    customOrder.value.clear()
+  }
 
   /**
    * Sorts rows recursively, maintaining group hierarchy
@@ -387,6 +429,8 @@ export function useRows(
    * @param column - Column to toggle sort for
    */
   const toggleSort = (column: string) => {
+    const previousDirection = sortState.value.direction
+
     if (sortState.value.column !== column) {
       sortState.value = {
         column,
@@ -407,6 +451,9 @@ export function useRows(
     }
     onSort(sortState.value)
     sortChangeCallbacks.value.forEach((callback) => callback())
+    if (previousDirection !== "none" && sortState.value.direction === "none") {
+      applyCustomOrder(rows.value)
+    }
   }
 
   /**
@@ -479,8 +526,13 @@ export function useRows(
    */
   const getChartRows = () => rows.value
 
+  const updateRows = (newRows: ChartRow[]) => {
+    reorderedRows.value = newRows
+  }
+
   return {
     rows,
+    updateRows,
     sortState,
     toggleSort,
     getChartRows,
@@ -488,6 +540,8 @@ export function useRows(
     toggleGroupExpansion,
     isGroupExpanded,
     getFlattenedRows,
-    onGroupExpansionChange
+    onGroupExpansionChange,
+    customOrder,
+    resetCustomOrder
   }
 }

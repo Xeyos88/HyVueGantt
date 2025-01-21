@@ -1,105 +1,39 @@
 import { type Ref } from "vue"
-import type { UseChartNavigationReturn } from "../types/navigation"
 
 /**
- * A composable that manages keyboard navigation within the Gantt chart
- * Provides keyboard shortcuts for zooming, scrolling, and navigation
- * @param chartNavigation - Object containing chart navigation methods
- * @param wrapperRef - Reference to chart wrapper element
- * @param ganttContainerRef - Reference to main Gantt container
+ * Interface defining the navigation control methods and state
+ * Contains the essential methods and values needed for keyboard-based navigation
+ */
+interface NavigationControls {
+  scrollPosition: Ref<number>
+  handleStep: (value: number, wrapper: HTMLElement) => void
+  handleZoomUpdate: (increase: boolean) => void
+}
+
+/**
+ * A composable that provides keyboard navigation functionality for the Gantt chart
+ * Allows users to navigate and control the chart using keyboard shortcuts
+ *
+ * @param chartNavigation - Object containing navigation control methods
+ * @param wrapperRef - Reference to the chart wrapper element
+ * @param ganttContainerRef - Reference to the main Gantt container
  * @returns Object containing keyboard event handler
  */
 export function useKeyboardNavigation(
-  chartNavigation: UseChartNavigationReturn,
+  chartNavigation: NavigationControls,
   wrapperRef: Ref<HTMLElement | null>,
   ganttContainerRef: Ref<HTMLElement | null>
 ) {
-  const { handleStep, decreaseZoom, increaseZoom, ganttPosition, ganttStep } = chartNavigation
+  const { handleStep, handleZoomUpdate, scrollPosition } = chartNavigation
 
   /**
-   * Map of keyboard shortcuts to their corresponding actions
-   * Each key defines a specific navigation or zoom operation
-   */
-  const KEYBOARD_MAPPINGS = {
-    /**
-     * Left arrow key: Move chart view left
-     * Checks if movement is possible before execution
-     */
-    ArrowLeft: () => {
-      if (wrapperRef.value && ganttPosition.value > 0) {
-        handleStep(ganttPosition.value - ganttStep.value, wrapperRef.value)
-      }
-    },
-
-    /**
-     * Right arrow key: Move chart view right
-     * Checks if movement is possible before execution
-     */
-    ArrowRight: () => {
-      if (wrapperRef.value && ganttPosition.value < 100) {
-        handleStep(ganttPosition.value + ganttStep.value, wrapperRef.value)
-      }
-    },
-
-    /**
-     * Plus key: Increase zoom level
-     */
-    "+": () => {
-      increaseZoom()
-    },
-
-    /**
-     * Minus key: Decrease zoom level
-     */
-    "-": () => {
-      decreaseZoom()
-    },
-
-    /**
-     * Home key: Move chart view to the start
-     */
-    Home: () => {
-      if (wrapperRef.value) {
-        handleStep(0, wrapperRef.value)
-      }
-    },
-
-    /**
-     * End key: Move chart view to the end
-     */
-    End: () => {
-      if (wrapperRef.value) {
-        handleStep(100, wrapperRef.value)
-      }
-    },
-
-    /**
-     * Page Up key: Move chart view left by larger increment
-     */
-    PageUp: () => {
-      if (wrapperRef.value && ganttPosition.value >= 10) {
-        handleStep(ganttPosition.value - 10, wrapperRef.value)
-      } else if (wrapperRef.value) {
-        handleStep(0, wrapperRef.value)
-      }
-    },
-
-    /**
-     * Page Down key: Move chart view right by larger increment
-     */
-    PageDown: () => {
-      if (wrapperRef.value && ganttPosition.value <= 90) {
-        handleStep(ganttPosition.value + 10, wrapperRef.value)
-      } else if (wrapperRef.value) {
-        handleStep(100, wrapperRef.value)
-      }
-    }
-  }
-
-  /**
-   * Main keyboard event handler
-   * Processes keyboard events and triggers corresponding actions
-   * Only handles events when the Gantt container is focused
+   * Handles keyboard events for chart navigation
+   * Implements the following controls:
+   * - ArrowLeft/Right: Moves chart view left/right
+   * - +/-: Zooms in/out
+   * - Home/End: Jumps to start/end
+   * - PageUp/Down: Moves chart view by larger increments
+   *
    * @param event - Keyboard event to handle
    */
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -109,10 +43,54 @@ export function useKeyboardNavigation(
       return
     }
 
-    const action = KEYBOARD_MAPPINGS[event.key as keyof typeof KEYBOARD_MAPPINGS]
-    if (action) {
-      event.preventDefault()
-      action()
+    switch (event.key) {
+      case "ArrowLeft":
+        if (wrapperRef.value && scrollPosition.value > 0) {
+          handleStep(Math.max(0, scrollPosition.value - 10), wrapperRef.value)
+        }
+        break
+
+      case "ArrowRight":
+        if (wrapperRef.value && scrollPosition.value < 100) {
+          handleStep(Math.min(100, scrollPosition.value + 10), wrapperRef.value)
+        }
+        break
+
+      case "+":
+        handleZoomUpdate(true)
+        break
+
+      case "-":
+        handleZoomUpdate(false)
+        break
+
+      case "Home":
+        if (wrapperRef.value) {
+          handleStep(0, wrapperRef.value)
+        }
+        break
+
+      case "End":
+        if (wrapperRef.value) {
+          handleStep(100, wrapperRef.value)
+        }
+        break
+
+      case "PageUp":
+        if (wrapperRef.value && scrollPosition.value >= 10) {
+          handleStep(scrollPosition.value - 10, wrapperRef.value)
+        } else if (wrapperRef.value) {
+          handleStep(0, wrapperRef.value)
+        }
+        break
+
+      case "PageDown":
+        if (wrapperRef.value && scrollPosition.value <= 90) {
+          handleStep(scrollPosition.value + 10, wrapperRef.value)
+        } else if (wrapperRef.value) {
+          handleStep(100, wrapperRef.value)
+        }
+        break
     }
   }
 

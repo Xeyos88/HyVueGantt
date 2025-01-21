@@ -1,8 +1,19 @@
-<script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
+# Connetions Demo 
 
-const isLibraryReady = ref(false)
+Connections Live Demo for Hyper Vue Gantt:
+
+## Live
+
+<ClientOnly>
+  <ConnectionsGanttDemo />
+</ClientOnly>
+
+## Code
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
 
 const rows = ref([
   {
@@ -76,43 +87,29 @@ const rows = ref([
     ],
   },
 ])
-
-onMounted(() => {
-  isLibraryReady.value = true
-})
 </script>
 
 <template>
-  <ClientOnly>
-    <div class="demo-container" v-if="isLibraryReady">
-      <g-gantt-chart
-        chart-start="2024-12-25 08:00"
-        chart-end="2024-12-27 23:00"
-        precision="hour"
-        bar-start="start"
-        bar-end="end"
-        :enable-connections="true"
-        :push-on-connect="true"
-        color-scheme="dark"
-        :holidayHighlight="'US'"
-      >
-        <g-gantt-row
-          v-for="row in rows"
-          :key="row.label"
-          :label="row.label"
-          :bars="row.bars"
-          highlightOnHover
-        />
-      </g-gantt-chart>
-    </div>
-  </ClientOnly>
+  <div class="demo-container" v-if="isLibraryReady">
+    <g-gantt-chart
+      chart-start="2024-12-25 08:00"
+      chart-end="2024-12-27 23:00"
+      precision="hour"
+      bar-start="start"
+      bar-end="end"
+      :enable-connections="true"
+      :push-on-connect="true"
+      color-scheme="dark"
+      :holidayHighlight="'US'"
+    >
+      <g-gantt-row
+        v-for="row in rows"
+        :key="row.label"
+        :label="row.label"
+        :bars="row.bars"
+        highlightOnHover
+      />
+    </g-gantt-chart>
+  </div>
 </template>
-
-<style scoped>
-.demo-container {
-  border: 1px solid #eaeaea;
-  border-radius: 8px;
-  padding: 20px;
-  margin: 20px 0;
-}
-</style>
+```

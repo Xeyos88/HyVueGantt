@@ -1,6 +1,6 @@
 {
   "name": "hy-vue-gantt",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Evolution of vue-ganttastic package",
   "author": "Eugenio Topa (@Xeyos88)",
   "scripts": {
@@ -49,6 +49,7 @@
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.7.0",
     "@vuepress/plugin-search": "2.0.0-beta.51",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
     "eslint": "^9.16.0",
     "eslint-plugin-vue": "^9.32.0",
     "jsdom": "^25.0.1",
@@ -66,14 +67,14 @@
     "vue-tsc": "^2.1.10"
   },
   "peerDependencies": {
-    "date-holidays": "^3.23.14",
-    "dayjs": "^1.11.13",
-    "vue": "^3.5.13",
     "@fortawesome/free-brands-svg-icons": "^6.7.1",
     "@fortawesome/free-regular-svg-icons": "^6.7.1",
     "@fortawesome/free-solid-svg-icons": "^6.7.1",
     "@fortawesome/vue-fontawesome": "^3.0.8",
-    "@vueuse/core": "^12.0.0"
+    "@vueuse/core": "^12.0.0",
+    "date-holidays": "^3.23.14",
+    "dayjs": "^1.11.13",
+    "vue": "^3.5.13"
   },
   "homepage": "https://xeyos88.github.io/HyVueGantt/",
   "keywords": [
