@@ -27,9 +27,12 @@ interface GanttBarConfig {
   bundle?: string;
   pushOnOverlap?: boolean;
   pushOnConnect?: boolean;
+  dragLimitLeft?: number
+  dragLimitRight?: number
   style?: CSSProperties;
   class?: string;
   connections?: GanttBarConnection[];
+  milestoneId?: string
 }
 
 interface GanttBarObject {
@@ -59,7 +62,7 @@ interface BarConnection {
   animationSpeed?: ConnectionSpeed;
 }
 
-export interface GanttMilestone {
+interface GanttMilestone {
   id: string
   date: string
   name: string
@@ -70,9 +73,10 @@ export interface GanttMilestone {
 ## Label Data Types
 
 ```typescript
-export type LabelColumnField = "Id" | "Label" | "StartDate" | "EndDate" | "Duration"
+type LabelColumnField = "Id" | "Label" | "StartDate" | "EndDate" | "Duration"
 
-export type SortFunction = (a: ChartRow, b: ChartRow) => number
+type SortFunction = (a: ChartRow, b: ChartRow) => number
+type SortDirection = "asc" | "desc" | "none"
 
 interface LabelColumnConfig {
   field: LabelColumnField | string

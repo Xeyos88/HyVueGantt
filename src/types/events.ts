@@ -1,4 +1,5 @@
 import type { GanttBarObject } from "./bar"
+import type { ChartRow, SortState } from "./chart"
 
 export interface GanttBarEvent {
   bar: GanttBarObject
@@ -16,15 +17,31 @@ export interface GanttBarDragEvent extends GanttBarEvent {
   >
 }
 
+export type BarMouseEvent = Omit<GanttBarEvent, "datetime">
+
+export interface RowDragEvent {
+  sourceRow: ChartRow
+  targetRow?: ChartRow
+  newIndex: number
+  parentId?: string | number
+}
+
+export interface RowExpansion {
+  rowId: string | number
+}
+
 export interface GanttChartEmits {
   (e: "click-bar", value: GanttBarEvent): void
   (e: "mousedown-bar", value: GanttBarEvent): void
   (e: "mouseup-bar", value: GanttBarEvent): void
   (e: "dblclick-bar", value: GanttBarEvent): void
-  (e: "mouseenter-bar", value: Omit<GanttBarEvent, "datetime">): void
-  (e: "mouseleave-bar", value: Omit<GanttBarEvent, "datetime">): void
-  (e: "dragstart-bar", value: Omit<GanttBarEvent, "datetime">): void
-  (e: "drag-bar", value: Omit<GanttBarEvent, "datetime">): void
+  (e: "mouseenter-bar", value: BarMouseEvent): void
+  (e: "mouseleave-bar", value: BarMouseEvent): void
+  (e: "dragstart-bar", value: BarMouseEvent): void
+  (e: "drag-bar", value: BarMouseEvent): void
   (e: "dragend-bar", value: GanttBarDragEvent): void
   (e: "contextmenu-bar", value: GanttBarEvent): void
+  (e: "row-drop", value: RowDragEvent): void
+  (e: "group-expansion", value: RowExpansion): void
+  (e: "sort", value: SortState): void
 }

@@ -51,6 +51,10 @@ const GroupingGanttDemo = defineClientComponent(() => {
   return import('./components/GroupingGanttDemo.vue')
 })
 
+const EventsGanttDemo = defineClientComponent(() => {
+  return import('./components/EventsGanttDemo.vue')
+})
+
 
 export default {
   extends: DefaultTheme,
@@ -64,5 +68,6 @@ export default {
     app.component('MultiColumnDemo', MultiColumnDemo)
     app.component('HolidayGanttDemo', HolidayGanttDemo)
     app.component('GroupingGanttDemo', GroupingGanttDemo)
+    app.component('EventsGanttDemo', EventsGanttDemo)
   }
 }

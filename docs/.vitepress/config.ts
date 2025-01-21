@@ -79,7 +79,8 @@ export default defineConfig({
             { text: "Advanced", link: "/live/advanced" },
             { text: "Holiday", link: "/live/holiday" },
             { text: "Other", link: "/live/others" },
-            { text: "Grouping", link: "/live/grouping" }
+            { text: "Grouping", link: "/live/grouping" },
+            { text: "Events", link: "/live/events" }
           ]
         }
       ],

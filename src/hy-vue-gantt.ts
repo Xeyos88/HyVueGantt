@@ -24,7 +24,11 @@ import type {
   ConnectionSpeed,
   GanttMilestone,
   GanttBarDragEvent,
-  GanttBarEvent
+  GanttBarEvent,
+  RowDragEvent,
+  SortFunction,
+  SortState,
+  SortDirection
 } from "./types"
 
 import "dayjs/locale/it"
@@ -109,7 +113,11 @@ export type {
   ConnectionSpeed,
   GanttMilestone,
   GanttBarDragEvent,
-  GanttBarEvent
+  GanttBarEvent,
+  RowDragEvent,
+  SortFunction,
+  SortState,
+  SortDirection
 }
 export { GGanttChart, GGanttRow }
 

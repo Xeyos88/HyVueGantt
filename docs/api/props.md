@@ -46,6 +46,8 @@ interface VisualProps {
   highlightedMonths?: number[];              // Array of months to highlight (0-11, 0 is January)
   highlightedWeek?: number[];                // Array of weeks to highlight (1-53)
   locale?: string;                          // Locale for dayjs
+ 
+
 }
 ```
 
@@ -60,7 +62,8 @@ interface BehaviorProps {
   noOverlap?: boolean;              // Prevent bar overlap
   commands?: boolean;               // Show control commands
   maxRows?: number;                 // Maximum visible rows
-  initialSortDirection?: SortDirection; // Initial sort direction
+  initialSortDirection?: SortState; // Initial sort direction
+  enableRowDragAndDrop?: boolean            // Enable row drag and dro
 }
 ```
 
@@ -83,8 +86,10 @@ interface ConnectionProps {
 
 ```typescript
 interface GGanttRowProps {
-  label: string;                    // Row label
+  label: string;                   // Row label
   bars: GanttBarObject[];          // Bar data array
   highlightOnHover?: boolean;      // Highlight on hover
+  id?: string | number 
+  children?: { id: string | number; label: string; bars: GanttBarObject[] }[]  
 }
 ```

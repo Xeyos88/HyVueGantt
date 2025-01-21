@@ -53,7 +53,8 @@ import type {
   SortState,
   GGanttTimeaxisInstance,
   ColorScheme,
-  ChartRow
+  ChartRow,
+  RowDragEvent
 } from "../types"
 import type { CSSProperties } from "vue"
 import useTimeaxisUnits from "../composables/useTimeaxisUnits"
@@ -102,7 +103,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   highlightedDaysInMonth: () => [],
   highlightedMonths: () => [],
   highlightedWeek: () => [],
-  locale: "en"
+  locale: "en",
+  enableRowDragAndDrop: false
 })
 
 const id = ref(crypto.randomUUID())
@@ -189,6 +191,15 @@ const emit = defineEmits<{
   ): void
   (e: "sort", value: { sortState: SortState }): void
   (e: "group-expansion", value: { rowId: string | number }): void
+  (
+    e: "row-drop",
+    value: {
+      sourceRow: ChartRow
+      targetRow?: ChartRow
+      newIndex: number
+      parentId?: string | number
+    }
+  ): void
 }>()
 
 // Chart Elements Refs
@@ -349,6 +360,11 @@ const emitBarEvent = (
   }
 }
 
+const dropRow = (event: RowDragEvent) => {
+  emit("row-drop", event)
+  updateBarPositions()
+}
+
 // Style Updates
 const updateRangeBackground = () => {
   const parentElement = document.getElementById(id.value)
@@ -432,7 +448,12 @@ provide(GANTT_ID_KEY, id.value)
       <!-- Chart Layout Section -->
       <div :class="[{ 'labels-in-column': !!labelColumnTitle }]" aria-controls="gantt-controls">
         <!-- Label Column -->
-        <g-gantt-label-column v-if="labelColumnTitle" ref="labelColumn" @scroll="handleLabelScroll">
+        <g-gantt-label-column
+          v-if="labelColumnTitle"
+          ref="labelColumn"
+          @scroll="handleLabelScroll"
+          @row-drop="dropRow"
+        >
           <template #label-column-title>
             <slot name="label-column-title" />
           </template>
