@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v2.1.0](https://github.com/Xeyos88/HyVueGantt/tree/v2.1.0) (2025-01-21)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v2.0.0...v2.1.0)
+
+
+
+**✨ New Features:**
+
+- Drag and drop rows
+
 ## [v2.0.0](https://github.com/Xeyos88/HyVueGantt/tree/v2.0.0) (2025-01-15)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v1.6.0...v2.0.0)
