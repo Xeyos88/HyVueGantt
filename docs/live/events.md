@@ -8,7 +8,7 @@ Live demo of events issued by the Gantt component:
   <EventsGanttDemo />
 </ClientOnly>
 
-## Codice
+## Code
 
 ```vue
 <script setup lang="ts">

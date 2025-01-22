@@ -13,6 +13,7 @@ type DayOptionLabel = "day" | "doy" | "name" | "number"
 type ConnectionType = 'bezier' | 'straight' | 'squared';
 type ConnectionPattern = 'solid' | 'dot' | 'dash' | 'dashdot';
 type ConnectionSpeed = 'slow' | 'normal' | 'fast';
+type MarkerConnection = 'none' | 'forward' | 'bidirectional'
 ```
 
 ## Bar Configuration

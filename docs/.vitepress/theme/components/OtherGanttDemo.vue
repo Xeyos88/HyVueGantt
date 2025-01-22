@@ -274,7 +274,7 @@ onMounted(() => {
         label-column-title="Rows"
         :dayOptionLabel="['day','name','doy']"
         :milestones="milestones"
-        
+        :markerConnection="'bidirectional'"
       >
         <g-gantt-row
           v-for="row in rows"

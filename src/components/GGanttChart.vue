@@ -104,7 +104,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   highlightedMonths: () => [],
   highlightedWeek: () => [],
   locale: "en",
-  enableRowDragAndDrop: false
+  enableRowDragAndDrop: false,
+  markerConnection: "forward"
 })
 
 const id = ref(crypto.randomUUID())
@@ -541,6 +542,7 @@ provide(GANTT_ID_KEY, id.value)
                   <g-gantt-connector
                     v-if="barPositions.get(conn.sourceId) && barPositions.get(conn.targetId)"
                     v-bind="getConnectorProps(conn)!"
+                    :marker="markerConnection"
                   />
                 </template>
               </template>

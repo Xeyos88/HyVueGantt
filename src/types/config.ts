@@ -8,7 +8,8 @@ import type {
   GanttMilestone,
   LabelColumnConfig,
   SortState,
-  TimeUnit
+  TimeUnit,
+  MarkerConnection
 } from "./chart"
 import type { ColorScheme } from "./style"
 
@@ -58,6 +59,7 @@ export interface GGanttChartProps {
   highlightedWeek?: number[]
   locale?: string
   enableRowDragAndDrop?: boolean
+  markerConnection?: MarkerConnection
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
