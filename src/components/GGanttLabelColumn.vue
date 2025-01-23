@@ -21,6 +21,7 @@ import {
 import useDayjsHelper from "../composables/useDayjsHelper"
 import type { UseRowsReturn } from "../composables/useRows"
 import { useRowDragAndDrop } from "../composables/useRowDragAndDrop"
+import { useColumnTouchResize } from "../composables/useColumnTouchResize"
 
 interface LabelColumnRowProps extends ChartRow {
   indentLevel?: number
@@ -66,6 +67,24 @@ const {
   rowManager.updateRows,
   (_event, payload) => emit("row-drop", payload)
 )
+
+const { touchState, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } =
+  useColumnTouchResize()
+
+const handleColumnTouchStart = (e: TouchEvent, column: string) => {
+  if (!labelResizable) return
+
+  const currentWidth = columnWidths.get(column) || labelColumnWidth.value
+  handleTouchStart(e, column, currentWidth)
+}
+
+const handleColumnTouchMove = (e: TouchEvent) => {
+  if (!labelResizable) return
+
+  handleTouchMove(e, (column: string, newWidth: number) => {
+    columnWidths.set(column, newWidth)
+  })
+}
 
 const columnWidths = reactive<Map<string, number>>(new Map())
 const isDragging = ref(false)
@@ -397,7 +416,15 @@ defineExpose({
             v-if="labelResizable"
             class="column-resizer"
             @mousedown="(e) => handleDragStart(e, column.field)"
-            :class="{ 'is-dragging': isDragging && draggedColumn === column.field }"
+            @touchstart="(e) => handleColumnTouchStart(e, column.field)"
+            @touchmove="handleColumnTouchMove"
+            @touchend="handleTouchEnd"
+            @touchcancel="handleTouchCancel"
+            :class="{
+              'is-dragging': isDragging && draggedColumn === column.field,
+              'is-touch-resizing':
+                touchState.isResizing && touchState.currentColumn === column.field
+            }"
           ></div>
         </div>
       </template>
@@ -611,8 +638,19 @@ defineExpose({
 }
 
 .column-resizer:hover,
-.column-resizer.is-dragging {
+.column-resizer.is-dragging,
+.column-resizer.is-touch-resizing {
   background: rgba(0, 0, 0, 0.1);
+}
+
+.g-label-column-header-cell:has(.column-resizer.is-touch-resizing) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+  .column-resizer {
+    width: 16px;
+  }
 }
 
 .g-label-column {
