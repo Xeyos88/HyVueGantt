@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { BarPosition, ConnectionType } from "../types"
+import type { BarPosition, ConnectionType, MarkerConnection } from "../types"
 import { computed, ref } from "vue"
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
   pattern?: "solid" | "dash" | "dot" | "dashdot"
   animated?: boolean
   animationSpeed?: "slow" | "normal" | "fast"
+  marker: MarkerConnection
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -29,6 +30,12 @@ const animationClass = computed(() => {
   return `connector-animated-${props.pattern}-${props.animationSpeed}`
 })
 
+const markerId = computed(() => `marker-start-${props.sourceBar.id}-${props.targetBar.id}`)
+const hasMarkerEnd = computed(() => props.marker === "bidirectional" || props.marker === "forward")
+const hasMarkerStart = computed(() => props.marker === "bidirectional")
+const markerDeltaEnd = computed(() => (hasMarkerEnd.value ? 4 : 0))
+const markerDeltaStart = computed(() => (hasMarkerStart.value ? 4 : 0))
+
 const pathData = computed(() => {
   const sourceX = props.sourceBar.x + props.sourceBar.width
   const sourceY = props.sourceBar.y + props.sourceBar.height / 2
@@ -36,34 +43,33 @@ const pathData = computed(() => {
   const targetY = props.targetBar.y + props.targetBar.height / 2
 
   const OFFSET = 20
-  const isGoingBack = targetX < sourceX
-
+  const isGoingBack = targetX <= sourceX
   switch (props.type) {
     case "straight":
-      return `M ${sourceX},${sourceY} L ${targetX - 4},${targetY}`
+      return `M ${sourceX},${sourceY} L ${targetX - markerDeltaEnd.value},${targetY}`
 
     case "squared":
       if (isGoingBack) {
-        return `M ${sourceX},${sourceY}
+        return `M ${sourceX + markerDeltaStart.value},${sourceY}
                 h ${OFFSET}
                 v ${(targetY - sourceY) / 2}
                 h -${Math.abs(targetX - sourceX) + OFFSET * 2}
                 v ${(targetY - sourceY) / 2}
-                h ${OFFSET - 4}`
+                h ${OFFSET - markerDeltaEnd.value * 2}`
       }
 
-      return `M ${sourceX},${sourceY}
+      return `M ${sourceX + markerDeltaStart.value},${sourceY}
               h ${OFFSET}
               v ${targetY - sourceY}
-              h ${targetX - sourceX - OFFSET - 4}`
+              h ${targetX - sourceX - OFFSET - markerDeltaEnd.value * 2}`
 
     case "bezier":
     default:
       const controlPointX = (sourceX + targetX) / 2
-      return `M ${sourceX},${sourceY}
+      return `M ${sourceX + markerDeltaStart.value},${sourceY}
               C ${controlPointX},${sourceY}
                 ${controlPointX},${targetY}
-                ${targetX - 4},${targetY}`
+                ${targetX - markerDeltaEnd.value},${targetY}`
   }
 })
 
@@ -81,8 +87,6 @@ const nonAnimatedDashArray = computed(() => {
       return ""
   }
 })
-
-const markerId = computed(() => `marker-start-${props.sourceBar.id}-${props.targetBar.id}`)
 </script>
 
 <template>
@@ -152,8 +156,8 @@ const markerId = computed(() => `marker-start-${props.sourceBar.id}-${props.targ
       :stroke-dasharray="nonAnimatedDashArray"
       :class="['connector-path', animationClass]"
       :style="{
-        markerStart: 'none',
-        markerEnd: `url(#${markerId})`
+        markerStart: hasMarkerStart ? `url(#${markerId})` : 'none',
+        markerEnd: hasMarkerEnd ? `url(#${markerId})` : 'none'
       }"
     />
   </svg>

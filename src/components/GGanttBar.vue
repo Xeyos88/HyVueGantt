@@ -5,6 +5,7 @@ import useBarDragManagement from "../composables/useBarDragManagement"
 import useTimePositionMapping from "../composables/useTimePositionMapping"
 import useBarDragLimit from "../composables/useBarDragLimit"
 import { useBarKeyboardControl } from "../composables/useBarKeyboardControl"
+import { useTouchEvents } from "../composables/useTouchEvents"
 import type { GanttBarObject } from "../types"
 import provideEmitBarEvent from "../provider/provideEmitBarEvent"
 import provideConfig from "../provider/provideConfig"
@@ -46,11 +47,10 @@ const prepareForDrag = () => {
 
   window.addEventListener("mousemove", firstMousemoveCallback, {
     once: true
-  }) // on first mousemove event
+  })
   window.addEventListener(
     "mouseup",
     () => {
-      // in case user does not move the mouse after mousedown at all
       window.removeEventListener("mousemove", firstMousemoveCallback)
       isDragging.value = false
     },
@@ -77,6 +77,37 @@ const { barStart, barEnd, width, chartStart, chartEnd, chartSize } = config
 
 const xStart = ref(0)
 const xEnd = ref(0)
+
+const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchEvents(
+  (_draggedBar, e) => {
+    firstMousemoveCallback(e)
+    isDragging.value = true
+  }
+)
+const onTouchEvent = (e: TouchEvent) => {
+  if (bar.value.ganttBarConfig.immobile) return
+
+  let mouseEvent: MouseEvent | undefined
+
+  switch (e.type) {
+    case "touchstart":
+      mouseEvent = handleTouchStart(e, bar.value)!
+      break
+    case "touchmove":
+      mouseEvent = handleTouchMove(e)!
+      break
+    case "touchend":
+      mouseEvent = handleTouchEnd(e)!
+      break
+    case "touchcancel":
+      mouseEvent = handleTouchCancel(e)!
+      break
+  }
+
+  if (mouseEvent) {
+    onMouseEvent(mouseEvent)
+  }
+}
 
 onMounted(() => {
   xStart.value = mapTimeToPosition(bar.value[barStart.value])
@@ -133,6 +164,10 @@ const getGroupBarPath = (width: number, height: number) => {
     @mouseenter="onMouseEvent"
     @mouseleave="onMouseEvent"
     @contextmenu="onMouseEvent"
+    @touchstart="onTouchEvent"
+    @touchmove="onTouchEvent"
+    @touchend="onTouchEvent"
+    @touchcancel="onTouchEvent"
     @keydown="onBarKeyDown"
     role="listitem"
     :aria-label="`Activity ${barConfig.label}`"

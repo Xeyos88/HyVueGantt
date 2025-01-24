@@ -23,5 +23,8 @@ export default [
   ...vueTsEslintConfig(),
 
   skipFormatting,
-  includeIgnoreFile(gitignorePath)
+  includeIgnoreFile(gitignorePath),
+  {
+    ignores: ["**/tests/*", "**/docs/*"]
+  }
 ]
