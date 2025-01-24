@@ -85,7 +85,6 @@ const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } =
   }
 )
 const onTouchEvent = (e: TouchEvent) => {
-  console.log(e)
   if (bar.value.ganttBarConfig.immobile) return
 
   let mouseEvent: MouseEvent | undefined

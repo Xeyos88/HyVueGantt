@@ -12,7 +12,7 @@ import type { UseRowsReturn } from "../composables/useRows"
 interface SlotData {
   bar?: GanttBarObject
   label?: string
-  [key: string]: any
+  [key: string]: GanttBarObject | string | undefined
 }
 
 const props = defineProps<{

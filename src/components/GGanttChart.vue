@@ -59,7 +59,7 @@ import type {
 import type { CSSProperties } from "vue"
 import useTimeaxisUnits from "../composables/useTimeaxisUnits"
 import { ganttWidth } from "../composables/useSimpleStore"
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid"
 
 // Props & Emits Definition
 const props = withDefaults(defineProps<GGanttChartProps>(), {
@@ -314,6 +314,40 @@ const handleTimeaxisMouseUp = () => {
   isDraggingTimeaxis.value = false
 }
 
+const handleTimeaxisTouch = {
+  startX: 0,
+  isDragging: false
+}
+
+const handleTimeaxisTouchStart = (e: TouchEvent) => {
+  const touch = e.touches[0]
+  if (!touch) return
+
+  handleTimeaxisTouch.isDragging = true
+  handleTimeaxisTouch.startX = touch.clientX
+  e.preventDefault()
+}
+
+const handleTimeaxisTouchMove = (e: TouchEvent) => {
+  if (!handleTimeaxisTouch.isDragging || !ganttWrapper.value) return
+
+  const touch = e.touches[0]
+  if (!touch) return
+
+  const deltaX = touch.clientX - handleTimeaxisTouch.startX
+  handleTimeaxisTouch.startX = touch.clientX
+
+  ganttWrapper.value.scrollLeft -= deltaX
+  const maxScroll = ganttWrapper.value.scrollWidth - ganttWrapper.value.clientWidth
+  scrollPosition.value = (ganttWrapper.value.scrollLeft / maxScroll) * 100
+
+  e.preventDefault()
+}
+
+const handleTimeaxisTouchEnd = () => {
+  handleTimeaxisTouch.isDragging = false
+}
+
 // Bar Event Handling
 const emitBarEvent = (
   e: MouseEvent,
@@ -491,6 +525,10 @@ provide(GANTT_ID_KEY, id.value)
               v-if="!hideTimeaxis"
               ref="timeaxisComponent"
               @drag-start="handleTimeaxisMouseDown"
+              @touchstart="handleTimeaxisTouchStart"
+              @touchmove="handleTimeaxisTouchMove"
+              @touchend="handleTimeaxisTouchEnd"
+              @touchcancel="handleTimeaxisTouchEnd"
               :timeaxisUnits="timeaxisUnits"
               :internalPrecision="internalPrecision"
             >
