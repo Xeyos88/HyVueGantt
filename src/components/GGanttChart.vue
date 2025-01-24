@@ -59,6 +59,7 @@ import type {
 import type { CSSProperties } from "vue"
 import useTimeaxisUnits from "../composables/useTimeaxisUnits"
 import { ganttWidth } from "../composables/useSimpleStore"
+import { v4 as uuidv4 } from 'uuid';
 
 // Props & Emits Definition
 const props = withDefaults(defineProps<GGanttChartProps>(), {
@@ -108,7 +109,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   markerConnection: "forward"
 })
 
-const id = ref(crypto.randomUUID())
+const id = ref(uuidv4())
 const slots = useSlots()
 
 const rowManager = useRows(
