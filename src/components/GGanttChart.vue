@@ -9,7 +9,9 @@ import {
   faAngleUp,
   faAngleDown,
   faMagnifyingGlassPlus,
-  faMagnifyingGlassMinus
+  faMagnifyingGlassMinus,
+  faExpandAlt,
+  faCompressAlt
 } from "@fortawesome/free-solid-svg-icons"
 import {
   computed,
@@ -401,6 +403,15 @@ const dropRow = (event: RowDragEvent) => {
   updateBarPositions()
 }
 
+const hasGroupRows = computed(() => {
+  const checkForGroups = (rows: ChartRow[]): boolean => {
+    return rows.some(
+      (row) => row.children?.length! > 0 || (row.children && checkForGroups(row.children))
+    )
+  }
+  return checkForGroups(rows.value)
+})
+
 // Style Updates
 const updateRangeBackground = () => {
   const parentElement = document.getElementById(id.value)
@@ -598,7 +609,7 @@ provide(GANTT_ID_KEY, id.value)
         aria-label="Gantt Commands"
       >
         <!-- Navigation Controls -->
-        <div class="g-gantt-command-vertical" v-if="maxRows > 0 && rows.length > maxRows">
+        <div class="g-gantt-command-vertical" v-if="maxRows > 0">
           <button @click="scrollRowUp" aria-label="Scroll row up" :disabled="isAtTop">
             <FontAwesomeIcon :icon="faAngleUp" class="command-icon" />
           </button>
@@ -607,6 +618,14 @@ provide(GANTT_ID_KEY, id.value)
           </button>
         </div>
         <div class="g-gantt-command-fixed">
+          <div class="g-gantt-command-groups" v-if="hasGroupRows">
+            <button @click="rowManager.expandAllGroups()" aria-label="Espandi tutti i gruppi">
+              <FontAwesomeIcon :icon="faExpandAlt" class="command-icon" />
+            </button>
+            <button @click="rowManager.collapseAllGroups()" aria-label="Collassa tutti i gruppi">
+              <FontAwesomeIcon :icon="faCompressAlt" class="command-icon" />
+            </button>
+          </div>
           <div class="g-gantt-command-slider">
             <button
               :disabled="scrollPosition === 0"
@@ -733,6 +752,7 @@ provide(GANTT_ID_KEY, id.value)
 
 .g-gantt-command-fixed,
 .g-gantt-command-slider,
+.g-gantt-command-vertical,
 .g-gantt-command-zoom {
   display: flex;
   align-items: center;
@@ -743,17 +763,80 @@ provide(GANTT_ID_KEY, id.value)
   flex-grow: 1;
 }
 
-.g-gantt-command-vertical {
-  display: flex;
-  gap: 2px;
-  margin-left: 8px;
-}
-
 .g-gantt-command-vertical button:disabled,
 .g-gantt-command-slider button:disabled,
-.g-gantt-command-zoom button:disabled {
+.g-gantt-command-zoom button:disabled,
+.g-gantt-command-groups button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.g-gantt-command-groups {
+  display: flex;
+  gap: 2px;
+  margin-right: 8px;
+}
+
+@media screen and (max-width: 768px) {
+  .g-gantt-command {
+    height: auto;
+    min-height: unset;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 6px;
+    gap: 12px;
+  }
+
+  .g-gantt-command > * {
+    width: 100%;
+  }
+
+  .g-gantt-command-fixed {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .g-gantt-command-groups {
+    justify-content: center;
+    margin-right: 0;
+    margin-bottom: 4px;
+  }
+
+  .g-gantt-command-slider {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .g-gantt-command-vertical {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .g-gantt-command-zoom {
+    justify-content: center;
+  }
+
+  /* Aumenta la dimensione dei pulsanti per una migliore interazione touch */
+  .command-icon {
+    padding: 8px;
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Migliora la dimensione dello slider per dispositivi touch */
+  .g-gantt-scroller {
+    height: 12px;
+  }
+
+  .g-gantt-scroller::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+  }
+
+  .g-gantt-scroller::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 /* Scroller Styles */

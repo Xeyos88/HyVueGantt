@@ -26,6 +26,8 @@ export interface UseRowsReturn {
   onGroupExpansionChange: (callback: () => void) => () => void
   customOrder: Ref<Map<string | number, number>>
   resetCustomOrder: () => void
+  expandAllGroups: () => void
+  collapseAllGroups: () => void
 }
 
 /**
@@ -524,6 +526,31 @@ export function useRows(
   }
 
   /**
+   * Expand all row group
+   */
+  const expandAllGroups = () => {
+    const addGroupsToExpanded = (rows: ChartRow[]) => {
+      rows.forEach((row) => {
+        if (row.children?.length && row.id) {
+          expandedGroups.value.add(row.id)
+          addGroupsToExpanded(row.children)
+        }
+      })
+    }
+
+    addGroupsToExpanded(getSourceRows())
+    groupExpansionCallbacks.value.forEach((callback) => callback())
+  }
+
+  /**
+   * Collapse all row roup
+   */
+  const collapseAllGroups = () => {
+    expandedGroups.value.clear()
+    groupExpansionCallbacks.value.forEach((callback) => callback())
+  }
+
+  /**
    * Returns the current chart rows
    * @returns Array of current chart rows
    */
@@ -545,6 +572,8 @@ export function useRows(
     getFlattenedRows,
     onGroupExpansionChange,
     customOrder,
-    resetCustomOrder
+    resetCustomOrder,
+    expandAllGroups,
+    collapseAllGroups
   }
 }

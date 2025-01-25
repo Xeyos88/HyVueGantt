@@ -527,6 +527,7 @@ onMounted(() => {
         bar-end="end"
         :enable-connections="true"
         :push-on-connect="true"
+        :maxRows="10"
         grid
         :color-scheme="customColorScheme"
         label-column-title="Project Structure"
