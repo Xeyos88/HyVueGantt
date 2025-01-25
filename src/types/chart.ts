@@ -1,10 +1,11 @@
-import type { GanttBarObject } from "./bar"
+import type { GanttBarConnection, GanttBarObject } from "./bar"
 
 export interface ChartRow {
   id?: string | number
   label: string
   bars: GanttBarObject[]
   children?: ChartRow[]
+  connections?: GanttBarConnection[]
   _originalNode?: any
 }
 
