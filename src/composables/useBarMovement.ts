@@ -18,6 +18,7 @@ export interface MovementAPI {
   moveBar: (bar: GanttBarObject, newStart: string, newEnd: string) => MovementResult
   findOverlappingBars: (bar: GanttBarObject) => GanttBarObject[]
   findConnectedBars: (bar: GanttBarObject) => GanttBarObject[]
+  getAllBars: () => GanttBarObject[]
 }
 
 /**
@@ -125,6 +126,34 @@ export function useBarMovement(
     bar[barStart.value] = newStart
     bar[barEnd.value] = newEnd
 
+    if (bar.ganttBarConfig.bundle && initialMove) {
+      const bundleBars = getAllBars().filter(
+        (b) => b.ganttBarConfig.bundle === bar.ganttBarConfig.bundle && b !== bar
+      )
+
+      const timeDiff = dayjsHelper
+        .toDayjs(newStart)
+        .diff(dayjsHelper.toDayjs(originalStart), "minutes")
+
+      for (const bundleBar of bundleBars) {
+        const bundleBarNewStart = formatDate(
+          dayjsHelper.toDayjs(bundleBar[barStart.value]).add(timeDiff, "minutes")
+        )
+        const bundleBarNewEnd = formatDate(
+          dayjsHelper.toDayjs(bundleBar[barEnd.value]).add(timeDiff, "minutes")
+        )
+
+        const bundleResult = moveBar(bundleBar, bundleBarNewStart, bundleBarNewEnd, false)
+        if (!bundleResult.success) {
+          bar[barStart.value] = originalStart
+          bar[barEnd.value] = originalEnd
+          processedBars.delete(bar.ganttBarConfig.id)
+          return { success: false, affectedBars: new Set() }
+        }
+        bundleResult.affectedBars.forEach((b) => affectedBars.add(b))
+      }
+    }
+
     const result = handleBarInteractions(bar, affectedBars)
 
     if (!result.success) {
@@ -138,6 +167,7 @@ export function useBarMovement(
       processedBars.clear()
     }
 
+    affectedBars.add(bar)
     return { success: true, affectedBars }
   }
 
@@ -302,6 +332,7 @@ export function useBarMovement(
   return {
     moveBar,
     findOverlappingBars,
-    findConnectedBars
+    findConnectedBars,
+    getAllBars
   }
 }
