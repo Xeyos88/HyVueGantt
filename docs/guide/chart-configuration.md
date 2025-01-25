@@ -14,7 +14,6 @@ The GGanttChart component accepts several key configuration properties that defi
   :bar-start="'start'"
   :bar-end="'end'"
   :row-height="40"
-  :width="'100%'"
   :color-scheme="'default'"
   :grid="true"
   :push-on-overlap="true"
@@ -29,7 +28,6 @@ The GGanttChart component accepts several key configuration properties that defi
 - `precision`: Sets the time unit ('hour', 'day', 'week', 'month')
 - `bar-start` and `bar-end`: Specify data properties for dates
 - `row-height`: Controls row height in pixels
-- `width`: Chart width (percentage or pixels)
 
 ### Advanced Configuration
 

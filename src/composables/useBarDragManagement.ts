@@ -38,12 +38,30 @@ const useBarDragManagement = () => {
     isDragging: false
   }
 
+  const getBundleBars = (bundle?: string) => {
+    const res: GanttBarObject[] = []
+    if (bundle != null) {
+      const allBars = movement.getAllBars()
+      allBars.forEach((bar) => {
+        if (bar.ganttBarConfig.bundle === bundle) {
+          res.push(bar)
+        }
+      })
+    }
+    return res
+  }
+
   /**
    * Initializes drag operation for a single bar
    * @param bar - Bar to initialize drag for
    * @param e - Mouse event that triggered the drag
    */
   const initDragOfBar = (bar: GanttBarObject, e: MouseEvent) => {
+    if (bar.ganttBarConfig.bundle) {
+      initDragOfBundle(bar, e)
+      return
+    }
+
     const dragHandler = createDragHandler(bar)
     dragHandler.initiateDrag(e)
     addBarToMovedBars(bar)
@@ -60,10 +78,7 @@ const useBarDragManagement = () => {
     const bundle = mainBar.ganttBarConfig.bundle
     if (!bundle) return
 
-    const bundleBars = rowManager.rows.value
-      .flatMap((row) => row.bars)
-      .filter((bar) => bar.ganttBarConfig.bundle === bundle)
-
+    const bundleBars = getBundleBars(bundle)
     bundleBars.forEach((bar) => {
       const isMainBar = bar === mainBar
       const dragHandler = createDragHandler(bar, isMainBar)

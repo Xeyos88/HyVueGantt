@@ -18,6 +18,7 @@ export interface MovementAPI {
   moveBar: (bar: GanttBarObject, newStart: string, newEnd: string) => MovementResult
   findOverlappingBars: (bar: GanttBarObject) => GanttBarObject[]
   findConnectedBars: (bar: GanttBarObject) => GanttBarObject[]
+  getAllBars: () => GanttBarObject[]
 }
 
 /**
@@ -76,6 +77,24 @@ export function useBarMovement(
   }
 
   /**
+   * Gets all bars from all rows including nested groups
+   * @returns Array of all bars in the chart
+   */
+  const getAllBars = (): GanttBarObject[] => {
+    const extractBarsFromRow = (row: any): GanttBarObject[] => {
+      let bars: GanttBarObject[] = [...row.bars]
+      if (row.children?.length) {
+        row.children.forEach((child: any) => {
+          bars = [...bars, ...extractBarsFromRow(child)]
+        })
+      }
+      return bars
+    }
+
+    return rowManager.rows.value.flatMap((row) => extractBarsFromRow(row))
+  }
+
+  /**
    * Moves a bar to new start and end positions
    * Handles validation and affected bar movement
    * @param bar - Bar to move
@@ -107,6 +126,34 @@ export function useBarMovement(
     bar[barStart.value] = newStart
     bar[barEnd.value] = newEnd
 
+    if (bar.ganttBarConfig.bundle && initialMove) {
+      const bundleBars = getAllBars().filter(
+        (b) => b.ganttBarConfig.bundle === bar.ganttBarConfig.bundle && b !== bar
+      )
+
+      const timeDiff = dayjsHelper
+        .toDayjs(newStart)
+        .diff(dayjsHelper.toDayjs(originalStart), "minutes")
+
+      for (const bundleBar of bundleBars) {
+        const bundleBarNewStart = formatDate(
+          dayjsHelper.toDayjs(bundleBar[barStart.value]).add(timeDiff, "minutes")
+        )
+        const bundleBarNewEnd = formatDate(
+          dayjsHelper.toDayjs(bundleBar[barEnd.value]).add(timeDiff, "minutes")
+        )
+
+        const bundleResult = moveBar(bundleBar, bundleBarNewStart, bundleBarNewEnd, false)
+        if (!bundleResult.success) {
+          bar[barStart.value] = originalStart
+          bar[barEnd.value] = originalEnd
+          processedBars.delete(bar.ganttBarConfig.id)
+          return { success: false, affectedBars: new Set() }
+        }
+        bundleResult.affectedBars.forEach((b) => affectedBars.add(b))
+      }
+    }
+
     const result = handleBarInteractions(bar, affectedBars)
 
     if (!result.success) {
@@ -120,6 +167,7 @@ export function useBarMovement(
       processedBars.clear()
     }
 
+    affectedBars.add(bar)
     return { success: true, affectedBars }
   }
 
@@ -221,11 +269,23 @@ export function useBarMovement(
    * @returns Array of overlapping bars
    */
   const findOverlappingBars = (bar: GanttBarObject): GanttBarObject[] => {
-    const currentRow = rowManager.rows.value.find((row) => row.bars.includes(bar))
-    if (!currentRow) return []
+    const findRowForBar = (searchBar: GanttBarObject, rows: any[]): any | null => {
+      for (const row of rows) {
+        if (row.bars.includes(searchBar)) return row
+        if (row.children?.length) {
+          const foundInChildren = findRowForBar(searchBar, row.children)
+          if (foundInChildren) return foundInChildren
+        }
+      }
+      return null
+    }
 
-    return currentRow.bars.filter((otherBar) => {
+    const barRow = findRowForBar(bar, rowManager.rows.value)
+    if (!barRow) return []
+
+    return barRow.bars.filter((otherBar: GanttBarObject) => {
       if (otherBar === bar || otherBar.ganttBarConfig.pushOnOverlap === false) return false
+      if (otherBar.ganttBarConfig.id.startsWith("group-")) return false
 
       const start1 = dayjsHelper.toDayjs(bar[barStart.value])
       const end1 = dayjsHelper.toDayjs(bar[barEnd.value])
@@ -245,7 +305,7 @@ export function useBarMovement(
    * @returns Array of connected bars
    */
   const findConnectedBars = (bar: GanttBarObject): GanttBarObject[] => {
-    const allBars = rowManager.rows.value.flatMap((row) => row.bars)
+    const allBars = getAllBars()
     const connectedBars: GanttBarObject[] = []
 
     bar.ganttBarConfig.connections?.forEach((conn) => {
@@ -266,12 +326,13 @@ export function useBarMovement(
       })
     })
 
-    return connectedBars
+    return connectedBars.filter((b) => !b.ganttBarConfig.id.startsWith("group-"))
   }
 
   return {
     moveBar,
     findOverlappingBars,
-    findConnectedBars
+    findConnectedBars,
+    getAllBars
   }
 }

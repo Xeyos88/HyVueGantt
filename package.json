@@ -1,10 +1,10 @@
 {
   "name": "hy-vue-gantt",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Evolution of vue-ganttastic package",
   "author": "Eugenio Topa (@Xeyos88)",
   "scripts": {
-    "serve": "vite",
+    "serve": "vite --host",
     "build": "npm run build:types && npm run build:lib",
     "build:lib": "vite build",
     "build:types": "vue-tsc --declaration --emitDeclarationOnly --outDir lib_types -p tsconfig.build.json",
@@ -92,6 +92,7 @@
     "url": "https://github.com/Xeyos88/HyVueGantt"
   },
   "dependencies": {
-    "@tsconfig/node22": "^22.0.0"
+    "@tsconfig/node22": "^22.0.0",
+    "uuid": "^11.0.5"
   }
 }

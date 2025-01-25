@@ -8,8 +8,6 @@ All notable changes to this project will be documented in this file.
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v2.0.0...v2.1.0)
 
-
-
 **✨ New Features:**
 
 - Drag and drop rows

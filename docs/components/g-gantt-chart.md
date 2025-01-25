@@ -70,6 +70,7 @@ Here's a minimal example of using the GGanttChart component:
 | dayOptionLabel| `DayOptionLabel[]` | `['day']` | Customization for time unit day |
 | locale| `string` | `'en'` | Locale for dayjs |
 | enableRowDragAndDrop| `boolean` | `false` | Enable drag and drop of rows |
+| markerConnection| `MarkerConnection` | `forward` | Choose the type of marker in connection |
 
 
 ### Events

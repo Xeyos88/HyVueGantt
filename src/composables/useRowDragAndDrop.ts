@@ -112,6 +112,31 @@ export function useRowDragAndDrop(
     }
   }
 
+  const isDescendant = (parent: ChartRow, potentialChild: ChartRow): boolean => {
+    if (!parent.children) {
+      return false
+    }
+
+    return parent.children.some(
+      (child) => child.id === potentialChild.id || isDescendant(child, potentialChild)
+    )
+  }
+
+  const findRowIndexById = (rows: ChartRow[], id: string | number): [number, ChartRow[]] => {
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i]!.id === id) {
+        return [i, rows]
+      }
+      if (rows[i]!.children?.length) {
+        const [index, parentRows] = findRowIndexById(rows[i]!.children!, id)
+        if (index !== -1) {
+          return [index, parentRows]
+        }
+      }
+    }
+    return [-1, rows]
+  }
+
   /**
    * Handles the completion of a drag operation
    * Updates row positions and emits drop event
@@ -122,40 +147,14 @@ export function useRowDragAndDrop(
       return
     }
 
-    const isDescendant = (parent: ChartRow, potentialChild: ChartRow): boolean => {
-      if (!parent.children) {
-        return false
-      }
-
-      return parent.children.some(
-        (child) => child.id === potentialChild.id || isDescendant(child, potentialChild)
-      )
-    }
-
     if (isDescendant(draggedRow, dropTarget.row)) {
       return
-    }
-
-    const findRowIndexById = (rows: ChartRow[], id: string | number): [number, ChartRow[]] => {
-      for (let i = 0; i < rows.length; i++) {
-        if (rows[i]!.id === id) {
-          return [i, rows]
-        }
-        if (rows[i]!.children?.length) {
-          const [index, parentRows] = findRowIndexById(rows[i]!.children!, id)
-          if (index !== -1) {
-            return [index, parentRows]
-          }
-        }
-      }
-      return [-1, rows]
     }
 
     const [sourceIndex, sourceParentRows] = findRowIndexById(rows.value, draggedRow.id!)
     const [targetIndex, targetParentRows] = findRowIndexById(rows.value, dropTarget.row.id!)
 
     if (sourceIndex === -1 || targetIndex === -1) {
-      console.log("Row non trovate")
       return
     }
 
@@ -200,6 +199,8 @@ export function useRowDragAndDrop(
     handleDragStart,
     handleDragOver,
     handleDrop,
-    resetOrder
+    resetOrder,
+    isDescendant,
+    findRowIndexById
   }
 }

@@ -95,6 +95,7 @@ onMounted(() => {
         :push-on-connect="true"
         color-scheme="dark"
         :holidayHighlight="'US'"
+        :markerConnection="'none'"
       >
         <g-gantt-row
           v-for="row in rows"

@@ -31,6 +31,7 @@ describe("GGanttConnector", () => {
         pattern: "solid",
         animated: false,
         animationSpeed: "normal",
+        marker: "forward",
         ...props
       }
     })

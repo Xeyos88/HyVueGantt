@@ -1,10 +1,11 @@
-import type { GanttBarObject } from "./bar"
+import type { GanttBarConnection, GanttBarObject } from "./bar"
 
 export interface ChartRow {
   id?: string | number
   label: string
   bars: GanttBarObject[]
   children?: ChartRow[]
+  connections?: GanttBarConnection[]
   _originalNode?: any
 }
 
@@ -15,6 +16,7 @@ export type ConnectionSpeed = "slow" | "normal" | "fast"
 export type SortDirection = "asc" | "desc" | "none"
 export type LabelColumnField = "Id" | "Label" | "StartDate" | "EndDate" | "Duration"
 export type DayOptionLabel = "day" | "doy" | "name" | "number"
+export type MarkerConnection = "none" | "forward" | "bidirectional"
 
 export type SortFunction = (a: ChartRow, b: ChartRow) => number
 

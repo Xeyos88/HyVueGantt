@@ -21,6 +21,8 @@ import {
 import useDayjsHelper from "../composables/useDayjsHelper"
 import type { UseRowsReturn } from "../composables/useRows"
 import { useRowDragAndDrop } from "../composables/useRowDragAndDrop"
+import { useColumnTouchResize } from "../composables/useColumnTouchResize"
+import { useRowTouchDrag } from '../composables/useRowTouchDrag'
 
 interface LabelColumnRowProps extends ChartRow {
   indentLevel?: number
@@ -343,6 +345,102 @@ const handleLabelScroll = (e: Event) => {
   emit("scroll", target.scrollTop)
 }
 
+const { touchState, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } =
+  useColumnTouchResize()
+
+const handleColumnTouchStart = (e: TouchEvent, column: string) => {
+  if (!labelResizable) return
+
+  const currentWidth = columnWidths.get(column) || labelColumnWidth.value
+  handleTouchStart(e, column, currentWidth)
+}
+
+const handleColumnTouchMove = (e: TouchEvent) => {
+  if (!labelResizable) return
+
+  handleTouchMove(e, (column: string, newWidth: number) => {
+    columnWidths.set(column, newWidth)
+  })
+}
+
+const {
+  touchState: rowTouchState,
+  handleTouchStart: handleRowTouchStart,
+  handleTouchMove: handleRowTouchMove,
+  handleTouchEnd: handleRowTouchEnd,
+  resetTouchState: resetRowTouchState
+} = useRowTouchDrag()
+
+let touchStartTime = 0
+const LONG_PRESS_DURATION = 500
+
+const onRowTouchStart = (e: TouchEvent, row: ChartRow) => {
+  if (!enableRowDragAndDrop || sortState.value.direction !== 'none') return
+  
+  touchStartTime = Date.now()
+  const element = e.currentTarget as HTMLElement
+  handleRowTouchStart(e, row, element)
+}
+
+const onRowTouchMove = (e: TouchEvent, targetRow: ChartRow) => {
+  if (!enableRowDragAndDrop || sortState.value.direction !== 'none') return
+
+  if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
+    resetRowTouchState()
+    return
+  }
+
+  const rowElement = e.currentTarget as HTMLElement
+  handleRowTouchMove(e, targetRow, rowElement)
+}
+
+const onRowTouchEnd = (e: TouchEvent) => {
+  if (!enableRowDragAndDrop || sortState.value.direction !== 'none') return
+
+  if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
+    const target = e.target as HTMLElement
+    const button = target.closest('.group-toggle-button')
+    if (button) {
+      const rowElement = target.closest('[data-row-id]') as HTMLElement
+      if (rowElement) {
+        const rowId = rowElement.dataset.rowId
+        if (rowId) {
+          rowManager.toggleGroupExpansion(rowId)
+        }
+      }
+    }
+    resetRowTouchState()
+    return
+  }
+
+  const result = handleRowTouchEnd(e)
+  if (result && result.sourceRow && result.dropTarget.row) {
+    let newIndex = getProcessedRows.value.findIndex(r => r === result.dropTarget.row)
+    if (result.dropTarget.position === 'after') {
+      newIndex += 1
+    }
+
+    const sourceIndex = getProcessedRows.value.findIndex(r => r === result.sourceRow)
+    if (sourceIndex < newIndex) {
+      newIndex -= 1
+    }
+
+    const payload = {
+      sourceRow: result.sourceRow,
+      targetRow: result.dropTarget.row,
+      newIndex: newIndex,
+      parentId: result.dropTarget.position === 'child' ? result.dropTarget.row.id : undefined
+    }
+
+    const newRows = [...getProcessedRows.value]
+    newRows.splice(sourceIndex, 1)
+    newRows.splice(newIndex, 0, result.sourceRow)
+    rowManager.updateRows(newRows)
+
+    emit('row-drop', payload)
+  }
+}
+
 onMounted(() => {
   initializeColumnWidths()
 })
@@ -397,7 +495,15 @@ defineExpose({
             v-if="labelResizable"
             class="column-resizer"
             @mousedown="(e) => handleDragStart(e, column.field)"
-            :class="{ 'is-dragging': isDragging && draggedColumn === column.field }"
+            @touchstart="(e) => handleColumnTouchStart(e, column.field)"
+            @touchmove="handleColumnTouchMove"
+            @touchend="handleTouchEnd"
+            @touchcancel="handleTouchCancel"
+            :class="{
+              'is-dragging': isDragging && draggedColumn === column.field,
+              'is-touch-resizing':
+                touchState.isResizing && touchState.currentColumn === column.field
+            }"
           ></div>
         </div>
       </template>
@@ -411,6 +517,7 @@ defineExpose({
       <div
         v-for="(row, index) in getProcessedRows"
         :key="`${row.id || row.label}_${index}`"
+        :data-row-id="row.id"
         :style="{
           background: row.children?.length
             ? colors.rowContainer
@@ -418,13 +525,25 @@ defineExpose({
               ? colors.ternary
               : colors.quartenary,
           height: `${rowHeight}px`,
-          borderBottom: `1px solid ${colors.gridAndBorder}`
+          borderBottom: `1px solid ${colors.gridAndBorder}`,
+           transform: rowTouchState.draggedRow === row 
+            ? `translateY(${rowTouchState.currentY - rowTouchState.startY}px)`
+            : undefined,
+          zIndex: rowTouchState.draggedRow === row ? 1000 : undefined
         }"
-        :class="[rowClasses(row), getDragClasses(row)]"
+        :class="[rowClasses(row), getDragClasses(row), {
+          'is-touch-dragging': rowTouchState.draggedRow === row,
+          'is-touch-drop-target': rowTouchState.dropTarget.row === row,
+          [`is-touch-drop-${rowTouchState.dropTarget.position}`]: rowTouchState.dropTarget.row === row
+        }]"
         :draggable="enableRowDragAndDrop"
         @dragstart="handleRowDragStart(row, $event)"
         @dragover="handleDragOver(row, $event)"
         @drop="handleDrop()"
+        @touchstart="(e) => onRowTouchStart(e, row)"
+        @touchmove="(e) => onRowTouchMove(e, row)"
+        @touchend="onRowTouchEnd"
+        @touchcancel="resetRowTouchState"
       >
         <div class="g-label-column-row-inner">
           <template v-for="column in getVisibleColumns(row)" :key="column.field">
@@ -611,8 +730,19 @@ defineExpose({
 }
 
 .column-resizer:hover,
-.column-resizer.is-dragging {
+.column-resizer.is-dragging,
+.column-resizer.is-touch-resizing {
   background: rgba(0, 0, 0, 0.1);
+}
+
+.g-label-column-header-cell:has(.column-resizer.is-touch-resizing) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+  .column-resizer {
+    width: 16px;
+  }
 }
 
 .g-label-column {
@@ -691,5 +821,17 @@ defineExpose({
 
 .g-label-column-row-drop-child {
   background: var(--drop-child-background, rgba(74, 158, 255, 0.1)) !important;
+}
+
+.is-touch-dragging {
+  opacity: 0.8;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .group-toggle-button {
+    padding: 12px;
+  }
 }
 </style>

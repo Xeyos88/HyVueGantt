@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import { faChevronRight, faChevronDown } from "@fortawesome/free-solid-svg-icons"
 import useTimePositionMapping from "../composables/useTimePositionMapping"
 import provideConfig from "../provider/provideConfig"
-import type { GanttBarObject } from "../types"
+import type { GanttBarConnection, GanttBarObject } from "../types"
 import GGanttBar from "./GGanttBar.vue"
 import { BAR_CONTAINER_KEY } from "../provider/symbols"
 import type { UseRowsReturn } from "../composables/useRows"
@@ -12,7 +12,7 @@ import type { UseRowsReturn } from "../composables/useRows"
 interface SlotData {
   bar?: GanttBarObject
   label?: string
-  [key: string]: any
+  [key: string]: GanttBarObject | string | undefined
 }
 
 const props = defineProps<{
@@ -20,7 +20,13 @@ const props = defineProps<{
   bars: GanttBarObject[]
   highlightOnHover?: boolean
   id?: string | number
-  children?: { id: string | number; label: string; bars: GanttBarObject[] }[]
+  children?: {
+    id: string | number
+    label: string
+    bars: GanttBarObject[]
+    connections?: GanttBarConnection[]
+  }[]
+  connections?: GanttBarConnection[]
 }>()
 
 const emit = defineEmits<{
