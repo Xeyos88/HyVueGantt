@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v2.2.0](https://github.com/Xeyos88/HyVueGantt/tree/v2.2.0) (2025-01-25)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v2.1.0...v2.2.0)
+
+
+
+**🐛 Fix:**
+
+- added uuid package for cryopto replacement
+- Bundle movement for bars in groups
+- pushOnOverlap and pushOnConnect for bars in group
+
+**✨ New Features:**
+
+- Gantt connections with bar groups
+- Marker connection definition. 3 types none, bidirectional and forward
+- Mobile event support
+
 ## [v2.1.0](https://github.com/Xeyos88/HyVueGantt/tree/v2.1.0) (2025-01-21)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v2.0.0...v2.1.0)
