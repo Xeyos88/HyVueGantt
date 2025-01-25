@@ -83,24 +83,26 @@ export function useRows(
 
     defaultSlot.forEach((child) => {
       if (child.props?.bars || child.props?.children) {
-        const { label, bars = [], children = [], id } = child.props
+        const { label, bars = [], children = [], id, connections = [] } = child.props
         rows.push({
           id,
           label,
           bars,
           children,
+          connections,
           _originalNode: child
         })
       } else if (Array.isArray(child.children)) {
         child.children.forEach((grandchild) => {
           const grandchildNode = grandchild as { props?: ChartRow }
           if (grandchildNode?.props?.bars || grandchildNode?.props?.children) {
-            const { label, bars = [], children = [], id } = grandchildNode.props
+            const { label, bars = [], children = [], id, connections = [] } = grandchildNode.props
             rows.push({
               id,
               label,
               bars,
               children,
+              connections,
               _originalNode: grandchildNode
             })
           }
@@ -173,7 +175,8 @@ export function useRows(
           label: row.label,
           style: {
             background: "transparent"
-          }
+          },
+          connections: row.connections || []
         }
       }
     ]
