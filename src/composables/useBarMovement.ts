@@ -76,6 +76,24 @@ export function useBarMovement(
   }
 
   /**
+   * Gets all bars from all rows including nested groups
+   * @returns Array of all bars in the chart
+   */
+  const getAllBars = (): GanttBarObject[] => {
+    const extractBarsFromRow = (row: any): GanttBarObject[] => {
+      let bars: GanttBarObject[] = [...row.bars]
+      if (row.children?.length) {
+        row.children.forEach((child: any) => {
+          bars = [...bars, ...extractBarsFromRow(child)]
+        })
+      }
+      return bars
+    }
+
+    return rowManager.rows.value.flatMap((row) => extractBarsFromRow(row))
+  }
+
+  /**
    * Moves a bar to new start and end positions
    * Handles validation and affected bar movement
    * @param bar - Bar to move
@@ -221,11 +239,23 @@ export function useBarMovement(
    * @returns Array of overlapping bars
    */
   const findOverlappingBars = (bar: GanttBarObject): GanttBarObject[] => {
-    const currentRow = rowManager.rows.value.find((row) => row.bars.includes(bar))
-    if (!currentRow) return []
+    const findRowForBar = (searchBar: GanttBarObject, rows: any[]): any | null => {
+      for (const row of rows) {
+        if (row.bars.includes(searchBar)) return row
+        if (row.children?.length) {
+          const foundInChildren = findRowForBar(searchBar, row.children)
+          if (foundInChildren) return foundInChildren
+        }
+      }
+      return null
+    }
 
-    return currentRow.bars.filter((otherBar) => {
+    const barRow = findRowForBar(bar, rowManager.rows.value)
+    if (!barRow) return []
+
+    return barRow.bars.filter((otherBar: GanttBarObject) => {
       if (otherBar === bar || otherBar.ganttBarConfig.pushOnOverlap === false) return false
+      if (otherBar.ganttBarConfig.id.startsWith("group-")) return false
 
       const start1 = dayjsHelper.toDayjs(bar[barStart.value])
       const end1 = dayjsHelper.toDayjs(bar[barEnd.value])
@@ -245,7 +275,7 @@ export function useBarMovement(
    * @returns Array of connected bars
    */
   const findConnectedBars = (bar: GanttBarObject): GanttBarObject[] => {
-    const allBars = rowManager.rows.value.flatMap((row) => row.bars)
+    const allBars = getAllBars()
     const connectedBars: GanttBarObject[] = []
 
     bar.ganttBarConfig.connections?.forEach((conn) => {
@@ -266,7 +296,7 @@ export function useBarMovement(
       })
     })
 
-    return connectedBars
+    return connectedBars.filter((b) => !b.ganttBarConfig.id.startsWith("group-"))
   }
 
   return {
