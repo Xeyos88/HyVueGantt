@@ -424,6 +424,16 @@ const updateRangeBackground = () => {
   }
 }
 
+const redo = () => {
+  rowManager.redo()
+  updateBarPositions()
+}
+
+const undo = () => {
+  rowManager.undo()
+  updateBarPositions()
+}
+
 // ResizeObserver instance
 let resizeObserver: ResizeObserver
 
@@ -695,17 +705,13 @@ provide(GANTT_ID_KEY, id.value)
         </div>
         <div class="g-gantt-command-history">
           <button
-            @click="rowManager.undo()"
+            @click="undo"
             :disabled="!rowManager.canUndo.value"
             aria-label="Annulla ultima azione"
           >
             <FontAwesomeIcon :icon="faUndo" class="command-icon" />
           </button>
-          <button
-            @click="rowManager.redo()"
-            :disabled="!rowManager.canRedo.value"
-            aria-label="Ripeti azione"
-          >
+          <button @click="redo" :disabled="!rowManager.canRedo.value" aria-label="Ripeti azione">
             <FontAwesomeIcon :icon="faRedo" class="command-icon" />
           </button>
         </div>

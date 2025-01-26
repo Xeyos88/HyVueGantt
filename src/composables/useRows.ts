@@ -1,13 +1,4 @@
-import {
-  ref,
-  computed,
-  type Ref,
-  type Slots,
-  watch,
-  onMounted,
-  type ComputedRef,
-  nextTick
-} from "vue"
+import { ref, computed, type Ref, type Slots, watch, onMounted, type ComputedRef } from "vue"
 import type {
   ChartRow,
   GanttBarObject,
@@ -15,9 +6,12 @@ import type {
   LabelColumnField,
   SortDirection,
   SortState,
-  HistoryState
+  HistoryState,
+  BaseConnection,
+  GanttBarConfig
 } from "../types"
 import dayjs from "dayjs"
+import { cloneDeep } from "lodash-es"
 
 /**
  * Interface defining the return object from the useRows composable
@@ -59,67 +53,17 @@ export interface UseRowsProps {
   onGroupExpansion: (rowId: string | number) => void
 }
 
-function cloneBarForHistory(bar: GanttBarObject) {
-  const dynamicKeys = Object.keys(bar).filter((key) => key !== "ganttBarConfig")
-
-  const clonedBar: any = {}
-  dynamicKeys.forEach((key) => {
-    clonedBar[key] = bar[key]
-  })
-
-  clonedBar.ganttBarConfig = {
-    ...bar.ganttBarConfig,
-    style: bar.ganttBarConfig.style ? { ...bar.ganttBarConfig.style } : undefined,
-    connections: bar.ganttBarConfig.connections?.map((conn) => ({ ...conn }))
-  }
-
-  return clonedBar as GanttBarObject
+interface CleanBar {
+  ganttBarConfig: GanttBarConfig
+  [key: string]: any
 }
 
-function cloneRowsForHistory(rows: ChartRow[]): ChartRow[] {
-  return rows.map((row) => {
-    const clonedRow: ChartRow = {
-      id: row.id,
-      label: row.label,
-      bars: row.bars.map(cloneBarForHistory),
-      children: row.children ? cloneRowsForHistory(row.children) : undefined,
-      connections: row.connections?.map((conn) => ({ ...conn }))
-    }
-    return clonedRow
-  })
-}
-
-function restoreBarFromHistory(
-  historicBar: GanttBarObject,
-  originalBar: GanttBarObject
-): GanttBarObject {
-  return {
-    ...historicBar,
-    ganttBarConfig: {
-      ...historicBar.ganttBarConfig,
-      hasHandles: originalBar.ganttBarConfig.hasHandles,
-      style: historicBar.ganttBarConfig.style ? { ...historicBar.ganttBarConfig.style } : undefined,
-      connections: historicBar.ganttBarConfig.connections?.map((conn) => ({ ...conn }))
-    }
-  }
-}
-
-function restoreRowsFromHistory(historyRows: ChartRow[], originalRows: ChartRow[]): ChartRow[] {
-  return historyRows.map((historyRow, index) => {
-    const originalRow = originalRows.find((r) => r.id === historyRow.id) || originalRows[index]
-
-    return {
-      ...historyRow,
-      _originalNode: originalRow?._originalNode,
-      bars: historyRow.bars.map((historyBar, barIndex) =>
-        restoreBarFromHistory(historyBar, originalRow?.bars[barIndex] || historyBar)
-      ),
-      children:
-        historyRow.children && originalRow?.children
-          ? restoreRowsFromHistory(historyRow.children, originalRow.children)
-          : historyRow.children
-    }
-  })
+interface CleanRow {
+  id?: string | number
+  label: string
+  bars: CleanBar[]
+  connections?: BaseConnection[]
+  children?: CleanRow[]
 }
 
 function createHistoryState(
@@ -127,11 +71,76 @@ function createHistoryState(
   expandedGroups: Set<string | number>,
   customOrder: Map<string | number, number>
 ): HistoryState {
+  const prepareRowForCloning = (row: ChartRow): CleanRow => {
+    const cleanRow: CleanRow = {
+      id: row.id,
+      label: row.label,
+      bars:
+        row.bars?.map((bar) => ({
+          ...bar,
+          ganttBarConfig: {
+            id: bar.ganttBarConfig.id,
+            label: bar.ganttBarConfig.label,
+            html: bar.ganttBarConfig.html,
+            hasHandles: bar.ganttBarConfig.hasHandles,
+            immobile: bar.ganttBarConfig.immobile,
+            bundle: bar.ganttBarConfig.bundle,
+            pushOnOverlap: bar.ganttBarConfig.pushOnOverlap,
+            pushOnConnect: bar.ganttBarConfig.pushOnConnect,
+            style: bar.ganttBarConfig.style,
+            class: bar.ganttBarConfig.class,
+            connections: bar.ganttBarConfig.connections,
+            milestoneId: bar.ganttBarConfig.milestoneId
+          }
+        })) || [],
+      connections: row.connections,
+      children: row.children?.map(prepareRowForCloning)
+    }
+
+    return cleanRow
+  }
+
+  const preparedRows = rows.map(prepareRowForCloning)
+
   return {
-    rows: cloneRowsForHistory(rows),
-    expandedGroups: new Set(Array.from(expandedGroups)),
+    rows: cloneDeep(preparedRows),
+    expandedGroups: new Set(expandedGroups),
     customOrder: new Map(customOrder),
     timestamp: Date.now()
+  }
+}
+
+function restoreState(
+  state: HistoryState,
+  originalRows: ChartRow[]
+): {
+  rows: ChartRow[]
+  expandedGroups: Set<string | number>
+  customOrder: Map<string | number, number>
+} {
+  const restoreRow = (historyRow: CleanRow, originalRow: ChartRow | undefined): ChartRow => {
+    const restored = cloneDeep(historyRow) as ChartRow
+
+    if (originalRow) {
+      restored._originalNode = originalRow._originalNode
+    }
+
+    if (restored.children && originalRow?.children) {
+      restored.children = restored.children.map((child, index) =>
+        restoreRow(child, originalRow.children![index])
+      )
+    }
+
+    return restored
+  }
+
+  return {
+    rows: state.rows.map((historyRow) => {
+      const originalRow = originalRows.find((r) => r.id === historyRow.id)
+      return restoreRow(historyRow as CleanRow, originalRow)
+    }),
+    expandedGroups: new Set(state.expandedGroups),
+    customOrder: new Map(state.customOrder)
   }
 }
 
@@ -195,6 +204,7 @@ export function useRows(
     historyStates.value.push(
       createHistoryState(reorderedRows.value, expandedGroups.value, customOrder.value)
     )
+
     currentHistoryIndex.value++
 
     if (historyStates.value.length > MAX_HISTORY_STATES) {
@@ -210,8 +220,11 @@ export function useRows(
     currentHistoryIndex.value--
     const previousState = historyStates.value[currentHistoryIndex.value]!
 
-    reorderedRows.value = restoreRowsFromHistory(previousState.rows, reorderedRows.value)
-    customOrder.value = new Map(previousState.customOrder)
+    // Ripristiniamo lo stato completo in un'unica operazione
+    const restored = restoreState(previousState, reorderedRows.value)
+
+    reorderedRows.value = restored.rows
+    customOrder.value = restored.customOrder
   }
 
   const redo = () => {
@@ -220,14 +233,15 @@ export function useRows(
     currentHistoryIndex.value++
     const nextState = historyStates.value[currentHistoryIndex.value]!
 
-    reorderedRows.value = restoreRowsFromHistory(nextState.rows, reorderedRows.value)
-    customOrder.value = new Map(nextState.customOrder)
+    // Ripristiniamo lo stato completo in un'unica operazione
+    const restored = restoreState(nextState, reorderedRows.value)
+
+    reorderedRows.value = restored.rows
+    customOrder.value = restored.customOrder
   }
 
   const onBarMove = () => {
-    nextTick(() => {
-      addHistoryState()
-    })
+    addHistoryState()
   }
 
   const clearHistory = () => {
