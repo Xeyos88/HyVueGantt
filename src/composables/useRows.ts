@@ -1,11 +1,21 @@
-import { ref, computed, type Ref, type Slots, watch } from "vue"
+import {
+  ref,
+  computed,
+  type Ref,
+  type Slots,
+  watch,
+  onMounted,
+  type ComputedRef,
+  nextTick
+} from "vue"
 import type {
   ChartRow,
   GanttBarObject,
   LabelColumnConfig,
   LabelColumnField,
   SortDirection,
-  SortState
+  SortState,
+  HistoryState
 } from "../types"
 import dayjs from "dayjs"
 
@@ -28,6 +38,12 @@ export interface UseRowsReturn {
   resetCustomOrder: () => void
   expandAllGroups: () => void
   collapseAllGroups: () => void
+  canUndo: ComputedRef<boolean>
+  canRedo: ComputedRef<boolean>
+  undo: () => void
+  redo: () => void
+  clearHistory: () => void
+  onBarMove: () => void
 }
 
 /**
@@ -42,6 +58,84 @@ export interface UseRowsProps {
   initialSort?: SortState
   onGroupExpansion: (rowId: string | number) => void
 }
+
+function cloneBarForHistory(bar: GanttBarObject) {
+  const dynamicKeys = Object.keys(bar).filter((key) => key !== "ganttBarConfig")
+
+  const clonedBar: any = {}
+  dynamicKeys.forEach((key) => {
+    clonedBar[key] = bar[key]
+  })
+
+  clonedBar.ganttBarConfig = {
+    ...bar.ganttBarConfig,
+    style: bar.ganttBarConfig.style ? { ...bar.ganttBarConfig.style } : undefined,
+    connections: bar.ganttBarConfig.connections?.map((conn) => ({ ...conn }))
+  }
+
+  return clonedBar as GanttBarObject
+}
+
+function cloneRowsForHistory(rows: ChartRow[]): ChartRow[] {
+  return rows.map((row) => {
+    const clonedRow: ChartRow = {
+      id: row.id,
+      label: row.label,
+      bars: row.bars.map(cloneBarForHistory),
+      children: row.children ? cloneRowsForHistory(row.children) : undefined,
+      connections: row.connections?.map((conn) => ({ ...conn }))
+    }
+    return clonedRow
+  })
+}
+
+function restoreBarFromHistory(
+  historicBar: GanttBarObject,
+  originalBar: GanttBarObject
+): GanttBarObject {
+  return {
+    ...historicBar,
+    ganttBarConfig: {
+      ...historicBar.ganttBarConfig,
+      hasHandles: originalBar.ganttBarConfig.hasHandles,
+      style: historicBar.ganttBarConfig.style ? { ...historicBar.ganttBarConfig.style } : undefined,
+      connections: historicBar.ganttBarConfig.connections?.map((conn) => ({ ...conn }))
+    }
+  }
+}
+
+function restoreRowsFromHistory(historyRows: ChartRow[], originalRows: ChartRow[]): ChartRow[] {
+  return historyRows.map((historyRow, index) => {
+    const originalRow = originalRows.find((r) => r.id === historyRow.id) || originalRows[index]
+
+    return {
+      ...historyRow,
+      _originalNode: originalRow?._originalNode,
+      bars: historyRow.bars.map((historyBar, barIndex) =>
+        restoreBarFromHistory(historyBar, originalRow?.bars[barIndex] || historyBar)
+      ),
+      children:
+        historyRow.children && originalRow?.children
+          ? restoreRowsFromHistory(historyRow.children, originalRow.children)
+          : historyRow.children
+    }
+  })
+}
+
+function createHistoryState(
+  rows: ChartRow[],
+  expandedGroups: Set<string | number>,
+  customOrder: Map<string | number, number>
+): HistoryState {
+  return {
+    rows: cloneRowsForHistory(rows),
+    expandedGroups: new Set(Array.from(expandedGroups)),
+    customOrder: new Map(customOrder),
+    timestamp: Date.now()
+  }
+}
+
+const MAX_HISTORY_STATES = 50
 
 /**
  * A composable that manages rows in a Gantt chart, providing sorting, grouping, and row manipulation functionality
@@ -73,6 +167,72 @@ export function useRows(
   const customOrder = ref<Map<string | number, number>>(new Map())
   const reorderedRows = ref<ChartRow[]>([])
 
+  const historyStates = ref<HistoryState[]>([])
+  const currentHistoryIndex = ref(-1)
+
+  const initializeHistory = () => {
+    historyStates.value = [
+      createHistoryState(reorderedRows.value, expandedGroups.value, customOrder.value)
+    ]
+    currentHistoryIndex.value = 0
+  }
+
+  onMounted(() => {
+    initializeHistory()
+  })
+
+  const canUndo = computed(() => currentHistoryIndex.value > 0 && historyStates.value.length > 1)
+  const canRedo = computed(
+    () =>
+      historyStates.value.length > 1 && currentHistoryIndex.value < historyStates.value.length - 1
+  )
+
+  const addHistoryState = () => {
+    if (currentHistoryIndex.value < historyStates.value.length - 1) {
+      historyStates.value = historyStates.value.slice(0, currentHistoryIndex.value + 1)
+    }
+
+    historyStates.value.push(
+      createHistoryState(reorderedRows.value, expandedGroups.value, customOrder.value)
+    )
+    currentHistoryIndex.value++
+
+    if (historyStates.value.length > MAX_HISTORY_STATES) {
+      const excess = historyStates.value.length - MAX_HISTORY_STATES
+      historyStates.value = historyStates.value.slice(excess)
+      currentHistoryIndex.value = Math.max(0, currentHistoryIndex.value - excess)
+    }
+  }
+
+  const undo = () => {
+    if (!canUndo.value) return
+
+    currentHistoryIndex.value--
+    const previousState = historyStates.value[currentHistoryIndex.value]!
+
+    reorderedRows.value = restoreRowsFromHistory(previousState.rows, reorderedRows.value)
+    customOrder.value = new Map(previousState.customOrder)
+  }
+
+  const redo = () => {
+    if (!canRedo.value) return
+
+    currentHistoryIndex.value++
+    const nextState = historyStates.value[currentHistoryIndex.value]!
+
+    reorderedRows.value = restoreRowsFromHistory(nextState.rows, reorderedRows.value)
+    customOrder.value = new Map(nextState.customOrder)
+  }
+
+  const onBarMove = () => {
+    nextTick(() => {
+      addHistoryState()
+    })
+  }
+
+  const clearHistory = () => {
+    initializeHistory()
+  }
   /**
    * Extracts rows data from slots, processing both direct and nested slot contents
    * @returns Array of ChartRow objects
@@ -558,6 +718,7 @@ export function useRows(
 
   const updateRows = (newRows: ChartRow[]) => {
     reorderedRows.value = newRows
+    addHistoryState()
   }
 
   return {
@@ -574,6 +735,12 @@ export function useRows(
     customOrder,
     resetCustomOrder,
     expandAllGroups,
-    collapseAllGroups
+    collapseAllGroups,
+    canUndo,
+    canRedo,
+    undo,
+    redo,
+    clearHistory,
+    onBarMove
   }
 }

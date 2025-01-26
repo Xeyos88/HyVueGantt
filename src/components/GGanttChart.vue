@@ -11,7 +11,9 @@ import {
   faMagnifyingGlassPlus,
   faMagnifyingGlassMinus,
   faExpandAlt,
-  faCompressAlt
+  faCompressAlt,
+  faUndo,
+  faRedo
 } from "@fortawesome/free-solid-svg-icons"
 import {
   computed,
@@ -391,6 +393,7 @@ const emitBarEvent = (
       isDragging.value = false
       emit("dragend-bar", { bar, e, movedBars })
       updateBarPositions()
+      rowManager.onBarMove()
       break
     case "contextmenu":
       emit("contextmenu-bar", { bar, e, datetime })
@@ -673,7 +676,6 @@ provide(GANTT_ID_KEY, id.value)
             </button>
           </div>
         </div>
-
         <!-- Zoom Controls -->
         <div class="g-gantt-command-zoom">
           <button
@@ -689,6 +691,22 @@ provide(GANTT_ID_KEY, id.value)
             :disabled="zoomLevel === 10 && internalPrecision === precision"
           >
             <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
+          </button>
+        </div>
+        <div class="g-gantt-command-history">
+          <button
+            @click="rowManager.undo()"
+            :disabled="!rowManager.canUndo.value"
+            aria-label="Annulla ultima azione"
+          >
+            <FontAwesomeIcon :icon="faUndo" class="command-icon" />
+          </button>
+          <button
+            @click="rowManager.redo()"
+            :disabled="!rowManager.canRedo.value"
+            aria-label="Ripeti azione"
+          >
+            <FontAwesomeIcon :icon="faRedo" class="command-icon" />
           </button>
         </div>
 
@@ -753,7 +771,8 @@ provide(GANTT_ID_KEY, id.value)
 .g-gantt-command-fixed,
 .g-gantt-command-slider,
 .g-gantt-command-vertical,
-.g-gantt-command-zoom {
+.g-gantt-command-zoom,
+.g-gantt-command-history {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -766,7 +785,8 @@ provide(GANTT_ID_KEY, id.value)
 .g-gantt-command-vertical button:disabled,
 .g-gantt-command-slider button:disabled,
 .g-gantt-command-zoom button:disabled,
-.g-gantt-command-groups button:disabled {
+.g-gantt-command-groups button:disabled,
+.g-gantt-command-history button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
