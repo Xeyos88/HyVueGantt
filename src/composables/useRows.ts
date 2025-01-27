@@ -7,8 +7,7 @@ import type {
   SortDirection,
   SortState,
   HistoryState,
-  BaseConnection,
-  GanttBarConfig
+  BaseConnection
 } from "../types"
 import dayjs from "dayjs"
 import { cloneDeep } from "lodash-es"
@@ -34,8 +33,8 @@ export interface UseRowsReturn {
   collapseAllGroups: () => void
   canUndo: ComputedRef<boolean>
   canRedo: ComputedRef<boolean>
-  undo: () => void
-  redo: () => void
+  undo: () => HistoryChange
+  redo: () => HistoryChange
   clearHistory: () => void
   onBarMove: () => void
 }
@@ -53,24 +52,57 @@ export interface UseRowsProps {
   onGroupExpansion: (rowId: string | number) => void
 }
 
-interface CleanBar {
-  ganttBarConfig: GanttBarConfig
-  [key: string]: any
-}
-
 interface CleanRow {
   id?: string | number
   label: string
-  bars: CleanBar[]
+  bars: GanttBarObject[]
   connections?: BaseConnection[]
   children?: CleanRow[]
 }
 
+interface BarHistoryChange {
+  barId: string
+  rowId: string | number
+  oldStart?: string
+  newStart?: string
+  oldEnd?: string
+  newEnd?: string
+}
+
+interface RowHistoryChange {
+  type: "reorder" | "group"
+  sourceRow: ChartRow
+  targetRow?: ChartRow
+  oldIndex: number
+  newIndex: number
+  oldParentId?: string | number
+  newParentId?: string | number
+}
+
+interface HistoryChange {
+  rowChanges: RowHistoryChange[]
+  barChanges: BarHistoryChange[]
+}
+
+/**
+ * Creates a snapshot of the current chart state for history tracking
+ * Captures rows, expanded groups, and custom ordering
+ * @param rows - Current rows in the chart
+ * @param expandedGroups - Set of currently expanded group IDs
+ * @param customOrder - Map of current row ordering
+ * @returns HistoryState object containing current chart state
+ */
 function createHistoryState(
   rows: ChartRow[],
   expandedGroups: Set<string | number>,
   customOrder: Map<string | number, number>
 ): HistoryState {
+  /**
+   * Helper function that creates a deep copy of a row's state for history tracking
+   * Cleans and normalizes row data for storage
+   * @param row - Row to prepare for cloning
+   * @returns Cleaned row object ready for history
+   */
   const prepareRowForCloning = (row: ChartRow): CleanRow => {
     const cleanRow: CleanRow = {
       id: row.id,
@@ -110,6 +142,13 @@ function createHistoryState(
   }
 }
 
+/**
+ * Restores a previous state from history
+ * Reconstructs rows with their original nodes and maintains component references
+ * @param state - Historical state to restore
+ * @param originalRows - Current rows to merge with historical data
+ * @returns Object containing restored rows, groups and ordering
+ */
 function restoreState(
   state: HistoryState,
   originalRows: ChartRow[]
@@ -118,6 +157,13 @@ function restoreState(
   expandedGroups: Set<string | number>
   customOrder: Map<string | number, number>
 } {
+  /**
+   * Restores a single row from history state
+   * Preserves original component references while updating data
+   * @param historyRow - Row data from history
+   * @param originalRow - Current row instance to merge with
+   * @returns Restored row with preserved component references
+   */
   const restoreRow = (historyRow: CleanRow, originalRow: ChartRow | undefined): ChartRow => {
     const restored = cloneDeep(historyRow) as ChartRow
 
@@ -141,6 +187,253 @@ function restoreState(
     }),
     expandedGroups: new Set(state.expandedGroups),
     customOrder: new Map(state.customOrder)
+  }
+}
+
+/**
+ * Finds the parent ID for a row at a given path
+ * Used for tracking hierarchy changes in row movement
+ * @param rows - Array of rows to search
+ * @param path - Array of indices representing path to row
+ * @returns ID of parent row or undefined if at root
+ */
+function findParentId(rows: ChartRow[], path: number[]): string | number | undefined {
+  if (path.length <= 1) return undefined
+  let current = rows[path[0]!]
+  for (let i = 1; i < path.length - 1; i++) {
+    if (!current?.children) return undefined
+    current = current.children[path[i]!]
+  }
+  return current?.id
+}
+
+/**
+ * Recursively searches for a bar by ID through all rows
+ * @param rows - Array of rows to search
+ * @param barId - ID of bar to find
+ * @returns Found bar object or null if not found
+ */
+export function findBarInRows(rows: ChartRow[], barId: string): GanttBarObject | null {
+  for (const row of rows) {
+    const found = row.bars.find((bar) => bar.ganttBarConfig.id === barId)
+    if (found) return found
+
+    if (row.children) {
+      const foundInChildren = findBarInRows(row.children, barId)
+      if (foundInChildren) return foundInChildren
+    }
+  }
+  return null
+}
+
+/**
+ * Recursively searches for a row by ID
+ * @param rows - Array of rows to search
+ * @param id - ID of row to find
+ * @returns Found row or null if not found
+ */
+function findRowById(rows: ChartRow[], id: string | number): ChartRow | null {
+  for (const row of rows) {
+    if (row.id === id) return row
+    if (row.children) {
+      const found = findRowById(row.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+/**
+ * Finds the path of indices to a row with given ID
+ * @param rows - Array of rows to search
+ * @param id - ID of row to find path for
+ * @returns Array of indices representing path to row
+ */
+function findRowPath(rows: ChartRow[], id: string | number): number[] {
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i]!.id === id) return [i]
+    if (rows[i]!.children) {
+      const childPath = findRowPath(rows[i]!.children!, id)
+      if (childPath.length) return [i, ...childPath]
+    }
+  }
+  return []
+}
+
+/**
+ * Finds the row ID that contains a specific bar
+ * @param barId - ID of bar to locate
+ * @param rows - Array of rows to search
+ * @returns ID of row containing the bar or empty string if not found
+ */
+function findRowIdForBar(barId: string, rows: ChartRow[]): string | number {
+  function searchInRows(rows: ChartRow[]): string | number | null {
+    for (const row of rows) {
+      if (row.bars.some((bar) => bar.ganttBarConfig.id === barId)) {
+        return row.id!
+      }
+      if (row.children) {
+        const foundId = searchInRows(row.children)
+        if (foundId) return foundId
+      }
+    }
+    return null
+  }
+  return searchInRows(rows) || ""
+}
+
+/**
+ * Extracts all bars from a historical state
+ * Creates a map for efficient bar lookup
+ * @param state - Historical state to extract bars from
+ * @returns Map of bar IDs to bar objects
+ */
+function getAllBarsFromState(state: HistoryState): Map<string, GanttBarObject> {
+  const barsMap = new Map()
+
+  function collectBars(rows: ChartRow[]) {
+    rows.forEach((row) => {
+      row.bars.forEach((bar) => {
+        barsMap.set(bar.ganttBarConfig.id, bar)
+      })
+      if (row.children) {
+        collectBars(row.children)
+      }
+    })
+  }
+
+  collectBars(state.rows)
+  return barsMap
+}
+
+/**
+ * Compares two versions of a bar to detect changes
+ * @param oldBar - Previous version of bar
+ * @param newBar - Current version of bar
+ * @param barStart - Reference to start time property
+ * @param barEnd - Reference to end time property
+ * @param rows - Reference to current rows
+ * @returns Change object or null if no changes
+ */
+function compareBarStates(
+  oldBar: GanttBarObject,
+  newBar: GanttBarObject,
+  barStart: Ref<string>,
+  barEnd: Ref<string>,
+  rows: Ref<ChartRow[]>
+): BarHistoryChange | null {
+  if (
+    oldBar[barStart.value] === newBar[barStart.value] &&
+    oldBar[barEnd.value] === newBar[barEnd.value]
+  ) {
+    return null
+  }
+
+  return {
+    barId: oldBar.ganttBarConfig.id,
+    rowId: findRowIdForBar(oldBar.ganttBarConfig.id, rows.value),
+    oldStart: oldBar[barStart.value],
+    newStart: newBar[barStart.value],
+    oldEnd: oldBar[barEnd.value],
+    newEnd: newBar[barEnd.value]
+  }
+}
+
+/**
+ * Compares all bars between two states to detect changes
+ * @param oldState - Previous chart state
+ * @param newState - Current chart state
+ * @param barStart - Reference to start time property
+ * @param barEnd - Reference to end time property
+ * @param rows - Reference to current rows
+ * @returns Array of detected bar changes
+ */
+function compareAllBars(
+  oldState: HistoryState,
+  newState: HistoryState,
+  barStart: Ref<string>,
+  barEnd: Ref<string>,
+  rows: Ref<ChartRow[]>
+): BarHistoryChange[] {
+  const changes: BarHistoryChange[] = []
+
+  const oldBars = getAllBarsFromState(oldState)
+  const newBars = getAllBarsFromState(newState)
+
+  oldBars.forEach((oldBar, barId) => {
+    const newBar = newBars.get(barId)
+    if (newBar) {
+      const change = compareBarStates(oldBar, newBar, barStart, barEnd, rows)
+      if (change) {
+        changes.push(change)
+      }
+    }
+  })
+
+  return changes
+}
+
+/**
+ * Calculates all changes between two chart states
+ * Includes both row position changes and bar modifications
+ * @param prevState - Previous chart state
+ * @param newState - Current chart state
+ * @param barStart - Reference to start time property
+ * @param barEnd - Reference to end time property
+ * @param rows - Reference to current rows
+ * @returns Object containing all detected changes
+ */
+function calculateHistoryChanges(
+  prevState: HistoryState,
+  newState: HistoryState,
+  barStart: Ref<string>,
+  barEnd: Ref<string>,
+  rows: Ref<ChartRow[]>
+): HistoryChange {
+  const rowChanges: RowHistoryChange[] = []
+
+  /**
+   * Compares row positions between states to detect structural changes
+   * Used as part of history change calculation
+   * @param oldRows - Previous row arrangement
+   * @returns Array of detected row position changes
+   */
+  function compareRows(oldRows: ChartRow[]) {
+    for (const oldRow of oldRows) {
+      if (!oldRow.id) continue
+
+      const oldPath = findRowPath(prevState.rows, oldRow.id)
+      const newPath = findRowPath(newState.rows, oldRow.id)
+
+      if (oldPath.length !== newPath.length || !oldPath.every((v, i) => v === newPath[i])) {
+        const oldParentId = oldPath.length > 1 ? findParentId(prevState.rows, oldPath) : undefined
+        const newParentId = newPath.length > 1 ? findParentId(newState.rows, newPath) : undefined
+
+        rowChanges.push({
+          type: oldParentId !== newParentId ? "group" : "reorder",
+          sourceRow: oldRow,
+          oldIndex: oldPath[oldPath.length - 1] as number,
+          newIndex: newPath[newPath.length - 1] as number,
+          oldParentId,
+          newParentId
+        })
+      }
+
+      if (oldRow.children) {
+        const newRow = findRowById(newState.rows, oldRow.id)
+        if (newRow?.children) {
+          compareRows(oldRow.children)
+        }
+      }
+    }
+  }
+
+  compareRows(prevState.rows)
+  const barChanges = compareAllBars(prevState, newState, barStart, barEnd, rows)
+
+  return {
+    rowChanges,
+    barChanges
   }
 }
 
@@ -179,6 +472,10 @@ export function useRows(
   const historyStates = ref<HistoryState[]>([])
   const currentHistoryIndex = ref(-1)
 
+  /**
+   * Initializes history tracking for the chart
+   * Creates first history entry with current state
+   */
   const initializeHistory = () => {
     historyStates.value = [
       createHistoryState(reorderedRows.value, expandedGroups.value, customOrder.value)
@@ -196,6 +493,10 @@ export function useRows(
       historyStates.value.length > 1 && currentHistoryIndex.value < historyStates.value.length - 1
   )
 
+  /**
+   * Adds a new state to the history stack
+   * Handles history size limits and current position
+   */
   const addHistoryState = () => {
     if (currentHistoryIndex.value < historyStates.value.length - 1) {
       historyStates.value = historyStates.value.slice(0, currentHistoryIndex.value + 1)
@@ -214,36 +515,56 @@ export function useRows(
     }
   }
 
+  /**
+   * Reverts chart to previous state
+   * Handles both row and bar changes
+   * @returns Object containing reverted changes
+   */
   const undo = () => {
-    if (!canUndo.value) return
-
+    const currentState = historyStates.value[currentHistoryIndex.value]!
     currentHistoryIndex.value--
     const previousState = historyStates.value[currentHistoryIndex.value]!
 
-    // Ripristiniamo lo stato completo in un'unica operazione
-    const restored = restoreState(previousState, reorderedRows.value)
+    const changes = calculateHistoryChanges(currentState, previousState, barStart, barEnd, rows)
 
+    const restored = restoreState(previousState, reorderedRows.value)
     reorderedRows.value = restored.rows
     customOrder.value = restored.customOrder
+
+    return changes
   }
 
+  /**
+   * Reapplies previously undone changes
+   * Handles both row and bar changes
+   * @returns Object containing reapplied changes
+   */
   const redo = () => {
-    if (!canRedo.value) return
-
+    const currentState = historyStates.value[currentHistoryIndex.value]!
     currentHistoryIndex.value++
     const nextState = historyStates.value[currentHistoryIndex.value]!
 
-    // Ripristiniamo lo stato completo in un'unica operazione
-    const restored = restoreState(nextState, reorderedRows.value)
+    const changes = calculateHistoryChanges(currentState, nextState, barStart, barEnd, rows)
 
+    const restored = restoreState(nextState, reorderedRows.value)
     reorderedRows.value = restored.rows
     customOrder.value = restored.customOrder
+
+    return changes
   }
 
+  /**
+   * Records bar movement in history
+   * Called after bar position changes are completed
+   */
   const onBarMove = () => {
     addHistoryState()
   }
 
+  /**
+   * Resets history tracking
+   * Clears all recorded states except current
+   */
   const clearHistory = () => {
     initializeHistory()
   }
@@ -289,6 +610,11 @@ export function useRows(
     return rows
   }
 
+  /**
+   * Retrieves source rows from props or slots
+   * Handles both dynamic and static row sources
+   * @returns Array of source rows
+   */
   const getSourceRows = () => {
     if (initialRows?.value?.length) {
       return initialRows.value
@@ -524,6 +850,11 @@ export function useRows(
     return ["Id", "Label", "StartDate", "EndDate", "Duration"].includes(field)
   }
 
+  /**
+   * Applies custom row ordering when sorting is disabled
+   * @param rowsToSort - Rows to apply custom order to
+   * @returns Reordered array of rows
+   */
   const applyCustomOrder = (rowsToSort: ChartRow[]): ChartRow[] => {
     if (customOrder.value.size === 0 || sortState.value.direction !== "none") {
       return rowsToSort
@@ -544,6 +875,12 @@ export function useRows(
 
     if (!sourceRows.length) return sourceRows
 
+    /**
+     * Processes rows to include group bars
+     * Calculates synthetic bars for group rows based on children
+     * @param rows - Rows to process
+     * @returns Processed rows with group bars
+     */
     const processRowsWithGroupBars = (rows: ChartRow[]): ChartRow[] => {
       return rows.map((row) => {
         if (row.children?.length) {
@@ -575,6 +912,10 @@ export function useRows(
     return sourceRows
   })
 
+  /**
+   * Resets custom row ordering
+   * Clears stored order information
+   */
   const resetCustomOrder = () => {
     customOrder.value.clear()
   }
@@ -730,6 +1071,10 @@ export function useRows(
    */
   const getChartRows = () => rows.value
 
+  /**
+   * Updates rows and records change in history
+   * @param newRows - New rows to update with
+   */
   const updateRows = (newRows: ChartRow[]) => {
     reorderedRows.value = newRows
     addHistoryState()

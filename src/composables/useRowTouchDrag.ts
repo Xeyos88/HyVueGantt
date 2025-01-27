@@ -1,6 +1,9 @@
-import { ref } from 'vue'
-import type { ChartRow } from '../types'
+import { ref } from "vue"
+import type { ChartRow } from "../types"
 
+/**
+ * Interface defining the state for touch-based row dragging
+ */
 interface TouchDragState {
   isDragging: boolean
   startY: number
@@ -8,12 +11,17 @@ interface TouchDragState {
   draggedRow: ChartRow | null
   dropTarget: {
     row: ChartRow | null
-    position: 'before' | 'after' | 'child'
+    position: "before" | "after" | "child"
   }
   dragElement: HTMLElement | null
   initialTransform: string
 }
 
+/**
+ * A composable that manages touch-based drag and drop functionality for rows
+ * Handles touch events, visual feedback, and drop position detection
+ * @returns Object containing touch state and event handlers
+ */
 export function useRowTouchDrag() {
   const touchState = ref<TouchDragState>({
     isDragging: false,
@@ -22,12 +30,16 @@ export function useRowTouchDrag() {
     draggedRow: null,
     dropTarget: {
       row: null,
-      position: 'before'
+      position: "before"
     },
     dragElement: null,
-    initialTransform: ''
+    initialTransform: ""
   })
 
+  /**
+   * Resets touch drag state and restores original element position
+   * Called when drag operation ends or is cancelled
+   */
   const resetTouchState = () => {
     if (touchState.value.dragElement) {
       touchState.value.dragElement.style.transform = touchState.value.initialTransform
@@ -40,13 +52,20 @@ export function useRowTouchDrag() {
       draggedRow: null,
       dropTarget: {
         row: null,
-        position: 'before'
+        position: "before"
       },
       dragElement: null,
-      initialTransform: ''
+      initialTransform: ""
     }
   }
 
+  /**
+   * Initializes touch drag operation
+   * Sets up initial positions and state for dragging
+   * @param event - Touch event that started the drag
+   * @param row - Row being dragged
+   * @param element - DOM element being dragged
+   */
   const handleTouchStart = (event: TouchEvent, row: ChartRow, element: HTMLElement) => {
     const touch = event.touches[0]
     if (!touch) return
@@ -56,7 +75,7 @@ export function useRowTouchDrag() {
         event.preventDefault()
       }
     }, 100)
-    
+
     touchState.value = {
       isDragging: true,
       startY: touch.clientY,
@@ -64,13 +83,20 @@ export function useRowTouchDrag() {
       draggedRow: row,
       dropTarget: {
         row: null,
-        position: 'before'
+        position: "before"
       },
       dragElement: element,
-      initialTransform: element.style.transform || ''
+      initialTransform: element.style.transform || ""
     }
   }
 
+  /**
+   * Handles ongoing touch drag movement
+   * Updates visual position and calculates drop targets
+   * @param event - Touch move event
+   * @param targetRow - Row being dragged over
+   * @param rowElement - DOM element being dragged over
+   */
   const handleTouchMove = (event: TouchEvent, targetRow: ChartRow, rowElement: HTMLElement) => {
     const touch = event.touches[0]
     if (!touch || !touchState.value.isDragging || !touchState.value.dragElement) return
@@ -80,7 +106,7 @@ export function useRowTouchDrag() {
 
     const deltaY = touch.clientY - touchState.value.startY
     touchState.value.dragElement.style.transform = `translateY(${deltaY}px)`
-    
+
     const rect = rowElement.getBoundingClientRect()
     const relativeY = touch.clientY - rect.top
     const position = relativeY / rect.height
@@ -88,21 +114,27 @@ export function useRowTouchDrag() {
     if (touchState.value.draggedRow !== targetRow) {
       if (targetRow.children?.length) {
         if (position < 0.25) {
-          touchState.value.dropTarget = { row: targetRow, position: 'before' }
+          touchState.value.dropTarget = { row: targetRow, position: "before" }
         } else if (position > 0.75) {
-          touchState.value.dropTarget = { row: targetRow, position: 'after' }
+          touchState.value.dropTarget = { row: targetRow, position: "after" }
         } else {
-          touchState.value.dropTarget = { row: targetRow, position: 'child' }
+          touchState.value.dropTarget = { row: targetRow, position: "child" }
         }
       } else {
         touchState.value.dropTarget = {
           row: targetRow,
-          position: position < 0.5 ? 'before' : 'after'
+          position: position < 0.5 ? "before" : "after"
         }
       }
     }
   }
 
+  /**
+   * Finalizes touch drag operation
+   * Determines final drop position and triggers updates
+   * @param event - Touch end event
+   * @returns Object containing drag result information or null if invalid
+   */
   const handleTouchEnd = (event: TouchEvent) => {
     if (!touchState.value.isDragging) return null
 

@@ -45,7 +45,7 @@ import { useConnections } from "../composables/useConnections"
 import { useTooltip } from "../composables/useTooltip"
 import { useChartNavigation } from "../composables/useChartNavigation"
 import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
-import { useRows } from "../composables/useRows"
+import { useRows, findBarInRows } from "../composables/useRows"
 
 // Types and Constants
 import { colorSchemes, type ColorSchemeKey } from "../color-schemes"
@@ -424,13 +424,73 @@ const updateRangeBackground = () => {
   }
 }
 
-const redo = () => {
-  rowManager.redo()
+const undo = () => {
+  const changes = rowManager.undo()
+  if (!changes) return
+
+  changes.rowChanges.forEach((rowChange) => {
+    emit("row-drop", {
+      sourceRow: rowChange.sourceRow,
+      targetRow: undefined,
+      newIndex: rowChange.newIndex,
+      parentId: rowChange.newParentId
+    })
+  })
+
+  changes.barChanges.forEach((barChange) => {
+    const bar = findBarInRows(rowManager.rows.value, barChange.barId)
+    if (!bar) return
+
+    emit("dragend-bar", {
+      bar,
+      e: new MouseEvent("mouseup"),
+      movedBars: new Map([
+        [
+          bar,
+          {
+            oldStart: barChange.newStart!,
+            oldEnd: barChange.newEnd!
+          }
+        ]
+      ])
+    })
+  })
+
   updateBarPositions()
 }
 
-const undo = () => {
-  rowManager.undo()
+const redo = () => {
+  const changes = rowManager.redo()
+  if (!changes) return
+
+  changes.rowChanges.forEach((rowChange) => {
+    emit("row-drop", {
+      sourceRow: rowChange.sourceRow,
+      targetRow: undefined,
+      newIndex: rowChange.newIndex,
+      parentId: rowChange.newParentId
+    })
+  })
+
+  changes.barChanges.forEach((barChange) => {
+    const bar = findBarInRows(rowManager.rows.value, barChange.barId)
+    if (!bar) return
+
+    emit("dragend-bar", {
+      bar,
+      e: new MouseEvent("mouseup"),
+      movedBars: new Map([
+        [
+          bar,
+          {
+            oldStart: barChange.oldStart!,
+            oldEnd: barChange.oldEnd!
+          }
+        ]
+      ])
+    })
+  })
+
   updateBarPositions()
 }
 
