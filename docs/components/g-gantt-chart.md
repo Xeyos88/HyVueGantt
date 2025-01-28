@@ -97,11 +97,11 @@ Here's a minimal example of using the GGanttChart component:
 |-----------|-------|-------------|
 | default | None | Main content slot for GGanttRow components |
 | label-column-title | None | Custom label column header |
-| label-column-{label} | None | Custom label column row |
+| label-column-`{label}` | None | Custom specific label form column|
 | current-time-label | None | Custom current time indicator label |
 | bar-label | `{ bar: GanttBarObject }` | Custom bars label content |
 | milestone | `{ bar: GanttBarObject }` | Custom milestones content |
-| milestone-{milestoneId} | `{ bar: GanttBarObject }` | Custom specific milestone content |
+| milestone-`{milestoneId}` | `{ bar: GanttBarObject }` | Custom specific milestone content |
 
 ## Advanced Features
 
@@ -112,6 +112,8 @@ The component supports keyboard navigation:
 - +/- for zooming
 - Page Up/Down for faster navigation
 - Home/End for jumping to start/end
+- Ctrl+Z undo history
+- Ctrl+Shift+Z redo history
 
 ### Time Management
 
