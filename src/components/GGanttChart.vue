@@ -554,6 +554,22 @@ const redo = () => {
   updateBarPositions()
 }
 
+const handleKeyboardShortcuts = (e: KeyboardEvent) => {
+  const isCtrlPressed = e.ctrlKey || e.metaKey
+  if (isCtrlPressed && e.code === "KeyZ") {
+    e.preventDefault()
+    if (e.shiftKey) {
+      if (rowManager.canRedo.value) {
+        redo()
+      }
+    } else {
+      if (rowManager.canUndo.value) {
+        undo()
+      }
+    }
+  }
+}
+
 // -----------------------------
 // 10. LIFECYCLE HOOKS
 // -----------------------------
@@ -576,6 +592,7 @@ onMounted(() => {
   window.addEventListener("mouseup", handleTimeaxisMouseUp)
   window.addEventListener("mousemove", (e) => handleResizeMove(e, handleSectionResize))
   window.addEventListener("mouseup", handleResizeEnd)
+  window.addEventListener("keydown", handleKeyboardShortcuts)
 
   resizeObserver = new ResizeObserver(updateBarPositions)
   const container = document.querySelector(".g-gantt-chart")
@@ -602,6 +619,7 @@ onUnmounted(() => {
   window.removeEventListener("mouseup", handleTimeaxisMouseUp)
   window.removeEventListener("mousemove", (e) => handleResizeMove(e, handleSectionResize))
   window.removeEventListener("mouseup", handleResizeEnd)
+  window.removeEventListener("keydown", handleKeyboardShortcuts)
 
   if (resizeObserver) {
     resizeObserver.disconnect()
