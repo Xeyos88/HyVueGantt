@@ -1,5 +1,7 @@
 <script setup lang="ts">
-// External Imports
+// -----------------------------
+// 1. EXTERNAL IMPORTS
+// -----------------------------
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import {
   faAnglesLeft,
@@ -29,8 +31,14 @@ import {
   h
 } from "vue"
 import { useElementSize } from "@vueuse/core"
+import { v4 as uuidv4 } from "uuid"
+import type { CSSProperties } from "vue"
 
-// Internal Imports - Components
+// -----------------------------
+// 2. INTERNAL IMPORTS
+// -----------------------------
+
+// Components
 import GGanttGrid from "./GGanttGrid.vue"
 import GGanttLabelColumn from "./GGanttLabelColumn.vue"
 import GGanttTimeaxis from "./GGanttTimeaxis.vue"
@@ -40,12 +48,15 @@ import GGanttConnector from "./GGanttConnector.vue"
 import GGanttMilestone from "./GGanttMilestone.vue"
 import GGanttRow from "./GGanttRow.vue"
 
-// Internal Imports - Composables
+// Composables
 import { useConnections } from "../composables/useConnections"
 import { useTooltip } from "../composables/useTooltip"
 import { useChartNavigation } from "../composables/useChartNavigation"
 import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
 import { useRows, findBarInRows } from "../composables/useRows"
+import { ganttWidth } from "../composables/useSimpleStore"
+import useTimeaxisUnits from "../composables/useTimeaxisUnits"
+import { useSectionResize } from "../composables/useSectionResize"
 
 // Types and Constants
 import { colorSchemes, type ColorSchemeKey } from "../color-schemes"
@@ -60,12 +71,8 @@ import type {
   ChartRow,
   RowDragEvent
 } from "../types"
-import type { CSSProperties } from "vue"
-import useTimeaxisUnits from "../composables/useTimeaxisUnits"
-import { ganttWidth } from "../composables/useSimpleStore"
-import { v4 as uuidv4 } from "uuid"
 
-// Props & Emits Definition
+// Props
 const props = withDefaults(defineProps<GGanttChartProps>(), {
   currentTimeLabel: "",
   dateFormat: DEFAULT_DATE_FORMAT,
@@ -113,63 +120,6 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   markerConnection: "forward"
 })
 
-const id = ref(uuidv4())
-const slots = useSlots()
-
-const rowManager = useRows(
-  slots,
-  {
-    barStart: toRef(props, "barStart"),
-    barEnd: toRef(props, "barEnd"),
-    dateFormat: toRef(props, "dateFormat"),
-    multiColumnLabel: toRef(props, "multiColumnLabel"),
-    onSort: (sortState) => emit("sort", { sortState }),
-    initialSort: props.initialSort,
-    onGroupExpansion: (rowId) => emit("group-expansion", { rowId })
-  },
-  props.initialRows ? toRef(props, "initialRows") : undefined
-)
-const rows = computed(() => rowManager.rows.value)
-
-const renderRow = (row: ChartRow) => {
-  if (row._originalNode) {
-    return h(
-      GGanttRow,
-      {
-        ...row._originalNode.props,
-        label: row.label,
-        bars: row.bars,
-        children: row.children,
-        id: row.id,
-        key: row.id || row.label
-      },
-      row._originalNode.children || {}
-    )
-  }
-
-  return h(GGanttRow, {
-    label: row.label,
-    bars: row.bars,
-    id: row.id,
-    key: row.id || row.label
-  })
-}
-
-provide("useRows", rowManager)
-
-const rowsContainerStyle = computed<CSSProperties>(() => {
-  if (props.maxRows === 0) return {}
-
-  return {
-    "max-height": `${props.maxRows * props.rowHeight}px`,
-    "overflow-y": "auto"
-  }
-})
-
-watch([() => props.chartStart, () => props.chartEnd], () => {
-  updateBarPositions()
-})
-
 // Events
 const emit = defineEmits<{
   (e: "click-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
@@ -208,31 +158,72 @@ const emit = defineEmits<{
   ): void
 }>()
 
-// Chart Elements Refs
+// -----------------------------
+// 4. INTERNAL STATE
+// -----------------------------
+
+// Basic State
+const id = ref(uuidv4())
+const slots = useSlots()
+const isDragging = ref(false)
+const isDraggingTimeaxis = ref(false)
+const lastMouseX = ref(0)
+
+// Component Refs
 const ganttChart = ref<HTMLElement | null>(null)
-const chartSize = useElementSize(ganttChart)
 const ganttWrapper = ref<HTMLElement | null>(null)
 const timeaxisComponent = ref<
   (InstanceType<typeof GGanttTimeaxis> & GGanttTimeaxisInstance) | null
 >(null)
 const ganttContainer = ref<HTMLElement | null>(null)
+const rowsContainer = ref<HTMLElement | null>(null)
+const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
+const labelSectionWidth = ref(
+  props.labelColumnWidth * (props.multiColumnLabel.length === 0 ? 1 : props.multiColumnLabel.length)
+)
 
-// Composables
+// Chart Size
+const chartSize = useElementSize(ganttChart)
+
+// Touch State
+const handleTimeaxisTouch = {
+  startX: 0,
+  isDragging: false
+}
+
+// -----------------------------
+// 5. COMPOSABLES & PROVIDERS
+// -----------------------------
+
+// Row Management
+const rowManager = useRows(
+  slots,
+  {
+    barStart: toRef(props, "barStart"),
+    barEnd: toRef(props, "barEnd"),
+    dateFormat: toRef(props, "dateFormat"),
+    multiColumnLabel: toRef(props, "multiColumnLabel"),
+    onSort: (sortState) => emit("sort", { sortState }),
+    initialSort: props.initialSort,
+    onGroupExpansion: (rowId) => emit("group-expansion", { rowId })
+  },
+  props.initialRows ? toRef(props, "initialRows") : undefined
+)
+
+provide("useRows", rowManager)
+
+// Connections Management
 const { connections, barPositions, getConnectorProps, initializeConnections, updateBarPositions } =
   useConnections(rowManager, props, id)
 
+// Tooltip Management
 const { showTooltip, tooltipBar, initTooltip, clearTooltip } = useTooltip()
 
-const rowsContainer = ref<HTMLElement | null>(null)
-const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
+// Color Scheme Management
 const { font, colorScheme } = toRefs(props)
-
-const getColorScheme = (scheme: string | ColorScheme): ColorScheme =>
-  typeof scheme !== "string"
-    ? scheme
-    : ((colorSchemes[scheme as ColorSchemeKey] || colorSchemes.default) as ColorScheme)
-
 const colors = computed(() => getColorScheme(colorScheme.value))
+
+// Time Units Management
 const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision } = useTimeaxisUnits(
   {
     ...toRefs(props),
@@ -242,21 +233,7 @@ const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision } = 
   props.enableMinutes
 )
 
-const totalWidth = computed(() => {
-  const lowerUnits = timeaxisUnits.value!.result.lowerUnits
-  return lowerUnits.reduce((total, unit) => {
-    return total + parseInt(unit.width!)
-  }, 0)
-})
-
-watch(
-  () => totalWidth.value,
-  () => {
-    ganttWidth.value = totalWidth.value
-  },
-  { immediate: true }
-)
-
+// Navigation Management
 const {
   scrollPosition,
   handleStep,
@@ -281,6 +258,7 @@ const {
   props.maxRows
 )
 
+// Keyboard Navigation
 const { handleKeyDown } = useKeyboardNavigation(
   {
     scrollPosition,
@@ -290,14 +268,60 @@ const { handleKeyDown } = useKeyboardNavigation(
   ganttWrapper,
   ganttContainer
 )
-// Computed property per timeaxisUnits
 
-// Time Axis Interaction State
-const isDragging = ref(false)
-const isDraggingTimeaxis = ref(false)
-const lastMouseX = ref(0)
+// Size Management
+const {
+  handleResizeStart,
+  handleResizeMove,
+  handleResizeEnd,
+  handleTouchStart,
+  handleTouchMove,
+  resetResizeState
+} = useSectionResize()
 
-// Time Axis Event Handlers
+// -----------------------------
+// 6. COMPUTED PROPERTIES
+// -----------------------------
+const rows = computed(() => rowManager.rows.value)
+
+const rowsContainerStyle = computed<CSSProperties>(() => {
+  if (props.maxRows === 0) return {}
+
+  return {
+    "max-height": `${props.maxRows * props.rowHeight}px`,
+    "overflow-y": "auto"
+  }
+})
+
+const totalWidth = computed(() => {
+  const lowerUnits = timeaxisUnits.value!.result.lowerUnits
+  return lowerUnits.reduce((total, unit) => {
+    return total + parseInt(unit.width!)
+  }, 0)
+})
+
+const hasGroupRows = computed(() => {
+  const checkForGroups = (rows: ChartRow[]): boolean => {
+    return rows.some(
+      (row) => row.children?.length! > 0 || (row.children && checkForGroups(row.children))
+    )
+  }
+  return checkForGroups(rows.value)
+})
+
+const labelSectionStyle = computed(() => ({
+  width: `${labelSectionWidth.value}px`,
+  maxWidth: `${labelSectionWidth.value}px`,
+  position: "relative" as const,
+  flexShrink: 0,
+  flexGrow: 0
+}))
+
+// -----------------------------
+// 7. EVENT HANDLERS
+// -----------------------------
+
+// Timeaxis Mouse Events
 const handleTimeaxisMouseDown = (e: MouseEvent) => {
   isDraggingTimeaxis.value = true
   lastMouseX.value = e.clientX
@@ -318,11 +342,7 @@ const handleTimeaxisMouseUp = () => {
   isDraggingTimeaxis.value = false
 }
 
-const handleTimeaxisTouch = {
-  startX: 0,
-  isDragging: false
-}
-
+// Timeaxis Touch Events
 const handleTimeaxisTouchStart = (e: TouchEvent) => {
   const touch = e.touches[0]
   if (!touch) return
@@ -352,7 +372,11 @@ const handleTimeaxisTouchEnd = () => {
   handleTimeaxisTouch.isDragging = false
 }
 
-// Bar Event Handling
+const handleSectionResize = (newWidth: number) => {
+  labelSectionWidth.value = newWidth
+}
+
+// Bar Events
 const emitBarEvent = (
   e: MouseEvent,
   bar: GanttBarObject,
@@ -401,21 +425,53 @@ const emitBarEvent = (
   }
 }
 
+// Row Events
 const dropRow = (event: RowDragEvent) => {
   emit("row-drop", event)
   updateBarPositions()
 }
 
-const hasGroupRows = computed(() => {
-  const checkForGroups = (rows: ChartRow[]): boolean => {
-    return rows.some(
-      (row) => row.children?.length! > 0 || (row.children && checkForGroups(row.children))
+// -----------------------------
+// 8. SUPPORT FUNCTIONS
+// -----------------------------
+
+const getColorScheme = (scheme: string | ColorScheme): ColorScheme =>
+  typeof scheme !== "string"
+    ? scheme
+    : ((colorSchemes[scheme as ColorSchemeKey] || colorSchemes.default) as ColorScheme)
+
+watch(
+  () => totalWidth.value,
+  () => {
+    ganttWidth.value = totalWidth.value
+  },
+  { immediate: true }
+)
+
+const renderRow = (row: ChartRow) => {
+  if (row._originalNode) {
+    return h(
+      GGanttRow,
+      {
+        ...row._originalNode.props,
+        label: row.label,
+        bars: row.bars,
+        children: row.children,
+        id: row.id,
+        key: row.id || row.label
+      },
+      row._originalNode.children || {}
     )
   }
-  return checkForGroups(rows.value)
-})
 
-// Style Updates
+  return h(GGanttRow, {
+    label: row.label,
+    bars: row.bars,
+    id: row.id,
+    key: row.id || row.label
+  })
+}
+
 const updateRangeBackground = () => {
   const parentElement = document.getElementById(id.value)
   const slider = parentElement!.querySelector(".g-gantt-scroller") as HTMLInputElement
@@ -423,6 +479,10 @@ const updateRangeBackground = () => {
     slider.style.setProperty("--value", `${scrollPosition.value}%`)
   }
 }
+
+// -----------------------------
+// 9. HISTORY MANAGEMENT
+// -----------------------------
 
 const undo = () => {
   const changes = rowManager.undo()
@@ -494,6 +554,10 @@ const redo = () => {
   updateBarPositions()
 }
 
+// -----------------------------
+// 10. LIFECYCLE HOOKS
+// -----------------------------
+
 // ResizeObserver instance
 let resizeObserver: ResizeObserver
 
@@ -510,6 +574,8 @@ onMounted(() => {
 
   window.addEventListener("mousemove", handleTimeaxisMouseMove)
   window.addEventListener("mouseup", handleTimeaxisMouseUp)
+  window.addEventListener("mousemove", (e) => handleResizeMove(e, handleSectionResize))
+  window.addEventListener("mouseup", handleResizeEnd)
 
   resizeObserver = new ResizeObserver(updateBarPositions)
   const container = document.querySelector(".g-gantt-chart")
@@ -524,7 +590,6 @@ onMounted(() => {
     updateBarPositions()
   })
 
-  // Watchers
   watch(scrollPosition, updateRangeBackground, { immediate: true })
 })
 
@@ -535,6 +600,8 @@ onUnmounted(() => {
 
   window.removeEventListener("mousemove", handleTimeaxisMouseMove)
   window.removeEventListener("mouseup", handleTimeaxisMouseUp)
+  window.removeEventListener("mousemove", (e) => handleResizeMove(e, handleSectionResize))
+  window.removeEventListener("mouseup", handleResizeEnd)
 
   if (resizeObserver) {
     resizeObserver.disconnect()
@@ -543,7 +610,17 @@ onUnmounted(() => {
   window.removeEventListener("resize", updateBarPositions)
 })
 
-// Provider Setup
+// -----------------------------
+// 11. WATCHERS
+// -----------------------------
+watch([() => props.chartStart, () => props.chartEnd], () => {
+  updateBarPositions()
+})
+
+// -----------------------------
+// 12. PROVIDERS
+// -----------------------------
+
 provide(CONFIG_KEY, {
   ...toRefs(props),
   colors,
@@ -566,24 +643,29 @@ provide(GANTT_ID_KEY, id.value)
   >
     <div class="g-gantt-rounded-wrapper">
       <!-- Chart Layout Section -->
-      <div :class="[{ 'labels-in-column': !!labelColumnTitle }]" aria-controls="gantt-controls">
-        <!-- Label Column -->
-        <g-gantt-label-column
-          v-if="labelColumnTitle"
-          ref="labelColumn"
-          @scroll="handleLabelScroll"
-          @row-drop="dropRow"
-        >
-          <template #label-column-title>
-            <slot name="label-column-title" />
-          </template>
-          <template #label-column-row="slotProps">
-            <slot name="label-column-row" v-bind="slotProps" />
-          </template>
-          <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
-            <slot :name="name" v-bind="slotData" />
-          </template>
-        </g-gantt-label-column>
+      <div class="g-gantt-main-layout" aria-controls="gantt-controls">
+        <div v-if="labelColumnTitle" class="g-gantt-label-section" :style="labelSectionStyle">
+          <!-- Label Column -->
+          <g-gantt-label-column ref="labelColumn" @scroll="handleLabelScroll" @row-drop="dropRow">
+            <template #label-column-title>
+              <slot name="label-column-title" />
+            </template>
+            <template #label-column-row="slotProps">
+              <slot name="label-column-row" v-bind="slotProps" />
+            </template>
+            <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
+              <slot :name="name" v-bind="slotData" />
+            </template>
+          </g-gantt-label-column>
+          <div
+            class="g-gantt-section-resizer"
+            @mousedown="(e) => handleResizeStart(e, labelSectionWidth)"
+            @touchstart="(e) => handleTouchStart(e, labelSectionWidth)"
+            @touchmove="(e) => handleTouchMove(e, handleSectionResize)"
+            @touchend="resetResizeState"
+            @touchcancel="resetResizeState"
+          />
+        </div>
 
         <!-- Chart Wrapper -->
         <div
@@ -1006,5 +1088,43 @@ button {
 
 .g-gantt-rows-container::-webkit-scrollbar {
   display: none;
+}
+
+.g-gantt-main-layout {
+  display: flex;
+  width: 100%;
+  position: relative;
+}
+
+.g-gantt-label-section {
+  position: relative;
+  display: flex;
+}
+
+.g-gantt-section-resizer {
+  position: absolute;
+  right: -4px;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 10;
+  transition: background 0.2s ease;
+}
+
+.g-gantt-section-resizer:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.g-gantt-section-resizer:active {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .g-gantt-section-resizer {
+    width: 16px;
+    right: -8px;
+  }
 }
 </style>

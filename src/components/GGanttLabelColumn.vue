@@ -22,7 +22,7 @@ import useDayjsHelper from "../composables/useDayjsHelper"
 import type { UseRowsReturn } from "../composables/useRows"
 import { useRowDragAndDrop } from "../composables/useRowDragAndDrop"
 import { useColumnTouchResize } from "../composables/useColumnTouchResize"
-import { useRowTouchDrag } from '../composables/useRowTouchDrag'
+import { useRowTouchDrag } from "../composables/useRowTouchDrag"
 
 interface LabelColumnRowProps extends ChartRow {
   indentLevel?: number
@@ -375,15 +375,15 @@ let touchStartTime = 0
 const LONG_PRESS_DURATION = 500
 
 const onRowTouchStart = (e: TouchEvent, row: ChartRow) => {
-  if (!enableRowDragAndDrop || sortState.value.direction !== 'none') return
-  
+  if (!enableRowDragAndDrop || sortState.value.direction !== "none") return
+
   touchStartTime = Date.now()
   const element = e.currentTarget as HTMLElement
   handleRowTouchStart(e, row, element)
 }
 
 const onRowTouchMove = (e: TouchEvent, targetRow: ChartRow) => {
-  if (!enableRowDragAndDrop || sortState.value.direction !== 'none') return
+  if (!enableRowDragAndDrop || sortState.value.direction !== "none") return
 
   if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
     resetRowTouchState()
@@ -395,13 +395,13 @@ const onRowTouchMove = (e: TouchEvent, targetRow: ChartRow) => {
 }
 
 const onRowTouchEnd = (e: TouchEvent) => {
-  if (!enableRowDragAndDrop || sortState.value.direction !== 'none') return
+  if (!enableRowDragAndDrop || sortState.value.direction !== "none") return
 
   if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
     const target = e.target as HTMLElement
-    const button = target.closest('.group-toggle-button')
+    const button = target.closest(".group-toggle-button")
     if (button) {
-      const rowElement = target.closest('[data-row-id]') as HTMLElement
+      const rowElement = target.closest("[data-row-id]") as HTMLElement
       if (rowElement) {
         const rowId = rowElement.dataset.rowId
         if (rowId) {
@@ -415,12 +415,12 @@ const onRowTouchEnd = (e: TouchEvent) => {
 
   const result = handleRowTouchEnd(e)
   if (result && result.sourceRow && result.dropTarget.row) {
-    let newIndex = getProcessedRows.value.findIndex(r => r === result.dropTarget.row)
-    if (result.dropTarget.position === 'after') {
+    let newIndex = getProcessedRows.value.findIndex((r) => r === result.dropTarget.row)
+    if (result.dropTarget.position === "after") {
       newIndex += 1
     }
 
-    const sourceIndex = getProcessedRows.value.findIndex(r => r === result.sourceRow)
+    const sourceIndex = getProcessedRows.value.findIndex((r) => r === result.sourceRow)
     if (sourceIndex < newIndex) {
       newIndex -= 1
     }
@@ -429,7 +429,7 @@ const onRowTouchEnd = (e: TouchEvent) => {
       sourceRow: result.sourceRow,
       targetRow: result.dropTarget.row,
       newIndex: newIndex,
-      parentId: result.dropTarget.position === 'child' ? result.dropTarget.row.id : undefined
+      parentId: result.dropTarget.position === "child" ? result.dropTarget.row.id : undefined
     }
 
     const newRows = [...getProcessedRows.value]
@@ -437,7 +437,7 @@ const onRowTouchEnd = (e: TouchEvent) => {
     newRows.splice(newIndex, 0, result.sourceRow)
     rowManager.updateRows(newRows)
 
-    emit('row-drop', payload)
+    emit("row-drop", payload)
   }
 }
 
@@ -460,8 +460,7 @@ defineExpose({
     :style="{
       fontFamily: font,
       color: colors.text,
-      width: `${totalWidth}px`,
-      minWidth: `${totalWidth}px`,
+      minWidth: `100%`,
       flex: `0 0 ${totalWidth}px`,
       borderRight: `1px solid ${colors.gridAndBorder}`
     }"
@@ -526,16 +525,22 @@ defineExpose({
               : colors.quartenary,
           height: `${rowHeight}px`,
           borderBottom: `1px solid ${colors.gridAndBorder}`,
-           transform: rowTouchState.draggedRow === row 
-            ? `translateY(${rowTouchState.currentY - rowTouchState.startY}px)`
-            : undefined,
+          transform:
+            rowTouchState.draggedRow === row
+              ? `translateY(${rowTouchState.currentY - rowTouchState.startY}px)`
+              : undefined,
           zIndex: rowTouchState.draggedRow === row ? 1000 : undefined
         }"
-        :class="[rowClasses(row), getDragClasses(row), {
-          'is-touch-dragging': rowTouchState.draggedRow === row,
-          'is-touch-drop-target': rowTouchState.dropTarget.row === row,
-          [`is-touch-drop-${rowTouchState.dropTarget.position}`]: rowTouchState.dropTarget.row === row
-        }]"
+        :class="[
+          rowClasses(row),
+          getDragClasses(row),
+          {
+            'is-touch-dragging': rowTouchState.draggedRow === row,
+            'is-touch-drop-target': rowTouchState.dropTarget.row === row,
+            [`is-touch-drop-${rowTouchState.dropTarget.position}`]:
+              rowTouchState.dropTarget.row === row
+          }
+        ]"
         :draggable="enableRowDragAndDrop"
         @dragstart="handleRowDragStart(row, $event)"
         @dragover="handleDragOver(row, $event)"
@@ -833,5 +838,10 @@ defineExpose({
   .group-toggle-button {
     padding: 12px;
   }
+}
+
+.g-label-column-header-cell-ex {
+  position: relative;
+  flex-grow: 1;
 }
 </style>
