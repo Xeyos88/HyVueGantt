@@ -37,6 +37,8 @@ export interface UseRowsReturn {
   redo: () => HistoryChange
   clearHistory: () => void
   onBarMove: () => void
+  areAllGroupsExpanded: ComputedRef<boolean>
+  areAllGroupsCollapsed: ComputedRef<boolean>
 }
 
 /**
@@ -1066,6 +1068,67 @@ export function useRows(
   }
 
   /**
+   * A computed property that checks if there are any group rows in the chart
+   * Used as a utility to enable/disable group-related functionality
+   *
+   * @returns Boolean indicating if there are any groups
+   */
+  const hasAnyGroup = computed(() => {
+    const checkForGroups = (rows: ChartRow[]): boolean => {
+      return rows.some(
+        (row) => row.children?.length! > 0 || (row.children && checkForGroups(row.children))
+      )
+    }
+    return checkForGroups(rows.value)
+  })
+
+  /**
+   * A computed property that checks if all group rows are in expanded state
+   * Performs a recursive check through the row hierarchy
+   * Used to control the state of expand all functionality
+   *
+   * @returns Boolean indicating if all groups are expanded
+   */
+  const areAllGroupsExpanded = computed(() => {
+    if (!hasAnyGroup.value) return false
+
+    const checkAllExpanded = (rows: ChartRow[]): boolean => {
+      return rows.every((row) => {
+        if (row.children?.length) {
+          const isCurrentExpanded = row.id ? expandedGroups.value.has(row.id) : false
+          return isCurrentExpanded && checkAllExpanded(row.children)
+        }
+        return true
+      })
+    }
+
+    return checkAllExpanded(rows.value)
+  })
+
+  /**
+   * A computed property that checks if all group rows are in collapsed state
+   * Performs a recursive check through the row hierarchy
+   * Used to control the state of collapse all functionality
+   *
+   * @returns Boolean indicating if all groups are collapsed
+   */
+  const areAllGroupsCollapsed = computed(() => {
+    if (!hasAnyGroup.value) return false
+
+    const checkAllCollapsed = (rows: ChartRow[]): boolean => {
+      return rows.every((row) => {
+        if (row.children?.length) {
+          const isCurrentCollapsed = row.id ? !expandedGroups.value.has(row.id) : true
+          return isCurrentCollapsed && checkAllCollapsed(row.children)
+        }
+        return true
+      })
+    }
+
+    return checkAllCollapsed(rows.value)
+  })
+
+  /**
    * Returns the current chart rows
    * @returns Array of current chart rows
    */
@@ -1100,6 +1163,8 @@ export function useRows(
     undo,
     redo,
     clearHistory,
-    onBarMove
+    onBarMove,
+    areAllGroupsExpanded,
+    areAllGroupsCollapsed
   }
 }

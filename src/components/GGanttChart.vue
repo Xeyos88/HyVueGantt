@@ -781,24 +781,35 @@ provide(GANTT_ID_KEY, id.value)
         :style="{ background: colors.commands, fontFamily: font }"
         aria-label="Gantt Commands"
       >
-        <!-- Navigation Controls -->
-        <div class="g-gantt-command-vertical" v-if="maxRows > 0">
-          <button @click="scrollRowUp" aria-label="Scroll row up" :disabled="isAtTop">
-            <FontAwesomeIcon :icon="faAngleUp" class="command-icon" />
-          </button>
-          <button @click="scrollRowDown" aria-label="Scroll row down" :disabled="isAtBottom">
-            <FontAwesomeIcon :icon="faAngleDown" class="command-icon" />
-          </button>
-        </div>
-        <div class="g-gantt-command-fixed">
+        <div class="g-gantt-command-block">
+          <!-- Navigation Controls -->
+          <div class="g-gantt-command-vertical" v-if="maxRows > 0">
+            <button @click="scrollRowUp" aria-label="Scroll row up" :disabled="isAtTop">
+              <FontAwesomeIcon :icon="faAngleUp" class="command-icon" />
+            </button>
+            <button @click="scrollRowDown" aria-label="Scroll row down" :disabled="isAtBottom">
+              <FontAwesomeIcon :icon="faAngleDown" class="command-icon" />
+            </button>
+          </div>
           <div class="g-gantt-command-groups" v-if="hasGroupRows">
-            <button @click="rowManager.expandAllGroups()" aria-label="Espandi tutti i gruppi">
+            <button
+              @click="rowManager.expandAllGroups()"
+              aria-label="Expand all groups"
+              :disabled="rowManager.areAllGroupsExpanded.value"
+            >
               <FontAwesomeIcon :icon="faExpandAlt" class="command-icon" />
             </button>
-            <button @click="rowManager.collapseAllGroups()" aria-label="Collassa tutti i gruppi">
+            <button
+              @click="rowManager.collapseAllGroups()"
+              aria-label="Collapse all groups"
+              :disabled="rowManager.areAllGroupsCollapsed.value"
+            >
               <FontAwesomeIcon :icon="faCompressAlt" class="command-icon" />
             </button>
           </div>
+        </div>
+
+        <div class="g-gantt-command-fixed">
           <div class="g-gantt-command-slider">
             <button
               :disabled="scrollPosition === 0"
@@ -846,36 +857,38 @@ provide(GANTT_ID_KEY, id.value)
             </button>
           </div>
         </div>
-        <!-- Zoom Controls -->
-        <div class="g-gantt-command-zoom">
-          <button
-            @click="() => handleZoomUpdate(false)"
-            aria-label="Zoom-out Gantt"
-            :disabled="zoomLevel === 1 && internalPrecision === 'month'"
-          >
-            <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
-          </button>
-          <button
-            @click="() => handleZoomUpdate(true)"
-            aria-label="Zoom-out Gantt"
-            :disabled="zoomLevel === 10 && internalPrecision === precision"
-          >
-            <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
-          </button>
-        </div>
-        <div class="g-gantt-command-history">
-          <button
-            @click="undo"
-            :disabled="!rowManager.canUndo.value"
-            aria-label="Annulla ultima azione"
-          >
-            <FontAwesomeIcon :icon="faUndo" class="command-icon" />
-          </button>
-          <button @click="redo" :disabled="!rowManager.canRedo.value" aria-label="Ripeti azione">
-            <FontAwesomeIcon :icon="faRedo" class="command-icon" />
-          </button>
-        </div>
+        <div class="g-gantt-command-block">
+          <!-- Zoom Controls -->
+          <div class="g-gantt-command-zoom">
+            <button
+              @click="() => handleZoomUpdate(false)"
+              aria-label="Zoom-out Gantt"
+              :disabled="zoomLevel === 1 && internalPrecision === 'month'"
+            >
+              <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
+            </button>
+            <button
+              @click="() => handleZoomUpdate(true)"
+              aria-label="Zoom-out Gantt"
+              :disabled="zoomLevel === 10 && internalPrecision === precision"
+            >
+              <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
+            </button>
+          </div>
 
+          <div class="g-gantt-command-history">
+            <button
+              @click="undo"
+              :disabled="!rowManager.canUndo.value"
+              aria-label="Undo last action"
+            >
+              <FontAwesomeIcon :icon="faUndo" class="command-icon" />
+            </button>
+            <button @click="redo" :disabled="!rowManager.canRedo.value" aria-label="Redo action">
+              <FontAwesomeIcon :icon="faRedo" class="command-icon" />
+            </button>
+          </div>
+        </div>
         <!-- Custom Commands Slot -->
         <div class="g-gantt-command-custom">
           <slot name="commands" />
@@ -934,11 +947,17 @@ provide(GANTT_ID_KEY, id.value)
   gap: 8px;
 }
 
+.g-gantt-command-block {
+  display: flex;
+  gap: 8px;
+}
+
 .g-gantt-command-fixed,
 .g-gantt-command-slider,
 .g-gantt-command-vertical,
 .g-gantt-command-zoom,
-.g-gantt-command-history {
+.g-gantt-command-history,
+.g-gantt-command-groups {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -957,12 +976,6 @@ provide(GANTT_ID_KEY, id.value)
   cursor: not-allowed;
 }
 
-.g-gantt-command-groups {
-  display: flex;
-  gap: 2px;
-  margin-right: 8px;
-}
-
 @media screen and (max-width: 768px) {
   .g-gantt-command {
     height: auto;
@@ -977,6 +990,12 @@ provide(GANTT_ID_KEY, id.value)
     width: 100%;
   }
 
+  .g-gantt-command-block {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+
   .g-gantt-command-fixed {
     flex-direction: column;
     gap: 8px;
@@ -985,7 +1004,6 @@ provide(GANTT_ID_KEY, id.value)
   .g-gantt-command-groups {
     justify-content: center;
     margin-right: 0;
-    margin-bottom: 4px;
   }
 
   .g-gantt-command-slider {
@@ -998,7 +1016,8 @@ provide(GANTT_ID_KEY, id.value)
     justify-content: center;
   }
 
-  .g-gantt-command-zoom {
+  .g-gantt-command-zoom,
+  .g-gantt-command-history {
     justify-content: center;
   }
 
