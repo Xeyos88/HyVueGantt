@@ -482,7 +482,7 @@ defineExpose({
             @click="isSortable(column) ? toggleSort(column.field) : undefined"
           >
             <span class="text-ellipsis">
-              <slot name="label-column-title">
+              <slot :name="`label-column-title-${column.field.toLowerCase()}`">
                 {{ column.field }}
               </slot>
             </span>

@@ -532,6 +532,7 @@ onMounted(() => {
         :color-scheme="customColorScheme"
         label-column-title="Project Structure"
         :multi-column-label="multiColumnLabel"
+        
       >
         <g-gantt-row
           v-for="row in rows"

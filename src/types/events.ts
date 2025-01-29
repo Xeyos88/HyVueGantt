@@ -30,7 +30,7 @@ export interface RowExpansion {
   rowId: string | number
 }
 
-export interface GanttChartEmits {
+export interface GGanttChartEmits {
   (e: "click-bar", value: GanttBarEvent): void
   (e: "mousedown-bar", value: GanttBarEvent): void
   (e: "mouseup-bar", value: GanttBarEvent): void

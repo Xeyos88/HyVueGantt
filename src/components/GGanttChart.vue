@@ -781,118 +781,136 @@ provide(GANTT_ID_KEY, id.value)
         :style="{ background: colors.commands, fontFamily: font }"
         aria-label="Gantt Commands"
       >
-        <div class="g-gantt-command-block">
-          <!-- Navigation Controls -->
-          <div class="g-gantt-command-vertical" v-if="maxRows > 0">
-            <button @click="scrollRowUp" aria-label="Scroll row up" :disabled="isAtTop">
-              <FontAwesomeIcon :icon="faAngleUp" class="command-icon" />
-            </button>
-            <button @click="scrollRowDown" aria-label="Scroll row down" :disabled="isAtBottom">
-              <FontAwesomeIcon :icon="faAngleDown" class="command-icon" />
-            </button>
-          </div>
-          <div class="g-gantt-command-groups" v-if="hasGroupRows">
-            <button
-              @click="rowManager.expandAllGroups()"
-              aria-label="Expand all groups"
-              :disabled="rowManager.areAllGroupsExpanded.value"
-            >
-              <FontAwesomeIcon :icon="faExpandAlt" class="command-icon" />
-            </button>
-            <button
-              @click="rowManager.collapseAllGroups()"
-              aria-label="Collapse all groups"
-              :disabled="rowManager.areAllGroupsCollapsed.value"
-            >
-              <FontAwesomeIcon :icon="faCompressAlt" class="command-icon" />
-            </button>
-          </div>
-        </div>
-
-        <div class="g-gantt-command-fixed">
-          <div class="g-gantt-command-slider">
-            <button
-              :disabled="scrollPosition === 0"
-              @click="handleStep(0, ganttWrapper!)"
-              aria-label="Scroll to start"
-            >
-              <FontAwesomeIcon :icon="faAnglesLeft" class="command-icon" />
-            </button>
-            <button
-              :disabled="scrollPosition === 0"
-              @click="handleStep(scrollPosition - 10, ganttWrapper!)"
-              aria-label="Scroll back"
-            >
-              <FontAwesomeIcon :icon="faAngleLeft" class="command-icon" />
-            </button>
-
-            <!-- Position Slider -->
-            <input
-              v-model="scrollPosition"
-              type="range"
-              min="0"
-              max="100"
-              class="g-gantt-scroller"
-              :style="{ '--value': `${scrollPosition}%` }"
-              @input="handleScroll(ganttWrapper!)"
-              :aria-valuemin="0"
-              :aria-valuemax="100"
-              :aria-valuenow="scrollPosition"
-              aria-label="Gantt scroll position"
-            />
-
-            <button
-              :disabled="scrollPosition === 100"
-              @click="handleStep(scrollPosition + 10, ganttWrapper!)"
-              aria-label="Scroll up"
-            >
-              <FontAwesomeIcon :icon="faAngleRight" class="command-icon" />
-            </button>
-            <button
-              :disabled="scrollPosition === 100"
-              @click="handleStep(100, ganttWrapper!)"
-              aria-label="Scroll to end"
-            >
-              <FontAwesomeIcon :icon="faAnglesRight" class="command-icon" />
-            </button>
-          </div>
-        </div>
-        <div class="g-gantt-command-block">
-          <!-- Zoom Controls -->
-          <div class="g-gantt-command-zoom">
-            <button
-              @click="() => handleZoomUpdate(false)"
-              aria-label="Zoom-out Gantt"
-              :disabled="zoomLevel === 1 && internalPrecision === 'month'"
-            >
-              <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
-            </button>
-            <button
-              @click="() => handleZoomUpdate(true)"
-              aria-label="Zoom-out Gantt"
-              :disabled="zoomLevel === 10 && internalPrecision === precision"
-            >
-              <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
-            </button>
+        <slot
+          name="commands"
+          :zoom-in="() => handleZoomUpdate(true)"
+          :zoom-out="() => handleZoomUpdate(false)"
+          :scroll-row-up="() => scrollRowUp()"
+          :scroll-row-down="() => scrollRowDown()"
+          :expand-all-groups="() => rowManager.expandAllGroups()"
+          :collapse-all-groups="() => rowManager.collapseAllGroups()"
+          :handle-to-start="() => handleStep(0, ganttWrapper!)"
+          :handle-back="() => handleStep(scrollPosition - 10, ganttWrapper!)"
+          :handle-scroll="() => handleScroll(ganttWrapper!)"
+          :handle-forward="() => handleStep(scrollPosition + 10, ganttWrapper!)"
+          :handle-to-end="() => handleStep(100, ganttWrapper!)"
+          :undo="() => undo()"
+          :redo="() => redo()"
+          :can-undo="rowManager.canUndo"
+          :can-redo="rowManager.canRedo"
+          :is-at-top="isAtTop"
+          :is-at-bottom="isAtBottom"
+          :zoom-level="zoomLevel"
+        >
+          <div class="g-gantt-command-block">
+            <!-- Navigation Controls -->
+            <div class="g-gantt-command-vertical" v-if="maxRows > 0">
+              <button @click="scrollRowUp" aria-label="Scroll row up" :disabled="isAtTop">
+                <FontAwesomeIcon :icon="faAngleUp" class="command-icon" />
+              </button>
+              <button @click="scrollRowDown" aria-label="Scroll row down" :disabled="isAtBottom">
+                <FontAwesomeIcon :icon="faAngleDown" class="command-icon" />
+              </button>
+            </div>
+            <div class="g-gantt-command-groups" v-if="hasGroupRows">
+              <button
+                @click="rowManager.expandAllGroups()"
+                aria-label="Expand all groups"
+                :disabled="rowManager.areAllGroupsExpanded.value"
+              >
+                <FontAwesomeIcon :icon="faExpandAlt" class="command-icon" />
+              </button>
+              <button
+                @click="rowManager.collapseAllGroups()"
+                aria-label="Collapse all groups"
+                :disabled="rowManager.areAllGroupsCollapsed.value"
+              >
+                <FontAwesomeIcon :icon="faCompressAlt" class="command-icon" />
+              </button>
+            </div>
           </div>
 
-          <div class="g-gantt-command-history">
-            <button
-              @click="undo"
-              :disabled="!rowManager.canUndo.value"
-              aria-label="Undo last action"
-            >
-              <FontAwesomeIcon :icon="faUndo" class="command-icon" />
-            </button>
-            <button @click="redo" :disabled="!rowManager.canRedo.value" aria-label="Redo action">
-              <FontAwesomeIcon :icon="faRedo" class="command-icon" />
-            </button>
+          <div class="g-gantt-command-fixed">
+            <div class="g-gantt-command-slider">
+              <button
+                :disabled="scrollPosition === 0"
+                @click="handleStep(0, ganttWrapper!)"
+                aria-label="Scroll to start"
+              >
+                <FontAwesomeIcon :icon="faAnglesLeft" class="command-icon" />
+              </button>
+              <button
+                :disabled="scrollPosition === 0"
+                @click="handleStep(scrollPosition - 10, ganttWrapper!)"
+                aria-label="Scroll back"
+              >
+                <FontAwesomeIcon :icon="faAngleLeft" class="command-icon" />
+              </button>
+
+              <!-- Position Slider -->
+              <input
+                v-model="scrollPosition"
+                type="range"
+                min="0"
+                max="100"
+                class="g-gantt-scroller"
+                :style="{ '--value': `${scrollPosition}%` }"
+                @input="handleScroll(ganttWrapper!)"
+                :aria-valuemin="0"
+                :aria-valuemax="100"
+                :aria-valuenow="scrollPosition"
+                aria-label="Gantt scroll position"
+              />
+
+              <button
+                :disabled="scrollPosition === 100"
+                @click="handleStep(scrollPosition + 10, ganttWrapper!)"
+                aria-label="Scroll up"
+              >
+                <FontAwesomeIcon :icon="faAngleRight" class="command-icon" />
+              </button>
+              <button
+                :disabled="scrollPosition === 100"
+                @click="handleStep(100, ganttWrapper!)"
+                aria-label="Scroll to end"
+              >
+                <FontAwesomeIcon :icon="faAnglesRight" class="command-icon" />
+              </button>
+            </div>
           </div>
-        </div>
-        <!-- Custom Commands Slot -->
-        <div class="g-gantt-command-custom">
-          <slot name="commands" />
-        </div>
+          <div class="g-gantt-command-block">
+            <!-- Zoom Controls -->
+            <div class="g-gantt-command-zoom">
+              <button
+                @click="() => handleZoomUpdate(false)"
+                aria-label="Zoom-out Gantt"
+                :disabled="zoomLevel === 1 && internalPrecision === 'month'"
+              >
+                <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
+              </button>
+              <button
+                @click="() => handleZoomUpdate(true)"
+                aria-label="Zoom-out Gantt"
+                :disabled="zoomLevel === 10 && internalPrecision === precision"
+              >
+                <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
+              </button>
+            </div>
+
+            <div class="g-gantt-command-history">
+              <button
+                @click="undo"
+                :disabled="!rowManager.canUndo.value"
+                aria-label="Undo last action"
+              >
+                <FontAwesomeIcon :icon="faUndo" class="command-icon" />
+              </button>
+              <button @click="redo" :disabled="!rowManager.canRedo.value" aria-label="Redo action">
+                <FontAwesomeIcon :icon="faRedo" class="command-icon" />
+              </button>
+            </div>
+          </div>
+        </slot>
       </div>
     </div>
 
