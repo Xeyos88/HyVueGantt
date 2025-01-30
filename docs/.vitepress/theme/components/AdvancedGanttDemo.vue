@@ -2,10 +2,12 @@
 import { ref } from 'vue'
 import { GGanttChart, GGanttRow, type ChartRow, type LabelColumnConfig } from 'hy-vue-gantt'
 
+const year = new Date().getFullYear()
+const month = new Date().getMonth() + 1
 // Time Settings
 const precision = ref('day')
-const chartStart = ref('2024-01-01')
-const chartEnd = ref('2024-03-31')
+const chartStart = ref(`${year}-${month}-01`)
+const chartEnd = ref(`${year}-${month+2}-28`)
 const dateFormat = ref('YYYY-MM-DD HH:mm')
 const enableMinutes = ref(false)
 const currentTime = ref(true)
@@ -38,6 +40,8 @@ const availableColorSchemes = [
   'fuchsia', 'grove', 'material-blue', 'sky', 'slumber'
 ]
 
+
+
 const availablePrecisions = ['hour', 'day', 'week', 'month']
 const availableLocales = ['en', 'it', 'fr', 'de', 'es']
 
@@ -51,8 +55,8 @@ const sampleData = ref([
         id: 'task1',
         label: 'Setup Project',
         bars: [{
-          start: '2024-01-05',
-          end: '2024-01-15',
+          start: `${year}-${month}-05`,
+          end: `${year}-${month}-15`,
           ganttBarConfig: {
             id: 'bar1',
             label: 'Initial Setup',
@@ -69,8 +73,8 @@ const sampleData = ref([
         id: 'task2',
         label: 'Core Features',
         bars: [{
-          start: '2024-01-16',
-          end: '2024-02-01',
+          start: `${year}-${month}-16`,
+          end: `${year}-${month+1}-01`,
           ganttBarConfig: {
             id: 'bar2',
             label: 'Development',
@@ -88,16 +92,16 @@ const sampleData = ref([
         id: 'task3',
         label: 'API Design',
         bars: [{
-          start: '2024-01-10',
-          end: '2024-01-25',
+          start: `${year}-${month}-10`,
+          end: `${year}-${month}-25`,
           ganttBarConfig: {
             id: 'bar3',
             label: 'API Planning',
             style: { background: '#ff7e67' }
           }
         },{
-          start: '2024-01-27',
-          end: '2024-02-02',
+          start: `${year}-${month}-27`,
+          end: `${year}-${month+1}-02`,
           ganttBarConfig: {
             id: 'bar3.1',
             label: 'API Planning V2',
@@ -109,8 +113,8 @@ const sampleData = ref([
         id: 'task4',
         label: 'Database Setup',
         bars: [{
-          start: '2024-01-26',
-          end: '2024-02-10',
+          start: `${year}-${month}-26`,
+          end: `${year}-${month+1}-10`,
           ganttBarConfig: {
             id: 'bar4',
             label: 'DB Implementation',

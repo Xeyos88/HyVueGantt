@@ -65,7 +65,7 @@ export const colorSchemes: Record<string, ColorScheme> = {
     commands: "#525252",
     rangeHighlight: "#000",
     holidayHighlight: "#ff9d3b",
-    barContainer: "#525252",
+    barContainer: "rgba(0, 0, 0, 1)",
     rowContainer: "rgba(0, 0, 0, 1)",
     gridAndBorder: "#eaeaea"
   },
@@ -81,7 +81,7 @@ export const colorSchemes: Record<string, ColorScheme> = {
     background: "white",
     rangeHighlight: "#000",
     holidayHighlight: "rgba(240, 120, 96, 0.8)",
-    barContainer: "#e08a38",
+    barContainer: "rgba(0, 0, 0, 1)",
     rowContainer: "rgba(0, 0, 0, 1)",
     gridAndBorder: "#eaeaea"
   },

@@ -269,6 +269,14 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
       zoomLevel.value
     )
 
+    watch(
+      () => configPrecision.value,
+      () => {
+        internalPrecision.value = configPrecision.value
+        zoomLevel.value = DEFAULT_ZOOM
+      }
+    )
+
     let lowerUnits = getFromCache(cache.lower, lowerCacheKey)
     const lowerUnitsByStartTime = new Map<number, TimeaxisUnit>()
 

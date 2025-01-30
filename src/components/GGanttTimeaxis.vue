@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import provideConfig from "../provider/provideConfig"
 import { capitalizeWords } from "../composables/useTimeaxisUnits"
-import { computed, ref } from "vue"
+import { computed, ref, toRefs } from "vue"
 import useDayjsHelper from "../composables/useDayjsHelper"
 import type { TimeaxisData, TimeaxisUnit, TimeUnit } from "@/types"
 import GGanttHolidayTooltip from "./GGanttHolidayTooltip.vue"
@@ -16,6 +16,8 @@ const props = defineProps<{
   internalPrecision: TimeUnit
 }>()
 
+const { timeaxisUnits, internalPrecision } = toRefs(props)
+
 const emit = defineEmits<{
   (e: "dragStart", value: MouseEvent): void
   (e: "drag", value: MouseEvent): void
@@ -27,9 +29,9 @@ const handleMouseDown = (e: MouseEvent) => {
 }
 
 const dayUnitLevel = computed(() => {
-  if (props.internalPrecision === "hour") {
+  if (internalPrecision.value === "hour") {
     return "upper"
-  } else if (props.internalPrecision === "day") {
+  } else if (internalPrecision.value === "day") {
     return "lower"
   }
   return null
