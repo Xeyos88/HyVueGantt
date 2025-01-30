@@ -17,7 +17,7 @@ const locale = ref('en')
 
 // Display Configuration
 const hideTimeaxis = ref(false)
-const colorScheme = ref('vue')
+const colorScheme = ref('dark')
 const grid = ref(true)
 const rowHeight = ref(40)
 const font = ref('inherit')
@@ -196,6 +196,16 @@ const formattedEventLog = computed(() => {
                 Precision:
                 <select v-model="precision">
                   <option v-for="option in availablePrecisions" :key="option" :value="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Day Label:
+                <select v-model="dayOptionLabel" multiple>
+                  <option v-for="option in availableDayOptions" :key="option" :value="option" >
                     {{ option }}
                   </option>
                 </select>

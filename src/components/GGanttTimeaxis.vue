@@ -113,7 +113,7 @@ defineExpose({ timeaxisElement })
     <div class="g-timeunits-container">
       <div
         v-for="(unit, index) in timeaxisUnits.result.upperUnits"
-        :key="unit.label"
+        :key="unit.date.toISOString()"
         class="g-upper-timeunit"
         :style="{
           background: index % 2 === 0 ? colors.primary : colors.secondary,
@@ -238,6 +238,7 @@ defineExpose({ timeaxisElement })
 .label-unit {
   flex-grow: 1;
   text-align: center;
+  line-height: normal;
 }
 
 .g-timeunit-min {

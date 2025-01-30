@@ -4,6 +4,7 @@ import useDayjsHelper from "./useDayjsHelper"
 import provideConfig from "../provider/provideConfig"
 import type { GGanttChartConfig, TimeaxisUnit, TimeUnit } from "../types"
 import { useHolidays } from "./useHolidays"
+import dayjs from "dayjs"
 
 /**
  * Base width for time unit elements (in pixels)
@@ -103,8 +104,7 @@ export const capitalizeWords = (str: string): string => {
  */
 export default function useTimeaxisUnits(config: GGanttChartConfig = provideConfig()) {
   const { getHolidayInfo } = useHolidays(config)
-  const { precision: configPrecision, holidayHighlight } = config
-  const { chartStartDayjs, chartEndDayjs } = useDayjsHelper(config)
+  const { precision: configPrecision, holidayHighlight, locale } = config
 
   // Internal state
   const internalPrecision = ref<TimeUnit>(configPrecision.value)
@@ -257,24 +257,32 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     }
   }
 
+  watch(
+    () => configPrecision.value,
+    () => {
+      internalPrecision.value = configPrecision.value
+      zoomLevel.value = DEFAULT_ZOOM
+    }
+  )
+
+  watch([() => holidayHighlight.value, () => locale.value], () => {
+    dayjs.locale(locale.value)
+    cache.lower.clear()
+    cache.upper.clear()
+  })
+
   /**
    * Main computed property for time axis units
    * Implements caching and optimized calculations
    */
   const timeaxisUnits = computed(() => {
+    const { chartStartDayjs, chartEndDayjs } = useDayjsHelper(config)
+
     const lowerCacheKey = getCacheKey(
       chartStartDayjs.value,
       chartEndDayjs.value,
       internalPrecision.value,
       zoomLevel.value
-    )
-
-    watch(
-      () => configPrecision.value,
-      () => {
-        internalPrecision.value = configPrecision.value
-        zoomLevel.value = DEFAULT_ZOOM
-      }
     )
 
     let lowerUnits = getFromCache(cache.lower, lowerCacheKey)
@@ -285,6 +293,7 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
       let currentLower = chartStartDayjs.value.clone()
 
       while (currentLower.isBefore(chartEndDayjs.value)) {
+        console.log(dayjs.locale())
         const unit = createTimeaxisUnit(
           currentLower,
           getDisplayFormat(internalPrecision.value),
