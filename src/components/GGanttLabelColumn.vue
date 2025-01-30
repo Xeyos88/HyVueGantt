@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import provideConfig from "../provider/provideConfig"
-import provideBooleanConfig from "../provider/provideBooleanConfig"
 import { ref, computed, inject, reactive, onMounted } from "vue"
 import type { CSSProperties } from "vue"
 import type {
@@ -39,7 +38,6 @@ if (!rowManager) {
 }
 
 const { rows, sortState, toggleSort } = rowManager
-const { sortable } = provideBooleanConfig()
 const {
   font,
   colors,
@@ -55,7 +53,8 @@ const {
   rowLabelClass,
   labelResizable,
   enableRowDragAndDrop,
-  hideTimeaxis
+  hideTimeaxis,
+  sortable
 } = provideConfig()
 
 const { toDayjs, format } = useDayjsHelper()
@@ -87,16 +86,16 @@ const initializeColumnWidths = () => {
 
 const columns = computed<LabelColumnConfig[]>(() => {
   if (!multiColumnLabel.value?.length || !labelColumnTitle.value) {
-    return [{ field: "Label", sortable: true }]
+    return [{ field: "Label", sortable: sortable.value }]
   }
   const filteredColumns = multiColumnLabel.value.filter((col) => col.field !== "Label")
-  const labelColumn = { field: "Label", sortable: true }
+  const labelColumn = { field: "Label", sortable: sortable.value }
   return [labelColumn, ...filteredColumns]
 })
 
 const getVisibleColumns = (row: ChartRow) => {
   if (row.children && row.children.length > 0) {
-    return [{ field: "Label", sortable: true }]
+    return [{ field: "Label", sortable: sortable.value }]
   }
   return columns.value
 }
@@ -336,12 +335,19 @@ const isValidColumn = (field: string): field is LabelColumnField => {
   return ["Id", "Label", "StartDate", "EndDate", "Duration"].includes(field)
 }
 
-const isSortable = (column: LabelColumnConfig) => {
-  if (column.sortable === false) return false
-  return (
-    (sortable || (!sortable && column.sortable)) && (isValidColumn(column.field) || column.sortFn)
+const columnSortableStates = computed(() =>
+  columns.value.reduce(
+    (acc, column) => {
+      acc[column.field] = !!(
+        column.sortable !== false &&
+        (sortable.value || (!sortable.value && column.sortable)) &&
+        (isValidColumn(column.field) || column.sortFn)
+      )
+      return acc
+    },
+    {} as Record<string, boolean>
   )
-}
+)
 
 const handleLabelScroll = (e: Event) => {
   const target = e.target as HTMLElement
@@ -477,20 +483,20 @@ defineExpose({
         <div
           v-if="isValidColumn(column.field) || column.valueGetter"
           class="g-label-column-header-cell"
-          :class="{ sortable: isSortable(column) }"
+          :class="{ sortable: columnSortableStates[column.field] }"
           role="columnheader"
           :style="getColumnStyle(column.field, false)"
         >
           <div
             class="header-content"
-            @click="isSortable(column) ? toggleSort(column.field) : undefined"
+            @click="columnSortableStates[column.field] ? toggleSort(column.field) : undefined"
           >
             <span class="text-ellipsis">
               <slot :name="`label-column-title-${column.field.toLowerCase()}`">
                 {{ column.field }}
               </slot>
             </span>
-            <span v-if="isSortable(column)" class="sort-icon">
+            <span v-if="columnSortableStates[column.field]" class="sort-icon">
               <FontAwesomeIcon :icon="getSortIcon(column.field)" />
             </span>
           </div>
