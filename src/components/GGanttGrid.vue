@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import provideConfig from "../provider/provideConfig"
-import provideBooleanConfig from "../provider/provideBooleanConfig"
 import useDayjsHelper from "../composables/useDayjsHelper"
 import type { TimeaxisData, TimeUnit } from "../types"
 
@@ -17,9 +16,9 @@ const {
   highlightedDaysInWeek,
   highlightedDaysInMonth,
   highlightedMonths,
-  highlightedWeek
+  highlightedWeek,
+  enableMinutes
 } = provideConfig()
-const { enableMinutes } = provideBooleanConfig()
 
 const highlightLine = (date: Date) => {
   if (props.internalPrecision === "hour") {

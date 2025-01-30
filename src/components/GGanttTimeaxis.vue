@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import provideConfig from "../provider/provideConfig"
-import provideBooleanConfig from "../provider/provideBooleanConfig"
 import { capitalizeWords } from "../composables/useTimeaxisUnits"
 import { computed, ref } from "vue"
 import useDayjsHelper from "../composables/useDayjsHelper"
 import type { TimeaxisData, TimeaxisUnit, TimeUnit } from "@/types"
 import GGanttHolidayTooltip from "./GGanttHolidayTooltip.vue"
 
-const { precision, colors, holidayHighlight, dayOptionLabel } = provideConfig()
+const { precision, colors, holidayHighlight, dayOptionLabel, enableMinutes } = provideConfig()
 const { toDayjs } = useDayjsHelper()
 
 const timeaxisElement = ref<HTMLElement | null>(null)
@@ -16,8 +15,6 @@ const props = defineProps<{
   timeaxisUnits: TimeaxisData
   internalPrecision: TimeUnit
 }>()
-
-const { enableMinutes } = provideBooleanConfig()
 
 const emit = defineEmits<{
   (e: "dragStart", value: MouseEvent): void

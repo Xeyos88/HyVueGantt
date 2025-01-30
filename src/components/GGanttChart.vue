@@ -224,14 +224,11 @@ const { font, colorScheme } = toRefs(props)
 const colors = computed(() => getColorScheme(colorScheme.value))
 
 // Time Units Management
-const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision } = useTimeaxisUnits(
-  {
-    ...toRefs(props),
-    colors,
-    chartSize
-  },
-  props.enableMinutes
-)
+const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision } = useTimeaxisUnits({
+  ...toRefs(props),
+  colors,
+  chartSize
+})
 
 // Navigation Management
 const {

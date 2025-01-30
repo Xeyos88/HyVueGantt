@@ -2,7 +2,6 @@ import { computed, ref, watch } from "vue"
 import type { Dayjs, ManipulateType } from "dayjs"
 import useDayjsHelper from "./useDayjsHelper"
 import provideConfig from "../provider/provideConfig"
-import provideBooleanConfig from "../provider/provideBooleanConfig"
 import type { GGanttChartConfig, TimeaxisUnit, TimeUnit } from "../types"
 import { useHolidays } from "./useHolidays"
 
@@ -100,13 +99,9 @@ export const capitalizeWords = (str: string): string => {
  * - Timestamp-based calculations for week handling
  *
  * @param config - Optional Gantt chart configuration
- * @param enableMinutes - Flag to enable minute-level precision
  * @returns Object containing timeaxis state and control methods
  */
-export default function useTimeaxisUnits(
-  config: GGanttChartConfig = provideConfig(),
-  enableMinutes = provideBooleanConfig().enableMinutes
-) {
+export default function useTimeaxisUnits(config: GGanttChartConfig = provideConfig()) {
   const { getHolidayInfo } = useHolidays(config)
   const { precision: configPrecision, holidayHighlight } = config
   const { chartStartDayjs, chartEndDayjs } = useDayjsHelper(config)
@@ -367,7 +362,7 @@ export default function useTimeaxisUnits(
    * Calculates minute steps based on current settings
    */
   const calculateMinuteSteps = () => {
-    if (!enableMinutes || internalPrecision.value !== "hour") {
+    if (!config.enableMinutes.value || internalPrecision.value !== "hour") {
       return []
     }
 
