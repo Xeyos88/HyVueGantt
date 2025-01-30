@@ -1,136 +1,397 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
+import { ref } from 'vue'
+import { GGanttChart, GGanttRow, type ChartRow, type LabelColumnConfig } from 'hy-vue-gantt'
 
-const isLibraryReady = ref(false)
-const currentScheme = ref('default')
+// Time Settings
+const precision = ref('day')
+const chartStart = ref('2024-01-01')
+const chartEnd = ref('2024-03-31')
+const dateFormat = ref('YYYY-MM-DD HH:mm')
+const enableMinutes = ref(false)
+const currentTime = ref(true)
+const currentTimeLabel = ref('Now')
 
-const rows = ref([
+// Display Settings
+const hideTimeaxis = ref(false)
+const colorScheme = ref('vue')
+const grid = ref(true)
+const rowHeight = ref(40)
+const font = ref('inherit')
+const labelColumnTitle = ref('Project Tasks')
+const labelColumnWidth = ref(200)
+const commands = ref(true)
+const width = ref('100%')
+
+// Behavior Settings
+const pushOnOverlap = ref(true)
+const pushOnConnect = ref(true)
+const noOverlap = ref(false)
+const enableConnections = ref(true)
+const sortable = ref(true)
+const labelResizable = ref(true)
+const enableRowDragAndDrop = ref(true)
+const maxRows = ref(5)
+
+// Available Options
+const availableColorSchemes = [
+  'default', 'vue', 'dark', 'creamy', 'crimson', 'flare', 
+  'fuchsia', 'grove', 'material-blue', 'sky', 'slumber'
+]
+
+const availablePrecisions = ['hour', 'day', 'week', 'month']
+const availableLocales = ['en', 'it', 'fr', 'de', 'es']
+
+// Sample Data
+const sampleData = ref([
   {
-    label: 'Marketing',
-    bars: [
+    id: 'group1',
+    label: 'Frontend Development',
+    children: [
       {
-        ganttBarConfig: {
-          id: 'marketing1',
-          label: 'Campaign Planning',
-          hasHandles: true,
-          style: {
-            background: 'linear-gradient(45deg, #FF6B6B, #FF8E8E)',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            borderRadius: '4px',
-          },
-        },
-        progress: 75,
-        start: '2024-12-11',
-        end: '2024-12-15',
+        id: 'task1',
+        label: 'Setup Project',
+        bars: [{
+          start: '2024-01-05',
+          end: '2024-01-15',
+          ganttBarConfig: {
+            id: 'bar1',
+            label: 'Initial Setup',
+            style: { background: '#42b883' },
+            connections: [{
+              targetId: 'bar2',
+              type: 'bezier',
+              animated: true
+            }]
+          }
+        }]
       },
-    ],
+      {
+        id: 'task2',
+        label: 'Core Features',
+        bars: [{
+          start: '2024-01-16',
+          end: '2024-02-01',
+          ganttBarConfig: {
+            id: 'bar2',
+            label: 'Development',
+            style: { background: '#35495e' }
+          }
+        }]
+      }
+    ]
   },
   {
-    label: 'Development',
-    bars: [
+    id: 'group2',
+    label: 'Backend Development',
+    children: [
       {
-        ganttBarConfig: {
-          id: 'dev1',
-          label: 'Sprint 1',
-          hasHandles: true,
-          style: {
-            background: 'linear-gradient(45deg, #4ECDC4, #2EAF7D)',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            borderRadius: '4px',
-          },
-        },
-        progress: 90,
-        start: '2024-12-12',
-        end: '2024-12-16',
+        id: 'task3',
+        label: 'API Design',
+        bars: [{
+          start: '2024-01-10',
+          end: '2024-01-25',
+          ganttBarConfig: {
+            id: 'bar3',
+            label: 'API Planning',
+            style: { background: '#ff7e67' }
+          }
+        },{
+          start: '2024-01-27',
+          end: '2024-02-02',
+          ganttBarConfig: {
+            id: 'bar3.1',
+            label: 'API Planning V2',
+            style: { background: '#ff7e67' }
+          }
+        }]
       },
-    ],
-  },
+      {
+        id: 'task4',
+        label: 'Database Setup',
+        bars: [{
+          start: '2024-01-26',
+          end: '2024-02-10',
+          ganttBarConfig: {
+            id: 'bar4',
+            label: 'DB Implementation',
+            style: { background: '#4dc9ff' }
+          }
+        }]
+      }
+    ]
+  }
 ])
 
-onMounted(() => {
-  isLibraryReady.value = true
-})
+// Event Handlers
+const handleBarClick = (event: any) => {
+  console.log('Bar clicked:', event)
+}
+
+const handleBarDrag = (event: any) => {
+  console.log('Bar dragged:', event)
+}
+
+const handleSort = (event: any) => {
+  console.log('Sort changed:', event)
+}
+
+const handleGroupExpansion = (event: any) => {
+  console.log('Group toggled:', event)
+}
+
+const handleRowDrop = (event: any) => {
+  console.log('Row dropped:', event)
+}
 </script>
 
 <template>
-  <ClientOnly>
-    <div class="demo-container" v-if="isLibraryReady">
-      <div class="custom-header">
-           Theme:
-          <select v-model="currentScheme">
-              <option value="default">Default</option>
-              <option value="vue">Vue</option>
-              <option value="dark">Dark</option>
-              <option value="creamy">Creamy</option>
-          </select>
+  <div class="complete-demo">
+    <!-- Settings Panel -->
+    <div class="settings-panel">
+      <h3>Gantt Chart Configuration</h3>
+      
+      <div class="settings-group">
+        <h4>Time Settings</h4>
+        <div class="settings-grid">
+          <div class="setting-item">
+            <label>
+              Precision:
+              <select v-model="precision">
+                <option v-for="option in availablePrecisions" :key="option" :value="option">
+                  {{ option }}
+                </option>
+              </select>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Enable Minutes:
+              <input type="checkbox" v-model="enableMinutes">
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Show Current Time:
+              <input type="checkbox" v-model="currentTime">
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Date Format:
+              <input type="text" v-model="dateFormat">
+            </label>
+          </div>
         </div>
+      </div>
+
+      <div class="settings-group">
+        <h4>Display Settings</h4>
+        <div class="settings-grid">
+          <div class="setting-item">
+            <label>
+              Color Scheme:
+              <select v-model="colorScheme">
+                <option v-for="option in availableColorSchemes" :key="option" :value="option">
+                  {{ option }}
+                </option>
+              </select>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Hide Timeaxis:
+              <input type="checkbox" v-model="hideTimeaxis">
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Show Grid:
+              <input type="checkbox" v-model="grid">
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Row Height:
+              <input type="number" v-model="rowHeight">
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Label Width:
+              <input type="number" v-model="labelColumnWidth">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h4>Behavior Settings</h4>
+        <div class="settings-grid">
+          <div class="setting-item">
+            <label>
+              Push on Overlap:
+              <input type="checkbox" v-model="pushOnOverlap">
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Push on Connect:
+              <input type="checkbox" v-model="pushOnConnect">
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              No Overlap:
+              <input type="checkbox" v-model="noOverlap">
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Enable Connections:
+              <input type="checkbox" v-model="enableConnections">
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Sortable:
+              <input type="checkbox" v-model="sortable">
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Label Resizable:
+              <input type="checkbox" v-model="labelResizable">
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              Enable Row Drag & Drop:
+              <input type="checkbox" v-model="enableRowDragAndDrop">
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gantt Container -->
+    <div class="gantt-container">
       <g-gantt-chart
-        chart-start="2024-12-11"
-        chart-end="2024-12-17"
-        precision="day"
+        :chart-start="chartStart"
+        :chart-end="chartEnd"
+        :precision="precision"
         bar-start="start"
         bar-end="end"
-        :push-on-overlap="true"
-        :no-overlap="true"
-        grid
-        :color-scheme="currentScheme"
-        label-column-title="Projects"
-        
+        :width="width"
+        :hide-timeaxis="hideTimeaxis"
+        :color-scheme="colorScheme"
+        :grid="grid"
+        :push-on-overlap="pushOnOverlap"
+        :push-on-connect="pushOnConnect"
+        :no-overlap="noOverlap"
+        :row-height="rowHeight"
+        :font="font"
+        :label-column-title="labelColumnTitle"
+        :label-column-width="labelColumnWidth"
+        :commands="commands"
+        :enable-minutes="enableMinutes"
+        :enable-connections="enableConnections"
+        :max-rows="maxRows"
+        :current-time="currentTime"
+        :current-time-label="currentTimeLabel"
+        :date-format="dateFormat"
+        :enable-row-drag-and-drop="enableRowDragAndDrop"
+        :label-resizable="labelResizable"
+        :sortable="sortable"
+        @click-bar="handleBarClick"
+        @drag-bar="handleBarDrag"
+        @sort="handleSort"
+        @group-expansion="handleGroupExpansion"
+        @row-drop="handleRowDrop"
       >
-
-
         <g-gantt-row
-          v-for="row in rows"
-          :key="row.label"
+          v-for="row in sampleData"
+          :key="row.id"
+          :id="row.id"
           :label="row.label"
           :bars="row.bars"
+          :children="row.children"
           highlightOnHover
-        >
-          <template #bar-label="{ bar }">
-            <div class="custom-bar-label">
-              <span>{{ bar.ganttBarConfig.label }}</span>
-              <span class="progress">{{ bar.progress }}%</span>
-            </div>
-          </template>
-        </g-gantt-row>
+        />
       </g-gantt-chart>
     </div>
-  </ClientOnly>
+  </div>
 </template>
 
-<style scoped>
-.demo-container {
-  border: 1px solid #eaeaea;
-  border-radius: 8px;
-  padding: 20px;
-  margin: 20px 0;
+<style scoped> 
+h3, h4 {
+  margin: 6px 0px;
 }
 
-.custom-header {
+.complete-demo {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: bold;
+  gap: 20px;
+  padding: 20px;
+  flex-direction: column;
+  font-size: 12px;
+}
+
+.settings-panel {
+  background: #333;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  color: white;
+}
+
+.settings-group {
+  margin-bottom: 16px;
+}
+
+.settings-group h4 {
   margin-bottom: 12px;
+  color: #42b883;
+  border-bottom: 1px solid #444;
+  padding-bottom: 8px;
 }
 
-.custom-header select {
-  padding: 4px;
-  border-radius: 4px;
-  border: 1px solid #eaeaea;
+.settings-grid {
+  display: grid;
+  gap: 8px;
 }
 
-.custom-bar-label {
+.setting-item {
+  display: flex;
+}
+
+.setting-item label {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 0 8px;
+  gap: 8px;
 }
 
-.progress {
-  font-size: 0.8em;
-  opacity: 0.8;
+.setting-item select,
+.setting-item input[type="text"],
+.setting-item input[type="number"] {
+  width: 120px;
+  padding: 4px 8px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #222;
+  color: white;
+}
+
+.setting-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.gantt-container {
+  flex: 1;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
 }
 </style>

@@ -76,11 +76,13 @@ export default defineConfig({
             { text: "Base", link: "/live/base" },
             { text: "Connections", link: "/live/connection" },
             { text: "Multi Columns", link: "/live/multicolumn" },
-            { text: "Advanced", link: "/live/advanced" },
+            { text: "Bar Slot", link: "/live/barslot" },
+            { text: "Commands Slot", link: "/live/commands" },
             { text: "Holiday", link: "/live/holiday" },
             { text: "Other", link: "/live/others" },
             { text: "Grouping", link: "/live/grouping" },
             { text: "Events", link: "/live/events" }
+            
           ]
         }
       ],

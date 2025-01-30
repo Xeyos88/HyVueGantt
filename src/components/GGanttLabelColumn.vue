@@ -39,7 +39,7 @@ if (!rowManager) {
 }
 
 const { rows, sortState, toggleSort } = rowManager
-const { sortable, labelResizable, enableRowDragAndDrop } = provideBooleanConfig()
+const { sortable, enableRowDragAndDrop } = provideBooleanConfig()
 const {
   font,
   colors,
@@ -52,7 +52,8 @@ const {
   barStart,
   barEnd,
   dateFormat,
-  rowLabelClass
+  rowLabelClass,
+  labelResizable
 } = provideConfig()
 
 const { toDayjs, format } = useDayjsHelper()
