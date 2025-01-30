@@ -178,8 +178,23 @@ const timeaxisComponent = ref<
 const ganttContainer = ref<HTMLElement | null>(null)
 const rowsContainer = ref<HTMLElement | null>(null)
 const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
-const labelSectionWidth = ref(
-  props.labelColumnWidth * (props.multiColumnLabel.length === 0 ? 1 : props.multiColumnLabel.length)
+
+const setLabelWidth = () => {
+  return (
+    props.labelColumnWidth *
+    (props.multiColumnLabel.length === 0
+      ? 1
+      : props.multiColumnLabel.length +
+        (props.multiColumnLabel.some((el) => el.field === "Label") ? 0 : 1))
+  )
+}
+const labelSectionWidth = ref(setLabelWidth())
+
+watch(
+  () => props.multiColumnLabel,
+  () => {
+    labelSectionWidth.value = setLabelWidth()
+  }
 )
 
 // Chart Size

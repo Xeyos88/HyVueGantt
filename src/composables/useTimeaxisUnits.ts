@@ -293,7 +293,6 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
       let currentLower = chartStartDayjs.value.clone()
 
       while (currentLower.isBefore(chartEndDayjs.value)) {
-        console.log(dayjs.locale())
         const unit = createTimeaxisUnit(
           currentLower,
           getDisplayFormat(internalPrecision.value),

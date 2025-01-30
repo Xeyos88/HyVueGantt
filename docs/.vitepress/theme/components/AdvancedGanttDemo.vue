@@ -2,6 +2,17 @@
 import { ref, computed } from 'vue'
 import { GGanttChart, GGanttRow, type ChartRow, type LabelColumnConfig } from 'hy-vue-gantt'
 
+const sections = ref<{ [key: string]: boolean }>({
+  timeConfig: false,
+  displayConfig: false,
+  connectionConfig: false,
+  behaviorConfig: false
+})
+
+const toggleSection = (section: string) => {
+  sections.value[section] = !sections.value[section]
+}
+
 const year = new Date().getFullYear()
 const month = new Date().getMonth() + 1
 
@@ -22,9 +33,10 @@ const grid = ref(true)
 const rowHeight = ref(40)
 const font = ref('inherit')
 const labelColumnTitle = ref('Project Tasks')
-const labelColumnWidth = ref(200)
+const labelColumnWidth = ref(100)
 const commands = ref(true)
 const width = ref('100%')
+
 
 // Time Highlight Configuration
 const highlightedHours = ref([9, 13, 17])
@@ -37,6 +49,7 @@ const defaultConnectionType = ref('bezier')
 const defaultConnectionPattern = ref('solid')
 const defaultConnectionAnimationSpeed = ref('normal')
 const defaultConnectionAnimated = ref(false)
+const defaultConnectionColor = ref('#ff0000')
 const markerConnection = ref('forward')
 
 // Behavior Configuration
@@ -48,6 +61,14 @@ const sortable = ref(true)
 const labelResizable = ref(true)
 const enableRowDragAndDrop = ref(true)
 const maxRows = ref(5)
+
+const multiColumnOptions = ['Label','StartDate','EndDate','Id','Duration']
+const columnsSelected = ref(["Label"])
+const multiColumnLabel = computed(() =>  columnsSelected.value.map((el) => {return {
+  field: el, sortable: sortable.value
+}})
+
+) 
 
 // Available Options
 const availableColorSchemes = [
@@ -62,6 +83,7 @@ const availableConnectionPatterns = ['solid', 'dash', 'dot', 'dashdot']
 const availableConnectionSpeeds = ['slow', 'normal', 'fast']
 const availableMarkerTypes = ['none', 'forward', 'bidirectional']
 const availableDayOptions = ['day', 'name', 'doy', 'number']
+
 
 // Event Logging
 const eventLog = ref<Array<{type: string, data: any, timestamp: number}>>([])
@@ -189,8 +211,10 @@ const formattedEventLog = computed(() => {
     <div class="settings-container">
       <div class="settings-column">
         <div class="settings-group">
-          <h4>Time Settings</h4>
-          <div class="settings-grid">
+          <h4 @click="toggleSection('timeConfig')" class="toggle-header">Time Settings 
+            <span :class="{'arrow-down': sections.timeConfig, 'arrow-up': !sections.timeConfig}">▼</span>
+          </h4>
+          <div v-if="sections.timeConfig" class="settings-grid">
             <div class="setting-item">
               <label>
                 Precision:
@@ -260,8 +284,10 @@ const formattedEventLog = computed(() => {
         </div>
 
         <div class="settings-group">
-          <h4>Connection Settings</h4>
-          <div class="settings-grid">
+          <h4 @click="toggleSection('connectionConfig')" class="toggle-header">Connection Settings
+            <span :class="{'arrow-down': sections.connectionConfig, 'arrow-up': !sections.connectionConfig}">▼</span>
+          </h4>
+          <div v-if="sections.connectionConfig" class="settings-grid">
             <div class="setting-item">
               <label>
                 Animated:
@@ -300,6 +326,12 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
+                Connection Color:
+                <input type="color" v-model="defaultConnectionColor"/>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
                 Marker Type:
                 <select v-model="markerConnection">
                   <option v-for="marker in availableMarkerTypes" :key="marker" :value="marker">
@@ -314,13 +346,25 @@ const formattedEventLog = computed(() => {
 
       <div class="settings-column">
         <div class="settings-group">
-          <h4>Display Settings</h4>
-          <div class="settings-grid">
+          <h4 @click="toggleSection('displayConfig')" class="toggle-header">Display Settings
+            <span :class="{'arrow-down': sections.displayConfig, 'arrow-up': !sections.displayConfig}">▼</span>
+          </h4>
+          <div v-if="sections.displayConfig" class="settings-grid">
             <div class="setting-item">
               <label>
                 Color Scheme:
                 <select v-model="colorScheme">
                   <option v-for="option in availableColorSchemes" :key="option" :value="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Label Columns:
+                <select v-model="columnsSelected" multiple>
+                  <option v-for="option in multiColumnOptions" :key="option" :value="option" >
                     {{ option }}
                   </option>
                 </select>
@@ -346,22 +390,24 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
-                Label Width:
-                <input type="number" v-model="labelColumnWidth">
+                Max Rows:
+                <input type="number" v-model="maxRows">
               </label>
             </div>
             <div class="setting-item">
               <label>
-                Max Rows:
-                <input type="number" v-model="maxRows">
+                Commands:
+                <input type="checkbox" v-model="commands">
               </label>
             </div>
           </div>
         </div>
 
         <div class="settings-group">
-          <h4>Behavior Settings</h4>
-          <div class="settings-grid">
+          <h4 @click="toggleSection('behaviorConfig')" class="toggle-header">Behavior Settings
+            <span :class="{'arrow-down': sections.behaviorConfig, 'arrow-up': !sections.behaviorConfig}">▼</span>
+          </h4>
+          <div v-if="sections.behaviorConfig" class="settings-grid">
             <div class="setting-item">
               <label>
                 Enable Minutes:
@@ -433,6 +479,7 @@ const formattedEventLog = computed(() => {
         :width="width"
         :hide-timeaxis="hideTimeaxis"
         :color-scheme="colorScheme"
+        :multi-column-label="multiColumnLabel"
         :grid="grid"
         :push-on-overlap="pushOnOverlap"
         :push-on-connect="pushOnConnect"
@@ -456,9 +503,10 @@ const formattedEventLog = computed(() => {
         :default-connection-pattern="defaultConnectionPattern"
         :default-connection-animation-speed="defaultConnectionAnimationSpeed"
         :default-connection-animated="defaultConnectionAnimated"
+        :default-connection-color="defaultConnectionColor"
         :marker-connection="markerConnection"
         :enable-row-drag-and-drop="enableRowDragAndDrop"
-                :label-resizable="labelResizable"
+        :label-resizable="labelResizable"
         :sortable="sortable"
         @click-bar="handleBarClick"
         @drag-bar="handleBarDrag"
@@ -500,7 +548,6 @@ const formattedEventLog = computed(() => {
   padding: 20px;
   font-size: 12px;
   background: #1a1a1a;
-  min-height: 100vh;
   color: white;
 }
 
@@ -563,6 +610,11 @@ const formattedEventLog = computed(() => {
   font-size: 12px;
 }
 
+.setting-item input[type="color"] {
+  width: 140px;
+  height: 24px;
+}
+
 .setting-item input[type="checkbox"] {
   width: 16px;
   height: 16px;
@@ -570,7 +622,6 @@ const formattedEventLog = computed(() => {
 }
 
 .gantt-container {
-  background: white;
   border-radius: 8px;
   overflow: hidden;
   display: flex;
@@ -594,6 +645,8 @@ const formattedEventLog = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 600px;
+  overflow-y: auto;
 }
 
 .event-item {
@@ -622,6 +675,22 @@ const formattedEventLog = computed(() => {
   font-family: monospace;
   white-space: pre-wrap;
   overflow-x: auto;
+}
+
+.toggle-header {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.arrow-down {
+  transform: rotate(180deg);
+  transition: transform 0.3s ease;
+}
+
+.arrow-up {
+  transition: transform 0.3s ease;
 }
 
 @media (max-width: 1200px) {
