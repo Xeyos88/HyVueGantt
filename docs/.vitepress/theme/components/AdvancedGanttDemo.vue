@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { GGanttChart, GGanttRow, type ChartRow, type LabelColumnConfig } from 'hy-vue-gantt'
 
 const year = new Date().getFullYear()
 const month = new Date().getMonth() + 1
-// Time Settings
+
+// Time Configuration
 const precision = ref('day')
 const chartStart = ref(`${year}-${month}-01`)
 const chartEnd = ref(`${year}-${month+2}-28`)
@@ -12,8 +13,9 @@ const dateFormat = ref('YYYY-MM-DD HH:mm')
 const enableMinutes = ref(false)
 const currentTime = ref(true)
 const currentTimeLabel = ref('Now')
+const locale = ref('en')
 
-// Display Settings
+// Display Configuration
 const hideTimeaxis = ref(false)
 const colorScheme = ref('vue')
 const grid = ref(true)
@@ -24,7 +26,20 @@ const labelColumnWidth = ref(200)
 const commands = ref(true)
 const width = ref('100%')
 
-// Behavior Settings
+// Time Highlight Configuration
+const highlightedHours = ref([9, 13, 17])
+const highlightedDaysInWeek = ref([0, 6]) // Sunday and Saturday
+const holidayHighlight = ref('US')
+const dayOptionLabel = ref(['day', 'name', 'doy'])
+
+// Connection Configuration
+const defaultConnectionType = ref('bezier')
+const defaultConnectionPattern = ref('solid')
+const defaultConnectionAnimationSpeed = ref('normal')
+const defaultConnectionAnimated = ref(false)
+const markerConnection = ref('forward')
+
+// Behavior Configuration
 const pushOnOverlap = ref(true)
 const pushOnConnect = ref(true)
 const noOverlap = ref(false)
@@ -40,10 +55,50 @@ const availableColorSchemes = [
   'fuchsia', 'grove', 'material-blue', 'sky', 'slumber'
 ]
 
-
-
 const availablePrecisions = ['hour', 'day', 'week', 'month']
 const availableLocales = ['en', 'it', 'fr', 'de', 'es']
+const availableConnectionTypes = ['bezier', 'straight', 'squared']
+const availableConnectionPatterns = ['solid', 'dash', 'dot', 'dashdot']
+const availableConnectionSpeeds = ['slow', 'normal', 'fast']
+const availableMarkerTypes = ['none', 'forward', 'bidirectional']
+const availableDayOptions = ['day', 'name', 'doy', 'number']
+
+// Event Logging
+const eventLog = ref<Array<{type: string, data: any, timestamp: number}>>([])
+const maxEventLogs = 5
+
+const addEventLog = (type: string, data: any) => {
+  eventLog.value.unshift({
+    type,
+    data,
+    timestamp: Date.now()
+  })
+  
+  if (eventLog.value.length > maxEventLogs) {
+    eventLog.value = eventLog.value.slice(0, maxEventLogs)
+  }
+}
+
+// Event Handlers with Logging
+const handleBarClick = (event: any) => {
+  addEventLog('Bar Click', event)
+}
+
+const handleBarDrag = (event: any) => {
+  addEventLog('Bar Drag', event)
+}
+
+const handleSort = (event: any) => {
+  addEventLog('Sort Change', event)
+}
+
+const handleGroupExpansion = (event: any) => {
+  addEventLog('Group Toggle', event)
+}
+
+const handleRowDrop = (event: any) => {
+  addEventLog('Row Drop', event)
+}
 
 // Sample Data
 const sampleData = ref([
@@ -63,8 +118,6 @@ const sampleData = ref([
             style: { background: '#42b883' },
             connections: [{
               targetId: 'bar2',
-              type: 'bezier',
-              animated: true
             }]
           }
         }]
@@ -99,14 +152,6 @@ const sampleData = ref([
             label: 'API Planning',
             style: { background: '#ff7e67' }
           }
-        },{
-          start: `${year}-${month}-27`,
-          end: `${year}-${month+1}-02`,
-          ganttBarConfig: {
-            id: 'bar3.1',
-            label: 'API Planning V2',
-            style: { background: '#ff7e67' }
-          }
         }]
       },
       {
@@ -126,152 +171,241 @@ const sampleData = ref([
   }
 ])
 
-// Event Handlers
-const handleBarClick = (event: any) => {
-  console.log('Bar clicked:', event)
-}
-
-const handleBarDrag = (event: any) => {
-  console.log('Bar dragged:', event)
-}
-
-const handleSort = (event: any) => {
-  console.log('Sort changed:', event)
-}
-
-const handleGroupExpansion = (event: any) => {
-  console.log('Group toggled:', event)
-}
-
-const handleRowDrop = (event: any) => {
-  console.log('Row dropped:', event)
-}
+// Computed property to format event log output
+const formattedEventLog = computed(() => {
+  return eventLog.value.map(event => {
+    const time = new Date(event.timestamp).toLocaleTimeString()
+    return {
+      ...event,
+      formattedTime: time
+    }
+  })
+})
 </script>
 
 <template>
   <div class="complete-demo">
     <!-- Settings Panel -->
-    <div class="settings-panel">
-      <h3>Gantt Chart Configuration</h3>
-      
-      <div class="settings-group">
-        <h4>Time Settings</h4>
-        <div class="settings-grid">
-          <div class="setting-item">
-            <label>
-              Precision:
-              <select v-model="precision">
-                <option v-for="option in availablePrecisions" :key="option" :value="option">
-                  {{ option }}
-                </option>
-              </select>
-            </label>
+    <div class="settings-container">
+      <div class="settings-column">
+        <div class="settings-group">
+          <h4>Time Settings</h4>
+          <div class="settings-grid">
+            <div class="setting-item">
+              <label>
+                Precision:
+                <select v-model="precision">
+                  <option v-for="option in availablePrecisions" :key="option" :value="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Language:
+                <select v-model="locale">
+                  <option v-for="option in availableLocales" :key="option" :value="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Holidays:
+                <select v-model="holidayHighlight">
+                  <option value="">None</option>
+                  <option value="US">United States</option>
+                  <option value="GB">United Kingdom</option>
+                  <option value="IT">Italy</option>
+                  <option value="FR">France</option>
+                  <option value="DE">Germany</option>
+                </select>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Highlighted Hours:
+                <input 
+                  type="text" 
+                  :value="highlightedHours.join(',')" 
+                  @input="e => highlightedHours = (e.target as HTMLInputElement).value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))"
+                  placeholder="9,13,17"
+                >
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Highlighted Days:
+                <input 
+                  type="text" 
+                  :value="highlightedDaysInWeek.join(',')" 
+                  @input="e => highlightedDaysInWeek = (e.target as HTMLInputElement).value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))"
+                  placeholder="0,6"
+                >
+              </label>
+            </div>
           </div>
-          <div class="setting-item">
-            <label>
-              Enable Minutes:
-              <input type="checkbox" v-model="enableMinutes">
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              Show Current Time:
-              <input type="checkbox" v-model="currentTime">
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              Date Format:
-              <input type="text" v-model="dateFormat">
-            </label>
+        </div>
+
+        <div class="settings-group">
+          <h4>Connection Settings</h4>
+          <div class="settings-grid">
+            <div class="setting-item">
+              <label>
+                Animated:
+                <input type="checkbox" v-model="defaultConnectionAnimated">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Connection Type:
+                <select v-model="defaultConnectionType">
+                  <option v-for="type in availableConnectionTypes" :key="type" :value="type">
+                    {{ type }}
+                  </option>
+                </select>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Pattern:
+                <select v-model="defaultConnectionPattern">
+                  <option v-for="pattern in availableConnectionPatterns" :key="pattern" :value="pattern">
+                    {{ pattern }}
+                  </option>
+                </select>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Animation Speed:
+                <select v-model="defaultConnectionAnimationSpeed">
+                  <option v-for="speed in availableConnectionSpeeds" :key="speed" :value="speed">
+                    {{ speed }}
+                  </option>
+                </select>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Marker Type:
+                <select v-model="markerConnection">
+                  <option v-for="marker in availableMarkerTypes" :key="marker" :value="marker">
+                    {{ marker }}
+                  </option>
+                </select>
+              </label>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="settings-group">
-        <h4>Display Settings</h4>
-        <div class="settings-grid">
-          <div class="setting-item">
-            <label>
-              Color Scheme:
-              <select v-model="colorScheme">
-                <option v-for="option in availableColorSchemes" :key="option" :value="option">
-                  {{ option }}
-                </option>
-              </select>
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              Hide Timeaxis:
-              <input type="checkbox" v-model="hideTimeaxis">
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              Show Grid:
-              <input type="checkbox" v-model="grid">
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              Row Height:
-              <input type="number" v-model="rowHeight">
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              Label Width:
-              <input type="number" v-model="labelColumnWidth">
-            </label>
+      <div class="settings-column">
+        <div class="settings-group">
+          <h4>Display Settings</h4>
+          <div class="settings-grid">
+            <div class="setting-item">
+              <label>
+                Color Scheme:
+                <select v-model="colorScheme">
+                  <option v-for="option in availableColorSchemes" :key="option" :value="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Hide Timeline:
+                <input type="checkbox" v-model="hideTimeaxis">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Show Grid:
+                <input type="checkbox" v-model="grid">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Row Height:
+                <input type="number" v-model="rowHeight">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Label Width:
+                <input type="number" v-model="labelColumnWidth">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Max Rows:
+                <input type="number" v-model="maxRows">
+              </label>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="settings-group">
-        <h4>Behavior Settings</h4>
-        <div class="settings-grid">
-          <div class="setting-item">
-            <label>
-              Push on Overlap:
-              <input type="checkbox" v-model="pushOnOverlap">
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              Push on Connect:
-              <input type="checkbox" v-model="pushOnConnect">
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              No Overlap:
-              <input type="checkbox" v-model="noOverlap">
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              Enable Connections:
-              <input type="checkbox" v-model="enableConnections">
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              Sortable:
-              <input type="checkbox" v-model="sortable">
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              Label Resizable:
-              <input type="checkbox" v-model="labelResizable">
-            </label>
-          </div>
-          <div class="setting-item">
-            <label>
-              Enable Row Drag & Drop:
-              <input type="checkbox" v-model="enableRowDragAndDrop">
-            </label>
+        <div class="settings-group">
+          <h4>Behavior Settings</h4>
+          <div class="settings-grid">
+            <div class="setting-item">
+              <label>
+                Enable Minutes:
+                <input type="checkbox" v-model="enableMinutes">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Show Current Time:
+                <input type="checkbox" v-model="currentTime">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Push on Overlap:
+                <input type="checkbox" v-model="pushOnOverlap">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Push on Connect:
+                <input type="checkbox" v-model="pushOnConnect">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Prevent Overlap:
+                <input type="checkbox" v-model="noOverlap">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Enable Connections:
+                <input type="checkbox" v-model="enableConnections">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Sortable:
+                <input type="checkbox" v-model="sortable">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Label Resizable:
+                <input type="checkbox" v-model="labelResizable">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Enable Row Drag & Drop:
+                <input type="checkbox" v-model="enableRowDragAndDrop">
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -283,6 +417,7 @@ const handleRowDrop = (event: any) => {
         :chart-start="chartStart"
         :chart-end="chartEnd"
         :precision="precision"
+        :locale="locale"
         bar-start="start"
         bar-end="end"
         :width="width"
@@ -303,8 +438,17 @@ const handleRowDrop = (event: any) => {
         :current-time="currentTime"
         :current-time-label="currentTimeLabel"
         :date-format="dateFormat"
+        :highlighted-hours="highlightedHours"
+        :highlighted-days-in-week="highlightedDaysInWeek"
+        :holiday-highlight="holidayHighlight"
+        :day-option-label="dayOptionLabel"
+        :default-connection-type="defaultConnectionType"
+        :default-connection-pattern="defaultConnectionPattern"
+        :default-connection-animation-speed="defaultConnectionAnimationSpeed"
+        :default-connection-animated="defaultConnectionAnimated"
+        :marker-connection="markerConnection"
         :enable-row-drag-and-drop="enableRowDragAndDrop"
-        :label-resizable="labelResizable"
+                :label-resizable="labelResizable"
         :sortable="sortable"
         @click-bar="handleBarClick"
         @drag-bar="handleBarDrag"
@@ -322,45 +466,67 @@ const handleRowDrop = (event: any) => {
           highlightOnHover
         />
       </g-gantt-chart>
+
+      <!-- Event Log Panel -->
+      <div class="event-log">
+        <h4>Event Log</h4>
+        <div class="event-list">
+          <div v-for="event in formattedEventLog" :key="event.timestamp" class="event-item">
+            <span class="event-time">{{ event.formattedTime }}</span>
+            <span class="event-type">{{ event.type }}</span>
+            <pre class="event-data">{{ JSON.stringify(event.data, null, 2) }}</pre>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
-<style scoped> 
-h3, h4 {
-  margin: 6px 0px;
-}
-
+<style scoped>
 .complete-demo {
   display: flex;
+  flex-direction: column;
   gap: 20px;
   padding: 20px;
-  flex-direction: column;
   font-size: 12px;
-}
-
-.settings-panel {
-  background: #333;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: #1a1a1a;
+  min-height: 100vh;
   color: white;
 }
 
+.settings-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  background: #2a2a2a;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.settings-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .settings-group {
-  margin-bottom: 16px;
+  background: #333;
+  padding: 16px;
+  border-radius: 6px;
 }
 
 .settings-group h4 {
-  margin-bottom: 12px;
+  margin: 0 0 16px 0;
   color: #42b883;
   border-bottom: 1px solid #444;
   padding-bottom: 8px;
+  font-size: 14px;
 }
 
 .settings-grid {
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
 .setting-item {
@@ -372,30 +538,86 @@ h3, h4 {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  gap: 8px;
+  gap: 12px;
 }
 
 .setting-item select,
 .setting-item input[type="text"],
 .setting-item input[type="number"] {
-  width: 120px;
-  padding: 4px 8px;
+  width: 140px;
+  padding: 6px 10px;
   border: 1px solid #444;
   border-radius: 4px;
   background: #222;
   color: white;
+  font-size: 12px;
 }
 
 .setting-item input[type="checkbox"] {
   width: 16px;
   height: 16px;
+  accent-color: #42b883;
 }
 
 .gantt-container {
-  flex: 1;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.event-log {
+  background: #2a2a2a;
+  padding: 16px;
+  border-radius: 0 0 8px 8px;
+}
+
+.event-log h4 {
+  margin: 0 0 12px 0;
+  color: #42b883;
+  font-size: 14px;
+}
+
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-item {
+  background: #333;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.event-time {
+  color: #42b883;
+  margin-right: 12px;
+}
+
+.event-type {
+  color: #4dc9ff;
+  margin-right: 12px;
+}
+
+.event-data {
+  margin: 8px 0 0 0;
+  padding: 8px;
+  background: #222;
+  border-radius: 4px;
+  color: #ddd;
+  font-family: monospace;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+@media (max-width: 1200px) {
+  .settings-container {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
+        
