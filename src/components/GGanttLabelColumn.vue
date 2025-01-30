@@ -54,7 +54,8 @@ const {
   dateFormat,
   rowLabelClass,
   labelResizable,
-  enableRowDragAndDrop
+  enableRowDragAndDrop,
+  hideTimeaxis
 } = provideConfig()
 
 const { toDayjs, format } = useDayjsHelper()
@@ -469,6 +470,7 @@ defineExpose({
   >
     <div
       class="g-label-column-header"
+      v-if="!hideTimeaxis"
       :style="{ background: colors.primary, borderBottom: `1px solid ${colors.gridAndBorder}` }"
     >
       <template v-for="column in columns" :key="column">
