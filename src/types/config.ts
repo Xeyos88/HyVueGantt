@@ -74,7 +74,6 @@ export type GGanttBooleanConfig = {
   commands?: boolean
   enableMinutes?: boolean
   sortable?: boolean
-  enableRowDragAndDrop?: boolean
 }
 
 export interface GanttCommandSlot {

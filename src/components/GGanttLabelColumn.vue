@@ -39,7 +39,7 @@ if (!rowManager) {
 }
 
 const { rows, sortState, toggleSort } = rowManager
-const { sortable, enableRowDragAndDrop } = provideBooleanConfig()
+const { sortable } = provideBooleanConfig()
 const {
   font,
   colors,
@@ -53,7 +53,8 @@ const {
   barEnd,
   dateFormat,
   rowLabelClass,
-  labelResizable
+  labelResizable,
+  enableRowDragAndDrop
 } = provideConfig()
 
 const { toDayjs, format } = useDayjsHelper()
@@ -161,7 +162,7 @@ const handleGroupToggle = (row: ChartRow, event: Event) => {
 }
 
 const getDragClasses = (row: ChartRow) => {
-  if (!enableRowDragAndDrop) return {}
+  if (!enableRowDragAndDrop.value) return {}
 
   const isTarget = dragState.value.dropTarget.row === row
   const isDragged = dragState.value.draggedRow === row
@@ -376,7 +377,7 @@ let touchStartTime = 0
 const LONG_PRESS_DURATION = 500
 
 const onRowTouchStart = (e: TouchEvent, row: ChartRow) => {
-  if (!enableRowDragAndDrop || sortState.value.direction !== "none") return
+  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
 
   touchStartTime = Date.now()
   const element = e.currentTarget as HTMLElement
@@ -384,7 +385,7 @@ const onRowTouchStart = (e: TouchEvent, row: ChartRow) => {
 }
 
 const onRowTouchMove = (e: TouchEvent, targetRow: ChartRow) => {
-  if (!enableRowDragAndDrop || sortState.value.direction !== "none") return
+  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
 
   if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
     resetRowTouchState()
@@ -396,7 +397,7 @@ const onRowTouchMove = (e: TouchEvent, targetRow: ChartRow) => {
 }
 
 const onRowTouchEnd = (e: TouchEvent) => {
-  if (!enableRowDragAndDrop || sortState.value.direction !== "none") return
+  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
 
   if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
     const target = e.target as HTMLElement
