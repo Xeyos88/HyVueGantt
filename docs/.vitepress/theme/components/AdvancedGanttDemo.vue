@@ -383,7 +383,7 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
-                Custom Time Label:
+                Custom Current Time Label:
                 <input type="checkbox" v-model="customSlots.currentTimeLabel">
               </label>
             </div>
