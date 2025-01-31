@@ -6,7 +6,8 @@ const sections = ref<{ [key: string]: boolean }>({
   timeConfig: false,
   displayConfig: false,
   connectionConfig: false,
-  behaviorConfig: false
+  behaviorConfig: false,
+  slotsConfig: false
 })
 
 const toggleSection = (section: string) => {
@@ -84,6 +85,20 @@ const availableConnectionSpeeds = ['slow', 'normal', 'fast']
 const availableMarkerTypes = ['none', 'forward', 'bidirectional']
 const availableDayOptions = ['day', 'name', 'doy', 'number']
 
+// Slot Customization Settings
+const customSlots = ref({
+  commands: false,
+  barLabel: false,
+  barTooltip: false,
+  currentTimeLabel: false,
+  upperTimeunit: false
+})
+
+// Custom Styles
+const customCommandStyle = ref({
+  borderRadius: '4px',
+  gap: '12px',
+})
 
 // Event Logging
 const eventLog = ref<Array<{type: string, data: any, timestamp: number}>>([])
@@ -342,6 +357,44 @@ const formattedEventLog = computed(() => {
             </div>
           </div>
         </div>
+
+        <div class="settings-group">
+          <h4 @click="toggleSection('slotConfig')" class="toggle-header">Slot Customization
+            <span :class="{'arrow-down': sections.slotConfig, 'arrow-up': !sections.slotConfig}">▼</span>
+          </h4>
+          <div v-if="sections.slotConfig" class="settings-grid">
+            <div class="setting-item">
+              <label>
+                Custom Commands:
+                <input type="checkbox" v-model="customSlots.commands">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Custom Bar Label:
+                <input type="checkbox" v-model="customSlots.barLabel">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Custom Bar Tooltip:
+                <input type="checkbox" v-model="customSlots.barTooltip">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Custom Time Label:
+                <input type="checkbox" v-model="customSlots.currentTimeLabel">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Custom Time Unit:
+                <input type="checkbox" v-model="customSlots.upperTimeunit">
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="settings-column">
@@ -522,7 +575,90 @@ const formattedEventLog = computed(() => {
           :bars="row.bars"
           :children="row.children"
           highlightOnHover
-        />
+        >
+          <!-- Custom Bar Label Slot -->
+          <template v-if="customSlots.barLabel" #bar-label="{ bar }">
+            <div class="custom-bar-label">
+              <span class="bar-icon">🔷</span>
+              <span class="bar-title">{{ bar.ganttBarConfig.label }}</span>
+              <span class="bar-id">#{{ bar.ganttBarConfig.id }}</span>
+            </div>
+          </template>
+        </g-gantt-row>
+
+        <template v-if="customSlots.commands" #commands="{ 
+          zoomIn, zoomOut, scrollRowUp, scrollRowDown,
+          handleToStart, handleBack, handleForward, handleToEnd,
+          expandAllGroups, collapseAllGroups,
+          undo, redo, canUndo, canRedo,
+          isAtTop, isAtBottom, zoomLevel 
+        }">
+          <div class="custom-commands" :style="customCommandStyle">
+            <div class="command-group">
+              <span class="command-label">Zoom</span>
+              <button class="command-button" @click="zoomOut" :disabled="zoomLevel === 1">-</button>
+              <span>{{ zoomLevel }}x</span>
+              <button class="command-button" @click="zoomIn" :disabled="zoomLevel === 10">+</button>
+            </div>
+          
+
+          
+            <div class="command-group">
+              <span class="command-label">Navigation</span>
+              <button class="command-button" @click="handleToStart">⟪</button>
+              <button class="command-button" @click="handleBack">⟨</button>
+              <button class="command-button" @click="handleForward">⟩</button>
+              <button class="command-button" @click="handleToEnd">⟫</button>
+            </div>
+
+            <div class="command-group">
+              <span class="command-label">Rows</span>
+              <button class="command-button" @click="scrollRowUp" :disabled="isAtTop">↑</button>
+              <button class="command-button" @click="scrollRowDown" :disabled="isAtBottom">↓</button>
+            </div>
+
+            <div class="command-group">
+              <span class="command-label">Groups</span>
+              <button class="command-button" @click="expandAllGroups">Expand</button>
+              <button class="command-button" @click="collapseAllGroups">Collapse</button>
+            </div>
+
+            <div class="command-group">
+              <span class="command-label">History</span>
+              <button class="command-button" @click="undo" :disabled="!canUndo">Undo</button>
+              <button class="command-button" @click="redo" :disabled="!canRedo">Redo</button>
+            </div>
+
+        </div>
+      </template>
+  
+
+        <!-- Custom Bar Tooltip Slot -->
+        <template v-if="customSlots.barTooltip" #bar-tooltip="{ bar, barStart, barEnd }">
+          <div class="custom-tooltip">
+            <div class="tooltip-header">{{ bar.ganttBarConfig.label }}</div>
+            <div class="tooltip-content">
+              <div>Start: {{ new Date(barStart).toLocaleDateString() }}</div>
+              <div>End: {{ new Date(barEnd).toLocaleDateString() }}</div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Custom Current Time Label Slot -->
+        <template v-if="customSlots.currentTimeLabel" #current-time-label>
+          <div class="custom-time-label">
+            <span class="time-icon">⌚</span>
+            <span>{{ new Date().toLocaleTimeString() }}</span>
+          </div>
+        </template>
+
+        <!-- Custom Upper Time Unit Slot -->
+        <template v-if="customSlots.upperTimeunit" #upper-timeunit="{ label, value, date }">
+          <div class="custom-timeunit">
+            <div class="timeunit-label">{{ label }}</div>
+            <div class="timeunit-date">{{ new Date(date).toLocaleDateString() }}</div>
+          </div>
+        </template>
       </g-gantt-chart>
 
       <!-- Event Log Panel -->
@@ -691,6 +827,102 @@ const formattedEventLog = computed(() => {
 
 .arrow-up {
   transition: transform 0.3s ease;
+}
+
+.custom-commands {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+}
+
+.command-group {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.command-button {
+  padding: 2px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #fff;
+  font-size: 10px;
+}
+
+.command-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.command-label {
+  font-size: 0.8em;
+  color: #fff;
+  font-weight: 600;
+}
+
+.custom-bar-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  width: 100%;
+}
+
+.bar-icon {
+  font-size: 12px;
+}
+
+.bar-title {
+  flex: 1;
+  font-weight: 500;
+}
+
+.bar-id {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.custom-tooltip {
+  background: rgba(0, 0, 0, 0.9);
+  padding: 8px;
+  border-radius: 4px;
+  min-width: 200px;
+}
+
+.tooltip-header {
+  color: #42b883;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.tooltip-content {
+  font-size: 12px;
+  color: white;
+}
+
+.custom-time-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #42b883;
+}
+
+.custom-timeunit {
+  text-align: center;
+  font-size: 12px;
+}
+
+.timeunit-label {
+  font-weight: 500;
+}
+
+.timeunit-date {
+  font-size: 10px;
+  opacity: 0.7;
 }
 
 @media (max-width: 1200px) {
