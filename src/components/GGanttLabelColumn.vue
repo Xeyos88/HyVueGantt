@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import provideConfig from "../provider/provideConfig"
-import provideBooleanConfig from "../provider/provideBooleanConfig"
 import { ref, computed, inject, reactive, onMounted } from "vue"
 import type { CSSProperties } from "vue"
 import type {
@@ -22,7 +21,7 @@ import useDayjsHelper from "../composables/useDayjsHelper"
 import type { UseRowsReturn } from "../composables/useRows"
 import { useRowDragAndDrop } from "../composables/useRowDragAndDrop"
 import { useColumnTouchResize } from "../composables/useColumnTouchResize"
-import { useRowTouchDrag } from '../composables/useRowTouchDrag'
+import { useRowTouchDrag } from "../composables/useRowTouchDrag"
 
 interface LabelColumnRowProps extends ChartRow {
   indentLevel?: number
@@ -39,7 +38,6 @@ if (!rowManager) {
 }
 
 const { rows, sortState, toggleSort } = rowManager
-const { sortable, labelResizable, enableRowDragAndDrop } = provideBooleanConfig()
 const {
   font,
   colors,
@@ -52,7 +50,11 @@ const {
   barStart,
   barEnd,
   dateFormat,
-  rowLabelClass
+  rowLabelClass,
+  labelResizable,
+  enableRowDragAndDrop,
+  hideTimeaxis,
+  sortable
 } = provideConfig()
 
 const { toDayjs, format } = useDayjsHelper()
@@ -84,16 +86,16 @@ const initializeColumnWidths = () => {
 
 const columns = computed<LabelColumnConfig[]>(() => {
   if (!multiColumnLabel.value?.length || !labelColumnTitle.value) {
-    return [{ field: "Label", sortable: true }]
+    return [{ field: "Label", sortable: sortable.value }]
   }
   const filteredColumns = multiColumnLabel.value.filter((col) => col.field !== "Label")
-  const labelColumn = { field: "Label", sortable: true }
+  const labelColumn = { field: "Label", sortable: sortable.value }
   return [labelColumn, ...filteredColumns]
 })
 
 const getVisibleColumns = (row: ChartRow) => {
   if (row.children && row.children.length > 0) {
-    return [{ field: "Label", sortable: true }]
+    return [{ field: "Label", sortable: sortable.value }]
   }
   return columns.value
 }
@@ -160,7 +162,7 @@ const handleGroupToggle = (row: ChartRow, event: Event) => {
 }
 
 const getDragClasses = (row: ChartRow) => {
-  if (!enableRowDragAndDrop) return {}
+  if (!enableRowDragAndDrop.value) return {}
 
   const isTarget = dragState.value.dropTarget.row === row
   const isDragged = dragState.value.draggedRow === row
@@ -333,12 +335,19 @@ const isValidColumn = (field: string): field is LabelColumnField => {
   return ["Id", "Label", "StartDate", "EndDate", "Duration"].includes(field)
 }
 
-const isSortable = (column: LabelColumnConfig) => {
-  if (column.sortable === false) return false
-  return (
-    (sortable || (!sortable && column.sortable)) && (isValidColumn(column.field) || column.sortFn)
+const columnSortableStates = computed(() =>
+  columns.value.reduce(
+    (acc, column) => {
+      acc[column.field] = !!(
+        column.sortable !== false &&
+        (sortable.value || (!sortable.value && column.sortable)) &&
+        (isValidColumn(column.field) || column.sortFn)
+      )
+      return acc
+    },
+    {} as Record<string, boolean>
   )
-}
+)
 
 const handleLabelScroll = (e: Event) => {
   const target = e.target as HTMLElement
@@ -375,15 +384,15 @@ let touchStartTime = 0
 const LONG_PRESS_DURATION = 500
 
 const onRowTouchStart = (e: TouchEvent, row: ChartRow) => {
-  if (!enableRowDragAndDrop || sortState.value.direction !== 'none') return
-  
+  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
+
   touchStartTime = Date.now()
   const element = e.currentTarget as HTMLElement
   handleRowTouchStart(e, row, element)
 }
 
 const onRowTouchMove = (e: TouchEvent, targetRow: ChartRow) => {
-  if (!enableRowDragAndDrop || sortState.value.direction !== 'none') return
+  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
 
   if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
     resetRowTouchState()
@@ -395,13 +404,13 @@ const onRowTouchMove = (e: TouchEvent, targetRow: ChartRow) => {
 }
 
 const onRowTouchEnd = (e: TouchEvent) => {
-  if (!enableRowDragAndDrop || sortState.value.direction !== 'none') return
+  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
 
   if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
     const target = e.target as HTMLElement
-    const button = target.closest('.group-toggle-button')
+    const button = target.closest(".group-toggle-button")
     if (button) {
-      const rowElement = target.closest('[data-row-id]') as HTMLElement
+      const rowElement = target.closest("[data-row-id]") as HTMLElement
       if (rowElement) {
         const rowId = rowElement.dataset.rowId
         if (rowId) {
@@ -415,12 +424,12 @@ const onRowTouchEnd = (e: TouchEvent) => {
 
   const result = handleRowTouchEnd(e)
   if (result && result.sourceRow && result.dropTarget.row) {
-    let newIndex = getProcessedRows.value.findIndex(r => r === result.dropTarget.row)
-    if (result.dropTarget.position === 'after') {
+    let newIndex = getProcessedRows.value.findIndex((r) => r === result.dropTarget.row)
+    if (result.dropTarget.position === "after") {
       newIndex += 1
     }
 
-    const sourceIndex = getProcessedRows.value.findIndex(r => r === result.sourceRow)
+    const sourceIndex = getProcessedRows.value.findIndex((r) => r === result.sourceRow)
     if (sourceIndex < newIndex) {
       newIndex -= 1
     }
@@ -429,7 +438,7 @@ const onRowTouchEnd = (e: TouchEvent) => {
       sourceRow: result.sourceRow,
       targetRow: result.dropTarget.row,
       newIndex: newIndex,
-      parentId: result.dropTarget.position === 'child' ? result.dropTarget.row.id : undefined
+      parentId: result.dropTarget.position === "child" ? result.dropTarget.row.id : undefined
     }
 
     const newRows = [...getProcessedRows.value]
@@ -437,7 +446,7 @@ const onRowTouchEnd = (e: TouchEvent) => {
     newRows.splice(newIndex, 0, result.sourceRow)
     rowManager.updateRows(newRows)
 
-    emit('row-drop', payload)
+    emit("row-drop", payload)
   }
 }
 
@@ -460,34 +469,34 @@ defineExpose({
     :style="{
       fontFamily: font,
       color: colors.text,
-      width: `${totalWidth}px`,
-      minWidth: `${totalWidth}px`,
+      minWidth: `100%`,
       flex: `0 0 ${totalWidth}px`,
       borderRight: `1px solid ${colors.gridAndBorder}`
     }"
   >
     <div
       class="g-label-column-header"
+      v-if="!hideTimeaxis"
       :style="{ background: colors.primary, borderBottom: `1px solid ${colors.gridAndBorder}` }"
     >
       <template v-for="column in columns" :key="column">
         <div
           v-if="isValidColumn(column.field) || column.valueGetter"
           class="g-label-column-header-cell"
-          :class="{ sortable: isSortable(column) }"
+          :class="{ sortable: columnSortableStates[column.field] }"
           role="columnheader"
           :style="getColumnStyle(column.field, false)"
         >
           <div
             class="header-content"
-            @click="isSortable(column) ? toggleSort(column.field) : undefined"
+            @click="columnSortableStates[column.field] ? toggleSort(column.field) : undefined"
           >
             <span class="text-ellipsis">
-              <slot name="label-column-title">
+              <slot :name="`label-column-title-${column.field.toLowerCase()}`">
                 {{ column.field }}
               </slot>
             </span>
-            <span v-if="isSortable(column)" class="sort-icon">
+            <span v-if="columnSortableStates[column.field]" class="sort-icon">
               <FontAwesomeIcon :icon="getSortIcon(column.field)" />
             </span>
           </div>
@@ -526,16 +535,22 @@ defineExpose({
               : colors.quartenary,
           height: `${rowHeight}px`,
           borderBottom: `1px solid ${colors.gridAndBorder}`,
-           transform: rowTouchState.draggedRow === row 
-            ? `translateY(${rowTouchState.currentY - rowTouchState.startY}px)`
-            : undefined,
+          transform:
+            rowTouchState.draggedRow === row
+              ? `translateY(${rowTouchState.currentY - rowTouchState.startY}px)`
+              : undefined,
           zIndex: rowTouchState.draggedRow === row ? 1000 : undefined
         }"
-        :class="[rowClasses(row), getDragClasses(row), {
-          'is-touch-dragging': rowTouchState.draggedRow === row,
-          'is-touch-drop-target': rowTouchState.dropTarget.row === row,
-          [`is-touch-drop-${rowTouchState.dropTarget.position}`]: rowTouchState.dropTarget.row === row
-        }]"
+        :class="[
+          rowClasses(row),
+          getDragClasses(row),
+          {
+            'is-touch-dragging': rowTouchState.draggedRow === row,
+            'is-touch-drop-target': rowTouchState.dropTarget.row === row,
+            [`is-touch-drop-${rowTouchState.dropTarget.position}`]:
+              rowTouchState.dropTarget.row === row
+          }
+        ]"
         :draggable="enableRowDragAndDrop"
         @dragstart="handleRowDragStart(row, $event)"
         @dragover="handleDragOver(row, $event)"
@@ -833,5 +848,10 @@ defineExpose({
   .group-toggle-button {
     padding: 12px;
   }
+}
+
+.g-label-column-header-cell-ex {
+  position: relative;
+  flex-grow: 1;
 }
 </style>

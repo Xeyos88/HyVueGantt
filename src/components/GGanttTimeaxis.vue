@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import provideConfig from "../provider/provideConfig"
-import provideBooleanConfig from "../provider/provideBooleanConfig"
 import { capitalizeWords } from "../composables/useTimeaxisUnits"
-import { computed, ref } from "vue"
+import { computed, ref, toRefs } from "vue"
 import useDayjsHelper from "../composables/useDayjsHelper"
 import type { TimeaxisData, TimeaxisUnit, TimeUnit } from "@/types"
 import GGanttHolidayTooltip from "./GGanttHolidayTooltip.vue"
 
-const { precision, colors, holidayHighlight, dayOptionLabel } = provideConfig()
+const { precision, colors, holidayHighlight, dayOptionLabel, enableMinutes } = provideConfig()
 const { toDayjs } = useDayjsHelper()
 
 const timeaxisElement = ref<HTMLElement | null>(null)
@@ -17,7 +16,7 @@ const props = defineProps<{
   internalPrecision: TimeUnit
 }>()
 
-const { enableMinutes } = provideBooleanConfig()
+const { timeaxisUnits, internalPrecision } = toRefs(props)
 
 const emit = defineEmits<{
   (e: "dragStart", value: MouseEvent): void
@@ -30,9 +29,9 @@ const handleMouseDown = (e: MouseEvent) => {
 }
 
 const dayUnitLevel = computed(() => {
-  if (props.internalPrecision === "hour") {
+  if (internalPrecision.value === "hour") {
     return "upper"
-  } else if (props.internalPrecision === "day") {
+  } else if (internalPrecision.value === "day") {
     return "lower"
   }
   return null
@@ -114,7 +113,7 @@ defineExpose({ timeaxisElement })
     <div class="g-timeunits-container">
       <div
         v-for="(unit, index) in timeaxisUnits.result.upperUnits"
-        :key="unit.label"
+        :key="unit.date.toISOString()"
         class="g-upper-timeunit"
         :style="{
           background: index % 2 === 0 ? colors.primary : colors.secondary,
@@ -239,6 +238,7 @@ defineExpose({ timeaxisElement })
 .label-unit {
   flex-grow: 1;
   text-align: center;
+  line-height: normal;
 }
 
 .g-timeunit-min {

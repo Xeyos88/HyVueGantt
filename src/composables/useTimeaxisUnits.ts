@@ -2,9 +2,9 @@ import { computed, ref, watch } from "vue"
 import type { Dayjs, ManipulateType } from "dayjs"
 import useDayjsHelper from "./useDayjsHelper"
 import provideConfig from "../provider/provideConfig"
-import provideBooleanConfig from "../provider/provideBooleanConfig"
 import type { GGanttChartConfig, TimeaxisUnit, TimeUnit } from "../types"
 import { useHolidays } from "./useHolidays"
+import dayjs from "dayjs"
 
 /**
  * Base width for time unit elements (in pixels)
@@ -100,16 +100,11 @@ export const capitalizeWords = (str: string): string => {
  * - Timestamp-based calculations for week handling
  *
  * @param config - Optional Gantt chart configuration
- * @param enableMinutes - Flag to enable minute-level precision
  * @returns Object containing timeaxis state and control methods
  */
-export default function useTimeaxisUnits(
-  config: GGanttChartConfig = provideConfig(),
-  enableMinutes = provideBooleanConfig().enableMinutes
-) {
+export default function useTimeaxisUnits(config: GGanttChartConfig = provideConfig()) {
   const { getHolidayInfo } = useHolidays(config)
-  const { precision: configPrecision, holidayHighlight } = config
-  const { chartStartDayjs, chartEndDayjs } = useDayjsHelper(config)
+  const { precision: configPrecision, holidayHighlight, locale } = config
 
   // Internal state
   const internalPrecision = ref<TimeUnit>(configPrecision.value)
@@ -262,11 +257,27 @@ export default function useTimeaxisUnits(
     }
   }
 
+  watch(
+    () => configPrecision.value,
+    () => {
+      internalPrecision.value = configPrecision.value
+      zoomLevel.value = DEFAULT_ZOOM
+    }
+  )
+
+  watch([() => holidayHighlight.value, () => locale.value], () => {
+    dayjs.locale(locale.value)
+    cache.lower.clear()
+    cache.upper.clear()
+  })
+
   /**
    * Main computed property for time axis units
    * Implements caching and optimized calculations
    */
   const timeaxisUnits = computed(() => {
+    const { chartStartDayjs, chartEndDayjs } = useDayjsHelper(config)
+
     const lowerCacheKey = getCacheKey(
       chartStartDayjs.value,
       chartEndDayjs.value,
@@ -367,7 +378,7 @@ export default function useTimeaxisUnits(
    * Calculates minute steps based on current settings
    */
   const calculateMinuteSteps = () => {
-    if (!enableMinutes || internalPrecision.value !== "hour") {
+    if (!config.enableMinutes.value || internalPrecision.value !== "hour") {
       return []
     }
 

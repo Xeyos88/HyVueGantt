@@ -143,7 +143,7 @@ const visibleChildRows = computed(() => {
           :bar="bar"
           :class="{ 'g-gantt-group-bar': isGroup }"
         >
-          <slot name="bar-label" :bar="bar" />
+          <slot name="bar-label" :bar="bar" v-if="!isGroup" />
         </g-gantt-bar>
       </transition-group>
     </div>

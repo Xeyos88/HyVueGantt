@@ -87,13 +87,9 @@ beforeAll(() => {
       defaultConnectionColor: ref("#ff0000"),
       defaultConnectionAnimated: ref(false),
       defaultConnectionAnimationSpeed: ref(1000),
-      locale: ref("en")
-    },
-    [BOOLEAN_KEY]: {
-      commands: true,
-      enableMinutes: false,
-      sortable: true,
-      labelResizable: true
+      locale: ref("en"),
+      sortable: ref(true),
+      enableRowDragAndDrop: ref(true)
     },
     [EMIT_BAR_EVENT_KEY]: () => {},
     [BAR_CONTAINER_KEY]: ref(barContainerElement),
