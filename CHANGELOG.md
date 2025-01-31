@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v2.3.0](https://github.com/Xeyos88/HyVueGantt/tree/v2.3.0) (2025-01-31)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v2.2.0...v2.3.0)
+
+
+
+**📚 Documentation:**
+
+- Advanced demo slots
+- Advanced Gantt Demo
+- fix some docs
+- Update changelog
+
+**⚠ BREAKING CHANGES:**
+
+- The commands slot now totally replaces the command area, exposing all useful methods
+
+**🐛 Fix:**
+
+- Chart and label misalignment with timeaxis hide
+- Expand and Collapse all buttons disabled status
+- Reactivity of defaultConnections props
+- Reactivity of enableMinutes prop
+- Reactivity of enableRowDragAndDrop prop
+- Reactivity of labelResizable prop
+- Reactivity of locale and holiday props
+- Reactivity of precision prop
+- Reactivity of sortable prop
+
+**✨ New Features:**
+
+- History managment by keyboard
+- History mode, undo and redo of actions
+- Label column section resizable
+- With grouped rows the commands now contain the functions expand all or collapse all
+
 ## [v2.2.0](https://github.com/Xeyos88/HyVueGantt/tree/v2.2.0) (2025-01-25)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v2.1.0...v2.2.0)
