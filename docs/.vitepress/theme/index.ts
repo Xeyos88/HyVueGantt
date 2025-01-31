@@ -31,8 +31,8 @@ const TimeGanttDemo = defineClientComponent(() => {
   return import('./components/TimeGanttDemo.vue')
 })
 
-const AdvancedGanttDemo = defineClientComponent(() => {
-  return import('./components/AdvancedGanttDemo.vue')
+const BarSlotGanttDemo = defineClientComponent(() => {
+  return import('./components/BarSlotGanttDemo.vue')
 })
 
 const OtherGanttDemo = defineClientComponent(() => {
@@ -55,6 +55,14 @@ const EventsGanttDemo = defineClientComponent(() => {
   return import('./components/EventsGanttDemo.vue')
 })
 
+const CommandsGanttDemo = defineClientComponent(() => {
+  return import('./components/CommandsGanttDemo.vue')
+})
+
+const AdvancedGanttDemo = defineClientComponent(() => {
+  return import('./components/AdvancedGanttDemo.vue')
+})
+
 
 export default {
   extends: DefaultTheme,
@@ -63,11 +71,13 @@ export default {
     app.component('BasicGanttDemo', GanttDemo)
     app.component('ConnectionsGanttDemo', ConnectionsGanttDemo)
     app.component('TimeGanttDemo', TimeGanttDemo)
-    app.component('AdvancedGanttDemo', AdvancedGanttDemo)
+    app.component('BarSlotGanttDemo', BarSlotGanttDemo)
     app.component('OtherGanttDemo', OtherGanttDemo)
     app.component('MultiColumnDemo', MultiColumnDemo)
     app.component('HolidayGanttDemo', HolidayGanttDemo)
     app.component('GroupingGanttDemo', GroupingGanttDemo)
     app.component('EventsGanttDemo', EventsGanttDemo)
+    app.component('CommandsGanttDemo',CommandsGanttDemo)
+    app.component('AdvancedGanttDemo',AdvancedGanttDemo)
   }
 }

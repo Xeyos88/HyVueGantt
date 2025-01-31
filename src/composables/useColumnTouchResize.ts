@@ -1,5 +1,8 @@
 import { ref } from "vue"
 
+/**
+ * Interface defining the state for touch-based column resizing
+ */
 interface TouchResizeState {
   isResizing: boolean
   startX: number
@@ -7,6 +10,11 @@ interface TouchResizeState {
   initialWidth: number
 }
 
+/**
+ * A composable that manages touch-based column resizing functionality
+ * Handles touch events and width calculations for responsive column sizing
+ * @returns Object containing resize state and event handlers
+ */
 export function useColumnTouchResize() {
   const touchState = ref<TouchResizeState>({
     isResizing: false,
@@ -15,6 +23,10 @@ export function useColumnTouchResize() {
     initialWidth: 0
   })
 
+  /**
+   * Resets resize state to initial values
+   * Called when resize operation ends or is cancelled
+   */
   const resetTouchState = () => {
     touchState.value = {
       isResizing: false,
@@ -24,6 +36,13 @@ export function useColumnTouchResize() {
     }
   }
 
+  /**
+   * Initializes touch resize operation
+   * Sets up initial positions and state for resizing
+   * @param e - Touch event that started the resize
+   * @param column - Column being resized
+   * @param currentWidth - Current width of the column
+   */
   const handleTouchStart = (e: TouchEvent, column: string, currentWidth: number) => {
     const touch = e.touches[0]
     if (!touch) return
@@ -38,6 +57,12 @@ export function useColumnTouchResize() {
     }
   }
 
+  /**
+   * Handles ongoing touch resize movement
+   * Calculates and applies new column width
+   * @param e - Touch move event
+   * @param onResize - Callback function to update column width
+   */
   const handleTouchMove = (e: TouchEvent, onResize: (column: string, newWidth: number) => void) => {
     const touch = e.touches[0]
     if (!touch || !touchState.value.isResizing) return
@@ -52,12 +77,20 @@ export function useColumnTouchResize() {
     }
   }
 
+  /**
+   * Finalizes touch resize operation
+   * Cleans up state and event listeners
+   */
   const handleTouchEnd = () => {
     if (touchState.value.isResizing) {
       resetTouchState()
     }
   }
 
+  /**
+   * Handles touch cancel event
+   * Behaves same as touch end
+   */
   const handleTouchCancel = handleTouchEnd
 
   return {

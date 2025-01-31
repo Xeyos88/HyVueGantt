@@ -1,6 +1,6 @@
 {
   "name": "hy-vue-gantt",
-  "version": "2.2.0",
+  "version": "3.0.0",
   "description": "Evolution of vue-ganttastic package",
   "author": "Eugenio Topa (@Xeyos88)",
   "scripts": {
@@ -40,6 +40,7 @@
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@senojs/rollup-plugin-style-inject": "^0.2.3",
+    "@types/lodash-es": "^4.17.12",
     "@types/node": "^22.10.1",
     "@types/postcss-preset-env": "^7.7.0",
     "@vitejs/plugin-vue": "^5.2.1",
@@ -93,6 +94,7 @@
   },
   "dependencies": {
     "@tsconfig/node22": "^22.0.0",
+    "lodash-es": "^4.17.21",
     "uuid": "^11.0.5"
   }
 }

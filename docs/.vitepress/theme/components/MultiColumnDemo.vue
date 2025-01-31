@@ -104,6 +104,7 @@ const rows = ref([
       :multi-column-label="multiColumnLabel"
       sortable
       color-scheme="slumber"
+      
     >
       <template #label-column-label="{ value }">
         <div class="custom-label">

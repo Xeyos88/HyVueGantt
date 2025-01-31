@@ -28,7 +28,8 @@ import type {
   RowDragEvent,
   SortFunction,
   SortState,
-  SortDirection
+  SortDirection,
+  TimeUnit
 } from "./types"
 
 import "dayjs/locale/it"
@@ -117,7 +118,8 @@ export type {
   RowDragEvent,
   SortFunction,
   SortState,
-  SortDirection
+  SortDirection,
+  TimeUnit
 }
 export { GGanttChart, GGanttRow }
 

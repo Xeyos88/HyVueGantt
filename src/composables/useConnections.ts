@@ -36,26 +36,17 @@ export function useConnections(
       return null
     }
 
-    const defaultProps = {
-      type: props.defaultConnectionType,
-      color: props.defaultConnectionColor,
-      pattern: props.defaultConnectionPattern,
-      animated: props.defaultConnectionAnimated,
-      animationSpeed: props.defaultConnectionAnimationSpeed
-    }
-
     const connectionProps = {
-      type: conn.type,
-      color: conn.color,
-      pattern: conn.pattern,
-      animated: conn.animated,
-      animationSpeed: conn.animationSpeed
+      type: conn.type ?? props.defaultConnectionType,
+      color: conn.color ?? props.defaultConnectionColor,
+      pattern: conn.pattern ?? props.defaultConnectionPattern,
+      animated: conn.animated ?? props.defaultConnectionAnimated,
+      animationSpeed: conn.animationSpeed ?? props.defaultConnectionAnimationSpeed
     }
 
     return {
       sourceBar,
       targetBar,
-      ...defaultProps,
       ...connectionProps
     }
   })

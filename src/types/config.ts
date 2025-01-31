@@ -74,6 +74,25 @@ export type GGanttBooleanConfig = {
   commands?: boolean
   enableMinutes?: boolean
   sortable?: boolean
-  labelResizable?: boolean
-  enableRowDragAndDrop?: boolean
+}
+
+export interface GanttCommandSlot {
+  zoomIn: () => void
+  zoomOut: () => void
+  scrollRowUp: () => void
+  scrollRowDown: () => void
+  expandAllGroups: () => void
+  collapseAllGroups: () => void
+  handleToStart: () => void
+  handleBack: () => void
+  handleScroll: () => void
+  handleForward: () => void
+  handleToEnd: () => void
+  undo: () => void
+  redo: () => void
+  canUndo: Ref<boolean>
+  canRedo: Ref<boolean>
+  isAtTop: Ref<boolean>
+  isAtBottom: Ref<boolean>
+  zoomLevel: Ref<number>
 }
