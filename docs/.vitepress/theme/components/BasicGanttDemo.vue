@@ -14,6 +14,8 @@ const rows = ref([
           label: 'Project Setup',
           immobile: true,
           style: { background: '#FF6B6B' },
+          progress: 50,
+          progressResizable: true
         },
         start: '2024-12-10 09:00',
         end: '2024-12-10 12:00',

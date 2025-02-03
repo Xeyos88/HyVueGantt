@@ -1,20 +1,50 @@
-import { ref } from "vue"
+import { ref, type Ref } from "vue"
 import type { ChartRow } from "../types"
 
 /**
- * Interface defining the state for touch-based row dragging
+ * Type Drop position
+ */
+type DropPosition = "before" | "after" | "child"
+
+/**
+ * Target release state
+ */
+interface DropTarget {
+  row: ChartRow | null
+  position: DropPosition
+}
+
+/**
+ * Result of the drag and drop operation
+ */
+interface DragResult {
+  sourceRow: ChartRow | null
+  dropTarget: DropTarget
+  dropPosition: DropPosition
+}
+
+/**
+ * Complete state of the touch drag operation
  */
 interface TouchDragState {
   isDragging: boolean
   startY: number
   currentY: number
   draggedRow: ChartRow | null
-  dropTarget: {
-    row: ChartRow | null
-    position: "before" | "after" | "child"
-  }
+  dropTarget: DropTarget
   dragElement: HTMLElement | null
   initialTransform: string
+}
+
+/**
+ * Return type del composable
+ */
+interface RowTouchDragReturn {
+  touchState: Ref<TouchDragState>
+  handleTouchStart: (event: TouchEvent, row: ChartRow, element: HTMLElement) => void
+  handleTouchMove: (event: TouchEvent, targetRow: ChartRow, rowElement: HTMLElement) => void
+  handleTouchEnd: (event: TouchEvent) => DragResult | null
+  resetTouchState: () => void
 }
 
 /**
@@ -22,7 +52,7 @@ interface TouchDragState {
  * Handles touch events, visual feedback, and drop position detection
  * @returns Object containing touch state and event handlers
  */
-export function useRowTouchDrag() {
+export function useRowTouchDrag(): RowTouchDragReturn {
   const touchState = ref<TouchDragState>({
     isDragging: false,
     startY: 0,

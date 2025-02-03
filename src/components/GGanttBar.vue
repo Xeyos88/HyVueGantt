@@ -142,6 +142,83 @@ const getGroupBarPath = (width: number, height: number) => {
     L 0 0
   `
 }
+
+const progressStyle = computed(() => {
+  const progress = props.bar.ganttBarConfig.progress ?? 0
+  const baseStyle = props.bar.ganttBarConfig.progressStyle || {}
+
+  return {
+    ...baseStyle,
+    left: 0,
+    width: `${Math.min(Math.max(progress, 0), 100)}%`,
+    backgroundColor: baseStyle.backgroundColor || "#4CAF50",
+    transition: "width 0.3s ease",
+    borderRadius: "inherit",
+    height: "100%"
+  }
+})
+
+const isProgressDragging = ref(false)
+const progressDragStart = ref(0)
+const initialProgress = ref(0)
+
+const handleProgressDragStart = (e: MouseEvent) => {
+  if (!props.bar.ganttBarConfig.progressResizable) return
+
+  e.stopPropagation()
+  isProgressDragging.value = true
+  progressDragStart.value = e.clientX
+  initialProgress.value = props.bar.ganttBarConfig.progress ?? 0
+
+  window.addEventListener("mousemove", handleProgressDrag)
+  window.addEventListener("mouseup", handleProgressDragEnd)
+
+  emitBarEvent(
+    {
+      ...e,
+      type: "progress-drag-start"
+    },
+    props.bar
+  )
+}
+
+const handleProgressDrag = (e: MouseEvent) => {
+  if (!isProgressDragging.value) return
+
+  const barElement = document.getElementById(props.bar.ganttBarConfig.id)
+  if (!barElement) return
+
+  const rect = barElement.getBoundingClientRect()
+  const deltaX = e.clientX - progressDragStart.value
+  const percentageDelta = (deltaX / rect.width) * 100
+
+  let newProgress = Math.min(Math.max(initialProgress.value + percentageDelta, 0), 100)
+  props.bar.ganttBarConfig.progress = Math.round(newProgress)
+
+  emitBarEvent(
+    {
+      ...e,
+      type: "progress-change"
+    },
+    props.bar
+  )
+}
+
+const handleProgressDragEnd = (e: MouseEvent) => {
+  if (!isProgressDragging.value) return
+
+  isProgressDragging.value = false
+  window.removeEventListener("mousemove", handleProgressDrag)
+  window.removeEventListener("mouseup", handleProgressDragEnd)
+
+  emitBarEvent(
+    {
+      ...e,
+      type: "progress-drag-end"
+    },
+    props.bar
+  )
+}
 </script>
 
 <template>
@@ -175,6 +252,17 @@ const getGroupBarPath = (width: number, height: number) => {
     tabindex="0"
     :aria-describedby="`tooltip-${barConfig.id}`"
   >
+    <div
+      v-if="barConfig.progress !== undefined"
+      class="g-gantt-progress-bar"
+      :style="progressStyle"
+    >
+      <div
+        v-if="barConfig.progressResizable"
+        class="g-gantt-progress-handle"
+        @mousedown="handleProgressDragStart"
+      />
+    </div>
     <svg
       v-if="isGroupBar"
       class="group-bar-decoration"
@@ -257,5 +345,31 @@ const getGroupBarPath = (width: number, height: number) => {
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+.g-gantt-progress-bar {
+  position: absolute;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.g-gantt-progress-handle {
+  position: absolute;
+  right: -4px;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  cursor: ew-resize;
+  pointer-events: all;
+  transition: background-color 0.2s ease;
+}
+
+.g-gantt-progress-handle:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.g-gantt-progress-handle:active {
+  background-color: rgba(0, 0, 0, 0.7);
 }
 </style>
