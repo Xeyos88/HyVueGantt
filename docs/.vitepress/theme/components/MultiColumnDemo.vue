@@ -55,6 +55,17 @@ const rows = ref([
           progress: 50,
           progressResizable: true
         }
+      },
+      {
+        start: '2024-01-21',
+        end: '2024-01-22',
+        ganttBarConfig: {
+          id: 'a11',
+          label: 'UI/UX Design',
+          style: { background: '#42b883' },
+          progress: 60,
+          progressResizable: true
+        }
       }
     ]
   },

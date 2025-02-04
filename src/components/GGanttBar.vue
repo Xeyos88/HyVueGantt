@@ -9,11 +9,13 @@ import { useTouchEvents } from "../composables/useTouchEvents"
 import type { GanttBarObject } from "../types"
 import provideEmitBarEvent from "../provider/provideEmitBarEvent"
 import provideConfig from "../provider/provideConfig"
-import { BAR_CONTAINER_KEY } from "../provider/symbols"
+import { BAR_CONTAINER_KEY, GANTT_ID_KEY } from "../provider/symbols"
+import useBarSelector from "../composables/useBarSelector"
 
 const props = defineProps<{
   bar: GanttBarObject
 }>()
+const ganttId = inject(GANTT_ID_KEY)!
 
 const emitBarEvent = provideEmitBarEvent()
 const config = provideConfig()
@@ -181,19 +183,20 @@ const handleProgressDragStart = (e: MouseEvent) => {
     props.bar
   )
 }
+const { findBarElement } = useBarSelector()
 
 const handleProgressDrag = (e: MouseEvent) => {
   if (!isProgressDragging.value) return
 
-  const barElement = document.getElementById(props.bar.ganttBarConfig.id)
+  const barElement = findBarElement(ganttId, props.bar.ganttBarConfig.id)
   if (!barElement) return
 
   const rect = barElement.getBoundingClientRect()
   const deltaX = e.clientX - progressDragStart.value
   const percentageDelta = (deltaX / rect.width) * 100
 
-  let newProgress = Math.min(Math.max(initialProgress.value + percentageDelta, 0), 100)
-  props.bar.ganttBarConfig.progress = Math.round(newProgress)
+  const newProgress = Math.min(Math.max(initialProgress.value + percentageDelta, 0), 100)
+  bar.value.ganttBarConfig.progress = Math.round(newProgress)
 
   emitBarEvent(
     {
@@ -260,6 +263,7 @@ const handleProgressDragEnd = (e: MouseEvent) => {
       <div
         v-if="barConfig.progressResizable"
         class="g-gantt-progress-handle"
+        :style="{ right: bar.ganttBarConfig.progress === 0 ? 0 : '-4px' }"
         @mousedown="handleProgressDragStart"
       />
     </div>
@@ -351,11 +355,15 @@ const handleProgressDragEnd = (e: MouseEvent) => {
   position: absolute;
   pointer-events: none;
   overflow: hidden;
+  transition: width 0.3s ease;
+  border-radius: inherit;
+  height: 100%;
+  left: 0;
+  min-width: 8px;
 }
 
 .g-gantt-progress-handle {
   position: absolute;
-  right: -4px;
   top: 0;
   width: 8px;
   height: 100%;
@@ -363,6 +371,7 @@ const handleProgressDragEnd = (e: MouseEvent) => {
   cursor: ew-resize;
   pointer-events: all;
   transition: background-color 0.2s ease;
+  z-index: 1;
 }
 
 .g-gantt-progress-handle:hover {
