@@ -833,6 +833,25 @@ export function useRows(
         const bDuration = calculateDuration(b)
         return aDuration - bDuration
       }
+      case "Progress": {
+        const getAvgProgress = (row: ChartRow) => {
+          const progressValues = row.bars
+            .map((bar) => bar.ganttBarConfig.progress)
+            .filter((progress): progress is number => progress !== undefined)
+
+          if (progressValues.length === 0) return -1
+          return progressValues.reduce((sum, curr) => sum + curr, 0) / progressValues.length
+        }
+
+        const progressA = getAvgProgress(a)
+        const progressB = getAvgProgress(b)
+
+        if (progressA === -1 && progressB === -1) return 0
+        if (progressA === -1) return 1
+        if (progressB === -1) return -1
+
+        return progressA - progressB
+      }
       default:
         if (columnConfig?.valueGetter) {
           const aValue = columnConfig.valueGetter(a)
