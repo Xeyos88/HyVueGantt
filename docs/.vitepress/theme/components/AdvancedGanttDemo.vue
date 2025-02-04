@@ -137,6 +137,14 @@ const handleRowDrop = (event: any) => {
   addEventLog('Row Drop', event)
 }
 
+const handleProgressStart = (event: any) => {
+  addEventLog('Progress Bar Start', event)
+}
+
+const handleProgressEnd = (event: any) => {
+  addEventLog('Progress Bar End', event)
+}
+
 // Sample Data
 const sampleData = ref([
   {
@@ -150,6 +158,8 @@ const sampleData = ref([
           start: `${year}-${month}-05`,
           end: `${year}-${month}-15`,
           ganttBarConfig: {
+            progress: 50,
+            progressResizable: true,
             id: 'bar1',
             label: 'Initial Setup',
             style: { background: '#42b883' },
@@ -566,6 +576,8 @@ const formattedEventLog = computed(() => {
         @sort="handleSort"
         @group-expansion="handleGroupExpansion"
         @row-drop="handleRowDrop"
+        @progress-drag-start="handleProgressStart"
+        @progress-drag-end="handleProgressEnd"
       >
         <g-gantt-row
           v-for="row in sampleData"

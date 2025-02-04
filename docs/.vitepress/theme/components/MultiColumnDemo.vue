@@ -31,7 +31,7 @@ const multiColumnLabel = ref<LabelColumnConfig[]>([
     field: 'StartDate',
   },
   {
-    field: 'Progress',
+    field: 'Duration',
   },
   {
     field: 'Bars N°',
@@ -52,19 +52,6 @@ const rows = ref([
           id: 'a1',
           label: 'UI/UX Design',
           style: { background: '#42b883' },
-          progress: 50,
-          progressResizable: true
-        }
-      },
-      {
-        start: '2024-01-21',
-        end: '2024-01-22',
-        ganttBarConfig: {
-          id: 'a11',
-          label: 'UI/UX Design',
-          style: { background: '#42b883' },
-          progress: 60,
-          progressResizable: true
         }
       }
     ]

@@ -145,15 +145,47 @@ const getGroupBarPath = (width: number, height: number) => {
   `
 }
 
+const getDarkerColor = (color: string) => {
+  const rgb = color.startsWith("#") ? hexToRgb(color) : parseRgb(color)
+
+  return `rgba(${Math.max(0, rgb.r - 40)}, ${Math.max(0, rgb.g - 40)}, ${Math.max(0, rgb.b - 40)}, ${rgb.a})`
+}
+
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  return result
+    ? {
+        r: parseInt(result[1]!, 16),
+        g: parseInt(result[2]!, 16),
+        b: parseInt(result[3]!, 16),
+        a: 1
+      }
+    : { r: 0, g: 0, b: 0, a: 1 }
+}
+
+const parseRgb = (color: string) => {
+  const matches = color.match(/(\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/)
+  if (matches) {
+    return {
+      r: parseInt(matches[1]!),
+      g: parseInt(matches[2]!),
+      b: parseInt(matches[3]!),
+      a: matches[4] ? parseFloat(matches[4]) : 1
+    }
+  }
+  return { r: 0, g: 0, b: 0, a: 1 }
+}
+
 const progressStyle = computed(() => {
   const progress = props.bar.ganttBarConfig.progress ?? 0
   const baseStyle = props.bar.ganttBarConfig.progressStyle || {}
+  const barColor = props.bar.ganttBarConfig.style?.background || "#5F9EA0"
 
   return {
     ...baseStyle,
     left: 0,
     width: `${Math.min(Math.max(progress, 0), 100)}%`,
-    backgroundColor: baseStyle.backgroundColor || "#4CAF50",
+    backgroundColor: baseStyle.backgroundColor || getDarkerColor(barColor as string),
     transition: "width 0.3s ease",
     borderRadius: "inherit",
     height: "100%"
@@ -260,6 +292,7 @@ const handleProgressDragEnd = (e: MouseEvent) => {
       class="g-gantt-progress-bar"
       :style="progressStyle"
     >
+      <span class="progress-text">{{ Math.round(barConfig.progress) }}%</span>
       <div
         v-if="barConfig.progressResizable"
         class="g-gantt-progress-handle"
@@ -310,6 +343,9 @@ const handleProgressDragEnd = (e: MouseEvent) => {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
 }
 .g-gantt-bar-label > * {
   white-space: nowrap;
@@ -355,11 +391,15 @@ const handleProgressDragEnd = (e: MouseEvent) => {
   position: absolute;
   pointer-events: none;
   overflow: hidden;
-  transition: width 0.3s ease;
-  border-radius: inherit;
-  height: 100%;
-  left: 0;
   min-width: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: 500;
+  z-index: 1;
 }
 
 .g-gantt-progress-handle {
@@ -371,7 +411,7 @@ const handleProgressDragEnd = (e: MouseEvent) => {
   cursor: ew-resize;
   pointer-events: all;
   transition: background-color 0.2s ease;
-  z-index: 1;
+  z-index: 3;
 }
 
 .g-gantt-progress-handle:hover {

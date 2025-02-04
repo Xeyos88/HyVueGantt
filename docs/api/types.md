@@ -33,7 +33,10 @@ interface GanttBarConfig {
   style?: CSSProperties;
   class?: string;
   connections?: GanttBarConnection[];
-  milestoneId?: string
+  milestoneId?: strin;
+  progress?: number;
+  progressResizable?: boolean;
+  progressStyle?: CSSProperties;
 }
 
 interface GanttBarObject {
@@ -74,7 +77,7 @@ interface GanttMilestone {
 ## Label Data Types
 
 ```typescript
-type LabelColumnField = "Id" | "Label" | "StartDate" | "EndDate" | "Duration"
+type LabelColumnField = "Id" | "Label" | "StartDate" | "EndDate" | "Duration" | "Progress"
 
 type SortFunction = (a: ChartRow, b: ChartRow) => number
 type SortDirection = "asc" | "desc" | "none"
