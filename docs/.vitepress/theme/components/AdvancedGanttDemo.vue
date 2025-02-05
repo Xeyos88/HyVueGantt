@@ -37,6 +37,8 @@ const labelColumnTitle = ref('Project Tasks')
 const labelColumnWidth = ref(100)
 const commands = ref(true)
 const width = ref('100%')
+const showLabel = ref(true)
+const showProgress = ref(true)
 
 
 // Time Highlight Configuration
@@ -62,6 +64,7 @@ const sortable = ref(true)
 const labelResizable = ref(true)
 const enableRowDragAndDrop = ref(true)
 const maxRows = ref(5)
+const defaultProgressResizable = ref(true)
 
 const multiColumnOptions = ['Label','StartDate','EndDate','Id','Duration']
 const columnsSelected = ref(["Label"])
@@ -150,6 +153,11 @@ const sampleData = ref([
   {
     id: 'group1',
     label: 'Frontend Development',
+    connections: [{
+      targetId: "bar3",
+      type: "straight",
+      color: "#FF0000"
+    }],
     children: [
       {
         id: 'task1',
@@ -158,11 +166,10 @@ const sampleData = ref([
           start: `${year}-${month}-05`,
           end: `${year}-${month}-15`,
           ganttBarConfig: {
-            progress: 50,
-            progressResizable: true,
             id: 'bar1',
             label: 'Initial Setup',
             style: { background: '#42b883' },
+            progress: 100,
             connections: [{
               targetId: 'bar2',
             }]
@@ -173,12 +180,17 @@ const sampleData = ref([
         id: 'task2',
         label: 'Core Features',
         bars: [{
-          start: `${year}-${month}-16`,
+          start: `${year}-${month}-16`, 
           end: `${year}-${month+1}-01`,
           ganttBarConfig: {
             id: 'bar2',
             label: 'Development',
-            style: { background: '#35495e' }
+            style: { background: '#35495e' },
+            progress: 75,
+            connections: [{
+              targetId: 'bar3',
+              pattern: 'dash'
+            }]
           }
         }]
       }
@@ -197,20 +209,179 @@ const sampleData = ref([
           ganttBarConfig: {
             id: 'bar3',
             label: 'API Planning',
-            style: { background: '#ff7e67' }
+            style: { background: '#ff7e67' },
+            hasHandles: true,
+            progress: 60,
+            connections: [{
+              targetId: 'bar4',
+            }]
           }
         }]
       },
       {
         id: 'task4',
         label: 'Database Setup',
+        bars: [
+          {
+            start: `${year}-${month}-26`,
+            end: `${year}-${month+1}-10`,
+            ganttBarConfig: {
+              id: 'bar4',
+              label: 'DB Implementation',
+              style: { background: '#4dc9ff' },
+              hasHandles: true,
+              progress: 30,
+              connections: [{
+                targetId: 'bar7',
+                type: 'squared'
+              }]
+            }
+          },
+          {
+            start: `${year}-${month+1}-05`,
+            end: `${year}-${month+1}-15`, 
+            ganttBarConfig: {
+              id: 'bar5',
+              label: 'DB Optimization',
+              immobile: true,
+              style: { background: '#34495e' },
+              progress: 0,
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'group3',
+    label: 'Progress Examples',
+    children: [
+      {
+        id: 'progress1',
+        label: 'Progress States',
+        bars: [
+          {
+            start: `${year}-${month}-01`,
+            end: `${year}-${month}-10`,
+            ganttBarConfig: {
+              id: 'bar6',
+              label: 'Not Started',
+              style: { background: '#95a5a6' },
+              progress: 0,
+              progressResizable: true
+            }
+          },
+          {
+            start: `${year}-${month}-11`,
+            end: `${year}-${month}-20`,
+            ganttBarConfig: {
+              id: 'bar7',
+              label: 'In Progress',
+              style: { background: '#e67e22' },
+              progress: 50,
+              progressResizable: true
+            }
+          },
+          {
+            start: `${year}-${month}-21`,
+            end: `${year}-${month}-30`,
+            ganttBarConfig: {
+              id: 'bar8',
+              label: 'Completed',
+              style: { background: '#27ae60' },
+              progress: 100,
+              progressResizable: true
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'group4',
+    label: 'Bundle Example',
+    children: [
+      {
+        id: 'bundle1',
+        label: 'Connected Tasks',
+        bars: [
+          {
+            start: `${year}-${month+1}-01`,
+            end: `${year}-${month+1}-10`,
+            ganttBarConfig: {
+              id: 'bar9',
+              label: 'Task A',
+              style: { background: '#8e44ad' },
+              bundle: 'bundle1',
+              progress: 45
+            }
+          }
+        ]
+      },
+      {
+        id: 'bundle2',
+        label: 'Parallel Tasks',
+        bars: [
+          {
+            start: `${year}-${month+1}-01`, 
+            end: `${year}-${month+1}-10`,
+            ganttBarConfig: {
+              id: 'bar10',
+              label: 'Task B',
+              style: { background: '#8e44ad' },
+              bundle: 'bundle1',
+              progress: 45
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'group5',
+    label: 'Complex Connections',
+    children: [
+      {
+        id: 'complex1',
+        label: 'Multiple Dependencies',
         bars: [{
-          start: `${year}-${month}-26`,
-          end: `${year}-${month+1}-10`,
+          start: `${year}-${month+1}-12`,
+          end: `${year}-${month+1}-22`,
           ganttBarConfig: {
-            id: 'bar4',
-            label: 'DB Implementation',
-            style: { background: '#4dc9ff' }
+            id: 'bar11',
+            label: 'Multi-Connected',
+            style: { background: '#c0392b' },
+            progress: 20,
+            connections: [
+              {
+                targetId: 'bar9',
+                type: 'bezier',
+                pattern: 'dashdot'
+              },
+              {
+                targetId: 'bar10',
+                type: 'straight',
+                pattern: 'dot'  
+              }
+            ]
+          }
+        }]
+      },
+      {
+        id: 'complex2',
+        label: 'Milestone Example',
+        bars: [{
+          start: `${year}-${month+1}-25`,
+          end: `${year}-${month+1}-25`,
+          ganttBarConfig: {
+            id: 'milestone1',
+            label: 'Release v1.0',
+            style: { 
+              background: '#2ecc71',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px'
+            }
           }
         }]
       }
@@ -435,6 +606,18 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
+                Show Label:
+                <input type="checkbox" v-model="showLabel">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Show Progress:
+                <input type="checkbox" v-model="showProgress">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
                 Hide Timeline:
                 <input type="checkbox" v-model="hideTimeaxis">
               </label>
@@ -525,6 +708,12 @@ const formattedEventLog = computed(() => {
                 <input type="checkbox" v-model="enableRowDragAndDrop">
               </label>
             </div>
+            <div class="setting-item">
+              <label>
+                Progress resizable:
+                <input type="checkbox" v-model="defaultProgressResizable">
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -571,6 +760,9 @@ const formattedEventLog = computed(() => {
         :enable-row-drag-and-drop="enableRowDragAndDrop"
         :label-resizable="labelResizable"
         :sortable="sortable"
+        :default-progress-resizable="defaultProgressResizable"
+        :show-progress="showProgress"
+        :showLabel="showLabel"
         @click-bar="handleBarClick"
         @drag-bar="handleBarDrag"
         @sort="handleSort"
@@ -586,6 +778,7 @@ const formattedEventLog = computed(() => {
           :label="row.label"
           :bars="row.bars"
           :children="row.children"
+          :connections="row.connections"
           highlightOnHover
         >
           <!-- Custom Bar Label Slot -->

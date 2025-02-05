@@ -60,6 +60,9 @@ export interface GGanttChartProps {
   locale?: string
   enableRowDragAndDrop?: boolean
   markerConnection?: MarkerConnection
+  showLabel?: boolean
+  showProgress?: boolean
+  defaultProgressResizable?: boolean
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

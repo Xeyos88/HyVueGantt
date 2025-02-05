@@ -117,7 +117,10 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   highlightedWeek: () => [],
   locale: "en",
   enableRowDragAndDrop: false,
-  markerConnection: "forward"
+  markerConnection: "forward",
+  showLabel: true,
+  showProgress: true,
+  defaultProgressResizable: true
 })
 
 // Events

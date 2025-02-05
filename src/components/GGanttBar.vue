@@ -75,7 +75,17 @@ const onMouseEvent = (e: MouseEvent) => {
   emitBarEvent(e, bar.value, datetime)
 }
 
-const { barStart, barEnd, width, chartStart, chartEnd, chartSize } = config
+const {
+  barStart,
+  barEnd,
+  width,
+  chartStart,
+  chartEnd,
+  chartSize,
+  showLabel,
+  showProgress,
+  defaultProgressResizable
+} = config
 
 const xStart = ref(0)
 const xEnd = ref(0)
@@ -197,7 +207,7 @@ const progressDragStart = ref(0)
 const initialProgress = ref(0)
 
 const handleProgressDragStart = (e: MouseEvent) => {
-  if (!props.bar.ganttBarConfig.progressResizable) return
+  if (!props.bar.ganttBarConfig.progressResizable && !defaultProgressResizable.value) return
 
   e.stopPropagation()
   isProgressDragging.value = true
@@ -292,9 +302,9 @@ const handleProgressDragEnd = (e: MouseEvent) => {
       class="g-gantt-progress-bar"
       :style="progressStyle"
     >
-      <span class="progress-text">{{ Math.round(barConfig.progress) }}%</span>
+      <span class="progress-text" v-if="showProgress">{{ Math.round(barConfig.progress) }}%</span>
       <div
-        v-if="barConfig.progressResizable"
+        v-if="barConfig.progressResizable || defaultProgressResizable"
         class="g-gantt-progress-handle"
         :style="{ right: bar.ganttBarConfig.progress === 0 ? 0 : '-4px' }"
         @mousedown="handleProgressDragStart"
@@ -313,7 +323,7 @@ const handleProgressDragEnd = (e: MouseEvent) => {
     </svg>
     <div class="g-gantt-bar-label">
       <slot :bar="bar">
-        <div v-if="!isGroupBar">
+        <div v-if="!isGroupBar && showLabel">
           {{ barConfig.label || "" }}
         </div>
         <div v-if="barConfig.html" v-html="barConfig.html" />

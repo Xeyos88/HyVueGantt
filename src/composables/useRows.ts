@@ -668,7 +668,6 @@ export function useRows(
     if (!minStart || !maxEnd) return []
 
     const format = typeof dateFormat.value === "string" ? dateFormat.value : "YYYY-MM-DD HH:mm"
-
     return [
       {
         [barStart.value]: minStart.format(format),
