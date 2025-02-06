@@ -307,6 +307,18 @@ const getRowValue = (row: ChartRow, column: LabelColumnConfig, index: number) =>
       }, "")
       return calculateDuration(minStart, maxEnd)
     }
+    case "Progress": {
+      if (!row.bars.length) return "-"
+      const progressValues = row.bars
+        .map((bar) => bar.ganttBarConfig.progress)
+        .filter((progress): progress is number => progress !== undefined)
+
+      if (progressValues.length === 0) return "-"
+
+      const averageProgress =
+        progressValues.reduce((sum, curr) => sum + curr, 0) / progressValues.length
+      return `${Math.round(averageProgress)}%`
+    }
     default:
       return ""
   }
@@ -332,7 +344,7 @@ const getSortIcon = (field: string) => {
 }
 
 const isValidColumn = (field: string): field is LabelColumnField => {
-  return ["Id", "Label", "StartDate", "EndDate", "Duration"].includes(field)
+  return ["Id", "Label", "StartDate", "EndDate", "Duration", "Progress"].includes(field)
 }
 
 const columnSortableStates = computed(() =>

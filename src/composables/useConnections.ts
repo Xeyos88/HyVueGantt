@@ -65,7 +65,6 @@ export function useConnections(
         return bars
       })
     }
-
     const allBars = getAllBars(rowManager.rows.value)
 
     allBars.forEach((el) => {

@@ -44,4 +44,7 @@ export interface GGanttChartEmits {
   (e: "row-drop", value: RowDragEvent): void
   (e: "group-expansion", value: RowExpansion): void
   (e: "sort", value: SortState): void
+  (e: "progress-change", value: BarMouseEvent): void
+  (e: "progress-drag-start", value: BarMouseEvent): void
+  (e: "progress-drag-end", value: BarMouseEvent): void
 }

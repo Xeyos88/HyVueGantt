@@ -9,11 +9,13 @@ import { useTouchEvents } from "../composables/useTouchEvents"
 import type { GanttBarObject } from "../types"
 import provideEmitBarEvent from "../provider/provideEmitBarEvent"
 import provideConfig from "../provider/provideConfig"
-import { BAR_CONTAINER_KEY } from "../provider/symbols"
+import { BAR_CONTAINER_KEY, GANTT_ID_KEY } from "../provider/symbols"
+import useBarSelector from "../composables/useBarSelector"
 
 const props = defineProps<{
   bar: GanttBarObject
 }>()
+const ganttId = inject(GANTT_ID_KEY)!
 
 const emitBarEvent = provideEmitBarEvent()
 const config = provideConfig()
@@ -73,7 +75,17 @@ const onMouseEvent = (e: MouseEvent) => {
   emitBarEvent(e, bar.value, datetime)
 }
 
-const { barStart, barEnd, width, chartStart, chartEnd, chartSize } = config
+const {
+  barStart,
+  barEnd,
+  width,
+  chartStart,
+  chartEnd,
+  chartSize,
+  showLabel,
+  showProgress,
+  defaultProgressResizable
+} = config
 
 const xStart = ref(0)
 const xEnd = ref(0)
@@ -142,6 +154,116 @@ const getGroupBarPath = (width: number, height: number) => {
     L 0 0
   `
 }
+
+const getDarkerColor = (color: string) => {
+  const rgb = color.startsWith("#") ? hexToRgb(color) : parseRgb(color)
+
+  return `rgba(${Math.max(0, rgb.r - 40)}, ${Math.max(0, rgb.g - 40)}, ${Math.max(0, rgb.b - 40)}, ${rgb.a})`
+}
+
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  return result
+    ? {
+        r: parseInt(result[1]!, 16),
+        g: parseInt(result[2]!, 16),
+        b: parseInt(result[3]!, 16),
+        a: 1
+      }
+    : { r: 0, g: 0, b: 0, a: 1 }
+}
+
+const parseRgb = (color: string) => {
+  const matches = color.match(/(\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/)
+  if (matches) {
+    return {
+      r: parseInt(matches[1]!),
+      g: parseInt(matches[2]!),
+      b: parseInt(matches[3]!),
+      a: matches[4] ? parseFloat(matches[4]) : 1
+    }
+  }
+  return { r: 0, g: 0, b: 0, a: 1 }
+}
+
+const progressStyle = computed(() => {
+  const progress = props.bar.ganttBarConfig.progress ?? 0
+  const baseStyle = props.bar.ganttBarConfig.progressStyle || {}
+  const barColor = props.bar.ganttBarConfig.style?.background || "#5F9EA0"
+
+  return {
+    ...baseStyle,
+    left: 0,
+    width: `${Math.min(Math.max(progress, 0), 100)}%`,
+    backgroundColor: baseStyle.backgroundColor || getDarkerColor(barColor as string),
+    transition: "width 0.3s ease",
+    borderRadius: "inherit",
+    height: "100%"
+  }
+})
+
+const isProgressDragging = ref(false)
+const progressDragStart = ref(0)
+const initialProgress = ref(0)
+
+const handleProgressDragStart = (e: MouseEvent) => {
+  if (!props.bar.ganttBarConfig.progressResizable && !defaultProgressResizable.value) return
+
+  e.stopPropagation()
+  isProgressDragging.value = true
+  progressDragStart.value = e.clientX
+  initialProgress.value = props.bar.ganttBarConfig.progress ?? 0
+
+  window.addEventListener("mousemove", handleProgressDrag)
+  window.addEventListener("mouseup", handleProgressDragEnd)
+
+  emitBarEvent(
+    {
+      ...e,
+      type: "progress-drag-start"
+    },
+    props.bar
+  )
+}
+const { findBarElement } = useBarSelector()
+
+const handleProgressDrag = (e: MouseEvent) => {
+  if (!isProgressDragging.value) return
+
+  const barElement = findBarElement(ganttId, props.bar.ganttBarConfig.id)
+  if (!barElement) return
+
+  const rect = barElement.getBoundingClientRect()
+  const deltaX = e.clientX - progressDragStart.value
+  const percentageDelta = (deltaX / rect.width) * 100
+
+  const newProgress = Math.min(Math.max(initialProgress.value + percentageDelta, 0), 100)
+  bar.value.ganttBarConfig.progress = Math.round(newProgress)
+
+  emitBarEvent(
+    {
+      ...e,
+      type: "progress-change"
+    },
+    props.bar
+  )
+}
+
+const handleProgressDragEnd = (e: MouseEvent) => {
+  if (!isProgressDragging.value) return
+
+  isProgressDragging.value = false
+  window.removeEventListener("mousemove", handleProgressDrag)
+  window.removeEventListener("mouseup", handleProgressDragEnd)
+
+  emitBarEvent(
+    {
+      ...e,
+      type: "progress-drag-end"
+    },
+    props.bar
+  )
+}
 </script>
 
 <template>
@@ -175,6 +297,19 @@ const getGroupBarPath = (width: number, height: number) => {
     tabindex="0"
     :aria-describedby="`tooltip-${barConfig.id}`"
   >
+    <div
+      v-if="barConfig.progress !== undefined"
+      class="g-gantt-progress-bar"
+      :style="progressStyle"
+    >
+      <span class="progress-text" v-if="showProgress">{{ Math.round(barConfig.progress) }}%</span>
+      <div
+        v-if="barConfig.progressResizable || defaultProgressResizable"
+        class="g-gantt-progress-handle"
+        :style="{ right: bar.ganttBarConfig.progress === 0 ? 0 : '-4px' }"
+        @mousedown="handleProgressDragStart"
+      />
+    </div>
     <svg
       v-if="isGroupBar"
       class="group-bar-decoration"
@@ -188,7 +323,7 @@ const getGroupBarPath = (width: number, height: number) => {
     </svg>
     <div class="g-gantt-bar-label">
       <slot :bar="bar">
-        <div v-if="!isGroupBar">
+        <div v-if="!isGroupBar && showLabel">
           {{ barConfig.label || "" }}
         </div>
         <div v-if="barConfig.html" v-html="barConfig.html" />
@@ -218,6 +353,9 @@ const getGroupBarPath = (width: number, height: number) => {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
 }
 .g-gantt-bar-label > * {
   white-space: nowrap;
@@ -257,5 +395,40 @@ const getGroupBarPath = (width: number, height: number) => {
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+.g-gantt-progress-bar {
+  position: absolute;
+  pointer-events: none;
+  overflow: hidden;
+  min-width: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: 500;
+  z-index: 1;
+}
+
+.g-gantt-progress-handle {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  cursor: ew-resize;
+  pointer-events: all;
+  transition: background-color 0.2s ease;
+  z-index: 3;
+}
+
+.g-gantt-progress-handle:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.g-gantt-progress-handle:active {
+  background-color: rgba(0, 0, 0, 0.7);
 }
 </style>

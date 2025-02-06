@@ -57,6 +57,9 @@ interface SortState {
 @dragstart-bar="(event: BarMouseEvent) => void"
 @drag-bar="(event: BarMouseEvent) => void"
 @dragend-bar="(event: GanttBarDragEvent) => void"
+@progress-drag-start="(event: BarMouseEvent) => void"
+@progress-change="(event: BarMouseEvent) => void"
+@progress-drag-end="(event: BarMouseEvent) => void"
 ```
 
 ### Mouse Events

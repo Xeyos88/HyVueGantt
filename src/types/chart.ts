@@ -14,7 +14,7 @@ export type ConnectionType = "bezier" | "straight" | "squared"
 export type ConnectionPattern = "solid" | "dot" | "dash" | "dashdot"
 export type ConnectionSpeed = "slow" | "normal" | "fast"
 export type SortDirection = "asc" | "desc" | "none"
-export type LabelColumnField = "Id" | "Label" | "StartDate" | "EndDate" | "Duration"
+export type LabelColumnField = "Id" | "Label" | "StartDate" | "EndDate" | "Duration" | "Progress"
 export type DayOptionLabel = "day" | "doy" | "name" | "number"
 export type MarkerConnection = "none" | "forward" | "bidirectional"
 

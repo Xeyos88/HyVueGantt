@@ -45,7 +45,9 @@ export default () => {
           /^dayjs\/locale/,
           "@fortawesome/vue-fontawesome",
           "@fortawesome/free-solid-svg-icons",
-          "@vueuse/core"
+          "@vueuse/core",
+          "lodash-es",
+          "uuid"
         ],
         output: {
           // Provide global variables to use in the UMD build
@@ -53,7 +55,9 @@ export default () => {
           globals: {
             vue: "Vue",
             dayjs: "dayjs",
-            "date-holidays": "date-holidays"
+            "date-holidays": "date-holidays",
+            "lodash-es": "lodash-es",
+            uuid: "uuid"
           },
           exports: "named"
         }

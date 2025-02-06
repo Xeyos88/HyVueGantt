@@ -117,7 +117,10 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   highlightedWeek: () => [],
   locale: "en",
   enableRowDragAndDrop: false,
-  markerConnection: "forward"
+  markerConnection: "forward",
+  showLabel: true,
+  showProgress: true,
+  defaultProgressResizable: true
 })
 
 // Events
@@ -156,6 +159,9 @@ const emit = defineEmits<{
       parentId?: string | number
     }
   ): void
+  (e: "progress-drag-start", value: { bar: GanttBarObject; e: MouseEvent }): void
+  (e: "progress-change", value: { bar: GanttBarObject; e: MouseEvent }): void
+  (e: "progress-drag-end", value: { bar: GanttBarObject; e: MouseEvent }): void
 }>()
 
 // -----------------------------
@@ -433,6 +439,18 @@ const emitBarEvent = (
       break
     case "contextmenu":
       emit("contextmenu-bar", { bar, e, datetime })
+      break
+    case "progress-drag-start":
+      initTooltip(bar)
+      emit("progress-drag-start", { bar, e })
+      break
+    case "progress-change":
+      initTooltip(bar)
+      emit("progress-change", { bar, e })
+      break
+    case "progress-drag-end":
+      initTooltip(bar)
+      emit("progress-drag-end", { bar, e })
       break
   }
 }
