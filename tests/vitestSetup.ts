@@ -89,7 +89,8 @@ beforeAll(() => {
       defaultConnectionAnimationSpeed: ref(1000),
       locale: ref("en"),
       sortable: ref(true),
-      enableRowDragAndDrop: ref(true)
+      enableRowDragAndDrop: ref(true),
+      showLabel: ref(true)
     },
     [EMIT_BAR_EVENT_KEY]: () => {},
     [BAR_CONTAINER_KEY]: ref(barContainerElement),

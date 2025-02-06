@@ -66,7 +66,7 @@ const enableRowDragAndDrop = ref(true)
 const maxRows = ref(5)
 const defaultProgressResizable = ref(true)
 
-const multiColumnOptions = ['Label','StartDate','EndDate','Id','Duration']
+const multiColumnOptions = ['Label','StartDate','EndDate','Id','Duration', 'Progress']
 const columnsSelected = ref(["Label"])
 const multiColumnLabel = computed(() =>  columnsSelected.value.map((el) => {return {
   field: el, sortable: sortable.value
@@ -153,18 +153,13 @@ const sampleData = ref([
   {
     id: 'group1',
     label: 'Frontend Development',
-    connections: [{
-      targetId: "bar3",
-      type: "straight",
-      color: "#FF0000"
-    }],
     children: [
       {
         id: 'task1',
         label: 'Setup Project',
         bars: [{
-          start: `${year}-${month}-05`,
-          end: `${year}-${month}-15`,
+          start: `${year}-${month}-01`,
+          end: `${year}-${month}-10`,
           ganttBarConfig: {
             id: 'bar1',
             label: 'Initial Setup',
@@ -180,8 +175,8 @@ const sampleData = ref([
         id: 'task2',
         label: 'Core Features',
         bars: [{
-          start: `${year}-${month}-16`, 
-          end: `${year}-${month+1}-01`,
+          start: `${year}-${month}-11`, 
+          end: `${year}-${month}-20`,
           ganttBarConfig: {
             id: 'bar2',
             label: 'Development',
@@ -204,8 +199,8 @@ const sampleData = ref([
         id: 'task3',
         label: 'API Design',
         bars: [{
-          start: `${year}-${month}-10`,
-          end: `${year}-${month}-25`,
+          start: `${year}-${month}-21`,
+          end: `${year}-${month}-28`,
           ganttBarConfig: {
             id: 'bar3',
             label: 'API Planning',
@@ -223,7 +218,7 @@ const sampleData = ref([
         label: 'Database Setup',
         bars: [
           {
-            start: `${year}-${month}-26`,
+            start: `${year}-${month+1}-01`,
             end: `${year}-${month+1}-10`,
             ganttBarConfig: {
               id: 'bar4',
@@ -238,12 +233,11 @@ const sampleData = ref([
             }
           },
           {
-            start: `${year}-${month+1}-05`,
-            end: `${year}-${month+1}-15`, 
+            start: `${year}-${month+1}-11`,
+            end: `${year}-${month+1}-20`, 
             ganttBarConfig: {
               id: 'bar5',
               label: 'DB Optimization',
-              immobile: true,
               style: { background: '#34495e' },
               progress: 0,
             }
@@ -261,30 +255,23 @@ const sampleData = ref([
         label: 'Progress States',
         bars: [
           {
-            start: `${year}-${month}-01`,
-            end: `${year}-${month}-10`,
-            ganttBarConfig: {
-              id: 'bar6',
-              label: 'Not Started',
-              style: { background: '#95a5a6' },
-              progress: 0,
-              progressResizable: true
-            }
-          },
-          {
-            start: `${year}-${month}-11`,
-            end: `${year}-${month}-20`,
+            start: `${year}-${month+1}-21`,
+            end: `${year}-${month+1}-25`,
             ganttBarConfig: {
               id: 'bar7',
               label: 'In Progress',
               style: { background: '#e67e22' },
               progress: 50,
-              progressResizable: true
+              progressResizable: true,
+              connections: [{
+                targetId: 'bar9',
+                type: 'bezier'
+              }]
             }
           },
           {
-            start: `${year}-${month}-21`,
-            end: `${year}-${month}-30`,
+            start: `${year}-${month+1}-26`,
+            end: `${year}-${month+1}-30`,
             ganttBarConfig: {
               id: 'bar8',
               label: 'Completed',
@@ -306,14 +293,18 @@ const sampleData = ref([
         label: 'Connected Tasks',
         bars: [
           {
-            start: `${year}-${month+1}-01`,
-            end: `${year}-${month+1}-10`,
+            start: `${year}-${month+2}-01`,
+            end: `${year}-${month+2}-10`,
             ganttBarConfig: {
               id: 'bar9',
               label: 'Task A',
               style: { background: '#8e44ad' },
               bundle: 'bundle1',
-              progress: 45
+              progress: 45,
+              connections: [{
+                targetId: 'milestone1',
+                pattern: 'dot'
+              }]
             }
           }
         ]
@@ -323,14 +314,18 @@ const sampleData = ref([
         label: 'Parallel Tasks',
         bars: [
           {
-            start: `${year}-${month+1}-01`, 
-            end: `${year}-${month+1}-10`,
+            start: `${year}-${month+2}-01`, 
+            end: `${year}-${month+2}-10`,
             ganttBarConfig: {
               id: 'bar10',
               label: 'Task B',
               style: { background: '#8e44ad' },
               bundle: 'bundle1',
-              progress: 45
+              progress: 45,
+              connections: [{
+                targetId: 'milestone1',
+                pattern: 'dashdot'
+              }]
             }
           }
         ]
@@ -339,40 +334,14 @@ const sampleData = ref([
   },
   {
     id: 'group5',
-    label: 'Complex Connections',
+    label: 'Final Milestone',
     children: [
       {
-        id: 'complex1',
-        label: 'Multiple Dependencies',
+        id: 'milestone',
+        label: 'Project Completion',
         bars: [{
-          start: `${year}-${month+1}-12`,
-          end: `${year}-${month+1}-22`,
-          ganttBarConfig: {
-            id: 'bar11',
-            label: 'Multi-Connected',
-            style: { background: '#c0392b' },
-            progress: 20,
-            connections: [
-              {
-                targetId: 'bar9',
-                type: 'bezier',
-                pattern: 'dashdot'
-              },
-              {
-                targetId: 'bar10',
-                type: 'straight',
-                pattern: 'dot'  
-              }
-            ]
-          }
-        }]
-      },
-      {
-        id: 'complex2',
-        label: 'Milestone Example',
-        bars: [{
-          start: `${year}-${month+1}-25`,
-          end: `${year}-${month+1}-25`,
+          start: `${year}-${month+2}-15`,
+          end: `${year}-${month+2}-15 01:00`,
           ganttBarConfig: {
             id: 'milestone1',
             label: 'Release v1.0',
@@ -387,6 +356,15 @@ const sampleData = ref([
       }
     ]
   }
+])
+
+const milestones = ref([
+  {
+    id: 'milestone1',
+    date: `${year}-${month+2}-15`,
+    name: 'Project End',
+    description: 'Official launch of the new platform',
+  },
 ])
 
 // Computed property to format event log output
@@ -763,6 +741,7 @@ const formattedEventLog = computed(() => {
         :default-progress-resizable="defaultProgressResizable"
         :show-progress="showProgress"
         :showLabel="showLabel"
+        :milestones="milestones"
         @click-bar="handleBarClick"
         @drag-bar="handleBarDrag"
         @sort="handleSort"
