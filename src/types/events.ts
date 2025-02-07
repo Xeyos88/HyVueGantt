@@ -30,6 +30,10 @@ export interface RowExpansion {
   rowId: string | number
 }
 
+export interface SortEvent {
+  sortState: SortState
+}
+
 export interface GGanttChartEmits {
   (e: "click-bar", value: GanttBarEvent): void
   (e: "mousedown-bar", value: GanttBarEvent): void
@@ -41,9 +45,9 @@ export interface GGanttChartEmits {
   (e: "drag-bar", value: BarMouseEvent): void
   (e: "dragend-bar", value: GanttBarDragEvent): void
   (e: "contextmenu-bar", value: GanttBarEvent): void
+  (e: "sort", value: SortEvent): void
+  (e: "group-expansion", value: { rowId: string | number }): void
   (e: "row-drop", value: RowDragEvent): void
-  (e: "group-expansion", value: RowExpansion): void
-  (e: "sort", value: SortState): void
   (e: "progress-change", value: BarMouseEvent): void
   (e: "progress-drag-start", value: BarMouseEvent): void
   (e: "progress-drag-end", value: BarMouseEvent): void

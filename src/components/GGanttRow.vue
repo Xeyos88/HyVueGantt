@@ -19,7 +19,7 @@ const props = defineProps<{
   label: string
   bars: GanttBarObject[]
   highlightOnHover?: boolean
-  id?: string | number
+  id: string | number
   children?: {
     id: string | number
     label: string

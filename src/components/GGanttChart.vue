@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 // -----------------------------
 // 1. EXTERNAL IMPORTS
 // -----------------------------
@@ -65,11 +65,11 @@ import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY, GANTT_ID_KEY } from "../pr
 import type {
   GanttBarObject,
   GGanttChartProps,
-  SortState,
   GGanttTimeaxisInstance,
   ColorScheme,
   ChartRow,
-  RowDragEvent
+  RowDragEvent,
+  GGanttChartEmits
 } from "../types"
 
 // Props
@@ -124,45 +124,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
 })
 
 // Events
-const emit = defineEmits<{
-  (e: "click-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
-  (
-    e: "mousedown-bar",
-    value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
-  ): void
-  (e: "mouseup-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
-  (e: "dblclick-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
-  (e: "mouseenter-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (e: "mouseleave-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (e: "dragstart-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (e: "drag-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (
-    e: "dragend-bar",
-    value: {
-      bar: GanttBarObject
-      e: MouseEvent
-      movedBars?: Map<GanttBarObject, { oldStart: string; oldEnd: string }>
-    }
-  ): void
-  (
-    e: "contextmenu-bar",
-    value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
-  ): void
-  (e: "sort", value: { sortState: SortState }): void
-  (e: "group-expansion", value: { rowId: string | number }): void
-  (
-    e: "row-drop",
-    value: {
-      sourceRow: ChartRow
-      targetRow?: ChartRow
-      newIndex: number
-      parentId?: string | number
-    }
-  ): void
-  (e: "progress-drag-start", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (e: "progress-change", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (e: "progress-drag-end", value: { bar: GanttBarObject; e: MouseEvent }): void
-}>()
+const emit = defineEmits<GGanttChartEmits>()
 
 // -----------------------------
 // 4. INTERNAL STATE

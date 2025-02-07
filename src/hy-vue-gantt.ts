@@ -29,7 +29,10 @@ import type {
   SortFunction,
   SortState,
   SortDirection,
-  TimeUnit
+  TimeUnit,
+  MarkerConnection,
+  DayOptionLabel,
+  GanttBarConnection
 } from "./types"
 
 import "dayjs/locale/it"
@@ -119,7 +122,10 @@ export type {
   SortFunction,
   SortState,
   SortDirection,
-  TimeUnit
+  TimeUnit,
+  MarkerConnection,
+  DayOptionLabel,
+  GanttBarConnection
 }
 export { GGanttChart, GGanttRow }
 

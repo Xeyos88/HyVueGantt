@@ -23,7 +23,7 @@ import { useRowDragAndDrop } from "../composables/useRowDragAndDrop"
 import { useColumnTouchResize } from "../composables/useColumnTouchResize"
 import { useRowTouchDrag } from "../composables/useRowTouchDrag"
 
-interface LabelColumnRowProps extends ChartRow {
+export interface LabelColumnRowProps extends ChartRow {
   indentLevel?: number
 }
 
