@@ -369,6 +369,12 @@ const milestones = ref([
     name: 'Project End',
     description: 'Official launch of the new platform',
   },
+  {
+    id: 'milestone2',
+    date: `${year}-${month+1}-15`,
+    name: 'Project Review',
+    description: 'Official review',
+  },
 ])
 
 // Computed property to format event log output
@@ -761,7 +767,7 @@ const formattedEventLog = computed(() => {
           :label="row.label"
           :bars="row.bars || []"
           :children="row.children || []"
-          :connections="(row.connections || []) as GanttBarConnection[]"
+          :connections="row.connections || []"
           highlightOnHover
         >
           <!-- Custom Bar Label Slot -->
@@ -773,6 +779,13 @@ const formattedEventLog = computed(() => {
             </div>
           </template>
         </g-gantt-row>
+
+        <template #milestone-milestone2="{ milestone }">
+          <div class="milestone-custom">
+            <i>📍</i>
+            <span>{{ milestone.name }}</span>
+          </div>
+        </template>
 
         <template v-if="customSlots.commands" #commands="{ 
           zoomIn, zoomOut, scrollRowUp, scrollRowDown,
@@ -1111,6 +1124,20 @@ const formattedEventLog = computed(() => {
 .timeunit-date {
   font-size: 10px;
   opacity: 0.7;
+}
+
+.milestone-custom {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 1em;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    position: absolute;
+    top: 4px;
+    transform: translateY(0);
+    background-color: #35496E;
+    color: #42B883;
+    font-weight: 700;
 }
 
 @media (max-width: 1200px) {
