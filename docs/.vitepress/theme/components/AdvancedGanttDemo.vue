@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { GGanttChart, GGanttRow, type ChartRow, type LabelColumnConfig } from 'hy-vue-gantt'
+import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
+import type { ConnectionType, ConnectionSpeed, MarkerConnection, TimeUnit, DayOptionLabel, ConnectionPattern, GanttBarConnection, GanttBarObject, ChartRow } from 'hy-vue-gantt'
 
 const sections = ref<{ [key: string]: boolean }>({
   timeConfig: false,
@@ -18,7 +19,7 @@ const year = new Date().getFullYear()
 const month = new Date().getMonth() + 1
 
 // Time Configuration
-const precision = ref('day')
+const precision = ref<TimeUnit>('day')
 const chartStart = ref(`${year}-${month}-01`)
 const chartEnd = ref(`${year}-${month+2}-28`)
 const dateFormat = ref('YYYY-MM-DD HH:mm')
@@ -45,15 +46,15 @@ const showProgress = ref(true)
 const highlightedHours = ref([9, 13, 17])
 const highlightedDaysInWeek = ref([0, 6]) // Sunday and Saturday
 const holidayHighlight = ref('US')
-const dayOptionLabel = ref(['day', 'name', 'doy'])
+const dayOptionLabel = ref<DayOptionLabel[]>(['day', 'name', 'doy'])
 
 // Connection Configuration
-const defaultConnectionType = ref('bezier')
-const defaultConnectionPattern = ref('solid')
-const defaultConnectionAnimationSpeed = ref('normal')
+const defaultConnectionType = ref<ConnectionType>('bezier')
+const defaultConnectionPattern = ref<ConnectionPattern>('solid')
+const defaultConnectionAnimationSpeed = ref<ConnectionSpeed>('normal')
 const defaultConnectionAnimated = ref(false)
 const defaultConnectionColor = ref('#ff0000')
-const markerConnection = ref('forward')
+const markerConnection = ref<MarkerConnection>('forward')
 
 // Behavior Configuration
 const pushOnOverlap = ref(true)
@@ -148,8 +149,11 @@ const handleProgressEnd = (event: any) => {
   addEventLog('Progress Bar End', event)
 }
 
+export type ChartRowWithOptionalBars = Omit<ChartRow, "bars"> & { bars?: GanttBarObject[] };
+
+
 // Sample Data
-const sampleData = ref([
+const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group1',
     label: 'Frontend Development',
@@ -364,6 +368,12 @@ const milestones = ref([
     date: `${year}-${month+2}-15`,
     name: 'Project End',
     description: 'Official launch of the new platform',
+  },
+  {
+    id: 'milestone2',
+    date: `${year}-${month+1}-15`,
+    name: 'Project Review',
+    description: 'Official review',
   },
 ])
 
@@ -753,11 +763,11 @@ const formattedEventLog = computed(() => {
         <g-gantt-row
           v-for="row in sampleData"
           :key="row.id"
-          :id="row.id"
+          :id="row.id || ''"
           :label="row.label"
-          :bars="row.bars"
-          :children="row.children"
-          :connections="row.connections"
+          :bars="row.bars || []"
+          :children="row.children || []"
+          :connections="row.connections || []"
           highlightOnHover
         >
           <!-- Custom Bar Label Slot -->
@@ -769,6 +779,13 @@ const formattedEventLog = computed(() => {
             </div>
           </template>
         </g-gantt-row>
+
+        <template #milestone-milestone2="{ milestone }">
+          <div class="milestone-custom">
+            <i>📍</i>
+            <span>{{ milestone.name }}</span>
+          </div>
+        </template>
 
         <template v-if="customSlots.commands" #commands="{ 
           zoomIn, zoomOut, scrollRowUp, scrollRowDown,
@@ -1107,6 +1124,20 @@ const formattedEventLog = computed(() => {
 .timeunit-date {
   font-size: 10px;
   opacity: 0.7;
+}
+
+.milestone-custom {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 1em;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    position: absolute;
+    top: 4px;
+    transform: translateY(0);
+    background-color: #35496E;
+    color: #42B883;
+    font-weight: 700;
 }
 
 @media (max-width: 1200px) {

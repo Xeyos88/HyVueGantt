@@ -5,6 +5,7 @@ import vue from "@vitejs/plugin-vue"
 import postcssPresetEnv from "postcss-preset-env"
 import styleInject from "@senojs/rollup-plugin-style-inject"
 import { visualizer } from "rollup-plugin-visualizer"
+import dts from "vite-plugin-dts"
 
 // https://vitejs.dev/config/
 export default () => {
@@ -17,6 +18,15 @@ export default () => {
       visualizer({
         filename: "stats.html",
         gzipSize: true
+      }),
+      dts({
+        include: ["src/**/*.ts", "src/**/*.vue"],
+        beforeWriteFile: (filePath, content) => {
+          if (filePath.endsWith(".vue.d.ts")) {
+            return false
+          }
+          return { filePath, content }
+        }
       })
     ],
     css: {

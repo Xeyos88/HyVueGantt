@@ -9,11 +9,11 @@ import advancedFormat from "dayjs/plugin/advancedFormat"
 import customParseFormat from "dayjs/plugin/customParseFormat.js"
 import dayOfYear from "dayjs/plugin/dayOfYear.js"
 import localizedFormat from "dayjs/plugin/localizedFormat"
-import type { ColorScheme } from "./types"
 
 import GGanttChart from "./components/GGanttChart.vue"
 import GGanttRow from "./components/GGanttRow.vue"
 import type {
+  ColorScheme,
   GanttBarObject,
   GanttBarConfig,
   BarConnection,
@@ -29,7 +29,10 @@ import type {
   SortFunction,
   SortState,
   SortDirection,
-  TimeUnit
+  TimeUnit,
+  MarkerConnection,
+  DayOptionLabel,
+  GanttBarConnection
 } from "./types"
 
 import "dayjs/locale/it"
@@ -119,7 +122,10 @@ export type {
   SortFunction,
   SortState,
   SortDirection,
-  TimeUnit
+  TimeUnit,
+  MarkerConnection,
+  DayOptionLabel,
+  GanttBarConnection
 }
 export { GGanttChart, GGanttRow }
 

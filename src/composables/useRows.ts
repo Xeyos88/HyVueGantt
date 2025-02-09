@@ -55,7 +55,7 @@ export interface UseRowsProps {
 }
 
 interface CleanRow {
-  id?: string | number
+  id: string | number
   label: string
   bars: GanttBarObject[]
   connections?: BaseConnection[]

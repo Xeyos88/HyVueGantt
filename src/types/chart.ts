@@ -1,7 +1,7 @@
 import type { GanttBarConnection, GanttBarObject } from "./bar"
 
 export interface ChartRow {
-  id?: string | number
+  id: string | number
   label: string
   bars: GanttBarObject[]
   children?: ChartRow[]
