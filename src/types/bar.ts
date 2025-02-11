@@ -48,3 +48,5 @@ export interface BarPosition {
   width: number
   height: number
 }
+
+export type ConnectionPoint = "start" | "end"
