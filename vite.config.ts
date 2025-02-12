@@ -18,16 +18,16 @@ export default () => {
       visualizer({
         filename: "stats.html",
         gzipSize: true
-      }),
-      dts({
-        include: ["src/**/*.ts", "src/**/*.vue"],
-        beforeWriteFile: (filePath, content) => {
-          if (filePath.endsWith(".vue.d.ts")) {
-            return false
-          }
-          return { filePath, content }
-        }
       })
+      //dts({
+      //  include: ["src/**/*.ts", "src/**/*.vue"],
+      //  beforeWriteFile: (filePath, content) => {
+      //   if (filePath.endsWith(".vue.d.ts")) {
+      //     return false
+      //   }
+      //   return { filePath, content }
+      // }
+      //})
     ],
     css: {
       postcss: {

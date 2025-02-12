@@ -12,6 +12,7 @@ import type {
   ConnectionPointHoverState,
   ConnectionPoint
 } from "../types"
+import type { UseRowsReturn } from "../composables/useRows"
 
 export interface UseConnectionCreationReturn {
   connectionState: Ref<ConnectionCreationState>
@@ -39,12 +40,14 @@ export interface ConnectionCreationService extends UseConnectionCreationReturn {
 
 export function useConnectionCreation(
   config: GGanttChartConfig,
+  rowManager: UseRowsReturn,
   emit: {
     (e: "connection-start", value: ConnectionStartEvent): void
     (e: "connection-drag", value: ConnectionDragEvent): void
     (e: "connection-complete", value: ConnectionCompleteEvent): void
     (e: "connection-cancel", value: ConnectionStartEvent): void
-  }
+  },
+  reinitializeConnections: () => void
 ): UseConnectionCreationReturn {
   const connectionState = ref<ConnectionCreationState>({
     isCreating: false,
@@ -132,6 +135,11 @@ export function useConnectionCreation(
         connectionState.value.sourceBar.ganttBarConfig.connections = []
       }
       connectionState.value.sourceBar.ganttBarConfig.connections.push(newConnection)
+
+      const updatedRows = [...rowManager.rows.value]
+      rowManager.updateRows(updatedRows)
+
+      reinitializeConnections()
 
       emit("connection-complete", {
         sourceBar: connectionState.value.sourceBar,

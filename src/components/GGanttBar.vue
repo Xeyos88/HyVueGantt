@@ -305,12 +305,10 @@ const handleConnectionPointMouseDown = (e: MouseEvent, point: ConnectionPoint) =
 
 const handleConnectionDrop = (e: MouseEvent, point: ConnectionPoint) => {
   if (!enableConnectionCreation.value) return
-
   e.stopPropagation()
   connectionCreation?.completeConnection(props.bar, point, e)
 }
 
-// Computed per determinare se la barra può essere target di connessione
 const canBeTarget = computed(() => {
   if (!connectionCreation?.connectionState.value.isCreating) return false
   return connectionCreation.canBeConnectionTarget.value(props.bar)
@@ -331,7 +329,7 @@ const connectionPointStyle = computed(() => ({
   height: "12px",
   borderRadius: "50%",
   cursor: "pointer",
-  background: canBeTarget.value ? config.colors.value.primary : "#ccc",
+  background: canBeTarget.value ? "#00ff00" : "#ff0000",
   transition: "all 0.2s ease",
   opacity:
     connectionCreation?.connectionState.value.isCreating ||
@@ -340,7 +338,7 @@ const connectionPointStyle = computed(() => ({
     endPointHover.value
       ? 1
       : 0,
-  zIndex: 100
+  zIndex: 1000
 }))
 
 const startPointStyle = computed(() => ({
@@ -452,7 +450,7 @@ const endPointStyle = computed(() => ({
   justify-content: center;
   align-items: center;
   background: cadetblue;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
 }
 

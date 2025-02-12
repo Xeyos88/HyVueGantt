@@ -1,4 +1,4 @@
-import { computed, ref, type Ref } from "vue"
+import { computed, ref, type Ref, watch } from "vue"
 import type {
   BarConnection,
   BarPosition,
@@ -56,6 +56,8 @@ export function useConnections(
    * Extracts and normalizes connection data from bar configurations
    */
   const initializeConnections = () => {
+    connections.value = []
+
     const getAllBars = (rows: ChartRow[]): GanttBarObject[] => {
       return rows.flatMap((row) => {
         const bars = [...row.bars]
@@ -83,6 +85,14 @@ export function useConnections(
       }
     })
   }
+
+  watch(
+    () => rowManager.rows.value,
+    () => {
+      initializeConnections()
+    },
+    { deep: true }
+  )
 
   /**
    * Updates the positions of all bars in the chart

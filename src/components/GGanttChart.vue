@@ -277,7 +277,9 @@ const {
     colors,
     chartSize
   },
-  emit
+  rowManager,
+  emit,
+  initializeConnections
 )
 
 provide("connectionCreation", {
@@ -321,15 +323,18 @@ const previewLinePoints = computed(() => {
   if (!rowsContainer) return null
 
   const containerRect = rowsContainer.getBoundingClientRect()
+
   const scrollLeft = rowsContainer.scrollLeft
   const scrollTop = rowsContainer.scrollTop
 
+  // Calcoliamo la posizione della source considerando lo scroll
   const sourceX =
     connectionState.value.sourcePoint === "start"
       ? sourceRect.left - containerRect.left + scrollLeft
       : sourceRect.right - containerRect.left + scrollLeft
   const sourceY = sourceRect.top - containerRect.top + scrollTop + sourceRect.height / 2
 
+  // Calcoliamo la posizione del mouse considerando lo scroll
   const mouseX = connectionState.value.mouseX - containerRect.left + scrollLeft
   const mouseY = connectionState.value.mouseY - containerRect.top + scrollTop
 
@@ -340,6 +345,20 @@ const previewLinePoints = computed(() => {
     y2: mouseY
   }
 })
+
+// Aggiungiamo anche un watcher per aggiornare la posizione durante lo scroll
+watch(
+  () => scrollPosition.value,
+  () => {
+    if (connectionState.value.isCreating) {
+      // Forza il ricalcolo delle coordinate
+      const container = ganttContainer.value?.querySelector(".g-gantt-rows-container")
+      if (container) {
+        connectionState.value.mouseX = connectionState.value.mouseX // Trigger update
+      }
+    }
+  }
+)
 
 // -----------------------------
 // 6. COMPUTED PROPERTIES
@@ -495,6 +514,7 @@ const emitBarEvent = (
     case "progress-drag-end":
       initTooltip(bar)
       emit("progress-drag-end", { bar, e })
+      rowManager.onBarMove()
       break
   }
 }
@@ -846,7 +866,8 @@ provide(GANTT_ID_KEY, id.value)
                   width: '100%',
                   height: '100%',
                   pointerEvents: 'none',
-                  zIndex: 1000
+                  zIndex: 2000,
+                  overflow: 'visible'
                 }"
               >
                 <g-gantt-connector
