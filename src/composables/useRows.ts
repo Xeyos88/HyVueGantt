@@ -124,7 +124,10 @@ function createHistoryState(
             style: bar.ganttBarConfig.style,
             class: bar.ganttBarConfig.class,
             connections: bar.ganttBarConfig.connections,
-            milestoneId: bar.ganttBarConfig.milestoneId
+            milestoneId: bar.ganttBarConfig.milestoneId,
+            progress: bar.ganttBarConfig.progress,
+            progressStyle: bar.ganttBarConfig.progressStyle,
+            progressResizable: bar.ganttBarConfig.progressResizable
           }
         })) || [],
       connections: row.connections,

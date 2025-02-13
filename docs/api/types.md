@@ -33,7 +33,7 @@ interface GanttBarConfig {
   style?: CSSProperties;
   class?: string;
   connections?: GanttBarConnection[];
-  milestoneId?: strin;
+  milestoneId?: string;
   progress?: number;
   progressResizable?: boolean;
   progressStyle?: CSSProperties;
@@ -42,6 +42,15 @@ interface GanttBarConfig {
 interface GanttBarObject {
   [key: string]: any;
   ganttBarConfig: GanttBarConfig;
+}
+
+interface GanttBarConnection {
+  targetId: string;
+  type?: ConnectionType;
+  color?: string;
+  pattern?: ConnectionPattern;
+  animated?: boolean;
+  animationSpeed?: ConnectionSpeed;
 }
 ```
 
@@ -53,17 +62,6 @@ interface ChartRow {
   label: string
   bars: GanttBarObject[]
   children?: ChartRow[]
-  _originalNode?: any
-}
-
-interface BarConnection {
-  sourceId: string;
-  targetId: string;
-  type?: ConnectionType;
-  color?: string;
-  pattern?: ConnectionPattern;
-  animated?: boolean;
-  animationSpeed?: ConnectionSpeed;
 }
 
 interface GanttMilestone {
@@ -74,6 +72,7 @@ interface GanttMilestone {
   color?: string
 }
 ```
+
 ## Label Data Types
 
 ```typescript
@@ -87,5 +86,32 @@ interface LabelColumnConfig {
   sortable?: boolean
   valueGetter?: (row: ChartRow) => string | number
   sortFn?: SortFunction
+}
+
+interface SortState {
+  column: string;
+  direction: SortDirection;
+}
+```
+
+## Style Types
+
+```typescript
+interface ColorScheme {
+  primary: string;
+  secondary: string;
+  ternary: string;
+  quartenary: string;
+  hoverHighlight: string;
+  markerCurrentTime: string;
+  text: string;
+  background: string;
+  toast?: string;
+  commands?: string;
+  rangeHighlight?: string;
+  holidayHighlight?: string;
+  barContainer?: string;
+  rowContainer?: string;
+  gridAndBorder?: string;
 }
 ```

@@ -99,7 +99,7 @@ const nonAnimatedDashArray = computed(() => {
       width: '100%',
       height: '100%',
       pointerEvents: 'none',
-      zIndex: 1,
+      zIndex: 1001,
       overflow: 'visible'
     }"
   >

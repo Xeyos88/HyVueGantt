@@ -6,16 +6,18 @@ import useTimePositionMapping from "../composables/useTimePositionMapping"
 import useBarDragLimit from "../composables/useBarDragLimit"
 import { useBarKeyboardControl } from "../composables/useBarKeyboardControl"
 import { useTouchEvents } from "../composables/useTouchEvents"
-import type { GanttBarObject } from "../types"
+import type { ConnectionPoint, GanttBarObject } from "../types"
 import provideEmitBarEvent from "../provider/provideEmitBarEvent"
 import provideConfig from "../provider/provideConfig"
 import { BAR_CONTAINER_KEY, GANTT_ID_KEY } from "../provider/symbols"
 import useBarSelector from "../composables/useBarSelector"
+import type { ConnectionCreationService } from "../composables/useConnectionCreation"
 
 const props = defineProps<{
   bar: GanttBarObject
 }>()
 const ganttId = inject(GANTT_ID_KEY)!
+const connectionCreation = inject<ConnectionCreationService>("connectionCreation")
 
 const emitBarEvent = provideEmitBarEvent()
 const config = provideConfig()
@@ -84,7 +86,8 @@ const {
   chartSize,
   showLabel,
   showProgress,
-  defaultProgressResizable
+  defaultProgressResizable,
+  enableConnectionCreation
 } = config
 
 const xStart = ref(0)
@@ -264,6 +267,93 @@ const handleProgressDragEnd = (e: MouseEvent) => {
     props.bar
   )
 }
+
+const startPointHover = ref(false)
+const endPointHover = ref(false)
+const isBarHovered = ref(false)
+
+const handleConnectionPointMouseEnter = (point: ConnectionPoint) => {
+  if (!enableConnectionCreation.value) return
+
+  if (point === "start") {
+    startPointHover.value = true
+  } else {
+    endPointHover.value = true
+  }
+
+  connectionCreation?.handleConnectionPointHover(props.bar.ganttBarConfig.id, point, true)
+}
+
+const handleConnectionPointMouseLeave = (point: ConnectionPoint) => {
+  if (!enableConnectionCreation.value) return
+
+  if (point === "start") {
+    startPointHover.value = false
+  } else {
+    endPointHover.value = false
+  }
+
+  connectionCreation?.handleConnectionPointHover(props.bar.ganttBarConfig.id, point, false)
+}
+
+const handleConnectionPointMouseDown = (e: MouseEvent, point: ConnectionPoint) => {
+  if (!enableConnectionCreation.value) return
+
+  e.stopPropagation()
+  connectionCreation?.startConnectionCreation(props.bar, point, e)
+}
+
+const handleConnectionDrop = (e: MouseEvent, point: ConnectionPoint) => {
+  if (!enableConnectionCreation.value) return
+  e.stopPropagation()
+  connectionCreation?.completeConnection(props.bar, point, e)
+}
+
+const canBeTarget = computed(() => {
+  if (!connectionCreation?.connectionState.value.isCreating) return false
+  return connectionCreation.canBeConnectionTarget.value(props.bar)
+})
+
+const handleBarMouseEnter = (e: MouseEvent) => {
+  isBarHovered.value = true
+  onMouseEvent(e)
+}
+
+const handleBarMouseLeave = (e: MouseEvent) => {
+  isBarHovered.value = false
+  onMouseEvent(e)
+}
+
+const connectionPointStyle = computed(() => ({
+  width: "12px",
+  height: "12px",
+  borderRadius: "50%",
+  cursor: "pointer",
+  background: canBeTarget.value ? "#00ff00" : "#ff0000",
+  transition: "all 0.2s ease",
+  opacity:
+    connectionCreation?.connectionState.value.isCreating ||
+    isBarHovered.value ||
+    startPointHover.value ||
+    endPointHover.value
+      ? 1
+      : 0,
+  zIndex: 1000
+}))
+
+const startPointStyle = computed(() => ({
+  ...connectionPointStyle.value,
+  left: 0,
+  top: "50%",
+  transform: "translate(-50%, -50%)"
+}))
+
+const endPointStyle = computed(() => ({
+  ...connectionPointStyle.value,
+  right: 0,
+  top: "50%",
+  transform: "translate(50%, -50%)"
+}))
 </script>
 
 <template>
@@ -283,8 +373,8 @@ const handleProgressDragEnd = (e: MouseEvent) => {
     @mousedown="onMouseEvent"
     @click="onMouseEvent"
     @dblclick="onMouseEvent"
-    @mouseenter="onMouseEvent"
-    @mouseleave="onMouseEvent"
+    @mouseenter="handleBarMouseEnter"
+    @mouseleave="handleBarMouseLeave"
     @contextmenu="onMouseEvent"
     @touchstart="onTouchEvent"
     @touchmove="onTouchEvent"
@@ -297,6 +387,24 @@ const handleProgressDragEnd = (e: MouseEvent) => {
     tabindex="0"
     :aria-describedby="`tooltip-${barConfig.id}`"
   >
+    <template v-if="enableConnectionCreation">
+      <div
+        class="connection-point start"
+        :style="[startPointStyle, { position: 'absolute' }]"
+        @mouseenter="handleConnectionPointMouseEnter('start')"
+        @mouseleave="handleConnectionPointMouseLeave('start')"
+        @mousedown="handleConnectionPointMouseDown($event, 'start')"
+        @mouseup="handleConnectionDrop($event, 'start')"
+      />
+      <div
+        class="connection-point end"
+        :style="[endPointStyle, { position: 'absolute' }]"
+        @mouseenter="handleConnectionPointMouseEnter('end')"
+        @mouseleave="handleConnectionPointMouseLeave('end')"
+        @mousedown="handleConnectionPointMouseDown($event, 'end')"
+        @mouseup="handleConnectionDrop($event, 'end')"
+      />
+    </template>
     <div
       v-if="barConfig.progress !== undefined"
       class="g-gantt-progress-bar"
@@ -342,7 +450,8 @@ const handleProgressDragEnd = (e: MouseEvent) => {
   justify-content: center;
   align-items: center;
   background: cadetblue;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
 }
 
 .g-gantt-bar-label {
@@ -430,5 +539,17 @@ const handleProgressDragEnd = (e: MouseEvent) => {
 
 .g-gantt-progress-handle:active {
   background-color: rgba(0, 0, 0, 0.7);
+}
+
+.connection-point {
+  z-index: 10;
+}
+
+.connection-point:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.connection-point.end:hover {
+  transform: translate(50%, -50%) scale(1.2);
 }
 </style>
