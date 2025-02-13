@@ -73,7 +73,7 @@ export default defineConfig({
         {
           text: "Live Demo",
           items: [
-            { text: "Base", link: "/live/base" },
+            /*{ text: "Base", link: "/live/base" },
             { text: "Connections", link: "/live/connection" },
             { text: "Multi Columns", link: "/live/multicolumn" },
             { text: "Bar Slot", link: "/live/barslot" },
@@ -81,7 +81,7 @@ export default defineConfig({
             { text: "Holiday", link: "/live/holiday" },
             { text: "Other", link: "/live/others" },
             { text: "Grouping", link: "/live/grouping" },
-            { text: "Events", link: "/live/events" },
+            { text: "Events", link: "/live/events" },*/
             { text: "Advanced", link: "/live/advanced" }           
           ]
         }

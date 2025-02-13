@@ -71,6 +71,10 @@ Here's a minimal example of using the GGanttChart component:
 | locale| `string` | `'en'` | Locale for dayjs |
 | enableRowDragAndDrop| `boolean` | `false` | Enable drag and drop of rows |
 | markerConnection| `MarkerConnection` | `forward` | Choose the type of marker in connection |
+| showLabel| `boolean` | `true` | Enable the visualization of bar label |
+| showProgress| `boolean` | `true` | Enable the visualization of percentage bar progress |
+| defaultProgressResizable | `boolean` | `true` | Enable progress adjustment through dragging |
+| enableConnectionCreation | `boolean` | `true` | Enable the possibility to draw connections |
 
 ### Events
 
@@ -89,6 +93,14 @@ Here's a minimal example of using the GGanttChart component:
 | contextmenu-bar | `{ bar: GanttBarObject; e: MouseEvent; datetime?: string \| Date }`| Contextmenu click|
 | group-expansion | `{ rowId: string \| number }` | Open close group bar |
 | row-drop | `{ sourceRow: ChartRow; targetRow?: ChartRow; newIndex: number; parentId string \|number }` | Row drop after drag |
+| progress-change | `{ bar: GanttBarObject, e: MouseEvent }` | Bar progress change |
+| progress-drag-start | `{ bar: GanttBarObject, e: MouseEvent }` | Start progress change |
+| progress-drag-end | `{ bar: GanttBarObject, e: MouseEvent }` | End progress change |
+| connection-start | `{ sourceBar: GanttBarObject, connectionPoint: ConnectionPoint, e: MouseEvent }` | Starts the creation of a connection |
+| connection-drag | `{ sourceBar: GanttBarObject, connectionPoint: ConnectionPoint, currentX: number, currentY: number, e: MouseEvent }` | During connection dragging |
+| connection-complete | `{ sourceBar: GanttBarObject, targetBar: GanttBarObject, sourcePoint: ConnectionPoint, targetPoint: ConnectionPoint, e: MouseEvent }` | Completes the creation of a connection |
+| connection-cancel | `{ sourceBar: GanttBarObject, connectionPoint: ConnectionPoint, e: MouseEvent }` | Cancels the creation of a connection |
+
 
 ### Slots
 

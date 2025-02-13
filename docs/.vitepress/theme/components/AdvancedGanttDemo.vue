@@ -66,6 +66,7 @@ const labelResizable = ref(true)
 const enableRowDragAndDrop = ref(true)
 const maxRows = ref(5)
 const defaultProgressResizable = ref(true)
+const enableConnectionCreation = ref(true)
 
 const multiColumnOptions = ['Label','StartDate','EndDate','Id','Duration', 'Progress']
 const columnsSelected = ref(["Label"])
@@ -121,32 +122,8 @@ const addEventLog = (type: string, data: any) => {
 }
 
 // Event Handlers with Logging
-const handleBarClick = (event: any) => {
-  addEventLog('Bar Click', event)
-}
-
-const handleBarDrag = (event: any) => {
-  addEventLog('Bar Drag', event)
-}
-
-const handleSort = (event: any) => {
-  addEventLog('Sort Change', event)
-}
-
-const handleGroupExpansion = (event: any) => {
-  addEventLog('Group Toggle', event)
-}
-
-const handleRowDrop = (event: any) => {
-  addEventLog('Row Drop', event)
-}
-
-const handleProgressStart = (event: any) => {
-  addEventLog('Progress Bar Start', event)
-}
-
-const handleProgressEnd = (event: any) => {
-  addEventLog('Progress Bar End', event)
+const handleEvent = (event: any, type: string) => {
+  addEventLog(type, event)
 }
 
 export type ChartRowWithOptionalBars = Omit<ChartRow, "bars"> & { bars?: GanttBarObject[] };
@@ -702,6 +679,12 @@ const formattedEventLog = computed(() => {
                 <input type="checkbox" v-model="defaultProgressResizable">
               </label>
             </div>
+            <div class="setting-item">
+              <label>
+                Enable connection creation:
+                <input type="checkbox" v-model="enableConnectionCreation">
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -752,13 +735,16 @@ const formattedEventLog = computed(() => {
         :show-progress="showProgress"
         :showLabel="showLabel"
         :milestones="milestones"
-        @click-bar="handleBarClick"
-        @drag-bar="handleBarDrag"
-        @sort="handleSort"
-        @group-expansion="handleGroupExpansion"
-        @row-drop="handleRowDrop"
-        @progress-drag-start="handleProgressStart"
-        @progress-drag-end="handleProgressEnd"
+        :enableConnectionCreation="enableConnectionCreation"
+        @click-bar="handleEvent($event, 'Bar Click')"
+        @drag-bar="handleEvent($event, 'Bar Drag')"
+        @sort="handleEvent($event, 'Sort Change')"
+        @group-expansion="handleEvent($event, 'Group Toggle')"
+        @row-drop="handleEvent($event, 'Row Drop')"
+        @progress-drag-start="handleEvent($event, 'Progress Bar Start')"
+        @progress-drag-end="handleEvent($event, 'Progress Bar End')"
+        @connection-start="handleEvent($event, 'Connection Start')"
+        @connection-complete="handleEvent($event, 'Connection Complete')"
       >
         <g-gantt-row
           v-for="row in sampleData"
