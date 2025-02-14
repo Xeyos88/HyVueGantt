@@ -31,3 +31,8 @@ export interface ConnectionPreviewStyle {
   strokeDasharray?: string
   strokeOpacity: number
 }
+
+export interface SelectedConnection {
+  sourceId: string
+  targetId: string
+}

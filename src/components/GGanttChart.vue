@@ -123,7 +123,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   showLabel: true,
   showProgress: true,
   defaultProgressResizable: true,
-  enableConnectionCreation: true
+  enableConnectionCreation: false,
+  enableConnectionDeletion: false
 })
 
 // Events
@@ -199,8 +200,16 @@ const rowManager = useRows(
 provide("useRows", rowManager)
 
 // Connections Management
-const { connections, barPositions, getConnectorProps, initializeConnections, updateBarPositions } =
-  useConnections(rowManager, props, id)
+const {
+  connections,
+  barPositions,
+  getConnectorProps,
+  initializeConnections,
+  updateBarPositions,
+  handleConnectionClick,
+  selectedConnection,
+  deleteSelectedConnection
+} = useConnections(rowManager, props, id, emit)
 
 // Tooltip Management
 const { showTooltip, tooltipBar, initTooltip, clearTooltip } = useTooltip()
@@ -249,7 +258,12 @@ const { handleKeyDown } = useKeyboardNavigation(
     handleZoomUpdate
   },
   ganttWrapper,
-  ganttContainer
+  ganttContainer,
+  {
+    selectedConnection,
+    deleteSelectedConnection
+  },
+  toRef(props.enableConnectionDeletion)
 )
 
 // Size Management
@@ -901,6 +915,7 @@ provide(GANTT_ID_KEY, id.value)
                     v-if="barPositions.get(conn.sourceId) && barPositions.get(conn.targetId)"
                     v-bind="getConnectorProps(conn)!"
                     :marker="markerConnection"
+                    @click="handleConnectionClick(conn)"
                   />
                 </template>
               </template>

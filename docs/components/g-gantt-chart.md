@@ -74,7 +74,9 @@ Here's a minimal example of using the GGanttChart component:
 | showLabel| `boolean` | `true` | Enable the visualization of bar label |
 | showProgress| `boolean` | `true` | Enable the visualization of percentage bar progress |
 | defaultProgressResizable | `boolean` | `true` | Enable progress adjustment through dragging |
-| enableConnectionCreation | `boolean` | `true` | Enable the possibility to draw connections |
+| enableConnectionCreation | `boolean` | `false` | Enable the possibility to draw connections |
+| enableConnectionDelete | `boolean` | `false` | Enable the possibility to delete connections |
+
 
 ### Events
 
@@ -100,6 +102,7 @@ Here's a minimal example of using the GGanttChart component:
 | connection-drag | `{ sourceBar: GanttBarObject, connectionPoint: ConnectionPoint, currentX: number, currentY: number, e: MouseEvent }` | During connection dragging |
 | connection-complete | `{ sourceBar: GanttBarObject, targetBar: GanttBarObject, sourcePoint: ConnectionPoint, targetPoint: ConnectionPoint, e: MouseEvent }` | Completes the creation of a connection |
 | connection-cancel | `{ sourceBar: GanttBarObject, connectionPoint: ConnectionPoint, e: MouseEvent }` | Cancels the creation of a connection |
+| connection-delete | `{ sourceBar: GanttBarObject, targetBar: GanttBarObject, e: MouseEvent }` | Delete a connection |
 
 
 ### Slots

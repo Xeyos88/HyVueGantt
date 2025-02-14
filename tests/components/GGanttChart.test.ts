@@ -17,7 +17,8 @@ vi.mock("../../src/composables/useConnections", () => ({
     barPositions: ref(new Map()),
     getConnectorProps: vi.fn(),
     initializeConnections: vi.fn(),
-    updateBarPositions: vi.fn()
+    updateBarPositions: vi.fn(),
+    selectedConnection: true
   })
 }))
 

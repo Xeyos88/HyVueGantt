@@ -38,6 +38,7 @@ export interface GGanttChartProps {
   enableMinutes?: boolean
   enableConnections?: boolean
   enableConnectionCreation?: boolean
+  enableConnectionDeletion?: boolean
   defaultConnectionType?: ConnectionType
   defaultConnectionColor?: string
   defaultConnectionPattern?: ConnectionPattern

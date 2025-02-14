@@ -50,7 +50,6 @@ describe("GGanttConnector", () => {
       const svg = wrapper.find("svg")
       const style = svg.attributes("style") || ""
       expect(style).toContain("position: absolute")
-      expect(style).toContain("pointer-events: none")
       expect(style).toContain("overflow: visible")
     })
 
@@ -58,12 +57,10 @@ describe("GGanttConnector", () => {
       const customColor = "#00ff00"
       const wrapper = createWrapper({ color: customColor })
 
-      // Troviamo il path della connessione (il secondo path)
       const paths = wrapper.findAll("path")
       const connectorPath = paths[paths.length - 1]
       expect(connectorPath.attributes("stroke")).toBe(customColor)
 
-      // Verifichiamo il marker
       const markerPath = wrapper.find("marker path")
       expect(markerPath.attributes("fill")).toBe(customColor)
     })

@@ -56,6 +56,12 @@ export interface ConnectionCompleteEvent {
   e: MouseEvent
 }
 
+export interface ConnectionDeleteEvent {
+  sourceBar: GanttBarObject
+  targetBar: GanttBarObject
+  e: MouseEvent
+}
+
 export interface GGanttChartEmits {
   (e: "click-bar", value: GanttBarEvent): void
   (e: "mousedown-bar", value: GanttBarEvent): void
@@ -77,4 +83,5 @@ export interface GGanttChartEmits {
   (e: "connection-drag", value: ConnectionDragEvent): void
   (e: "connection-complete", value: ConnectionCompleteEvent): void
   (e: "connection-cancel", value: ConnectionStartEvent): void
+  (e: "connection-delete", value: ConnectionDeleteEvent): void
 }

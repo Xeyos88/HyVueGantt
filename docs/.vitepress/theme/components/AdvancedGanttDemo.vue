@@ -67,6 +67,7 @@ const enableRowDragAndDrop = ref(true)
 const maxRows = ref(5)
 const defaultProgressResizable = ref(true)
 const enableConnectionCreation = ref(true)
+const enableConnectionDeletion = ref(true)
 
 const multiColumnOptions = ['Label','StartDate','EndDate','Id','Duration', 'Progress']
 const columnsSelected = ref(["Label"])
@@ -685,6 +686,12 @@ const formattedEventLog = computed(() => {
                 <input type="checkbox" v-model="enableConnectionCreation">
               </label>
             </div>
+            <div class="setting-item">
+              <label>
+                Enable connection deletion:
+                <input type="checkbox" v-model="enableConnectionDeletion">
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -736,6 +743,7 @@ const formattedEventLog = computed(() => {
         :showLabel="showLabel"
         :milestones="milestones"
         :enableConnectionCreation="enableConnectionCreation"
+        :enableConnectionDeletion="enableConnectionDeletion"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"
@@ -745,6 +753,7 @@ const formattedEventLog = computed(() => {
         @progress-drag-end="handleEvent($event, 'Progress Bar End')"
         @connection-start="handleEvent($event, 'Connection Start')"
         @connection-complete="handleEvent($event, 'Connection Complete')"
+        @connection-delete="handleEvent($event, 'Connection Deleted')"
       >
         <g-gantt-row
           v-for="row in sampleData"
