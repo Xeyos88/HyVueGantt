@@ -90,7 +90,8 @@ beforeAll(() => {
       locale: ref("en"),
       sortable: ref(true),
       enableRowDragAndDrop: ref(true),
-      showLabel: ref(true)
+      showLabel: ref(true),
+      utc: ref(false)
     },
     [EMIT_BAR_EVENT_KEY]: () => {},
     [BAR_CONTAINER_KEY]: ref(barContainerElement),

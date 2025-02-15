@@ -124,7 +124,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   showProgress: true,
   defaultProgressResizable: true,
   enableConnectionCreation: false,
-  enableConnectionDeletion: false
+  enableConnectionDeletion: false,
+  utc: false
 })
 
 // Events

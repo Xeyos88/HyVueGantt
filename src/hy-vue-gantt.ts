@@ -9,6 +9,7 @@ import advancedFormat from "dayjs/plugin/advancedFormat"
 import customParseFormat from "dayjs/plugin/customParseFormat.js"
 import dayOfYear from "dayjs/plugin/dayOfYear.js"
 import localizedFormat from "dayjs/plugin/localizedFormat"
+import utc from "dayjs/plugin/utc"
 
 import GGanttChart from "./components/GGanttChart.vue"
 import GGanttRow from "./components/GGanttRow.vue"
@@ -103,6 +104,7 @@ export function extendDayjs() {
   dayjs.extend(advancedFormat)
   dayjs.extend(dayOfYear)
   dayjs.extend(localizedFormat)
+  dayjs.extend(utc)
 }
 
 export type {

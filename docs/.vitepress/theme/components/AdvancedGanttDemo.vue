@@ -27,6 +27,8 @@ const enableMinutes = ref(false)
 const currentTime = ref(true)
 const currentTimeLabel = ref('Now')
 const locale = ref('en')
+const utc = ref(false)
+
 
 // Display Configuration
 const hideTimeaxis = ref(false)
@@ -442,6 +444,12 @@ const formattedEventLog = computed(() => {
                 >
               </label>
             </div>
+            <div class="setting-item">
+              <label>
+                UTC Current time:
+                <input type="checkbox" v-model="utc">
+              </label>
+            </div>
           </div>
         </div>
 
@@ -744,6 +752,7 @@ const formattedEventLog = computed(() => {
         :milestones="milestones"
         :enableConnectionCreation="enableConnectionCreation"
         :enableConnectionDeletion="enableConnectionDeletion"
+        :utc="utc"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"

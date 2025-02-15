@@ -8,6 +8,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter.js"
 import isBetween from "dayjs/plugin/isBetween.js"
 import weekOfYear from "dayjs/plugin/weekOfYear"
 import dayOfYear from "dayjs/plugin/dayOfYear.js"
+import utc from "dayjs/plugin/utc"
 
 
 export function extendDayjs() {
@@ -17,6 +18,7 @@ export function extendDayjs() {
   dayjs.extend(weekOfYear)
   dayjs.extend(isoWeek)
   dayjs.extend(dayOfYear)
+  dayjs.extend(utc)
 }
 
 const GanttDemo = defineClientComponent(() => {

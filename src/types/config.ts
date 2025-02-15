@@ -65,6 +65,7 @@ export interface GGanttChartProps {
   showLabel?: boolean
   showProgress?: boolean
   defaultProgressResizable?: boolean
+  utc?: boolean
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
