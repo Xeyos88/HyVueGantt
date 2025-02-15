@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import useTimePositionMapping from "../composables/useTimePositionMapping"
 import dayjs from "dayjs"
 import provideConfig from "../provider/provideConfig"
@@ -8,15 +8,23 @@ import { useIntervalFn } from "@vueuse/core"
 
 const { mapTimeToPosition } = useTimePositionMapping()
 const currentMoment = ref(dayjs())
-const { colors, dateFormat, currentTimeLabel } = provideConfig()
+const { colors, dateFormat, currentTimeLabel, utc } = provideConfig()
 const xDist = ref()
 
 const loopTime = () => {
-  currentMoment.value = dayjs()
+  const now = utc.value ? dayjs().utc() : dayjs()
+  currentMoment.value = now
   const format = dateFormat.value || "YYYY-MM-DD HH:mm:ss"
   xDist.value = mapTimeToPosition(dayjs(currentMoment.value, format).format(format))
 }
 useIntervalFn(loopTime, 1000)
+
+const currentTimeDisplay = computed(() => {
+  if (utc.value) {
+    return `${currentTimeLabel.value} (UTC)`
+  }
+  return currentTimeLabel.value
+})
 </script>
 
 <template>
@@ -34,7 +42,7 @@ useIntervalFn(loopTime, 1000)
     />
     <span class="g-grid-current-time-text" :style="{ color: colors.markerCurrentTime }">
       <slot name="current-time-label">
-        {{ currentTimeLabel }}
+        {{ currentTimeDisplay }}
       </slot>
     </span>
   </div>

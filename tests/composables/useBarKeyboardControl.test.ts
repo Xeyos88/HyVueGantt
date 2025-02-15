@@ -3,7 +3,6 @@ import { ref } from "vue"
 import { useBarKeyboardControl } from "../../src/composables/useBarKeyboardControl"
 import type { GanttBarObject } from "../../src/types"
 
-// Creiamo un mock più completo di dayjs
 const mockDayjs = vi.fn(() => ({
   format: vi.fn().mockReturnValue("2024-01-01 10:00"),
   add: vi.fn().mockReturnValue({
@@ -21,7 +20,6 @@ const mockDayjs = vi.fn(() => ({
   isAfter: vi.fn().mockReturnValue(false)
 }))
 
-// Mock delle dipendenze
 vi.mock("../../src/composables/useDayjsHelper", () => ({
   default: () => ({
     toDayjs: mockDayjs,
@@ -40,10 +38,12 @@ vi.mock("vue", async () => {
   return {
     ...(actual as any),
     inject: () => ({
-      rows: ref([{
-        label: "Test Row",
-        bars: []
-      }])
+      rows: ref([
+        {
+          label: "Test Row",
+          bars: []
+        }
+      ])
     })
   }
 })
@@ -93,11 +93,11 @@ describe("useBarKeyboardControl", () => {
     it("should handle ArrowLeft key press", () => {
       const bar = createMockBar("test-bar")
       const { onBarKeyDown } = useBarKeyboardControl(bar, mockConfig, mockEmitBarEvent)
-      
+
       const element = document.createElement("div")
       element.id = "test-bar"
       const event = createKeyboardEvent("ArrowLeft", false, element)
-      
+
       onBarKeyDown(event)
       expect(mockEmitBarEvent).toHaveBeenCalled()
     })
@@ -105,11 +105,11 @@ describe("useBarKeyboardControl", () => {
     it("should handle ArrowRight key press", () => {
       const bar = createMockBar("test-bar")
       const { onBarKeyDown } = useBarKeyboardControl(bar, mockConfig, mockEmitBarEvent)
-      
+
       const element = document.createElement("div")
       element.id = "test-bar"
       const event = createKeyboardEvent("ArrowRight", false, element)
-      
+
       onBarKeyDown(event)
       expect(mockEmitBarEvent).toHaveBeenCalled()
     })
@@ -117,11 +117,11 @@ describe("useBarKeyboardControl", () => {
     it("should handle ArrowUp key press for expansion", () => {
       const bar = createMockBar("test-bar")
       const { onBarKeyDown } = useBarKeyboardControl(bar, mockConfig, mockEmitBarEvent)
-      
+
       const element = document.createElement("div")
       element.id = "test-bar"
       const event = createKeyboardEvent("ArrowUp", false, element)
-      
+
       onBarKeyDown(event)
       expect(mockEmitBarEvent).toHaveBeenCalled()
     })
@@ -129,11 +129,11 @@ describe("useBarKeyboardControl", () => {
     it("should handle ArrowDown key press for shrinking", () => {
       const bar = createMockBar("test-bar")
       const { onBarKeyDown } = useBarKeyboardControl(bar, mockConfig, mockEmitBarEvent)
-      
+
       const element = document.createElement("div")
       element.id = "test-bar"
       const event = createKeyboardEvent("ArrowDown", false, element)
-      
+
       onBarKeyDown(event)
       expect(mockEmitBarEvent).toHaveBeenCalled()
     })
@@ -141,11 +141,11 @@ describe("useBarKeyboardControl", () => {
     it("should not process events for immobile bars", () => {
       const bar = createMockBar("test-bar", true)
       const { onBarKeyDown } = useBarKeyboardControl(bar, mockConfig, mockEmitBarEvent)
-      
+
       const element = document.createElement("div")
       element.id = "test-bar"
       const event = createKeyboardEvent("ArrowRight", false, element)
-      
+
       onBarKeyDown(event)
       expect(mockEmitBarEvent).not.toHaveBeenCalled()
     })
@@ -153,11 +153,11 @@ describe("useBarKeyboardControl", () => {
     it("should not process events for wrong target element", () => {
       const bar = createMockBar("test-bar")
       const { onBarKeyDown } = useBarKeyboardControl(bar, mockConfig, mockEmitBarEvent)
-      
+
       const element = document.createElement("div")
       element.id = "wrong-id"
       const event = createKeyboardEvent("ArrowRight", false, element)
-      
+
       onBarKeyDown(event)
       expect(mockEmitBarEvent).not.toHaveBeenCalled()
     })
@@ -165,11 +165,11 @@ describe("useBarKeyboardControl", () => {
     it("should handle Shift modifier for larger movements", () => {
       const bar = createMockBar("test-bar")
       const { onBarKeyDown } = useBarKeyboardControl(bar, mockConfig, mockEmitBarEvent)
-      
+
       const element = document.createElement("div")
       element.id = "test-bar"
       const event = createKeyboardEvent("ArrowRight", true, element)
-      
+
       onBarKeyDown(event)
       expect(mockEmitBarEvent).toHaveBeenCalled()
     })
@@ -178,36 +178,35 @@ describe("useBarKeyboardControl", () => {
   describe("precision handling", () => {
     it("should handle different precision settings", () => {
       const precisions = ["hour", "day", "week", "month"]
-      
-      precisions.forEach(precision => {
+
+      precisions.forEach((precision) => {
         const configWithPrecision = {
           ...mockConfig,
           precision: ref(precision)
         }
-        
+
         const bar = createMockBar("test-bar")
         const { onBarKeyDown } = useBarKeyboardControl(bar, configWithPrecision, mockEmitBarEvent)
-        
+
         const element = document.createElement("div")
         element.id = "test-bar"
         const event = createKeyboardEvent("ArrowRight", false, element)
-        
+
         onBarKeyDown(event)
         expect(mockEmitBarEvent).toHaveBeenCalled()
       })
     })
   })
 
-
   describe("boundary conditions", () => {
     it("should respect chart start and end dates", () => {
       const bar = createMockBar("test-bar")
       const { onBarKeyDown } = useBarKeyboardControl(bar, mockConfig, mockEmitBarEvent)
-      
+
       const element = document.createElement("div")
       element.id = "test-bar"
       const event = createKeyboardEvent("ArrowLeft", false, element)
-      
+
       onBarKeyDown(event)
       expect(mockEmitBarEvent).toHaveBeenCalled()
     })

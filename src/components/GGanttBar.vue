@@ -6,14 +6,18 @@ import useTimePositionMapping from "../composables/useTimePositionMapping"
 import useBarDragLimit from "../composables/useBarDragLimit"
 import { useBarKeyboardControl } from "../composables/useBarKeyboardControl"
 import { useTouchEvents } from "../composables/useTouchEvents"
-import type { GanttBarObject } from "../types"
+import type { ConnectionPoint, GanttBarObject } from "../types"
 import provideEmitBarEvent from "../provider/provideEmitBarEvent"
 import provideConfig from "../provider/provideConfig"
-import { BAR_CONTAINER_KEY } from "../provider/symbols"
+import { BAR_CONTAINER_KEY, GANTT_ID_KEY } from "../provider/symbols"
+import useBarSelector from "../composables/useBarSelector"
+import type { ConnectionCreationService } from "../composables/useConnectionCreation"
 
 const props = defineProps<{
   bar: GanttBarObject
 }>()
+const ganttId = inject(GANTT_ID_KEY)!
+const connectionCreation = inject<ConnectionCreationService>("connectionCreation")
 
 const emitBarEvent = provideEmitBarEvent()
 const config = provideConfig()
@@ -73,7 +77,18 @@ const onMouseEvent = (e: MouseEvent) => {
   emitBarEvent(e, bar.value, datetime)
 }
 
-const { barStart, barEnd, width, chartStart, chartEnd, chartSize } = config
+const {
+  barStart,
+  barEnd,
+  width,
+  chartStart,
+  chartEnd,
+  chartSize,
+  showLabel,
+  showProgress,
+  defaultProgressResizable,
+  enableConnectionCreation
+} = config
 
 const xStart = ref(0)
 const xEnd = ref(0)
@@ -142,6 +157,203 @@ const getGroupBarPath = (width: number, height: number) => {
     L 0 0
   `
 }
+
+const getDarkerColor = (color: string) => {
+  const rgb = color.startsWith("#") ? hexToRgb(color) : parseRgb(color)
+
+  return `rgba(${Math.max(0, rgb.r - 40)}, ${Math.max(0, rgb.g - 40)}, ${Math.max(0, rgb.b - 40)}, ${rgb.a})`
+}
+
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  return result
+    ? {
+        r: parseInt(result[1]!, 16),
+        g: parseInt(result[2]!, 16),
+        b: parseInt(result[3]!, 16),
+        a: 1
+      }
+    : { r: 0, g: 0, b: 0, a: 1 }
+}
+
+const parseRgb = (color: string) => {
+  const matches = color.match(/(\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/)
+  if (matches) {
+    return {
+      r: parseInt(matches[1]!),
+      g: parseInt(matches[2]!),
+      b: parseInt(matches[3]!),
+      a: matches[4] ? parseFloat(matches[4]) : 1
+    }
+  }
+  return { r: 0, g: 0, b: 0, a: 1 }
+}
+
+const progressStyle = computed(() => {
+  const progress = props.bar.ganttBarConfig.progress ?? 0
+  const baseStyle = props.bar.ganttBarConfig.progressStyle || {}
+  const barColor = props.bar.ganttBarConfig.style?.background || "#5F9EA0"
+
+  return {
+    ...baseStyle,
+    left: 0,
+    width: `${Math.min(Math.max(progress, 0), 100)}%`,
+    backgroundColor: baseStyle.backgroundColor || getDarkerColor(barColor as string),
+    transition: "width 0.3s ease",
+    borderRadius: "inherit",
+    height: "100%"
+  }
+})
+
+const isProgressDragging = ref(false)
+const progressDragStart = ref(0)
+const initialProgress = ref(0)
+
+const handleProgressDragStart = (e: MouseEvent) => {
+  if (!props.bar.ganttBarConfig.progressResizable && !defaultProgressResizable.value) return
+
+  e.stopPropagation()
+  isProgressDragging.value = true
+  progressDragStart.value = e.clientX
+  initialProgress.value = props.bar.ganttBarConfig.progress ?? 0
+
+  window.addEventListener("mousemove", handleProgressDrag)
+  window.addEventListener("mouseup", handleProgressDragEnd)
+
+  emitBarEvent(
+    {
+      ...e,
+      type: "progress-drag-start"
+    },
+    props.bar
+  )
+}
+const { findBarElement } = useBarSelector()
+
+const handleProgressDrag = (e: MouseEvent) => {
+  if (!isProgressDragging.value) return
+
+  const barElement = findBarElement(ganttId, props.bar.ganttBarConfig.id)
+  if (!barElement) return
+
+  const rect = barElement.getBoundingClientRect()
+  const deltaX = e.clientX - progressDragStart.value
+  const percentageDelta = (deltaX / rect.width) * 100
+
+  const newProgress = Math.min(Math.max(initialProgress.value + percentageDelta, 0), 100)
+  bar.value.ganttBarConfig.progress = Math.round(newProgress)
+
+  emitBarEvent(
+    {
+      ...e,
+      type: "progress-change"
+    },
+    props.bar
+  )
+}
+
+const handleProgressDragEnd = (e: MouseEvent) => {
+  if (!isProgressDragging.value) return
+
+  isProgressDragging.value = false
+  window.removeEventListener("mousemove", handleProgressDrag)
+  window.removeEventListener("mouseup", handleProgressDragEnd)
+
+  emitBarEvent(
+    {
+      ...e,
+      type: "progress-drag-end"
+    },
+    props.bar
+  )
+}
+
+const startPointHover = ref(false)
+const endPointHover = ref(false)
+const isBarHovered = ref(false)
+
+const handleConnectionPointMouseEnter = (point: ConnectionPoint) => {
+  if (!enableConnectionCreation.value) return
+
+  if (point === "start") {
+    startPointHover.value = true
+  } else {
+    endPointHover.value = true
+  }
+
+  connectionCreation?.handleConnectionPointHover(props.bar.ganttBarConfig.id, point, true)
+}
+
+const handleConnectionPointMouseLeave = (point: ConnectionPoint) => {
+  if (!enableConnectionCreation.value) return
+
+  if (point === "start") {
+    startPointHover.value = false
+  } else {
+    endPointHover.value = false
+  }
+
+  connectionCreation?.handleConnectionPointHover(props.bar.ganttBarConfig.id, point, false)
+}
+
+const handleConnectionPointMouseDown = (e: MouseEvent, point: ConnectionPoint) => {
+  if (!enableConnectionCreation.value) return
+
+  e.stopPropagation()
+  connectionCreation?.startConnectionCreation(props.bar, point, e)
+}
+
+const handleConnectionDrop = (e: MouseEvent, point: ConnectionPoint) => {
+  if (!enableConnectionCreation.value) return
+  e.stopPropagation()
+  connectionCreation?.completeConnection(props.bar, point, e)
+}
+
+const canBeTarget = computed(() => {
+  if (!connectionCreation?.connectionState.value.isCreating) return false
+  return connectionCreation.canBeConnectionTarget.value(props.bar)
+})
+
+const handleBarMouseEnter = (e: MouseEvent) => {
+  isBarHovered.value = true
+  onMouseEvent(e)
+}
+
+const handleBarMouseLeave = (e: MouseEvent) => {
+  isBarHovered.value = false
+  onMouseEvent(e)
+}
+
+const connectionPointStyle = computed(() => ({
+  width: "12px",
+  height: "12px",
+  borderRadius: "50%",
+  cursor: "pointer",
+  background: canBeTarget.value ? "#00ff00" : "#ff0000",
+  transition: "all 0.2s ease",
+  opacity:
+    connectionCreation?.connectionState.value.isCreating ||
+    isBarHovered.value ||
+    startPointHover.value ||
+    endPointHover.value
+      ? 1
+      : 0,
+  zIndex: 1000
+}))
+
+const startPointStyle = computed(() => ({
+  ...connectionPointStyle.value,
+  left: 0,
+  top: "50%",
+  transform: "translate(-50%, -50%)"
+}))
+
+const endPointStyle = computed(() => ({
+  ...connectionPointStyle.value,
+  right: 0,
+  top: "50%",
+  transform: "translate(50%, -50%)"
+}))
 </script>
 
 <template>
@@ -161,8 +373,8 @@ const getGroupBarPath = (width: number, height: number) => {
     @mousedown="onMouseEvent"
     @click="onMouseEvent"
     @dblclick="onMouseEvent"
-    @mouseenter="onMouseEvent"
-    @mouseleave="onMouseEvent"
+    @mouseenter="handleBarMouseEnter"
+    @mouseleave="handleBarMouseLeave"
     @contextmenu="onMouseEvent"
     @touchstart="onTouchEvent"
     @touchmove="onTouchEvent"
@@ -175,6 +387,37 @@ const getGroupBarPath = (width: number, height: number) => {
     tabindex="0"
     :aria-describedby="`tooltip-${barConfig.id}`"
   >
+    <template v-if="enableConnectionCreation">
+      <div
+        class="connection-point start"
+        :style="[startPointStyle, { position: 'absolute' }]"
+        @mouseenter="handleConnectionPointMouseEnter('start')"
+        @mouseleave="handleConnectionPointMouseLeave('start')"
+        @mousedown="handleConnectionPointMouseDown($event, 'start')"
+        @mouseup="handleConnectionDrop($event, 'start')"
+      />
+      <div
+        class="connection-point end"
+        :style="[endPointStyle, { position: 'absolute' }]"
+        @mouseenter="handleConnectionPointMouseEnter('end')"
+        @mouseleave="handleConnectionPointMouseLeave('end')"
+        @mousedown="handleConnectionPointMouseDown($event, 'end')"
+        @mouseup="handleConnectionDrop($event, 'end')"
+      />
+    </template>
+    <div
+      v-if="barConfig.progress !== undefined"
+      class="g-gantt-progress-bar"
+      :style="progressStyle"
+    >
+      <span class="progress-text" v-if="showProgress">{{ Math.round(barConfig.progress) }}%</span>
+      <div
+        v-if="barConfig.progressResizable || defaultProgressResizable"
+        class="g-gantt-progress-handle"
+        :style="{ right: bar.ganttBarConfig.progress === 0 ? 0 : '-4px' }"
+        @mousedown="handleProgressDragStart"
+      />
+    </div>
     <svg
       v-if="isGroupBar"
       class="group-bar-decoration"
@@ -188,7 +431,7 @@ const getGroupBarPath = (width: number, height: number) => {
     </svg>
     <div class="g-gantt-bar-label">
       <slot :bar="bar">
-        <div v-if="!isGroupBar">
+        <div v-if="!isGroupBar && showLabel">
           {{ barConfig.label || "" }}
         </div>
         <div v-if="barConfig.html" v-html="barConfig.html" />
@@ -207,7 +450,8 @@ const getGroupBarPath = (width: number, height: number) => {
   justify-content: center;
   align-items: center;
   background: cadetblue;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
 }
 
 .g-gantt-bar-label {
@@ -218,6 +462,9 @@ const getGroupBarPath = (width: number, height: number) => {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
 }
 .g-gantt-bar-label > * {
   white-space: nowrap;
@@ -257,5 +504,52 @@ const getGroupBarPath = (width: number, height: number) => {
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+.g-gantt-progress-bar {
+  position: absolute;
+  pointer-events: none;
+  overflow: hidden;
+  min-width: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: 500;
+  z-index: 1;
+}
+
+.g-gantt-progress-handle {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  cursor: ew-resize;
+  pointer-events: all;
+  transition: background-color 0.2s ease;
+  z-index: 3;
+}
+
+.g-gantt-progress-handle:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.g-gantt-progress-handle:active {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.connection-point {
+  z-index: 10;
+}
+
+.connection-point:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.connection-point.end:hover {
+  transform: translate(50%, -50%) scale(1.2);
 }
 </style>

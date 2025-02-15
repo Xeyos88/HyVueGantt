@@ -31,6 +31,9 @@ export interface GanttBarConfig {
   class?: string
   connections?: GanttBarConnection[]
   milestoneId?: string
+  progress?: number
+  progressResizable?: boolean
+  progressStyle?: CSSProperties
 }
 
 export interface GanttBarObject {
@@ -45,3 +48,5 @@ export interface BarPosition {
   width: number
   height: number
 }
+
+export type ConnectionPoint = "start" | "end"

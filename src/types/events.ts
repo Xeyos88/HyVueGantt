@@ -1,4 +1,4 @@
-import type { GanttBarObject } from "./bar"
+import type { ConnectionPoint, GanttBarObject } from "./bar"
 import type { ChartRow, SortState } from "./chart"
 
 export interface GanttBarEvent {
@@ -30,6 +30,38 @@ export interface RowExpansion {
   rowId: string | number
 }
 
+export interface SortEvent {
+  sortState: SortState
+}
+
+export interface ConnectionStartEvent {
+  sourceBar: GanttBarObject
+  connectionPoint: ConnectionPoint
+  e: MouseEvent
+}
+
+export interface ConnectionDragEvent {
+  sourceBar: GanttBarObject
+  connectionPoint: ConnectionPoint
+  currentX: number
+  currentY: number
+  e: MouseEvent
+}
+
+export interface ConnectionCompleteEvent {
+  sourceBar: GanttBarObject
+  targetBar: GanttBarObject
+  sourcePoint: ConnectionPoint
+  targetPoint: ConnectionPoint
+  e: MouseEvent
+}
+
+export interface ConnectionDeleteEvent {
+  sourceBar: GanttBarObject
+  targetBar: GanttBarObject
+  e: MouseEvent
+}
+
 export interface GGanttChartEmits {
   (e: "click-bar", value: GanttBarEvent): void
   (e: "mousedown-bar", value: GanttBarEvent): void
@@ -41,7 +73,15 @@ export interface GGanttChartEmits {
   (e: "drag-bar", value: BarMouseEvent): void
   (e: "dragend-bar", value: GanttBarDragEvent): void
   (e: "contextmenu-bar", value: GanttBarEvent): void
+  (e: "sort", value: SortEvent): void
+  (e: "group-expansion", value: { rowId: string | number }): void
   (e: "row-drop", value: RowDragEvent): void
-  (e: "group-expansion", value: RowExpansion): void
-  (e: "sort", value: SortState): void
+  (e: "progress-change", value: BarMouseEvent): void
+  (e: "progress-drag-start", value: BarMouseEvent): void
+  (e: "progress-drag-end", value: BarMouseEvent): void
+  (e: "connection-start", value: ConnectionStartEvent): void
+  (e: "connection-drag", value: ConnectionDragEvent): void
+  (e: "connection-complete", value: ConnectionCompleteEvent): void
+  (e: "connection-cancel", value: ConnectionStartEvent): void
+  (e: "connection-delete", value: ConnectionDeleteEvent): void
 }

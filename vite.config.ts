@@ -5,6 +5,7 @@ import vue from "@vitejs/plugin-vue"
 import postcssPresetEnv from "postcss-preset-env"
 import styleInject from "@senojs/rollup-plugin-style-inject"
 import { visualizer } from "rollup-plugin-visualizer"
+import dts from "vite-plugin-dts"
 
 // https://vitejs.dev/config/
 export default () => {
@@ -18,6 +19,15 @@ export default () => {
         filename: "stats.html",
         gzipSize: true
       })
+      //dts({
+      //  include: ["src/**/*.ts", "src/**/*.vue"],
+      //  beforeWriteFile: (filePath, content) => {
+      //   if (filePath.endsWith(".vue.d.ts")) {
+      //     return false
+      //   }
+      //   return { filePath, content }
+      // }
+      //})
     ],
     css: {
       postcss: {
@@ -45,7 +55,9 @@ export default () => {
           /^dayjs\/locale/,
           "@fortawesome/vue-fontawesome",
           "@fortawesome/free-solid-svg-icons",
-          "@vueuse/core"
+          "@vueuse/core",
+          "lodash-es",
+          "uuid"
         ],
         output: {
           // Provide global variables to use in the UMD build
@@ -53,7 +65,9 @@ export default () => {
           globals: {
             vue: "Vue",
             dayjs: "dayjs",
-            "date-holidays": "date-holidays"
+            "date-holidays": "date-holidays",
+            "lodash-es": "lodash-es",
+            uuid: "uuid"
           },
           exports: "named"
         }

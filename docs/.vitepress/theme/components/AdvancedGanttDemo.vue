@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { GGanttChart, GGanttRow, type ChartRow, type LabelColumnConfig } from 'hy-vue-gantt'
+import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
+import type { ConnectionType, ConnectionSpeed, MarkerConnection, TimeUnit, DayOptionLabel, ConnectionPattern, GanttBarConnection, GanttBarObject, ChartRow } from 'hy-vue-gantt'
 
 const sections = ref<{ [key: string]: boolean }>({
   timeConfig: false,
@@ -18,7 +19,7 @@ const year = new Date().getFullYear()
 const month = new Date().getMonth() + 1
 
 // Time Configuration
-const precision = ref('day')
+const precision = ref<TimeUnit>('day')
 const chartStart = ref(`${year}-${month}-01`)
 const chartEnd = ref(`${year}-${month+2}-28`)
 const dateFormat = ref('YYYY-MM-DD HH:mm')
@@ -26,6 +27,8 @@ const enableMinutes = ref(false)
 const currentTime = ref(true)
 const currentTimeLabel = ref('Now')
 const locale = ref('en')
+const utc = ref(false)
+
 
 // Display Configuration
 const hideTimeaxis = ref(false)
@@ -37,21 +40,23 @@ const labelColumnTitle = ref('Project Tasks')
 const labelColumnWidth = ref(100)
 const commands = ref(true)
 const width = ref('100%')
+const showLabel = ref(true)
+const showProgress = ref(true)
 
 
 // Time Highlight Configuration
 const highlightedHours = ref([9, 13, 17])
 const highlightedDaysInWeek = ref([0, 6]) // Sunday and Saturday
 const holidayHighlight = ref('US')
-const dayOptionLabel = ref(['day', 'name', 'doy'])
+const dayOptionLabel = ref<DayOptionLabel[]>(['day', 'name', 'doy'])
 
 // Connection Configuration
-const defaultConnectionType = ref('bezier')
-const defaultConnectionPattern = ref('solid')
-const defaultConnectionAnimationSpeed = ref('normal')
+const defaultConnectionType = ref<ConnectionType>('bezier')
+const defaultConnectionPattern = ref<ConnectionPattern>('solid')
+const defaultConnectionAnimationSpeed = ref<ConnectionSpeed>('normal')
 const defaultConnectionAnimated = ref(false)
 const defaultConnectionColor = ref('#ff0000')
-const markerConnection = ref('forward')
+const markerConnection = ref<MarkerConnection>('forward')
 
 // Behavior Configuration
 const pushOnOverlap = ref(true)
@@ -62,8 +67,11 @@ const sortable = ref(true)
 const labelResizable = ref(true)
 const enableRowDragAndDrop = ref(true)
 const maxRows = ref(5)
+const defaultProgressResizable = ref(true)
+const enableConnectionCreation = ref(true)
+const enableConnectionDeletion = ref(true)
 
-const multiColumnOptions = ['Label','StartDate','EndDate','Id','Duration']
+const multiColumnOptions = ['Label','StartDate','EndDate','Id','Duration', 'Progress']
 const columnsSelected = ref(["Label"])
 const multiColumnLabel = computed(() =>  columnsSelected.value.map((el) => {return {
   field: el, sortable: sortable.value
@@ -117,28 +125,15 @@ const addEventLog = (type: string, data: any) => {
 }
 
 // Event Handlers with Logging
-const handleBarClick = (event: any) => {
-  addEventLog('Bar Click', event)
+const handleEvent = (event: any, type: string) => {
+  addEventLog(type, event)
 }
 
-const handleBarDrag = (event: any) => {
-  addEventLog('Bar Drag', event)
-}
+export type ChartRowWithOptionalBars = Omit<ChartRow, "bars"> & { bars?: GanttBarObject[] };
 
-const handleSort = (event: any) => {
-  addEventLog('Sort Change', event)
-}
-
-const handleGroupExpansion = (event: any) => {
-  addEventLog('Group Toggle', event)
-}
-
-const handleRowDrop = (event: any) => {
-  addEventLog('Row Drop', event)
-}
 
 // Sample Data
-const sampleData = ref([
+const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group1',
     label: 'Frontend Development',
@@ -147,12 +142,13 @@ const sampleData = ref([
         id: 'task1',
         label: 'Setup Project',
         bars: [{
-          start: `${year}-${month}-05`,
-          end: `${year}-${month}-15`,
+          start: `${year}-${month}-01`,
+          end: `${year}-${month}-10`,
           ganttBarConfig: {
             id: 'bar1',
             label: 'Initial Setup',
             style: { background: '#42b883' },
+            progress: 100,
             connections: [{
               targetId: 'bar2',
             }]
@@ -163,12 +159,17 @@ const sampleData = ref([
         id: 'task2',
         label: 'Core Features',
         bars: [{
-          start: `${year}-${month}-16`,
-          end: `${year}-${month+1}-01`,
+          start: `${year}-${month}-11`, 
+          end: `${year}-${month}-20`,
           ganttBarConfig: {
             id: 'bar2',
             label: 'Development',
-            style: { background: '#35495e' }
+            style: { background: '#35495e' },
+            progress: 75,
+            connections: [{
+              targetId: 'bar3',
+              pattern: 'dash'
+            }]
           }
         }]
       }
@@ -182,30 +183,178 @@ const sampleData = ref([
         id: 'task3',
         label: 'API Design',
         bars: [{
-          start: `${year}-${month}-10`,
-          end: `${year}-${month}-25`,
+          start: `${year}-${month}-21`,
+          end: `${year}-${month}-28`,
           ganttBarConfig: {
             id: 'bar3',
             label: 'API Planning',
-            style: { background: '#ff7e67' }
+            style: { background: '#ff7e67' },
+            hasHandles: true,
+            progress: 60,
+            connections: [{
+              targetId: 'bar4',
+            }]
           }
         }]
       },
       {
         id: 'task4',
         label: 'Database Setup',
+        bars: [
+          {
+            start: `${year}-${month+1}-01`,
+            end: `${year}-${month+1}-10`,
+            ganttBarConfig: {
+              id: 'bar4',
+              label: 'DB Implementation',
+              style: { background: '#4dc9ff' },
+              hasHandles: true,
+              progress: 30,
+              connections: [{
+                targetId: 'bar7',
+                type: 'squared'
+              }]
+            }
+          },
+          {
+            start: `${year}-${month+1}-11`,
+            end: `${year}-${month+1}-20`, 
+            ganttBarConfig: {
+              id: 'bar5',
+              label: 'DB Optimization',
+              style: { background: '#34495e' },
+              progress: 0,
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'group3',
+    label: 'Progress Examples',
+    children: [
+      {
+        id: 'progress1',
+        label: 'Progress States',
+        bars: [
+          {
+            start: `${year}-${month+1}-21`,
+            end: `${year}-${month+1}-25`,
+            ganttBarConfig: {
+              id: 'bar7',
+              label: 'In Progress',
+              style: { background: '#e67e22' },
+              progress: 50,
+              progressResizable: true,
+              connections: [{
+                targetId: 'bar9',
+                type: 'bezier'
+              }]
+            }
+          },
+          {
+            start: `${year}-${month+1}-26`,
+            end: `${year}-${month+1}-30`,
+            ganttBarConfig: {
+              id: 'bar8',
+              label: 'Completed',
+              style: { background: '#27ae60' },
+              progress: 100,
+              progressResizable: true
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'group4',
+    label: 'Bundle Example',
+    children: [
+      {
+        id: 'bundle1',
+        label: 'Connected Tasks',
+        bars: [
+          {
+            start: `${year}-${month+2}-01`,
+            end: `${year}-${month+2}-10`,
+            ganttBarConfig: {
+              id: 'bar9',
+              label: 'Task A',
+              style: { background: '#8e44ad' },
+              bundle: 'bundle1',
+              progress: 45,
+              connections: [{
+                targetId: 'milestone1',
+                pattern: 'dot'
+              }]
+            }
+          }
+        ]
+      },
+      {
+        id: 'bundle2',
+        label: 'Parallel Tasks',
+        bars: [
+          {
+            start: `${year}-${month+2}-01`, 
+            end: `${year}-${month+2}-10`,
+            ganttBarConfig: {
+              id: 'bar10',
+              label: 'Task B',
+              style: { background: '#8e44ad' },
+              bundle: 'bundle1',
+              progress: 45,
+              connections: [{
+                targetId: 'milestone1',
+                pattern: 'dashdot'
+              }]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'group5',
+    label: 'Final Milestone',
+    children: [
+      {
+        id: 'milestone',
+        label: 'Project Completion',
         bars: [{
-          start: `${year}-${month}-26`,
-          end: `${year}-${month+1}-10`,
+          start: `${year}-${month+2}-15`,
+          end: `${year}-${month+2}-15 01:00`,
           ganttBarConfig: {
-            id: 'bar4',
-            label: 'DB Implementation',
-            style: { background: '#4dc9ff' }
+            id: 'milestone1',
+            label: 'Release v1.0',
+            style: { 
+              background: '#2ecc71',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px'
+            }
           }
         }]
       }
     ]
   }
+])
+
+const milestones = ref([
+  {
+    id: 'milestone1',
+    date: `${year}-${month+2}-15`,
+    name: 'Project End',
+    description: 'Official launch of the new platform',
+  },
+  {
+    id: 'milestone2',
+    date: `${year}-${month+1}-15`,
+    name: 'Project Review',
+    description: 'Official review',
+  },
 ])
 
 // Computed property to format event log output
@@ -293,6 +442,12 @@ const formattedEventLog = computed(() => {
                   @input="e => highlightedDaysInWeek = (e.target as HTMLInputElement).value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))"
                   placeholder="0,6"
                 >
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                UTC Current time:
+                <input type="checkbox" v-model="utc">
               </label>
             </div>
           </div>
@@ -425,6 +580,18 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
+                Show Label:
+                <input type="checkbox" v-model="showLabel">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Show Progress:
+                <input type="checkbox" v-model="showProgress">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
                 Hide Timeline:
                 <input type="checkbox" v-model="hideTimeaxis">
               </label>
@@ -515,6 +682,24 @@ const formattedEventLog = computed(() => {
                 <input type="checkbox" v-model="enableRowDragAndDrop">
               </label>
             </div>
+            <div class="setting-item">
+              <label>
+                Progress resizable:
+                <input type="checkbox" v-model="defaultProgressResizable">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Enable connection creation:
+                <input type="checkbox" v-model="enableConnectionCreation">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Enable connection deletion:
+                <input type="checkbox" v-model="enableConnectionDeletion">
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -561,19 +746,32 @@ const formattedEventLog = computed(() => {
         :enable-row-drag-and-drop="enableRowDragAndDrop"
         :label-resizable="labelResizable"
         :sortable="sortable"
-        @click-bar="handleBarClick"
-        @drag-bar="handleBarDrag"
-        @sort="handleSort"
-        @group-expansion="handleGroupExpansion"
-        @row-drop="handleRowDrop"
+        :default-progress-resizable="defaultProgressResizable"
+        :show-progress="showProgress"
+        :showLabel="showLabel"
+        :milestones="milestones"
+        :enableConnectionCreation="enableConnectionCreation"
+        :enableConnectionDeletion="enableConnectionDeletion"
+        :utc="utc"
+        @click-bar="handleEvent($event, 'Bar Click')"
+        @drag-bar="handleEvent($event, 'Bar Drag')"
+        @sort="handleEvent($event, 'Sort Change')"
+        @group-expansion="handleEvent($event, 'Group Toggle')"
+        @row-drop="handleEvent($event, 'Row Drop')"
+        @progress-drag-start="handleEvent($event, 'Progress Bar Start')"
+        @progress-drag-end="handleEvent($event, 'Progress Bar End')"
+        @connection-start="handleEvent($event, 'Connection Start')"
+        @connection-complete="handleEvent($event, 'Connection Complete')"
+        @connection-delete="handleEvent($event, 'Connection Deleted')"
       >
         <g-gantt-row
           v-for="row in sampleData"
           :key="row.id"
-          :id="row.id"
+          :id="row.id || ''"
           :label="row.label"
-          :bars="row.bars"
-          :children="row.children"
+          :bars="row.bars || []"
+          :children="row.children || []"
+          :connections="row.connections || []"
           highlightOnHover
         >
           <!-- Custom Bar Label Slot -->
@@ -585,6 +783,13 @@ const formattedEventLog = computed(() => {
             </div>
           </template>
         </g-gantt-row>
+
+        <template #milestone-milestone2="{ milestone }">
+          <div class="milestone-custom">
+            <i>📍</i>
+            <span>{{ milestone.name }}</span>
+          </div>
+        </template>
 
         <template v-if="customSlots.commands" #commands="{ 
           zoomIn, zoomOut, scrollRowUp, scrollRowDown,
@@ -923,6 +1128,20 @@ const formattedEventLog = computed(() => {
 .timeunit-date {
   font-size: 10px;
   opacity: 0.7;
+}
+
+.milestone-custom {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 1em;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    position: absolute;
+    top: 4px;
+    transform: translateY(0);
+    background-color: #35496E;
+    color: #42B883;
+    font-weight: 700;
 }
 
 @media (max-width: 1200px) {

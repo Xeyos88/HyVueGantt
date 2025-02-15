@@ -55,7 +55,7 @@ export interface UseRowsProps {
 }
 
 interface CleanRow {
-  id?: string | number
+  id: string | number
   label: string
   bars: GanttBarObject[]
   connections?: BaseConnection[]
@@ -124,7 +124,10 @@ function createHistoryState(
             style: bar.ganttBarConfig.style,
             class: bar.ganttBarConfig.class,
             connections: bar.ganttBarConfig.connections,
-            milestoneId: bar.ganttBarConfig.milestoneId
+            milestoneId: bar.ganttBarConfig.milestoneId,
+            progress: bar.ganttBarConfig.progress,
+            progressStyle: bar.ganttBarConfig.progressStyle,
+            progressResizable: bar.ganttBarConfig.progressResizable
           }
         })) || [],
       connections: row.connections,
@@ -668,7 +671,6 @@ export function useRows(
     if (!minStart || !maxEnd) return []
 
     const format = typeof dateFormat.value === "string" ? dateFormat.value : "YYYY-MM-DD HH:mm"
-
     return [
       {
         [barStart.value]: minStart.format(format),
@@ -832,6 +834,25 @@ export function useRows(
         const aDuration = calculateDuration(a)
         const bDuration = calculateDuration(b)
         return aDuration - bDuration
+      }
+      case "Progress": {
+        const getAvgProgress = (row: ChartRow) => {
+          const progressValues = row.bars
+            .map((bar) => bar.ganttBarConfig.progress)
+            .filter((progress): progress is number => progress !== undefined)
+
+          if (progressValues.length === 0) return -1
+          return progressValues.reduce((sum, curr) => sum + curr, 0) / progressValues.length
+        }
+
+        const progressA = getAvgProgress(a)
+        const progressB = getAvgProgress(b)
+
+        if (progressA === -1 && progressB === -1) return 0
+        if (progressA === -1) return 1
+        if (progressB === -1) return -1
+
+        return progressA - progressB
       }
       default:
         if (columnConfig?.valueGetter) {

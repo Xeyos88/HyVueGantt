@@ -1,3 +1,4 @@
+import type { BarConnection } from "../types"
 import { type Ref } from "vue"
 
 /**
@@ -8,6 +9,11 @@ interface NavigationControls {
   scrollPosition: Ref<number>
   handleStep: (value: number, wrapper: HTMLElement) => void
   handleZoomUpdate: (increase: boolean) => void
+}
+
+interface ConnectionControls {
+  selectedConnection: Ref<BarConnection | null>
+  deleteSelectedConnection: () => void
 }
 
 /**
@@ -22,9 +28,12 @@ interface NavigationControls {
 export function useKeyboardNavigation(
   chartNavigation: NavigationControls,
   wrapperRef: Ref<HTMLElement | null>,
-  ganttContainerRef: Ref<HTMLElement | null>
+  ganttContainerRef: Ref<HTMLElement | null>,
+  connectionControls: ConnectionControls,
+  enableConnectionDeletion: Ref<boolean>
 ) {
   const { handleStep, handleZoomUpdate, scrollPosition } = chartNavigation
+  const { selectedConnection, deleteSelectedConnection } = connectionControls
 
   /**
    * Handles keyboard events for chart navigation
@@ -41,6 +50,17 @@ export function useKeyboardNavigation(
 
     if (!ganttContainerRef.value || target !== ganttContainerRef.value) {
       return
+    }
+
+    if (selectedConnection.value && enableConnectionDeletion.value) {
+      switch (event.key) {
+        case "Delete":
+          deleteSelectedConnection()
+          return
+        case "Escape":
+          selectedConnection.value = null
+          return
+      }
     }
 
     switch (event.key) {

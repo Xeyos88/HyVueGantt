@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import provideConfig from "../provider/provideConfig"
 import type { BarPosition, ConnectionType, MarkerConnection } from "../types"
 import { computed, ref } from "vue"
 
@@ -12,6 +13,7 @@ interface Props {
   animated?: boolean
   animationSpeed?: "slow" | "normal" | "fast"
   marker: MarkerConnection
+  isSelected?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -20,8 +22,11 @@ const props = withDefaults(defineProps<Props>(), {
   strokeWidth: 2,
   pattern: "solid",
   animated: false,
-  animationSpeed: "normal"
+  animationSpeed: "normal",
+  isSelected: false
 })
+
+const { enableConnectionDeletion } = provideConfig()
 
 const pathRef = ref<SVGPathElement | null>(null)
 
@@ -87,6 +92,13 @@ const nonAnimatedDashArray = computed(() => {
       return ""
   }
 })
+
+const getStrokeWidth = computed(() => {
+  if (props.isSelected && enableConnectionDeletion.value) {
+    return props.strokeWidth * 1.5
+  }
+  return props.strokeWidth
+})
 </script>
 
 <template>
@@ -98,8 +110,7 @@ const nonAnimatedDashArray = computed(() => {
       left: 0,
       width: '100%',
       height: '100%',
-      pointerEvents: 'none',
-      zIndex: 1,
+      zIndex: 1001,
       overflow: 'visible'
     }"
   >
@@ -152,24 +163,50 @@ const nonAnimatedDashArray = computed(() => {
       :stroke="
         animated && pattern === 'solid' ? `url(#gradient-${sourceBar.id}-${targetBar.id})` : color
       "
-      :stroke-width="strokeWidth"
+      :stroke-width="getStrokeWidth"
       :stroke-dasharray="nonAnimatedDashArray"
-      :class="['connector-path', animationClass]"
+      :class="[
+        'connector-path',
+        animationClass,
+        { selected: isSelected && enableConnectionDeletion }
+      ]"
       :style="{
         markerStart: hasMarkerStart ? `url(#${markerId})` : 'none',
-        markerEnd: hasMarkerEnd ? `url(#${markerId})` : 'none'
+        markerEnd: hasMarkerEnd ? `url(#${markerId})` : 'none',
+        cursor: enableConnectionDeletion ? 'pointer' : 'inherit'
       }"
     />
+    <template v-if="isSelected && enableConnectionDeletion">
+      <circle
+        :cx="sourceBar.x + sourceBar.width"
+        :cy="sourceBar.y + sourceBar.height / 2"
+        r="6"
+        fill="white"
+        class="connection-endpoint"
+      />
+      <circle
+        :cx="targetBar.x"
+        :cy="targetBar.y + targetBar.height / 2"
+        r="6"
+        fill="white"
+        class="connection-endpoint"
+      />
+    </template>
   </svg>
 </template>
 
 <style scoped>
 .gantt-connector {
   overflow: visible;
+  pointer-events: all;
 }
 
 .connector-path {
   transition: d 0.3s ease;
+}
+
+.connector-path.selected {
+  filter: drop-shadow(0 0 5px rgba(33, 150, 243, 0.6));
 }
 
 /* Animazione per pattern dash */
@@ -210,6 +247,17 @@ const nonAnimatedDashArray = computed(() => {
   transition:
     d 0.3s ease,
     marker-start 0.3s ease;
+}
+
+.connection-endpoint {
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
+  transition: all 0.3s ease;
+  border: 1px solid black;
+  border-radius: 100%;
+}
+
+.connection-endpoint:hover {
+  r: 8;
 }
 
 @keyframes dashFlow {

@@ -37,6 +37,8 @@ export interface GGanttChartProps {
   commands?: boolean
   enableMinutes?: boolean
   enableConnections?: boolean
+  enableConnectionCreation?: boolean
+  enableConnectionDeletion?: boolean
   defaultConnectionType?: ConnectionType
   defaultConnectionColor?: string
   defaultConnectionPattern?: ConnectionPattern
@@ -60,6 +62,10 @@ export interface GGanttChartProps {
   locale?: string
   enableRowDragAndDrop?: boolean
   markerConnection?: MarkerConnection
+  showLabel?: boolean
+  showProgress?: boolean
+  defaultProgressResizable?: boolean
+  utc?: boolean
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

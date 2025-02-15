@@ -9,6 +9,26 @@ vi.mock("../composables/useTimePositionMapping", () => ({
   })
 }))
 
+vi.mock("dayjs", () => {
+  const mockDayjs = vi.fn((input) => ({
+    format: vi.fn().mockReturnValue(input || "2024-01-01"),
+    diff: vi.fn().mockReturnValue(60),
+    add: vi.fn().mockImplementation((value, unit) => mockDayjs("2024-01-02")),
+    subtract: vi.fn().mockImplementation((value, unit) => mockDayjs("2023-12-31")),
+    locale: vi.fn().mockReturnValue(mockDayjs),
+    utc: vi.fn()
+  }))
+
+  // Add static methods and properties that dayjs uses
+  mockDayjs.extend = vi.fn()
+  mockDayjs.locale = vi.fn()
+
+  return {
+    default: mockDayjs,
+    __esModule: true
+  }
+})
+
 describe("GGanttCurrentTime", () => {
   beforeEach(() => {
     mockMapTimeToPosition.mockClear()

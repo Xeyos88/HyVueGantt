@@ -326,7 +326,7 @@ export function useBarMovement(
       })
     })
 
-    return connectedBars.filter((b) => !b.ganttBarConfig.id.startsWith("group-"))
+    return connectedBars
   }
 
   return {

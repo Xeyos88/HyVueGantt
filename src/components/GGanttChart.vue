@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 // -----------------------------
 // 1. EXTERNAL IMPORTS
 // -----------------------------
@@ -57,6 +57,8 @@ import { useRows, findBarInRows } from "../composables/useRows"
 import { ganttWidth } from "../composables/useSimpleStore"
 import useTimeaxisUnits from "../composables/useTimeaxisUnits"
 import { useSectionResize } from "../composables/useSectionResize"
+import { useConnectionCreation } from "../composables/useConnectionCreation"
+import useBarSelector from "../composables/useBarSelector"
 
 // Types and Constants
 import { colorSchemes, type ColorSchemeKey } from "../color-schemes"
@@ -65,11 +67,11 @@ import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY, GANTT_ID_KEY } from "../pr
 import type {
   GanttBarObject,
   GGanttChartProps,
-  SortState,
   GGanttTimeaxisInstance,
   ColorScheme,
   ChartRow,
-  RowDragEvent
+  RowDragEvent,
+  GGanttChartEmits
 } from "../types"
 
 // Props
@@ -117,46 +119,17 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   highlightedWeek: () => [],
   locale: "en",
   enableRowDragAndDrop: false,
-  markerConnection: "forward"
+  markerConnection: "forward",
+  showLabel: true,
+  showProgress: true,
+  defaultProgressResizable: true,
+  enableConnectionCreation: false,
+  enableConnectionDeletion: false,
+  utc: false
 })
 
 // Events
-const emit = defineEmits<{
-  (e: "click-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
-  (
-    e: "mousedown-bar",
-    value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
-  ): void
-  (e: "mouseup-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
-  (e: "dblclick-bar", value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }): void
-  (e: "mouseenter-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (e: "mouseleave-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (e: "dragstart-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (e: "drag-bar", value: { bar: GanttBarObject; e: MouseEvent }): void
-  (
-    e: "dragend-bar",
-    value: {
-      bar: GanttBarObject
-      e: MouseEvent
-      movedBars?: Map<GanttBarObject, { oldStart: string; oldEnd: string }>
-    }
-  ): void
-  (
-    e: "contextmenu-bar",
-    value: { bar: GanttBarObject; e: MouseEvent; datetime?: string | Date }
-  ): void
-  (e: "sort", value: { sortState: SortState }): void
-  (e: "group-expansion", value: { rowId: string | number }): void
-  (
-    e: "row-drop",
-    value: {
-      sourceRow: ChartRow
-      targetRow?: ChartRow
-      newIndex: number
-      parentId?: string | number
-    }
-  ): void
-}>()
+const emit = defineEmits<GGanttChartEmits>()
 
 // -----------------------------
 // 4. INTERNAL STATE
@@ -228,8 +201,16 @@ const rowManager = useRows(
 provide("useRows", rowManager)
 
 // Connections Management
-const { connections, barPositions, getConnectorProps, initializeConnections, updateBarPositions } =
-  useConnections(rowManager, props, id)
+const {
+  connections,
+  barPositions,
+  getConnectorProps,
+  initializeConnections,
+  updateBarPositions,
+  handleConnectionClick,
+  selectedConnection,
+  deleteSelectedConnection
+} = useConnections(rowManager, props, id, emit)
 
 // Tooltip Management
 const { showTooltip, tooltipBar, initTooltip, clearTooltip } = useTooltip()
@@ -278,7 +259,12 @@ const { handleKeyDown } = useKeyboardNavigation(
     handleZoomUpdate
   },
   ganttWrapper,
-  ganttContainer
+  ganttContainer,
+  {
+    selectedConnection,
+    deleteSelectedConnection
+  },
+  toRef(props.enableConnectionDeletion)
 )
 
 // Size Management
@@ -290,6 +276,104 @@ const {
   handleTouchMove,
   resetResizeState
 } = useSectionResize()
+
+const {
+  connectionState,
+  hoverState,
+  startConnectionCreation,
+  updateConnectionDrag,
+  completeConnection,
+  cancelConnectionCreation,
+  handleConnectionPointHover,
+  canBeConnectionTarget
+} = useConnectionCreation(
+  {
+    ...toRefs(props),
+    colors,
+    chartSize
+  },
+  rowManager,
+  emit,
+  initializeConnections
+)
+
+provide("connectionCreation", {
+  connectionState,
+  hoverState,
+  startConnectionCreation,
+  updateConnectionDrag,
+  completeConnection,
+  cancelConnectionCreation,
+  handleConnectionPointHover,
+  canBeConnectionTarget
+})
+
+const handleChartMouseMove = (e: MouseEvent) => {
+  if (connectionState.value.isCreating) {
+    updateConnectionDrag(e)
+  }
+}
+
+const handleChartMouseUp = (e: MouseEvent) => {
+  if (connectionState.value.isCreating) {
+    cancelConnectionCreation(e)
+  }
+}
+
+const { findBarElement } = useBarSelector()
+
+const previewLinePoints = computed(() => {
+  if (!connectionState.value.isCreating || !connectionState.value.sourceBar) return null
+
+  const sourceBarElement = findBarElement(
+    id.value,
+    connectionState.value.sourceBar.ganttBarConfig.id
+  )
+  if (!sourceBarElement) return null
+
+  const sourceRect = sourceBarElement.getBoundingClientRect()
+  const containerElement = ganttContainer.value
+  const rowsContainer = containerElement?.querySelector(".g-gantt-rows-container")
+
+  if (!rowsContainer) return null
+
+  const containerRect = rowsContainer.getBoundingClientRect()
+
+  const scrollLeft = rowsContainer.scrollLeft
+  const scrollTop = rowsContainer.scrollTop
+
+  // Calcoliamo la posizione della source considerando lo scroll
+  const sourceX =
+    connectionState.value.sourcePoint === "start"
+      ? sourceRect.left - containerRect.left + scrollLeft
+      : sourceRect.right - containerRect.left + scrollLeft
+  const sourceY = sourceRect.top - containerRect.top + scrollTop + sourceRect.height / 2
+
+  // Calcoliamo la posizione del mouse considerando lo scroll
+  const mouseX = connectionState.value.mouseX - containerRect.left + scrollLeft
+  const mouseY = connectionState.value.mouseY - containerRect.top + scrollTop
+
+  return {
+    x1: sourceX,
+    y1: sourceY,
+    x2: mouseX,
+    y2: mouseY
+  }
+})
+
+// Aggiungiamo anche un watcher per aggiornare la posizione durante lo scroll
+watch(
+  () => scrollPosition.value,
+  () => {
+    if (connectionState.value.isCreating) {
+      // Forza il ricalcolo delle coordinate
+      const container = ganttContainer.value?.querySelector(".g-gantt-rows-container")
+      if (container) {
+        connectionState.value.mouseX = connectionState.value.mouseX // Trigger update
+      }
+    }
+  }
+)
 
 // -----------------------------
 // 6. COMPUTED PROPERTIES
@@ -433,6 +517,19 @@ const emitBarEvent = (
       break
     case "contextmenu":
       emit("contextmenu-bar", { bar, e, datetime })
+      break
+    case "progress-drag-start":
+      initTooltip(bar)
+      emit("progress-drag-start", { bar, e })
+      break
+    case "progress-change":
+      initTooltip(bar)
+      emit("progress-change", { bar, e })
+      break
+    case "progress-drag-end":
+      initTooltip(bar)
+      emit("progress-drag-end", { bar, e })
+      rowManager.onBarMove()
       break
   }
 }
@@ -668,6 +765,8 @@ provide(GANTT_ID_KEY, id.value)
     aria-label="Interactive Gantt"
     tabindex="0"
     @keydown="handleKeyDown"
+    @mousemove="handleChartMouseMove"
+    @mouseup="handleChartMouseUp"
     ref="ganttContainer"
     :id="id"
   >
@@ -772,12 +871,52 @@ provide(GANTT_ID_KEY, id.value)
                 <component :is="renderRow(row)" />
               </template>
               <!-- Connections -->
+              <svg
+                v-if="connectionState.isCreating && previewLinePoints"
+                class="connection-preview"
+                :style="{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  pointerEvents: 'none',
+                  zIndex: 2000,
+                  overflow: 'visible'
+                }"
+              >
+                <g-gantt-connector
+                  v-if="previewLinePoints"
+                  :source-bar="{
+                    id: connectionState.sourceBar!.ganttBarConfig.id,
+                    x: previewLinePoints.x1,
+                    y: previewLinePoints.y1,
+                    width: 0,
+                    height: 0
+                  }"
+                  :target-bar="{
+                    id: 'preview',
+                    x: previewLinePoints.x2,
+                    y: previewLinePoints.y2,
+                    width: 0,
+                    height: 0
+                  }"
+                  :type="defaultConnectionType"
+                  :color="defaultConnectionColor"
+                  :pattern="defaultConnectionPattern"
+                  :animated="defaultConnectionAnimated"
+                  :animation-speed="defaultConnectionAnimationSpeed"
+                  :style="{ opacity: 0.6 }"
+                  :marker="markerConnection"
+                />
+              </svg>
               <template v-if="enableConnections">
                 <template v-for="conn in connections" :key="`${conn.sourceId}-${conn.targetId}`">
                   <g-gantt-connector
                     v-if="barPositions.get(conn.sourceId) && barPositions.get(conn.targetId)"
                     v-bind="getConnectorProps(conn)!"
                     :marker="markerConnection"
+                    @click="handleConnectionClick(conn)"
                   />
                 </template>
               </template>
@@ -1193,5 +1332,8 @@ button {
     width: 16px;
     right: -8px;
   }
+}
+.connection-preview {
+  pointer-events: none;
 }
 </style>

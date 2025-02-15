@@ -1,8 +1,9 @@
-import { computed, ref, type Ref } from "vue"
+import { computed, ref, type Ref, watch } from "vue"
 import type {
   BarConnection,
   BarPosition,
   ChartRow,
+  ConnectionDeleteEvent,
   GanttBarObject,
   GGanttChartProps
 } from "../types"
@@ -19,10 +20,14 @@ import type { UseRowsReturn } from "./useRows"
 export function useConnections(
   rowManager: UseRowsReturn,
   props: GGanttChartProps,
-  id: Ref<string>
+  id: Ref<string>,
+  emit: {
+    (e: "connection-delete", value: ConnectionDeleteEvent): void
+  }
 ) {
   const connections = ref<BarConnection[]>([])
   const barPositions = ref<Map<string, BarPosition>>(new Map())
+  const selectedConnection = ref<BarConnection | null>(null)
 
   /**
    * Computed property that generates connector properties for rendering
@@ -41,7 +46,10 @@ export function useConnections(
       color: conn.color ?? props.defaultConnectionColor,
       pattern: conn.pattern ?? props.defaultConnectionPattern,
       animated: conn.animated ?? props.defaultConnectionAnimated,
-      animationSpeed: conn.animationSpeed ?? props.defaultConnectionAnimationSpeed
+      animationSpeed: conn.animationSpeed ?? props.defaultConnectionAnimationSpeed,
+      isSelected:
+        selectedConnection.value?.sourceId === conn.sourceId &&
+        selectedConnection.value?.targetId === conn.targetId
     }
 
     return {
@@ -51,20 +59,62 @@ export function useConnections(
     }
   })
 
+  const handleConnectionClick = (connection: BarConnection) => {
+    if (
+      selectedConnection.value?.sourceId === connection.sourceId &&
+      selectedConnection.value?.targetId === connection.targetId
+    ) {
+      selectedConnection.value = null
+    } else {
+      selectedConnection.value = connection
+    }
+  }
+
+  const deleteSelectedConnection = () => {
+    if (!selectedConnection.value) return
+
+    const allBars = getAllBars(rowManager.rows.value)
+    const sourceBar = allBars.find(
+      (bar) => bar.ganttBarConfig.id === selectedConnection.value?.sourceId
+    )
+
+    if (sourceBar && sourceBar.ganttBarConfig.connections) {
+      sourceBar.ganttBarConfig.connections = sourceBar.ganttBarConfig.connections.filter(
+        (conn) => conn.targetId !== selectedConnection.value?.targetId
+      )
+
+      const targetBar = allBars.find(
+        (bar) => bar.ganttBarConfig.id === selectedConnection.value?.targetId
+      )!
+
+      emit("connection-delete", {
+        sourceBar,
+        targetBar,
+        e: new MouseEvent("mouseup")
+      })
+
+      selectedConnection.value = null
+      initializeConnections()
+      rowManager.onBarMove()
+    }
+  }
+
+  const getAllBars = (rows: ChartRow[]): GanttBarObject[] => {
+    return rows.flatMap((row) => {
+      const bars = [...row.bars]
+      if (row.children?.length) {
+        return [...bars, ...getAllBars(row.children)]
+      }
+      return bars
+    })
+  }
+
   /**
    * Initializes connections by processing all bars and their connection configurations
    * Extracts and normalizes connection data from bar configurations
    */
   const initializeConnections = () => {
-    const getAllBars = (rows: ChartRow[]): GanttBarObject[] => {
-      return rows.flatMap((row) => {
-        const bars = [...row.bars]
-        if (row.children?.length) {
-          return [...bars, ...getAllBars(row.children)]
-        }
-        return bars
-      })
-    }
+    connections.value = []
 
     const allBars = getAllBars(rowManager.rows.value)
 
@@ -84,6 +134,14 @@ export function useConnections(
       }
     })
   }
+
+  watch(
+    () => rowManager.rows.value,
+    () => {
+      initializeConnections()
+    },
+    { deep: true }
+  )
 
   /**
    * Updates the positions of all bars in the chart
@@ -124,6 +182,9 @@ export function useConnections(
     barPositions,
     getConnectorProps,
     initializeConnections,
-    updateBarPositions
+    updateBarPositions,
+    handleConnectionClick,
+    selectedConnection,
+    deleteSelectedConnection
   }
 }
