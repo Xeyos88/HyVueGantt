@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v3.1.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.1.0) (2025-02-15)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.0.0...v3.1.0)
+
+
+
+**✨ New Features:**
+
+- Deletion of connetions
+- Percentage progress for bar
+- Runtime connection creation
+- UTC support for current time
+
 ## [v3.0.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.0.0) (2025-01-31)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v2.2.0...v3.0.0)
