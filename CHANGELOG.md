@@ -8,8 +8,6 @@ All notable changes to this project will be documented in this file.
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.0.0...v3.1.0)
 
-
-
 **✨ New Features:**
 
 - Deletion of connetions
