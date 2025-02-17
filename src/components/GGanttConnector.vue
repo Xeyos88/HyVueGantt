@@ -173,7 +173,8 @@ const getStrokeWidth = computed(() => {
       :style="{
         markerStart: hasMarkerStart ? `url(#${markerId})` : 'none',
         markerEnd: hasMarkerEnd ? `url(#${markerId})` : 'none',
-        cursor: enableConnectionDeletion ? 'pointer' : 'inherit'
+        cursor: enableConnectionDeletion ? 'pointer' : 'inherit',
+        pointerEvents: enableConnectionDeletion ? 'all' : 'none'
       }"
     />
     <template v-if="isSelected && enableConnectionDeletion">
@@ -198,7 +199,7 @@ const getStrokeWidth = computed(() => {
 <style scoped>
 .gantt-connector {
   overflow: visible;
-  pointer-events: all;
+  pointer-events: none;
 }
 
 .connector-path {
