@@ -200,10 +200,6 @@ const visibleChildRows = computed(() => {
   background: #e0e0e0 !important;
 }
 
-.g-gantt-group-bar {
-  pointer-events: none;
-}
-
 .g-gantt-row-children {
   transition: max-height 0.3s ease-in-out;
 }

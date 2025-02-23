@@ -68,14 +68,14 @@ export function useConnectionCreation(
     targetBar: GanttBarObject
   ): ConnectionValidation => {
     if (sourceBar.ganttBarConfig.id === targetBar.ganttBarConfig.id) {
-      return { isValid: false, message: "Non puoi connettere una barra a se stessa" }
+      return { isValid: false, message: "Cannot connect a bar to itself" }
     }
 
     const existingConnection = sourceBar.ganttBarConfig.connections?.find(
       (conn) => conn.targetId === targetBar.ganttBarConfig.id
     )
     if (existingConnection) {
-      return { isValid: false, message: "Connessione già esistente" }
+      return { isValid: false, message: "Existing connection" }
     }
 
     return { isValid: true }
