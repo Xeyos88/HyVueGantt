@@ -1,21 +1,40 @@
 <script setup lang="ts">
+// -----------------------------
+// 1. EXTERNAL IMPORTS
+// -----------------------------
 import { computed, ref, toRefs, watch, onMounted, inject } from "vue"
 
+// -----------------------------
+// 2. INTERNAL IMPORTS
+// -----------------------------
+
+// Composables
 import useBarDragManagement from "../composables/useBarDragManagement"
 import useTimePositionMapping from "../composables/useTimePositionMapping"
 import useBarDragLimit from "../composables/useBarDragLimit"
 import { useBarKeyboardControl } from "../composables/useBarKeyboardControl"
 import { useTouchEvents } from "../composables/useTouchEvents"
+
+// Types
 import type { ConnectionPoint, GanttBarObject } from "../types"
+
+// Provider
 import provideEmitBarEvent from "../provider/provideEmitBarEvent"
 import provideConfig from "../provider/provideConfig"
 import { BAR_CONTAINER_KEY, GANTT_ID_KEY } from "../provider/symbols"
 import useBarSelector from "../composables/useBarSelector"
 import type { ConnectionCreationService } from "../composables/useConnectionCreation"
 
+// -----------------------------
+// 3. PROPS AND CONFIGURATION
+// -----------------------------
 const props = defineProps<{
   bar: GanttBarObject
 }>()
+
+// -----------------------------
+// 4. INTERNAL STATE
+// -----------------------------
 const ganttId = inject(GANTT_ID_KEY)!
 const connectionCreation = inject<ConnectionCreationService>("connectionCreation")
 
@@ -34,7 +53,36 @@ const isEditing = ref(false)
 const editedLabel = ref("")
 const labelInput = ref<HTMLInputElement | null>(null)
 
+// Extract configuration properties from provider
+const {
+  barStart,
+  barEnd,
+  width,
+  chartStart,
+  chartEnd,
+  chartSize,
+  showLabel,
+  showProgress,
+  defaultProgressResizable,
+  enableConnectionCreation,
+  barLabelEditable
+} = config
+
+// Position coordinates
+const xStart = ref(0)
+const xEnd = ref(0)
+
+// -----------------------------
+// 5. COMPUTED PROPERTIES
+// -----------------------------
+
+// Bar configuration
 const barConfig = computed(() => bar.value.ganttBarConfig)
+
+// Check if bar is a group bar
+const isGroupBar = computed(() => {
+  return bar.value.ganttBarConfig.id.startsWith("group-")
+})
 
 const { onBarKeyDown } = useBarKeyboardControl(bar.value, config, emitBarEvent)
 
@@ -80,23 +128,6 @@ const onMouseEvent = (e: MouseEvent) => {
   const datetime = mapPositionToTime(e.clientX - barContainer.left)
   emitBarEvent(e, bar.value, datetime)
 }
-
-const {
-  barStart,
-  barEnd,
-  width,
-  chartStart,
-  chartEnd,
-  chartSize,
-  showLabel,
-  showProgress,
-  defaultProgressResizable,
-  enableConnectionCreation,
-  barLabelEditable
-} = config
-
-const xStart = ref(0)
-const xEnd = ref(0)
 
 const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchEvents(
   (_draggedBar, e) => {
@@ -144,9 +175,6 @@ onMounted(() => {
     },
     { deep: true, immediate: true }
   )
-})
-const isGroupBar = computed(() => {
-  return bar.value.ganttBarConfig.id.startsWith("group-")
 })
 
 const getGroupBarPath = (width: number, height: number) => {
