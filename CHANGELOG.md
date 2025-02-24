@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v3.2.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.2.0) (2025-02-24)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.1.0...v3.2.0)
+
+
+
+**✨ New Features:**
+
+- Release fix
+
+**🐛 Fix:**
+
+- Creation connection with group bars
+- Interaction with progress with active connection drawing
+
 ## [v3.1.1](https://github.com/Xeyos88/HyVueGantt/tree/v3.1.1) (2025-02-17)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.1.0...v3.1.1)
