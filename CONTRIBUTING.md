@@ -1,128 +1,165 @@
-# Contributing to HyVue Gantt
+# Contributing to HY Vue Gantt
 
-We love your input! We want to make contributing to HyVue Gantt as easy and transparent as possible, whether it's:
+Thank you for considering contributing to HY Vue Gantt! This document provides guidelines and instructions to help you contribute effectively to this project.
 
-- Reporting a bug
-- Discussing the current state of the code
-- Submitting a fix
-- Proposing new features
-- Becoming a maintainer
+## Table of Contents
 
-## Development Process
+- [Code of Conduct](#code-of-conduct)
+- [Getting Started](#getting-started)
+  - [Setting Up the Development Environment](#setting-up-the-development-environment)
+  - [Understanding the Project Structure](#understanding-the-project-structure)
+- [How to Contribute](#how-to-contribute)
+  - [Reporting Bugs](#reporting-bugs)
+  - [Suggesting Features](#suggesting-features)
+  - [Pull Requests](#pull-requests)
+- [Development Workflow](#development-workflow)
+  - [Branching Strategy](#branching-strategy)
+  - [Commit Guidelines](#commit-guidelines)
+  - [Testing](#testing)
+- [Style Guide](#style-guide)
+  - [Code Style](#code-style)
+  - [Documentation Style](#documentation-style)
+- [Release Process](#release-process)
 
-We use GitHub to host code, to track issues and feature requests, as well as accept pull requests.
+## Getting Started
 
-1. Fork the repo and create your branch from `main`.
-2. If you've added code that should be tested, add tests.
-3. If you've changed APIs, update the documentation.
-4. Ensure the test suite passes.
-5. Make sure your code lints.
-6. Issue that pull request!
+### Setting Up the Development Environment
 
-## Any contributions you make will be under the MIT Software License
-
-When you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. If you have any concerns, please contact the maintainers.
-
-## Report bugs using GitHub's [issue tracker](https://github.com/Xeyos88/HyVueGantt/issues)
-
-We use GitHub issues to track public bugs. Report a bug by opening a new issue. Write bug reports with detail, background, and sample code.
-
-**Great Bug Reports** should include:
-
-- A quick summary and/or background
-- Steps to reproduce
-  - Be specific
-  - Give sample code if you can
-- What you expected would happen
-- What actually happens
-- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
-
-## Development Setup
-
-1. Clone your fork of the repo
-
-   ```sh
+1. Fork the repository on GitHub
+2. Clone your fork locally:
+   ```bash
    git clone https://github.com/Xeyos88/HyVueGantt.git
+   cd hy-vue-gantt
    ```
-
-2. Install dependencies
-
-   ```sh
+3. Install dependencies:
+   ```bash
    npm install
    ```
-
-3. Start development server
-
-   ```sh
+4. Create a branch for your work:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+5. Start the development server:
+   ```bash
    npm run dev
    ```
 
-4. Create a branch for your feature
-   ```sh
-   git checkout -b feature/my-new-feature
-   ```
+### Understanding the Project Structure
 
-## Testing
+The project is organized as follows:
 
-We use Vitest for unit testing. All tests should pass before submitting a pull request.
-
-```sh
-npm run test
+```
+/src
+  /components       # Vue components
+  /composables      # Vue composables (custom hooks)
+  /provider         # Dependency injection providers
+  /types            # TypeScript type definitions
+  /color-schemes.ts # Color scheme definitions
 ```
 
-## Code Style and Linting
+## How to Contribute
 
-We use ESLint and Prettier to maintain code quality and consistency.
+### Reporting Bugs
 
-- Follow TypeScript best practices
-- Use Vue 3 Composition API
-- Follow the existing code style
-- Write descriptive commit messages
+If you find a bug, please report it by creating an issue using our [Bug Report Template](.github/ISSUE_TEMPLATE/bug_report.md). Before creating a new issue, please check if the bug has already been reported.
 
-Run linting:
+When reporting a bug, include:
 
-```sh
-npm run lint
-```
+- A clear and descriptive title
+- Steps to reproduce the issue
+- Expected behavior and actual behavior
+- Screenshots if applicable
+- Any relevant code snippets or error messages
 
-## Pull Request Process
+### Suggesting Features
 
-1. Update the README.md with details of changes to the interface, if applicable.
-2. Update documentation in the `/docs` folder for new features or changes.
-3. The PR will be merged once you have the sign-off of at least one maintainer.
+We welcome suggestions for new features or enhancements! Please use our [Feature Request Template](.github/ISSUE_TEMPLATE/feature_request.md) to submit your ideas.
 
-## Documentation Guidelines
+Feature requests should:
 
-When adding new features, please include:
+- Clearly describe the problem or need the feature addresses
+- Explain how the feature would benefit users
+- Include examples of how the feature might be used
+- Consider potential implementation challenges
 
-- TypeScript interfaces and types
-- Description of the feature
-- Example usage code
-- Note any breaking changes
-- Update relevant sections in `/docs`
+### Pull Requests
 
-## Versioning
+Follow these steps to submit a pull request:
 
-We use [SemVer](http://semver.org/) for versioning. For new releases:
+1. Ensure your code follows our [Style Guide](#style-guide)
+2. Update or add tests for your changes
+3. Update documentation to reflect your changes
+4. Make sure all tests pass
+5. Create a pull request against the `main` branch
+6. Use our [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md) to provide context for your changes
 
-- MAJOR version for incompatible API changes
-- MINOR version for backwards-compatible functionality additions
-- PATCH version for backwards-compatible bug fixes
+## Development Workflow
 
-## Community and Behavioral Expectations
+### Branching Strategy
 
-This project adheres to the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) code of conduct. By participating, you are expected to uphold this code.
+- `main` - Contains the stable version of the code
+- `develop` - Integration branch for features
+- `feature/*` - For new features or enhancements
+- `bugfix/*` - For bug fixes
+- `release/*` - For preparing releases
 
-## License
+### Commit Guidelines
 
-By contributing, you agree that your contributions will be licensed under its MIT License.
+We follow [Conventional Commits](https://www.conventionalcommits.org/) for commit messages. This helps us generate changelogs and understand the purpose of each commit.
 
-## Questions or Need Help?
+Format: `type(scope): description`
 
-Feel free to:
+Types:
 
-- Open an issue with the question label
-- Contact the maintainers
-- Join our discussions on GitHub
+- `feat`: A new feature
+- `fix`: A bug fix
+- `docs`: Documentation only changes
+- `style`: Changes that do not affect the meaning of the code
+- `refactor`: A code change that neither fixes a bug nor adds a feature
+- `perf`: A code change that improves performance
+- `test`: Adding missing tests or correcting existing tests
+- `chore`: Changes to the build process or auxiliary tools
 
-Thank you for contributing to HyVue Gantt!
+Examples:
+
+- `feat(grid): add ability to customize grid line colors`
+- `fix(timeaxis): resolve issue with incorrect date formatting`
+- `docs(readme): update installation instructions`
+
+### Testing
+
+- Run tests before submitting a pull request:
+  ```bash
+  npm run test
+  ```
+- Add new tests for your changes when applicable
+- We use [Vitest](https://vitest.dev/) for unit tests
+
+## Style Guide
+
+### Code Style
+
+- We use ESLint and Prettier for code formatting
+- Run linting before submitting a PR:
+  ```bash
+  npm run lint
+  ```
+- TypeScript is preferred for all new code
+- Vue 3 Composition API is our standard for components
+- Follow Vue style guide for component structure
+
+### Documentation Style
+
+- Use JSDoc comments for functions, classes, and methods
+- Keep comments up-to-date with code changes
+- Write clear, concise documentation that explains the "why" not just the "how"
+- Include examples where helpful
+
+## Release Process
+
+1. We use semantic versioning (MAJOR.MINOR.PATCH)
+2. Changes are documented in CHANGELOG.md
+3. Release branches are created from develop for final testing
+4. After testing, releases are merged to main and tagged
+
+Thank you for contributing to HY Vue Gantt!

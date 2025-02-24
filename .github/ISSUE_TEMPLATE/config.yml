@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Hyper Vue Gantt Discussions
+    url: https://github.com/Xeyos88/HyVueGantt/discussions
+    about: Please ask and answer questions here.
+  - name: Hyper Vue Gantt Documentation
+    url: https://xeyos88.github.io/HyVueGantt/
+    about: Check the documentation for helpful information.

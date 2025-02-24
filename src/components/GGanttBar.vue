@@ -30,6 +30,10 @@ const { setDragLimitsOfGanttBar } = useBarDragLimit()
 
 const isDragging = ref(false)
 
+const isEditing = ref(false)
+const editedLabel = ref("")
+const labelInput = ref<HTMLInputElement | null>(null)
+
 const barConfig = computed(() => bar.value.ganttBarConfig)
 
 const { onBarKeyDown } = useBarKeyboardControl(bar.value, config, emitBarEvent)
@@ -87,7 +91,8 @@ const {
   showLabel,
   showProgress,
   defaultProgressResizable,
-  enableConnectionCreation
+  enableConnectionCreation,
+  barLabelEditable
 } = config
 
 const xStart = ref(0)
@@ -354,6 +359,57 @@ const endPointStyle = computed(() => ({
   top: "50%",
   transform: "translate(50%, -50%)"
 }))
+
+const startEditing = (e: MouseEvent) => {
+  if (!barLabelEditable.value || isGroupBar.value) return
+
+  e.stopPropagation()
+
+  bar.value.ganttBarConfig._previousLabel = barConfig.value.label || ""
+
+  isEditing.value = true
+  editedLabel.value = barConfig.value.label || ""
+
+  setTimeout(() => {
+    if (labelInput.value) {
+      labelInput.value.focus()
+      labelInput.value.select()
+    }
+  }, 0)
+}
+
+const saveLabel = () => {
+  if (!isEditing.value) return
+
+  bar.value.ganttBarConfig.label = editedLabel.value
+
+  emitBarEvent(
+    {
+      type: "label-edit",
+      preventDefault: () => {},
+      stopPropagation: () => {}
+    } as unknown as MouseEvent,
+    bar.value
+  )
+
+  isEditing.value = false
+}
+
+const cancelEditing = () => {
+  isEditing.value = false
+}
+
+const handleLabelKeydown = (e: KeyboardEvent) => {
+  if (e.key === "Enter") {
+    saveLabel()
+  } else if (e.key === "Escape") {
+    cancelEditing()
+  }
+}
+
+const handleInputBlur = () => {
+  saveLabel()
+}
 </script>
 
 <template>
@@ -372,7 +428,6 @@ const endPointStyle = computed(() => ({
     }"
     @mousedown="onMouseEvent"
     @click="onMouseEvent"
-    @dblclick="onMouseEvent"
     @mouseenter="handleBarMouseEnter"
     @mouseleave="handleBarMouseLeave"
     @contextmenu="onMouseEvent"
@@ -381,6 +436,7 @@ const endPointStyle = computed(() => ({
     @touchend="onTouchEvent"
     @touchcancel="onTouchEvent"
     @keydown="onBarKeyDown"
+    @dblclick="startEditing"
     role="listitem"
     :aria-label="`Activity ${barConfig.label}`"
     :aria-grabbed="isDragging"
@@ -432,7 +488,18 @@ const endPointStyle = computed(() => ({
     <div class="g-gantt-bar-label">
       <slot :bar="bar">
         <div v-if="!isGroupBar && showLabel">
-          {{ barConfig.label || "" }}
+          <div v-if="isEditing && barLabelEditable" class="g-gantt-bar-label-edit">
+            <input
+              ref="labelInput"
+              v-model="editedLabel"
+              @keydown="handleLabelKeydown"
+              @blur="handleInputBlur"
+              class="g-gantt-bar-label-input"
+            />
+          </div>
+          <div v-else>
+            {{ barConfig.label || "" }}
+          </div>
         </div>
         <div v-if="barConfig.html" v-html="barConfig.html" />
       </slot>
@@ -466,11 +533,13 @@ const endPointStyle = computed(() => ({
   z-index: 2;
   pointer-events: none;
 }
+
 .g-gantt-bar-label > * {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .g-gantt-bar-handle-left,
 .g-gantt-bar-handle-right {
   position: absolute;
@@ -482,15 +551,39 @@ const endPointStyle = computed(() => ({
   cursor: ew-resize;
   top: 0;
 }
+
 .g-gantt-bar-handle-left {
   left: 0;
 }
+
 .g-gantt-bar-handle-right {
   right: 0;
 }
 
 .g-gantt-bar-label img {
   pointer-events: none;
+}
+
+.g-gantt-bar-label-edit {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: all;
+}
+
+.g-gantt-bar-label-input {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  width: 100%;
+  height: 100%;
+  background: white;
+  color: black;
+  outline: none;
+  font: inherit;
+  padding: 2px;
+  text-align: center;
 }
 
 .is-group-bar {

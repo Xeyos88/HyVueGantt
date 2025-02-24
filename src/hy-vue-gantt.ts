@@ -33,7 +33,13 @@ import type {
   TimeUnit,
   MarkerConnection,
   DayOptionLabel,
-  GanttBarConnection
+  GanttBarConnection,
+  BarMouseEvent,
+  ConnectionStartEvent,
+  ConnectionDragEvent,
+  ConnectionCompleteEvent,
+  ConnectionDeleteEvent,
+  LabelEditEvent
 } from "./types"
 
 import "dayjs/locale/it"
@@ -127,7 +133,13 @@ export type {
   TimeUnit,
   MarkerConnection,
   DayOptionLabel,
-  GanttBarConnection
+  GanttBarConnection,
+  BarMouseEvent,
+  ConnectionStartEvent,
+  ConnectionDragEvent,
+  ConnectionCompleteEvent,
+  ConnectionDeleteEvent,
+  LabelEditEvent
 }
 export { GGanttChart, GGanttRow }
 
