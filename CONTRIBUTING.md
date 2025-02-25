@@ -90,7 +90,7 @@ Follow these steps to submit a pull request:
 2. Update or add tests for your changes
 3. Update documentation to reflect your changes
 4. Make sure all tests pass
-5. Create a pull request against the `main` branch
+5. Create a pull request against the `develop` branch
 6. Use our [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md) to provide context for your changes
 
 ## Development Workflow

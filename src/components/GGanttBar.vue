@@ -84,9 +84,69 @@ const isGroupBar = computed(() => {
   return bar.value.ganttBarConfig.id.startsWith("group-")
 })
 
-const { onBarKeyDown } = useBarKeyboardControl(bar.value, config, emitBarEvent)
+// Style for progress bar
+const progressStyle = computed(() => {
+  const progress = props.bar.ganttBarConfig.progress ?? 0
+  const baseStyle = props.bar.ganttBarConfig.progressStyle || {}
+  const barColor = props.bar.ganttBarConfig.style?.background || "#5F9EA0"
 
-function firstMousemoveCallback(e: MouseEvent) {
+  return {
+    ...baseStyle,
+    left: 0,
+    width: `${Math.min(Math.max(progress, 0), 100)}%`,
+    backgroundColor: baseStyle.backgroundColor || getDarkerColor(barColor as string),
+    transition: "width 0.3s ease",
+    borderRadius: "inherit",
+    height: "100%"
+  }
+})
+
+// Style for connection points
+const connectionPointStyle = computed(() => ({
+  width: "12px",
+  height: "12px",
+  borderRadius: "50%",
+  cursor: "pointer",
+  background: canBeTarget.value ? "#00ff00" : "#ff0000",
+  transition: "all 0.2s ease",
+  opacity:
+    connectionCreation?.connectionState.value.isCreating ||
+    isBarHovered.value ||
+    startPointHover.value ||
+    endPointHover.value
+      ? 1
+      : 0,
+  zIndex: 1000
+}))
+
+// Style for start connection point
+const startPointStyle = computed(() => ({
+  ...connectionPointStyle.value,
+  left: 0,
+  top: "50%",
+  transform: "translate(-50%, -50%)"
+}))
+
+// Style for end connection point
+const endPointStyle = computed(() => ({
+  ...connectionPointStyle.value,
+  right: 0,
+  top: "50%",
+  transform: "translate(50%, -50%)"
+}))
+
+// Check if bar can be connection target
+const canBeTarget = computed(() => {
+  if (!connectionCreation?.connectionState.value.isCreating) return false
+  return connectionCreation.canBeConnectionTarget.value(props.bar)
+})
+
+// -----------------------------
+// 6. MOUSE AND TOUCH SUPPORT
+// -----------------------------
+
+// Function to create a callback that will be called on first mouse movement
+const firstMousemoveCallback = (e: MouseEvent) => {
   if (barConfig.value.bundle != null) {
     initDragOfBundle(bar.value, e)
   } else {
@@ -95,6 +155,7 @@ function firstMousemoveCallback(e: MouseEvent) {
   isDragging.value = true
 }
 
+// Prepare bar for dragging
 const prepareForDrag = () => {
   setDragLimitsOfGanttBar(bar.value)
   if (barConfig.value.immobile) {
@@ -114,8 +175,7 @@ const prepareForDrag = () => {
   )
 }
 
-const barContainerEl = inject(BAR_CONTAINER_KEY)
-
+// Handle mouse events
 const onMouseEvent = (e: MouseEvent) => {
   e.preventDefault()
   if (e.type === "mousedown") {
@@ -129,12 +189,21 @@ const onMouseEvent = (e: MouseEvent) => {
   emitBarEvent(e, bar.value, datetime)
 }
 
+// Get bar container element
+const barContainerEl = inject(BAR_CONTAINER_KEY)
+
+// -----------------------------
+// 7. TOUCH EVENT HANDLING
+// -----------------------------
+
+// Configure touch event handling
 const { handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } = useTouchEvents(
   (_draggedBar, e) => {
     firstMousemoveCallback(e)
     isDragging.value = true
   }
 )
+
 const onTouchEvent = (e: TouchEvent) => {
   if (bar.value.ganttBarConfig.immobile) return
 
@@ -160,88 +229,15 @@ const onTouchEvent = (e: TouchEvent) => {
   }
 }
 
-onMounted(() => {
-  xStart.value = mapTimeToPosition(bar.value[barStart.value])
-  xEnd.value = mapTimeToPosition(bar.value[barEnd.value])
-
-  watch(
-    [() => bar.value, width, chartStart, chartEnd, chartSize.width],
-    () => {
-      const newXStart = mapTimeToPosition(bar.value[barStart.value])
-      const newXEnd = mapTimeToPosition(bar.value[barEnd.value])
-
-      xStart.value = newXStart
-      xEnd.value = newXEnd
-    },
-    { deep: true, immediate: true }
-  )
-})
-
-const getGroupBarPath = (width: number, height: number) => {
-  const mainBarHeight = height * 0.5
-
-  return `
-    M 0 0
-    L 0 ${height}
-    L ${15} ${mainBarHeight}
-    L ${width - 15} ${mainBarHeight}
-    L ${width} ${height}
-    L ${width} 0
-    L 0 0
-  `
-}
-
-const getDarkerColor = (color: string) => {
-  const rgb = color.startsWith("#") ? hexToRgb(color) : parseRgb(color)
-
-  return `rgba(${Math.max(0, rgb.r - 40)}, ${Math.max(0, rgb.g - 40)}, ${Math.max(0, rgb.b - 40)}, ${rgb.a})`
-}
-
-const hexToRgb = (hex: string) => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-  return result
-    ? {
-        r: parseInt(result[1]!, 16),
-        g: parseInt(result[2]!, 16),
-        b: parseInt(result[3]!, 16),
-        a: 1
-      }
-    : { r: 0, g: 0, b: 0, a: 1 }
-}
-
-const parseRgb = (color: string) => {
-  const matches = color.match(/(\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/)
-  if (matches) {
-    return {
-      r: parseInt(matches[1]!),
-      g: parseInt(matches[2]!),
-      b: parseInt(matches[3]!),
-      a: matches[4] ? parseFloat(matches[4]) : 1
-    }
-  }
-  return { r: 0, g: 0, b: 0, a: 1 }
-}
-
-const progressStyle = computed(() => {
-  const progress = props.bar.ganttBarConfig.progress ?? 0
-  const baseStyle = props.bar.ganttBarConfig.progressStyle || {}
-  const barColor = props.bar.ganttBarConfig.style?.background || "#5F9EA0"
-
-  return {
-    ...baseStyle,
-    left: 0,
-    width: `${Math.min(Math.max(progress, 0), 100)}%`,
-    backgroundColor: baseStyle.backgroundColor || getDarkerColor(barColor as string),
-    transition: "width 0.3s ease",
-    borderRadius: "inherit",
-    height: "100%"
-  }
-})
+// -----------------------------
+// 8. PROGRESS BAR HANDLING
+// -----------------------------
 
 const isProgressDragging = ref(false)
 const progressDragStart = ref(0)
 const initialProgress = ref(0)
 
+// Start progress bar dragging
 const handleProgressDragStart = (e: MouseEvent) => {
   if (!props.bar.ganttBarConfig.progressResizable && !defaultProgressResizable.value) return
 
@@ -261,8 +257,10 @@ const handleProgressDragStart = (e: MouseEvent) => {
     props.bar
   )
 }
+
 const { findBarElement } = useBarSelector()
 
+// Handle progress bar dragging
 const handleProgressDrag = (e: MouseEvent) => {
   if (!isProgressDragging.value) return
 
@@ -285,6 +283,7 @@ const handleProgressDrag = (e: MouseEvent) => {
   )
 }
 
+// End progress bar dragging
 const handleProgressDragEnd = (e: MouseEvent) => {
   if (!isProgressDragging.value) return
 
@@ -301,10 +300,15 @@ const handleProgressDragEnd = (e: MouseEvent) => {
   )
 }
 
+// -----------------------------
+// 9. CONNECTION POINT HANDLING
+// -----------------------------
+
 const startPointHover = ref(false)
 const endPointHover = ref(false)
 const isBarHovered = ref(false)
 
+// Handle connection point mouse enter
 const handleConnectionPointMouseEnter = (point: ConnectionPoint) => {
   if (!enableConnectionCreation.value) return
 
@@ -317,6 +321,7 @@ const handleConnectionPointMouseEnter = (point: ConnectionPoint) => {
   connectionCreation?.handleConnectionPointHover(props.bar.ganttBarConfig.id, point, true)
 }
 
+// Handle connection point mouse leave
 const handleConnectionPointMouseLeave = (point: ConnectionPoint) => {
   if (!enableConnectionCreation.value) return
 
@@ -329,6 +334,7 @@ const handleConnectionPointMouseLeave = (point: ConnectionPoint) => {
   connectionCreation?.handleConnectionPointHover(props.bar.ganttBarConfig.id, point, false)
 }
 
+// Handle connection point mouse down to start connection creation
 const handleConnectionPointMouseDown = (e: MouseEvent, point: ConnectionPoint) => {
   if (!enableConnectionCreation.value) return
 
@@ -336,58 +342,34 @@ const handleConnectionPointMouseDown = (e: MouseEvent, point: ConnectionPoint) =
   connectionCreation?.startConnectionCreation(props.bar, point, e)
 }
 
+// Handle connection point mouse up to complete connection
 const handleConnectionDrop = (e: MouseEvent, point: ConnectionPoint) => {
   if (!enableConnectionCreation.value) return
   e.stopPropagation()
   connectionCreation?.completeConnection(props.bar, point, e)
 }
 
-const canBeTarget = computed(() => {
-  if (!connectionCreation?.connectionState.value.isCreating) return false
-  return connectionCreation.canBeConnectionTarget.value(props.bar)
-})
+// -----------------------------
+// 10. BAR HOVER HANDLING
+// -----------------------------
 
+// Handle bar mouse enter
 const handleBarMouseEnter = (e: MouseEvent) => {
   isBarHovered.value = true
   onMouseEvent(e)
 }
 
+// Handle bar mouse leave
 const handleBarMouseLeave = (e: MouseEvent) => {
   isBarHovered.value = false
   onMouseEvent(e)
 }
 
-const connectionPointStyle = computed(() => ({
-  width: "12px",
-  height: "12px",
-  borderRadius: "50%",
-  cursor: "pointer",
-  background: canBeTarget.value ? "#00ff00" : "#ff0000",
-  transition: "all 0.2s ease",
-  opacity:
-    connectionCreation?.connectionState.value.isCreating ||
-    isBarHovered.value ||
-    startPointHover.value ||
-    endPointHover.value
-      ? 1
-      : 0,
-  zIndex: 1000
-}))
+// -----------------------------
+// 11. LABEL EDITING HANDLING
+// -----------------------------
 
-const startPointStyle = computed(() => ({
-  ...connectionPointStyle.value,
-  left: 0,
-  top: "50%",
-  transform: "translate(-50%, -50%)"
-}))
-
-const endPointStyle = computed(() => ({
-  ...connectionPointStyle.value,
-  right: 0,
-  top: "50%",
-  transform: "translate(50%, -50%)"
-}))
-
+// Start label editing
 const startEditing = (e: MouseEvent) => {
   if (!barLabelEditable.value || isGroupBar.value) return
 
@@ -406,6 +388,7 @@ const startEditing = (e: MouseEvent) => {
   }, 0)
 }
 
+// Save edited label
 const saveLabel = () => {
   if (!isEditing.value) return
 
@@ -423,10 +406,12 @@ const saveLabel = () => {
   isEditing.value = false
 }
 
+// Cancel label editing
 const cancelEditing = () => {
   isEditing.value = false
 }
 
+// Handle keyboard input during label editing
 const handleLabelKeydown = (e: KeyboardEvent) => {
   if (e.key === "Enter") {
     saveLabel()
@@ -435,9 +420,91 @@ const handleLabelKeydown = (e: KeyboardEvent) => {
   }
 }
 
+// Handle input blur
 const handleInputBlur = () => {
   saveLabel()
 }
+
+// -----------------------------
+// 12. UTILITY FUNCTIONS
+// -----------------------------
+
+// Calculate darker color for progress bar
+const getDarkerColor = (color: string) => {
+  const rgb = color.startsWith("#") ? hexToRgb(color) : parseRgb(color)
+
+  return `rgba(${Math.max(0, rgb.r - 40)}, ${Math.max(0, rgb.g - 40)}, ${Math.max(0, rgb.b - 40)}, ${rgb.a})`
+}
+
+// Convert hex color to RGB format
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  return result
+    ? {
+        r: parseInt(result[1]!, 16),
+        g: parseInt(result[2]!, 16),
+        b: parseInt(result[3]!, 16),
+        a: 1
+      }
+    : { r: 0, g: 0, b: 0, a: 1 }
+}
+
+// Parse RGB color string to object
+const parseRgb = (color: string) => {
+  const matches = color.match(/(\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/)
+  if (matches) {
+    return {
+      r: parseInt(matches[1]!),
+      g: parseInt(matches[2]!),
+      b: parseInt(matches[3]!),
+      a: matches[4] ? parseFloat(matches[4]) : 1
+    }
+  }
+  return { r: 0, g: 0, b: 0, a: 1 }
+}
+
+// Create SVG path for group bars
+const getGroupBarPath = (width: number, height: number) => {
+  const mainBarHeight = height * 0.5
+
+  return `
+    M 0 0
+    L 0 ${height}
+    L ${15} ${mainBarHeight}
+    L ${width - 15} ${mainBarHeight}
+    L ${width} ${height}
+    L ${width} 0
+    L 0 0
+  `
+}
+
+// -----------------------------
+// 13. KEYBOARD SUPPORT
+// -----------------------------
+
+// Configure keyboard control support
+const { onBarKeyDown } = useBarKeyboardControl(bar.value, config, emitBarEvent)
+
+// -----------------------------
+// 14. LIFECYCLE HOOKS
+// -----------------------------
+
+onMounted(() => {
+  xStart.value = mapTimeToPosition(bar.value[barStart.value])
+  xEnd.value = mapTimeToPosition(bar.value[barEnd.value])
+
+  watch(
+    [() => bar.value, width, chartStart, chartEnd, chartSize.width],
+    () => {
+      const newXStart = mapTimeToPosition(bar.value[barStart.value])
+      const newXEnd = mapTimeToPosition(bar.value[barEnd.value])
+
+      xStart.value = newXStart
+      xEnd.value = newXEnd
+    },
+    { deep: true, immediate: true }
+  )
+})
 </script>
 
 <template>
@@ -471,6 +538,7 @@ const handleInputBlur = () => {
     tabindex="0"
     :aria-describedby="`tooltip-${barConfig.id}`"
   >
+    <!-- Connection Points -->
     <template v-if="enableConnectionCreation">
       <div
         class="connection-point start"
@@ -489,6 +557,7 @@ const handleInputBlur = () => {
         @mouseup="handleConnectionDrop($event, 'end')"
       />
     </template>
+    <!-- Progress Bar -->
     <div
       v-if="barConfig.progress !== undefined"
       class="g-gantt-progress-bar"
@@ -502,6 +571,7 @@ const handleInputBlur = () => {
         @mousedown="handleProgressDragStart"
       />
     </div>
+    <!-- SVG for Group Bars -->
     <svg
       v-if="isGroupBar"
       class="group-bar-decoration"
@@ -513,6 +583,7 @@ const handleInputBlur = () => {
         :fill="config.colors.value.barContainer"
       />
     </svg>
+    <!-- Bar Label -->
     <div class="g-gantt-bar-label">
       <slot :bar="bar">
         <div v-if="!isGroupBar && showLabel">
@@ -532,6 +603,7 @@ const handleInputBlur = () => {
         <div v-if="barConfig.html" v-html="barConfig.html" />
       </slot>
     </div>
+    <!-- Bar Label -->
     <template v-if="barConfig.hasHandles">
       <div class="g-gantt-bar-handle-left" />
       <div class="g-gantt-bar-handle-right" />
