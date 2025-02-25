@@ -1,20 +1,49 @@
 <script setup lang="ts">
+// -----------------------------
+// 1. EXTERNAL IMPORTS
+// -----------------------------
 import { ref, computed } from "vue"
-import useTimePositionMapping from "../composables/useTimePositionMapping"
-import provideConfig from "../provider/provideConfig"
 import dayjs from "dayjs"
+
+// -----------------------------
+// 2. INTERNAL IMPORTS
+// -----------------------------
+// Composables
+import useTimePositionMapping from "../composables/useTimePositionMapping"
+
+// Provider
+import provideConfig from "../provider/provideConfig"
+
+// Types
 import type { GanttMilestone } from "../types"
 
+// -----------------------------
+// 3. PROPS AND CONFIGURATION
+// -----------------------------
 const props = defineProps<{
   milestone: GanttMilestone
 }>()
 
+// Initialize time position mapping utility
 const { mapTimeToPosition } = useTimePositionMapping()
+
+// Get color configuration from provider
 const { colors } = provideConfig()
 
+// -----------------------------
+// 4. INTERNAL STATE
+// -----------------------------
+// Tooltip state
 const showTooltip = ref(false)
 const tooltipPosition = ref({ x: 0, y: 0 })
 
+// -----------------------------
+// 5. COMPUTED PROPERTIES
+// -----------------------------
+/**
+ * Normalizes the milestone date to ensure proper positioning
+ * If the date has no hour/minute, sets it to noon for better visual placement
+ */
 const milestoneDate = computed(() => {
   const date = dayjs(props.milestone.date)
   if (!date.hour() && !date.minute()) {
@@ -23,24 +52,17 @@ const milestoneDate = computed(() => {
   return props.milestone.date
 })
 
+/**
+ * Calculates the horizontal position of the milestone based on its date
+ */
 const xPosition = computed(() => {
   return mapTimeToPosition(milestoneDate.value)
 })
 
-const handleMouseEnter = (event: MouseEvent) => {
-  const element = event.target as HTMLElement
-  const rect = element.getBoundingClientRect()
-  tooltipPosition.value = {
-    x: rect.left,
-    y: rect.top + 10
-  }
-  showTooltip.value = true
-}
-
-const handleMouseLeave = () => {
-  showTooltip.value = false
-}
-
+/**
+ * Computes the style configuration for the milestone
+ * Uses custom color if provided, otherwise uses defaults from theme
+ */
 const styleConfig = computed(() => {
   if (props.milestone.color) {
     return {
@@ -66,6 +88,29 @@ const styleConfig = computed(() => {
     }
   }
 })
+
+// -----------------------------
+// 6. EVENT HANDLERS
+// -----------------------------
+/**
+ * Shows tooltip on mouse enter
+ */
+const handleMouseEnter = (event: MouseEvent) => {
+  const element = event.target as HTMLElement
+  const rect = element.getBoundingClientRect()
+  tooltipPosition.value = {
+    x: rect.left,
+    y: rect.top + 10
+  }
+  showTooltip.value = true
+}
+
+/**
+ * Hides tooltip on mouse leave
+ */
+const handleMouseLeave = () => {
+  showTooltip.value = false
+}
 </script>
 
 <template>

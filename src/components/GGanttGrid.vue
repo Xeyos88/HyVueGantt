@@ -1,8 +1,24 @@
 <script setup lang="ts">
+// -----------------------------
+// 1. EXTERNAL IMPORTS
+// -----------------------------
+
+// -----------------------------
+// 2. INTERNAL IMPORTS
+// -----------------------------
+
+// Provider
 import provideConfig from "../provider/provideConfig"
+
+// Composables
 import useDayjsHelper from "../composables/useDayjsHelper"
+
+// Types
 import type { TimeaxisData, TimeUnit } from "../types"
 
+// -----------------------------
+// 3. PROPS AND CONFIGURATION
+// -----------------------------
 const props = defineProps<{
   timeaxisUnits: TimeaxisData
   internalPrecision: TimeUnit
@@ -20,6 +36,13 @@ const {
   enableMinutes
 } = provideConfig()
 
+// -----------------------------
+// 4. HELPER FUNCTIONS
+// -----------------------------
+
+/**
+ * Determines if a grid line should be highlighted based on date and precision
+ */
 const highlightLine = (date: Date) => {
   if (props.internalPrecision === "hour") {
     return (
@@ -45,8 +68,14 @@ const highlightLine = (date: Date) => {
   return false
 }
 
+/**
+ * Checks if the hour of a date is in the highlighted hours list
+ */
 const isHighlightedHour = (date: Date) => highlightedHours?.value.includes(date.getHours())
 
+/**
+ * Checks if the day of a date is in either the highlighted days of week or month lists
+ */
 const isHighlightedDay = (date: Date) => {
   return (
     highlightedDaysInWeek?.value.includes(date.getDay()) ||
@@ -54,8 +83,14 @@ const isHighlightedDay = (date: Date) => {
   )
 }
 
+/**
+ * Checks if the week of a date is in the highlighted weeks list
+ */
 const isHighlightedWeek = (date: Date) => highlightedWeek?.value.includes(toDayjs(date).week())
 
+/**
+ * Checks if the month of a date is in the highlighted months list
+ */
 const isHighlightedMonth = (date: Date) => highlightedMonths?.value.includes(date.getMonth())
 </script>
 
