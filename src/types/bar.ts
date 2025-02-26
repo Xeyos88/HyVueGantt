@@ -34,6 +34,7 @@ export interface GanttBarConfig {
   progress?: number
   progressResizable?: boolean
   progressStyle?: CSSProperties
+  _previousLabel?: string
 }
 
 export interface GanttBarObject {

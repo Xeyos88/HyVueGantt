@@ -14,7 +14,7 @@ export default function useBarSelector() {
     const ganttContainer = document.getElementById(ganttId)
     if (!ganttContainer) return null
 
-    return ganttContainer.querySelector(`#${barId}`) as HTMLElement
+    return ganttContainer.querySelector(`#${CSS.escape(barId)}`) as HTMLElement
   }
 
   /**

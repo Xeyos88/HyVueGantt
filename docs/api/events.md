@@ -41,6 +41,19 @@ interface ConnectionCompleteEvent {
   targetPoint: ConnectionPoint;
   e: MouseEvent;
 }
+
+export interface ConnectionDeleteEvent {
+  sourceBar: GanttBarObject
+  targetBar: GanttBarObject
+  e: MouseEvent
+}
+
+export interface LabelEditEvent {
+  bar: GanttBarObject
+  oldValue: string
+  newValue: string
+  e: MouseEvent
+}
 ```
 
 ## Bar Events
@@ -48,7 +61,7 @@ interface ConnectionCompleteEvent {
 ### Mouse Events
 ```typescript
 @click-bar="(event: GanttBarEvent) => void"
-@dblclick-bar="(event: GanttBarEvent) => void"
+@dblclick-bar="(event: LabelEditEvent) => void"
 @contextmenu-bar="(event: GanttBarEvent) => void"
 @mouseenter-bar="(event: BarMouseEvent) => void"
 @mouseleave-bar="(event: BarMouseEvent) => void"
@@ -84,6 +97,7 @@ interface ConnectionCompleteEvent {
 @connection-drag="(event: ConnectionDragEvent) => void"
 @connection-complete="(event: ConnectionCompleteEvent) => void"
 @connection-cancel="(event: ConnectionStartEvent) => void"
+@connection-delete="(event: ConnectionDeleteEvent) => void"
 ```
 
 ## Chart Events

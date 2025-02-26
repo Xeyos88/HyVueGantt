@@ -30,6 +30,9 @@ class ResizeObserverMock {
   disconnect = vi.fn()
 }
 global.ResizeObserver = ResizeObserverMock
+global.CSS = {
+  escape: (str) => str.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, "\\$&")
+}
 
 const barContainerElement = document.createElement("div")
 barContainerElement.getBoundingClientRect = vi.fn(() => ({

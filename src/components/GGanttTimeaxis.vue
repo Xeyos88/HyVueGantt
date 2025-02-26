@@ -1,16 +1,29 @@
 <script setup lang="ts">
-import provideConfig from "../provider/provideConfig"
-import { capitalizeWords } from "../composables/useTimeaxisUnits"
+// -----------------------------
+// 1. EXTERNAL IMPORTS
+// -----------------------------
 import { computed, ref, toRefs } from "vue"
+
+// -----------------------------
+// 2. INTERNAL IMPORTS
+// -----------------------------
+
+// Provider
+import provideConfig from "../provider/provideConfig"
+
+// Utilities
+import { capitalizeWords } from "../composables/useTimeaxisUnits"
 import useDayjsHelper from "../composables/useDayjsHelper"
-import type { TimeaxisData, TimeaxisUnit, TimeUnit } from "@/types"
+
+// Components
 import GGanttHolidayTooltip from "./GGanttHolidayTooltip.vue"
 
-const { precision, colors, holidayHighlight, dayOptionLabel, enableMinutes } = provideConfig()
-const { toDayjs } = useDayjsHelper()
+// Types
+import type { TimeaxisData, TimeaxisUnit, TimeUnit } from "@/types"
 
-const timeaxisElement = ref<HTMLElement | null>(null)
-
+// -----------------------------
+// 3. PROPS AND CONFIGURATION
+// -----------------------------
 const props = defineProps<{
   timeaxisUnits: TimeaxisData
   internalPrecision: TimeUnit
@@ -18,16 +31,48 @@ const props = defineProps<{
 
 const { timeaxisUnits, internalPrecision } = toRefs(props)
 
+// Events emitted for timeaxis drag interactions
 const emit = defineEmits<{
   (e: "dragStart", value: MouseEvent): void
   (e: "drag", value: MouseEvent): void
   (e: "dragEnd", value: MouseEvent): void
 }>()
 
+// -----------------------------
+// 4. INTERNAL STATE
+// -----------------------------
+
+// DOM references
+const timeaxisElement = ref<HTMLElement | null>(null)
+
+// Holiday tooltip state
+const hoveredUnit = ref<TimeaxisUnit | undefined>()
+const showTooltip = ref(false)
+const hoveredElement = ref<HTMLElement | null>(null)
+
+// -----------------------------
+// 5. CONFIGURATION FROM PROVIDER
+// -----------------------------
+const { precision, colors, holidayHighlight, dayOptionLabel, enableMinutes } = provideConfig()
+
+// -----------------------------
+// 6. HELPER FUNCTIONS
+// -----------------------------
+const { toDayjs } = useDayjsHelper()
+
+/**
+ * Handles mouse down events on the timeaxis
+ * Initiates drag operation and emits appropriate event
+ * @param e - Mouse event
+ */
 const handleMouseDown = (e: MouseEvent) => {
   emit("dragStart", e)
 }
 
+/**
+ * Determines if a specific day unit level should be highlighted
+ * Used to properly highlight holidays based on current precision
+ */
 const dayUnitLevel = computed(() => {
   if (internalPrecision.value === "hour") {
     return "upper"
@@ -37,6 +82,12 @@ const dayUnitLevel = computed(() => {
   return null
 })
 
+/**
+ * Calculates the holiday highlight style for a time unit
+ * @param unit - Timeaxis unit to style
+ * @param unitType - Unit type (upper/lower)
+ * @returns Style object for the unit
+ */
 const getHolidayStyle = (unit: TimeaxisUnit, unitType: "upper" | "lower") => {
   if (!holidayHighlight.value || dayUnitLevel.value !== unitType || !unit.isHoliday) {
     return {}
@@ -47,10 +98,17 @@ const getHolidayStyle = (unit: TimeaxisUnit, unitType: "upper" | "lower") => {
   }
 }
 
-const hoveredUnit = ref<TimeaxisUnit | undefined>()
-const showTooltip = ref(false)
-const hoveredElement = ref<HTMLElement | null>(null)
+// -----------------------------
+// 7. TOOLTIP HANDLING
+// -----------------------------
 
+/**
+ * Handles mouse enter events on time units
+ * Shows holiday tooltip when hovering over holiday units
+ * @param unit - Timeaxis unit being hovered
+ * @param unitType - Unit type (upper/lower)
+ * @param event - Mouse event
+ */
 const handleUnitMouseEnter = (
   unit: TimeaxisUnit,
   unitType: "upper" | "lower",
@@ -63,12 +121,26 @@ const handleUnitMouseEnter = (
   }
 }
 
+/**
+ * Handles mouse leave events on time units
+ * Hides holiday tooltip
+ */
 const handleUnitMouseLeave = () => {
   showTooltip.value = false
   hoveredUnit.value = undefined
   hoveredElement.value = null
 }
 
+// -----------------------------
+// 8. DISPLAY FORMATTING
+// -----------------------------
+
+/**
+ * Formats the label for a time unit based on configuration
+ * @param unit - Timeaxis unit to format
+ * @param unitType - Unit type (upper/lower)
+ * @returns Formatted label string
+ */
 const formatTimeUnitLabel = (unit: TimeaxisUnit, unitType: "upper" | "lower") => {
   if (dayUnitLevel.value !== unitType || !dayOptionLabel.value) {
     return unit.label
@@ -98,6 +170,7 @@ const formatTimeUnitLabel = (unit: TimeaxisUnit, unitType: "upper" | "lower") =>
   return result
 }
 
+// Expose timeaxisElement reference to parent component
 defineExpose({ timeaxisElement })
 </script>
 
@@ -110,6 +183,7 @@ defineExpose({ timeaxisElement })
     aria-label="Time Axis"
     :style="{ borderBottom: `1px solid ${colors.gridAndBorder}` }"
   >
+    <!-- Upper time units (months, years, etc.) -->
     <div class="g-timeunits-container">
       <div
         v-for="(unit, index) in timeaxisUnits.result.upperUnits"
@@ -134,7 +208,7 @@ defineExpose({ timeaxisElement })
         </slot>
       </div>
     </div>
-
+    <!-- Lower time units (days, hours, etc.) -->
     <div class="g-timeunits-container">
       <div
         v-for="(unit, index) in timeaxisUnits.result.lowerUnits"
@@ -151,6 +225,7 @@ defineExpose({ timeaxisElement })
         @mouseenter="(e) => handleUnitMouseEnter(unit, 'lower', e)"
         @mouseleave="handleUnitMouseLeave"
       >
+        <!-- Main unit label -->
         <div class="g-timeunit-min">
           <slot
             name="timeunit"
@@ -166,6 +241,7 @@ defineExpose({ timeaxisElement })
             :style="{ background: colors.text }"
           />
         </div>
+        <!-- Minutes subdivision for hourly precision -->
         <div v-if="precision === 'hour' && enableMinutes" class="g-timeunit-step">
           <div
             v-for="step in timeaxisUnits.globalMinuteStep"
@@ -185,6 +261,7 @@ defineExpose({ timeaxisElement })
         </div>
       </div>
     </div>
+    <!-- Holiday tooltip -->
     <g-gantt-holiday-tooltip
       :model-value="showTooltip"
       :unit="hoveredUnit"

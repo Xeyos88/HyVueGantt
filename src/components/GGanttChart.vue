@@ -125,7 +125,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   defaultProgressResizable: true,
   enableConnectionCreation: false,
   enableConnectionDeletion: false,
-  utc: false
+  utc: false,
+  barLabelEditable: false
 })
 
 // Events
@@ -342,14 +343,12 @@ const previewLinePoints = computed(() => {
   const scrollLeft = rowsContainer.scrollLeft
   const scrollTop = rowsContainer.scrollTop
 
-  // Calcoliamo la posizione della source considerando lo scroll
   const sourceX =
     connectionState.value.sourcePoint === "start"
       ? sourceRect.left - containerRect.left + scrollLeft
       : sourceRect.right - containerRect.left + scrollLeft
   const sourceY = sourceRect.top - containerRect.top + scrollTop + sourceRect.height / 2
 
-  // Calcoliamo la posizione del mouse considerando lo scroll
   const mouseX = connectionState.value.mouseX - containerRect.left + scrollLeft
   const mouseY = connectionState.value.mouseY - containerRect.top + scrollTop
 
@@ -361,7 +360,6 @@ const previewLinePoints = computed(() => {
   }
 })
 
-// Aggiungiamo anche un watcher per aggiornare la posizione durante lo scroll
 watch(
   () => scrollPosition.value,
   () => {
@@ -529,6 +527,15 @@ const emitBarEvent = (
     case "progress-drag-end":
       initTooltip(bar)
       emit("progress-drag-end", { bar, e })
+      rowManager.onBarMove()
+      break
+    case "label-edit":
+      emit("label-edit", {
+        bar,
+        e,
+        oldValue: bar.ganttBarConfig._previousLabel || "",
+        newValue: bar.ganttBarConfig.label || ""
+      })
       rowManager.onBarMove()
       break
   }
@@ -740,6 +747,7 @@ onUnmounted(() => {
 // -----------------------------
 // 11. WATCHERS
 // -----------------------------
+
 watch([() => props.chartStart, () => props.chartEnd], () => {
   updateBarPositions()
 })
@@ -1190,14 +1198,12 @@ provide(GANTT_ID_KEY, id.value)
     justify-content: center;
   }
 
-  /* Aumenta la dimensione dei pulsanti per una migliore interazione touch */
   .command-icon {
     padding: 8px;
     width: 16px;
     height: 16px;
   }
 
-  /* Migliora la dimensione dello slider per dispositivi touch */
   .g-gantt-scroller {
     height: 12px;
   }

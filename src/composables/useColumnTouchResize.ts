@@ -3,7 +3,7 @@ import { ref } from "vue"
 /**
  * Interface defining the state for touch-based column resizing
  */
-interface TouchResizeState {
+export interface TouchResizeState {
   isResizing: boolean
   startX: number
   currentColumn: string | null
