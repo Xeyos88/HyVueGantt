@@ -77,6 +77,7 @@ Here's a minimal example of using the GGanttChart component:
 | enableConnectionCreation | `boolean` | `false` | Enable the possibility to draw connections |
 | enableConnectionDelete | `boolean` | `false` | Enable the possibility to delete connections |
 | utc | `boolean` | `false` | Set the current time position based on UTC |
+| barLabelEditable | `boolean` | `false` | Enable the possibility to edit a bar label |
 
 
 ### Events
@@ -104,7 +105,7 @@ Here's a minimal example of using the GGanttChart component:
 | connection-complete | `{ sourceBar: GanttBarObject, targetBar: GanttBarObject, sourcePoint: ConnectionPoint, targetPoint: ConnectionPoint, e: MouseEvent }` | Completes the creation of a connection |
 | connection-cancel | `{ sourceBar: GanttBarObject, connectionPoint: ConnectionPoint, e: MouseEvent }` | Cancels the creation of a connection |
 | connection-delete | `{ sourceBar: GanttBarObject, targetBar: GanttBarObject, e: MouseEvent }` | Delete a connection |
-
+| label-edit | `{ sourceBar: GanttBarObject, e: MouseEvent, oldValue: string, newValue: string }` | Edit bar label |
 
 
 ### Slots

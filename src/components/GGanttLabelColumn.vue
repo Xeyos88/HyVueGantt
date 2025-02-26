@@ -1,14 +1,9 @@
 <script setup lang="ts">
-import provideConfig from "../provider/provideConfig"
+// -----------------------------
+// 1. EXTERNAL IMPORTS
+// -----------------------------
 import { ref, computed, inject, reactive, onMounted } from "vue"
 import type { CSSProperties } from "vue"
-import type {
-  LabelColumnField,
-  ChartRow,
-  GanttBarObject,
-  LabelColumnConfig,
-  RowDragEvent
-} from "../types"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import {
   faArrowDownAZ,
@@ -17,27 +12,70 @@ import {
   faChevronRight,
   faChevronDown
 } from "@fortawesome/free-solid-svg-icons"
+
+// -----------------------------
+// 2. INTERNAL IMPORTS
+// -----------------------------
+
+// Provider
+import provideConfig from "../provider/provideConfig"
+
+// Composables
 import useDayjsHelper from "../composables/useDayjsHelper"
-import type { UseRowsReturn } from "../composables/useRows"
 import { useRowDragAndDrop } from "../composables/useRowDragAndDrop"
 import { useColumnTouchResize } from "../composables/useColumnTouchResize"
 import { useRowTouchDrag } from "../composables/useRowTouchDrag"
 
+// Types
+import type {
+  LabelColumnField,
+  ChartRow,
+  GanttBarObject,
+  LabelColumnConfig,
+  RowDragEvent
+} from "../types"
+import type { UseRowsReturn } from "../composables/useRows"
+
+// -----------------------------
+// 3. INTERFACES
+// -----------------------------
+
+/**
+ * Extended row interface with indentation level
+ */
 export interface LabelColumnRowProps extends ChartRow {
   indentLevel?: number
 }
 
+// -----------------------------
+// 4. EVENTS
+// -----------------------------
 const emit = defineEmits<{
   (e: "scroll", value: number): void
   (e: "row-drop", value: RowDragEvent): void
 }>()
 
+// -----------------------------
+// 5. CONTEXT & CONFIGURATION
+// -----------------------------
+
+/**
+ * Get the row manager from the parent component
+ */
 const rowManager = inject<UseRowsReturn>("useRows")
+
 if (!rowManager) {
   throw new Error("useRows does not provide ")
 }
 
+/**
+ * Extract rows and sorting state from row manager
+ */
 const { rows, sortState, toggleSort } = rowManager
+
+/**
+ * Extract props from configuration
+ */
 const {
   font,
   colors,
@@ -57,8 +95,39 @@ const {
   sortable
 } = provideConfig()
 
+/**
+ * Initialize dayjs helper for date formatting
+ */
 const { toDayjs, format } = useDayjsHelper()
 
+// -----------------------------
+// 6. STATE MANAGEMENT
+// -----------------------------
+
+/**
+ * Stores width values for each column
+ */
+const columnWidths = reactive<Map<string, number>>(new Map())
+
+/**
+ * Keeps track of drag and resize states
+ */
+const isDragging = ref(false)
+const dragStartX = ref(0)
+const draggedColumn = ref<string | null>(null)
+
+/**
+ * Reference to column container element
+ */
+const labelContainer = ref<HTMLElement | null>(null)
+
+// -----------------------------
+// 7. DRAG & DROP MANAGEMENT
+// -----------------------------
+
+/**
+ * Initialize row drag and drop functionality
+ */
 const {
   dragState,
   handleDragStart: handleRowDragStart,
@@ -71,19 +140,30 @@ const {
   (_event, payload) => emit("row-drop", payload)
 )
 
-const columnWidths = reactive<Map<string, number>>(new Map())
-const isDragging = ref(false)
-const dragStartX = ref(0)
-const draggedColumn = ref<string | null>(null)
+/**
+ * Initialize column resize touch support
+ */
+const { touchState, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } =
+  useColumnTouchResize()
 
-const initializeColumnWidths = () => {
-  columns.value.forEach((column) => {
-    if (!columnWidths.has(column.field)) {
-      columnWidths.set(column.field, labelColumnWidth.value)
-    }
-  })
-}
+/**
+ * Initialize row touch drag support
+ */
+const {
+  touchState: rowTouchState,
+  handleTouchStart: handleRowTouchStart,
+  handleTouchMove: handleRowTouchMove,
+  handleTouchEnd: handleRowTouchEnd,
+  resetTouchState: resetRowTouchState
+} = useRowTouchDrag()
 
+// -----------------------------
+// 8. COMPUTED PROPERTIES
+// -----------------------------
+
+/**
+ * Get columns based on multiColumnLabel configuration
+ */
 const columns = computed<LabelColumnConfig[]>(() => {
   if (!multiColumnLabel.value?.length || !labelColumnTitle.value) {
     return [{ field: "Label", sortable: sortable.value }]
@@ -93,6 +173,225 @@ const columns = computed<LabelColumnConfig[]>(() => {
   return [labelColumn, ...filteredColumns]
 })
 
+/**
+ * Calculate total width of all columns
+ */
+const totalWidth = computed(() => {
+  let total = 0
+  columnWidths.forEach((width) => (total += width))
+  return total
+})
+
+/**
+ * Get processed rows with indentation level
+ */
+const getProcessedRows = computed(() => {
+  const processRows = (rows: ChartRow[], level = 0): LabelColumnRowProps[] => {
+    return rows.flatMap((row) => {
+      const processedRow: LabelColumnRowProps = {
+        ...row,
+        indentLevel: level
+      }
+
+      const isExpanded = row.id ? rowManager.isGroupExpanded(row.id) : false
+
+      if (row.children?.length && isExpanded) {
+        return [processedRow, ...processRows(row.children, level + 1)]
+      }
+
+      return [processedRow]
+    })
+  }
+
+  return processRows(rows.value)
+})
+
+/**
+ * Style for container based on maxRows setting
+ */
+const labelContainerStyle = computed<CSSProperties>(() => {
+  if (maxRows.value === 0) return {}
+  const minRows = Math.min(maxRows.value, getProcessedRows.value.length)
+
+  return {
+    height: `${minRows * rowHeight.value}px`,
+    "overflow-y": "auto"
+  }
+})
+
+/**
+ * Determine if a column is a sortable standard field
+ */
+const columnSortableStates = computed(() =>
+  columns.value.reduce(
+    (acc, column) => {
+      acc[column.field] = !!(
+        column.sortable !== false &&
+        (sortable.value || (!sortable.value && column.sortable)) &&
+        (isValidColumn(column.field) || column.sortFn)
+      )
+      return acc
+    },
+    {} as Record<string, boolean>
+  )
+)
+
+// -----------------------------
+// 9. TOUCH HANDLING
+// -----------------------------
+
+/**
+ * Timing variables for touch interaction
+ */
+let touchStartTime = 0
+const LONG_PRESS_DURATION = 500
+
+/**
+ * Handle row touch start
+ * @param e - Touch event
+ * @param row - Target row
+ */
+const onRowTouchStart = (e: TouchEvent, row: ChartRow) => {
+  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
+
+  touchStartTime = Date.now()
+  const element = e.currentTarget as HTMLElement
+  handleRowTouchStart(e, row, element)
+}
+
+/**
+ * Handle row touch move
+ * @param e - Touch event
+ * @param targetRow - Target row
+ */
+const onRowTouchMove = (e: TouchEvent, targetRow: ChartRow) => {
+  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
+
+  if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
+    resetRowTouchState()
+    return
+  }
+
+  const rowElement = e.currentTarget as HTMLElement
+  handleRowTouchMove(e, targetRow, rowElement)
+}
+
+/**
+ * Handle row touch end
+ * @param e - Touch event
+ */
+const onRowTouchEnd = (e: TouchEvent) => {
+  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
+
+  if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
+    const target = e.target as HTMLElement
+    const button = target.closest(".group-toggle-button")
+    if (button) {
+      const rowElement = target.closest("[data-row-id]") as HTMLElement
+      if (rowElement) {
+        const rowId = rowElement.dataset.rowId
+        if (rowId) {
+          rowManager.toggleGroupExpansion(rowId)
+        }
+      }
+    }
+    resetRowTouchState()
+    return
+  }
+
+  const result = handleRowTouchEnd(e)
+  if (result && result.sourceRow && result.dropTarget.row) {
+    let newIndex = getProcessedRows.value.findIndex((r) => r === result.dropTarget.row)
+    if (result.dropTarget.position === "after") {
+      newIndex += 1
+    }
+
+    const sourceIndex = getProcessedRows.value.findIndex((r) => r === result.sourceRow)
+    if (sourceIndex < newIndex) {
+      newIndex -= 1
+    }
+
+    const payload = {
+      sourceRow: result.sourceRow,
+      targetRow: result.dropTarget.row,
+      newIndex: newIndex,
+      parentId: result.dropTarget.position === "child" ? result.dropTarget.row.id : undefined
+    }
+
+    const newRows = [...getProcessedRows.value]
+    newRows.splice(sourceIndex, 1)
+    newRows.splice(newIndex, 0, result.sourceRow)
+    rowManager.updateRows(newRows)
+
+    emit("row-drop", payload)
+  }
+}
+
+/**
+ * Handle column touch start for resizing
+ * @param e - Touch event
+ * @param column - Column to resize
+ */
+const handleColumnTouchStart = (e: TouchEvent, column: string) => {
+  if (!labelResizable) return
+
+  const currentWidth = columnWidths.get(column) || labelColumnWidth.value
+  handleTouchStart(e, column, currentWidth)
+}
+
+/**
+ * Handle column touch move for resizing
+ * @param e - Touch event
+ */
+const handleColumnTouchMove = (e: TouchEvent) => {
+  if (!labelResizable) return
+
+  handleTouchMove(e, (column: string, newWidth: number) => {
+    columnWidths.set(column, newWidth)
+  })
+}
+
+// -----------------------------
+// 10. UTILITY FUNCTIONS
+// -----------------------------
+
+/**
+ * Initialize column widths on component mount
+ */
+const initializeColumnWidths = () => {
+  columns.value.forEach((column) => {
+    if (!columnWidths.has(column.field)) {
+      columnWidths.set(column.field, labelColumnWidth.value)
+    }
+  })
+}
+
+/**
+ * Check if a column is a valid standard field
+ * @param field - Field name to check
+ * @returns Boolean indicating if field is standard
+ */
+const isValidColumn = (field: string): field is LabelColumnField => {
+  return ["Id", "Label", "StartDate", "EndDate", "Duration", "Progress"].includes(field)
+}
+
+/**
+ * Get icon for sort direction
+ * @param field - Field to get icon for
+ * @returns Font Awesome icon
+ */
+const getSortIcon = (field: string) => {
+  if (field !== sortState.value.column || sortState.value.direction === "none") {
+    return faSort
+  }
+  return sortState.value.direction === "asc" ? faArrowDownAZ : faArrowDownZA
+}
+
+/**
+ * Get visible columns for a row (only Label for groups)
+ * @param row - Row to get columns for
+ * @returns Array of visible columns
+ */
 const getVisibleColumns = (row: ChartRow) => {
   if (row.children && row.children.length > 0) {
     return [{ field: "Label", sortable: sortable.value }]
@@ -100,6 +399,11 @@ const getVisibleColumns = (row: ChartRow) => {
   return columns.value
 }
 
+/**
+ * Get classes for a row
+ * @param row - Row to get classes for
+ * @returns Array of class names
+ */
 const rowClasses = (row: LabelColumnRowProps) => {
   const classes = ["g-label-column-row"]
   if (rowLabelClass.value) {
@@ -111,8 +415,34 @@ const rowClasses = (row: LabelColumnRowProps) => {
   return classes
 }
 
+/**
+ * Get drag classes for a row
+ * @param row - Row to get classes for
+ * @returns Object of class names
+ */
+const getDragClasses = (row: ChartRow) => {
+  if (!enableRowDragAndDrop.value) return {}
+
+  const isTarget = dragState.value.dropTarget.row === row
+  const isDragged = dragState.value.draggedRow === row
+
+  return {
+    "g-label-column-row-draggable": true,
+    "g-label-column-row-dragging": isDragged,
+    "g-label-column-row-drop-target": isTarget,
+    [`g-label-column-row-drop-${dragState.value.dropTarget.position}`]: isTarget
+  }
+}
+
+// Calculate indentation
 const INDENT_WIDTH = 24
 
+/**
+ * Get style for row content
+ * @param row - Row to style
+ * @param isLabelColumn - Whether this is the label column
+ * @returns Style object
+ */
 const getRowStyle = (row: LabelColumnRowProps, isLabelColumn: boolean): CSSProperties => {
   if (!isLabelColumn) {
     return {
@@ -139,6 +469,11 @@ const getRowStyle = (row: LabelColumnRowProps, isLabelColumn: boolean): CSSPrope
   return style
 }
 
+/**
+ * Get style for a cell
+ * @param isLabelColumn - Whether this is the label column
+ * @returns Style object
+ */
 const getCellStyle = (isLabelColumn: boolean): CSSProperties => {
   const style: CSSProperties = {
     display: "flex",
@@ -154,80 +489,12 @@ const getCellStyle = (isLabelColumn: boolean): CSSProperties => {
   return style
 }
 
-const handleGroupToggle = (row: ChartRow, event: Event) => {
-  event.stopPropagation()
-  if (row.id) {
-    rowManager.toggleGroupExpansion(row.id)
-  }
-}
-
-const getDragClasses = (row: ChartRow) => {
-  if (!enableRowDragAndDrop.value) return {}
-
-  const isTarget = dragState.value.dropTarget.row === row
-  const isDragged = dragState.value.draggedRow === row
-
-  return {
-    "g-label-column-row-draggable": true,
-    "g-label-column-row-dragging": isDragged,
-    "g-label-column-row-drop-target": isTarget,
-    [`g-label-column-row-drop-${dragState.value.dropTarget.position}`]: isTarget
-  }
-}
-
-const getProcessedRows = computed(() => {
-  const processRows = (rows: ChartRow[], level = 0): LabelColumnRowProps[] => {
-    return rows.flatMap((row) => {
-      const processedRow: LabelColumnRowProps = {
-        ...row,
-        indentLevel: level
-      }
-
-      const isExpanded = row.id ? rowManager.isGroupExpanded(row.id) : false
-
-      if (row.children?.length && isExpanded) {
-        return [processedRow, ...processRows(row.children, level + 1)]
-      }
-
-      return [processedRow]
-    })
-  }
-
-  return processRows(rows.value)
-})
-
-const totalWidth = computed(() => {
-  let total = 0
-  columnWidths.forEach((width) => (total += width))
-  return total
-})
-
-const handleDragStart = (e: MouseEvent, column: string) => {
-  isDragging.value = true
-  dragStartX.value = e.clientX
-  draggedColumn.value = column
-  document.addEventListener("mousemove", handleDrag)
-  document.addEventListener("mouseup", handleDragEnd)
-}
-
-const handleDrag = (e: MouseEvent) => {
-  if (!isDragging.value || !draggedColumn.value) return
-
-  const deltaX = e.clientX - dragStartX.value
-  const currentWidth = columnWidths.get(draggedColumn.value) || labelColumnWidth.value
-  const newWidth = Math.max(50, currentWidth + deltaX)
-
-  columnWidths.set(draggedColumn.value, newWidth)
-  dragStartX.value = e.clientX
-}
-
-const handleDragEnd = () => {
-  isDragging.value = false
-  draggedColumn.value = null
-  document.removeEventListener("mousemove", handleDrag)
-  document.removeEventListener("mouseup", handleDragEnd)
-}
-
+/**
+ * Get style for a column
+ * @param column - Column to style
+ * @param isGroup - Whether this is a group
+ * @returns Style object
+ */
 const getColumnStyle = (column: string, isGroup: boolean): CSSProperties => {
   if (isGroup && column === "Label") {
     return {
@@ -250,25 +517,13 @@ const getColumnStyle = (column: string, isGroup: boolean): CSSProperties => {
   }
 }
 
-const calculateDuration = (startDate: string, endDate: string) => {
-  const start = toDayjs(startDate)
-  const end = toDayjs(endDate)
-
-  switch (precision.value) {
-    case "hour":
-      return `${end.diff(start, "hour")}h`
-    case "day":
-    case "date":
-      return `${end.diff(start, "day")}d`
-    case "week":
-      return `${end.diff(start, "week")}w`
-    case "month":
-      return `${end.diff(start, "month")}m`
-    default:
-      return `${end.diff(start, "day")}d`
-  }
-}
-
+/**
+ * Get value for a row column
+ * @param row - Row to get value from
+ * @param column - Column to get value for
+ * @param index - Row index
+ * @returns Value for column
+ */
 const getRowValue = (row: ChartRow, column: LabelColumnConfig, index: number) => {
   if (column.valueGetter) {
     return column.valueGetter(row)
@@ -324,147 +579,105 @@ const getRowValue = (row: ChartRow, column: LabelColumnConfig, index: number) =>
   }
 }
 
-const labelContainer = ref<HTMLElement | null>(null)
+/**
+ * Calculate duration between two dates
+ * @param startDate - Start date string
+ * @param endDate - End date string
+ * @returns Formatted duration string
+ */
+const calculateDuration = (startDate: string, endDate: string) => {
+  const start = toDayjs(startDate)
+  const end = toDayjs(endDate)
 
-const labelContainerStyle = computed<CSSProperties>(() => {
-  if (maxRows.value === 0) return {}
-  const minRows = Math.min(maxRows.value, getProcessedRows.value.length)
-
-  return {
-    height: `${minRows * rowHeight.value}px`,
-    "overflow-y": "auto"
+  switch (precision.value) {
+    case "hour":
+      return `${end.diff(start, "hour")}h`
+    case "day":
+    case "date":
+      return `${end.diff(start, "day")}d`
+    case "week":
+      return `${end.diff(start, "week")}w`
+    case "month":
+      return `${end.diff(start, "month")}m`
+    default:
+      return `${end.diff(start, "day")}d`
   }
-})
-
-const getSortIcon = (field: string) => {
-  if (field !== sortState.value.column || sortState.value.direction === "none") {
-    return faSort
-  }
-  return sortState.value.direction === "asc" ? faArrowDownAZ : faArrowDownZA
 }
 
-const isValidColumn = (field: string): field is LabelColumnField => {
-  return ["Id", "Label", "StartDate", "EndDate", "Duration", "Progress"].includes(field)
-}
+// -----------------------------
+// 11. EVENT HANDLERS
+// -----------------------------
 
-const columnSortableStates = computed(() =>
-  columns.value.reduce(
-    (acc, column) => {
-      acc[column.field] = !!(
-        column.sortable !== false &&
-        (sortable.value || (!sortable.value && column.sortable)) &&
-        (isValidColumn(column.field) || column.sortFn)
-      )
-      return acc
-    },
-    {} as Record<string, boolean>
-  )
-)
-
+/**
+ * Handle label scroll event
+ * @param e - Scroll event
+ */
 const handleLabelScroll = (e: Event) => {
   const target = e.target as HTMLElement
   emit("scroll", target.scrollTop)
 }
 
-const { touchState, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel } =
-  useColumnTouchResize()
-
-const handleColumnTouchStart = (e: TouchEvent, column: string) => {
-  if (!labelResizable) return
-
-  const currentWidth = columnWidths.get(column) || labelColumnWidth.value
-  handleTouchStart(e, column, currentWidth)
-}
-
-const handleColumnTouchMove = (e: TouchEvent) => {
-  if (!labelResizable) return
-
-  handleTouchMove(e, (column: string, newWidth: number) => {
-    columnWidths.set(column, newWidth)
-  })
-}
-
-const {
-  touchState: rowTouchState,
-  handleTouchStart: handleRowTouchStart,
-  handleTouchMove: handleRowTouchMove,
-  handleTouchEnd: handleRowTouchEnd,
-  resetTouchState: resetRowTouchState
-} = useRowTouchDrag()
-
-let touchStartTime = 0
-const LONG_PRESS_DURATION = 500
-
-const onRowTouchStart = (e: TouchEvent, row: ChartRow) => {
-  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
-
-  touchStartTime = Date.now()
-  const element = e.currentTarget as HTMLElement
-  handleRowTouchStart(e, row, element)
-}
-
-const onRowTouchMove = (e: TouchEvent, targetRow: ChartRow) => {
-  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
-
-  if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
-    resetRowTouchState()
-    return
-  }
-
-  const rowElement = e.currentTarget as HTMLElement
-  handleRowTouchMove(e, targetRow, rowElement)
-}
-
-const onRowTouchEnd = (e: TouchEvent) => {
-  if (!enableRowDragAndDrop.value || sortState.value.direction !== "none") return
-
-  if (Date.now() - touchStartTime < LONG_PRESS_DURATION) {
-    const target = e.target as HTMLElement
-    const button = target.closest(".group-toggle-button")
-    if (button) {
-      const rowElement = target.closest("[data-row-id]") as HTMLElement
-      if (rowElement) {
-        const rowId = rowElement.dataset.rowId
-        if (rowId) {
-          rowManager.toggleGroupExpansion(rowId)
-        }
-      }
-    }
-    resetRowTouchState()
-    return
-  }
-
-  const result = handleRowTouchEnd(e)
-  if (result && result.sourceRow && result.dropTarget.row) {
-    let newIndex = getProcessedRows.value.findIndex((r) => r === result.dropTarget.row)
-    if (result.dropTarget.position === "after") {
-      newIndex += 1
-    }
-
-    const sourceIndex = getProcessedRows.value.findIndex((r) => r === result.sourceRow)
-    if (sourceIndex < newIndex) {
-      newIndex -= 1
-    }
-
-    const payload = {
-      sourceRow: result.sourceRow,
-      targetRow: result.dropTarget.row,
-      newIndex: newIndex,
-      parentId: result.dropTarget.position === "child" ? result.dropTarget.row.id : undefined
-    }
-
-    const newRows = [...getProcessedRows.value]
-    newRows.splice(sourceIndex, 1)
-    newRows.splice(newIndex, 0, result.sourceRow)
-    rowManager.updateRows(newRows)
-
-    emit("row-drop", payload)
+/**
+ * Handle group toggle
+ * @param row - Row to toggle
+ * @param event - Mouse event
+ */
+const handleGroupToggle = (row: ChartRow, event: Event) => {
+  event.stopPropagation()
+  if (row.id) {
+    rowManager.toggleGroupExpansion(row.id)
   }
 }
+
+/**
+ * Handle column drag start
+ * @param e - Mouse event
+ * @param column - Column to drag
+ */
+const handleDragStart = (e: MouseEvent, column: string) => {
+  isDragging.value = true
+  dragStartX.value = e.clientX
+  draggedColumn.value = column
+  document.addEventListener("mousemove", handleDrag)
+  document.addEventListener("mouseup", handleDragEnd)
+}
+
+/**
+ * Handle column drag
+ * @param e - Mouse event
+ */
+const handleDrag = (e: MouseEvent) => {
+  if (!isDragging.value || !draggedColumn.value) return
+
+  const deltaX = e.clientX - dragStartX.value
+  const currentWidth = columnWidths.get(draggedColumn.value) || labelColumnWidth.value
+  const newWidth = Math.max(50, currentWidth + deltaX)
+
+  columnWidths.set(draggedColumn.value, newWidth)
+  dragStartX.value = e.clientX
+}
+
+/**
+ * Handle column drag end
+ */
+const handleDragEnd = () => {
+  isDragging.value = false
+  draggedColumn.value = null
+  document.removeEventListener("mousemove", handleDrag)
+  document.removeEventListener("mouseup", handleDragEnd)
+}
+
+// -----------------------------
+// 12. LIFECYCLE HOOKS
+// -----------------------------
 
 onMounted(() => {
   initializeColumnWidths()
 })
+
+// -----------------------------
+// 13. EXPOSE
+// -----------------------------
 
 defineExpose({
   setScroll: (value: number) => {
@@ -486,6 +699,7 @@ defineExpose({
       borderRight: `1px solid ${colors.gridAndBorder}`
     }"
   >
+    <!-- Column Header -->
     <div
       class="g-label-column-header"
       v-if="!hideTimeaxis"
@@ -529,6 +743,7 @@ defineExpose({
         </div>
       </template>
     </div>
+    <!-- Rows Container -->
     <div
       class="g-label-column-rows"
       :style="labelContainerStyle"

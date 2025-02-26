@@ -1,8 +1,22 @@
 <script setup lang="ts">
-import provideConfig from "../provider/provideConfig"
-import type { BarPosition, ConnectionType, MarkerConnection } from "../types"
+// -----------------------------
+// 1. EXTERNAL IMPORTS
+// -----------------------------
 import { computed, ref } from "vue"
 
+// -----------------------------
+// 2. INTERNAL IMPORTS
+// -----------------------------
+
+// Provider
+import provideConfig from "../provider/provideConfig"
+
+// Types
+import type { BarPosition, ConnectionType, MarkerConnection } from "../types"
+
+// -----------------------------
+// 3. PROPS AND CONFIGURATION
+// -----------------------------
 interface Props {
   sourceBar: BarPosition
   targetBar: BarPosition
@@ -26,21 +40,52 @@ const props = withDefaults(defineProps<Props>(), {
   isSelected: false
 })
 
+// -----------------------------
+// 4. INTERNAL STATE
+// -----------------------------
 const { enableConnectionDeletion } = provideConfig()
-
 const pathRef = ref<SVGPathElement | null>(null)
 
+// -----------------------------
+// 5. COMPUTED PROPERTIES
+// -----------------------------
+
+/**
+ * Computed class for animation based on connection properties
+ */
 const animationClass = computed(() => {
   if (!props.animated) return ""
   return `connector-animated-${props.pattern}-${props.animationSpeed}`
 })
 
+/**
+ * Unique marker ID for this connection
+ */
 const markerId = computed(() => `marker-start-${props.sourceBar.id}-${props.targetBar.id}`)
+
+/**
+ * Whether to show end marker (arrow)
+ */
 const hasMarkerEnd = computed(() => props.marker === "bidirectional" || props.marker === "forward")
+
+/**
+ * Whether to show start marker (arrow)
+ */
 const hasMarkerStart = computed(() => props.marker === "bidirectional")
+
+/**
+ * Adjustment value for end marker positioning
+ */
 const markerDeltaEnd = computed(() => (hasMarkerEnd.value ? 4 : 0))
+
+/**
+ * Adjustment value for start marker positioning
+ */
 const markerDeltaStart = computed(() => (hasMarkerStart.value ? 4 : 0))
 
+/**
+ * Computed SVG path for the connection based on connection type
+ */
 const pathData = computed(() => {
   const sourceX = props.sourceBar.x + props.sourceBar.width
   const sourceY = props.sourceBar.y + props.sourceBar.height / 2
@@ -49,12 +94,15 @@ const pathData = computed(() => {
 
   const OFFSET = 20
   const isGoingBack = targetX <= sourceX
+
   switch (props.type) {
     case "straight":
+      // Direct line from source to target
       return `M ${sourceX},${sourceY} L ${targetX - markerDeltaEnd.value},${targetY}`
 
     case "squared":
       if (isGoingBack) {
+        // Special case for backwards connections with square corners
         return `M ${sourceX + markerDeltaStart.value},${sourceY}
                 h ${OFFSET}
                 v ${(targetY - sourceY) / 2}
@@ -63,6 +111,7 @@ const pathData = computed(() => {
                 h ${OFFSET - markerDeltaEnd.value * 2}`
       }
 
+      // Forward connection with square corners
       return `M ${sourceX + markerDeltaStart.value},${sourceY}
               h ${OFFSET}
               v ${targetY - sourceY}
@@ -70,6 +119,7 @@ const pathData = computed(() => {
 
     case "bezier":
     default:
+      // Curved connection using Bezier curve
       const controlPointX = (sourceX + targetX) / 2
       return `M ${sourceX + markerDeltaStart.value},${sourceY}
               C ${controlPointX},${sourceY}
@@ -78,6 +128,9 @@ const pathData = computed(() => {
   }
 })
 
+/**
+ * Dash array pattern for non-animated connections
+ */
 const nonAnimatedDashArray = computed(() => {
   if (props.animated) return undefined
 
@@ -93,6 +146,9 @@ const nonAnimatedDashArray = computed(() => {
   }
 })
 
+/**
+ * Compute stroke width, making it larger when selected
+ */
 const getStrokeWidth = computed(() => {
   if (props.isSelected && enableConnectionDeletion.value) {
     return props.strokeWidth * 1.5
@@ -102,6 +158,7 @@ const getStrokeWidth = computed(() => {
 </script>
 
 <template>
+  <!-- Connection SVG Container -->
   <svg
     class="gantt-connector"
     :style="{
@@ -114,7 +171,9 @@ const getStrokeWidth = computed(() => {
       overflow: 'visible'
     }"
   >
+    <!-- Definitions for markers and gradients -->
     <defs>
+      <!-- Arrow marker definition for connection endpoints -->
       <marker
         :id="markerId"
         viewBox="0 0 10 10"
@@ -126,6 +185,8 @@ const getStrokeWidth = computed(() => {
       >
         <path d="M 0 0 L 10 5 L 0 10 z" :fill="color" />
       </marker>
+
+      <!-- Gradient definition for animated solid connections -->
       <linearGradient
         v-if="animated && pattern === 'solid'"
         :id="`gradient-${sourceBar.id}-${targetBar.id}`"
@@ -156,6 +217,7 @@ const getStrokeWidth = computed(() => {
       </linearGradient>
     </defs>
 
+    <!-- Connection path -->
     <path
       ref="pathRef"
       :d="pathData"
@@ -177,6 +239,8 @@ const getStrokeWidth = computed(() => {
         pointerEvents: enableConnectionDeletion ? 'all' : 'none'
       }"
     />
+
+    <!-- Selection indicators shown when connection is selected -->
     <template v-if="isSelected && enableConnectionDeletion">
       <circle
         :cx="sourceBar.x + sourceBar.width"
@@ -210,7 +274,7 @@ const getStrokeWidth = computed(() => {
   filter: drop-shadow(0 0 5px rgba(33, 150, 243, 0.6));
 }
 
-/* Animazione per pattern dash */
+/* Animation for dash pattern */
 .connector-animated-dash-slow {
   animation: dashFlow 4s linear infinite;
 }
@@ -221,7 +285,7 @@ const getStrokeWidth = computed(() => {
   animation: dashFlow 1s linear infinite;
 }
 
-/* Animazione per pattern dot */
+/* Animation for dot pattern */
 .connector-animated-dot-slow {
   animation: dotFlow 4s linear infinite;
 }
@@ -232,7 +296,7 @@ const getStrokeWidth = computed(() => {
   animation: dotFlow 1s linear infinite;
 }
 
-/* Animazione per pattern dashdot */
+/* Animation for dashdot pattern */
 .connector-animated-dashdot-slow {
   animation: dashdotFlow 4s linear infinite;
 }

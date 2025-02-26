@@ -1,20 +1,32 @@
 <script setup lang="ts">
+// -----------------------------
+// 1. EXTERNAL IMPORTS
+// -----------------------------
 import { ref, type Ref, toRefs, computed, provide, inject, type StyleValue } from "vue"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import { faChevronRight, faChevronDown } from "@fortawesome/free-solid-svg-icons"
+
+// -----------------------------
+// 2. INTERNAL IMPORTS
+// -----------------------------
+
+// Composables
 import useTimePositionMapping from "../composables/useTimePositionMapping"
+
+// Provider
 import provideConfig from "../provider/provideConfig"
-import type { GanttBarConnection, GanttBarObject } from "../types"
-import GGanttBar from "./GGanttBar.vue"
 import { BAR_CONTAINER_KEY } from "../provider/symbols"
+
+// Components
+import GGanttBar from "./GGanttBar.vue"
+
+// Types
+import type { GanttBarConnection, GanttBarObject } from "../types"
 import type { UseRowsReturn } from "../composables/useRows"
 
-interface SlotData {
-  bar?: GanttBarObject
-  label?: string
-  [key: string]: GanttBarObject | string | undefined
-}
-
+// -----------------------------
+// 3. PROPS AND CONFIGURATION
+// -----------------------------
 const props = defineProps<{
   label: string
   bars: GanttBarObject[]
@@ -29,22 +41,58 @@ const props = defineProps<{
   connections?: GanttBarConnection[]
 }>()
 
+// Events that can be emitted by this component
 const emit = defineEmits<{
   (e: "drop", value: { e: MouseEvent; datetime: string | Date }): void
 }>()
 
+/**
+ * Interface for slot data structure to ensure type safety
+ */
+interface SlotData {
+  bar?: GanttBarObject
+  label?: string
+  [key: string]: GanttBarObject | string | undefined
+}
+
+// -----------------------------
+// 4. INTERNAL STATE
+// -----------------------------
+
+// Row Management
 const rowManager = inject<UseRowsReturn>("useRows")!
+
+// Configuration
 const { rowHeight, colors, labelColumnTitle, rowClass } = provideConfig()
 const { highlightOnHover } = toRefs(props)
+
+// Bar Container Reference
+const barContainer: Ref<HTMLElement | null> = ref(null)
+
+// UI State
 const isHovering = ref(false)
 
+// -----------------------------
+// 5. COMPUTED PROPERTIES
+// -----------------------------
+
+/**
+ * Determines if this row is a group row based on the presence of children
+ */
 const isGroup = computed(() => Boolean(props.children?.length))
 
+/**
+ * Determines if a group row is expanded
+ * Returns false for non-group rows or if row ID is not defined
+ */
 const isExpanded = computed(() => {
   if (!isGroup.value || !props.id) return false
   return rowManager.isGroupExpanded(props.id)
 })
 
+/**
+ * Computed style for the row based on row type, height, and hover state
+ */
 const rowStyle = computed(() => {
   const baseStyle: StyleValue = {
     height: `${rowHeight.value}px`,
@@ -64,6 +112,10 @@ const rowStyle = computed(() => {
   return baseStyle
 })
 
+/**
+ * Computed CSS classes for the row
+ * Applies custom row classes from configuration if available
+ */
 const rowClasses = computed(() => {
   const classes = ["g-gantt-row"]
   if (rowClass.value && props) {
@@ -75,11 +127,40 @@ const rowClasses = computed(() => {
   return classes
 })
 
+/**
+ * Computes visible child rows based on expansion state
+ * Returns empty array if row is not a group or is not expanded
+ */
+const visibleChildRows = computed(() => {
+  if (!isGroup.value || !isExpanded.value) return []
+  return props.children || []
+})
+
+// -----------------------------
+// 6. MAPPING AND UTILITY FUNCTIONS
+// -----------------------------
+
+// Time position mapping
 const { mapPositionToTime } = useTimePositionMapping()
-const barContainer: Ref<HTMLElement | null> = ref(null)
 
-provide(BAR_CONTAINER_KEY, barContainer)
+/**
+ * Checks if a string is blank (empty or only whitespace)
+ * @param str - String to check
+ * @returns Boolean indicating if string is blank
+ */
+const isBlank = (str: string) => {
+  return !str || /^\s*$/.test(str)
+}
 
+// -----------------------------
+// 7. EVENT HANDLERS
+// -----------------------------
+
+/**
+ * Handles drop events on the row
+ * Maps the drop position to a timestamp and emits the drop event
+ * @param e - Mouse event from drop
+ */
 const onDrop = (e: MouseEvent) => {
   if (isGroup.value) return
 
@@ -93,10 +174,10 @@ const onDrop = (e: MouseEvent) => {
   emit("drop", { e, datetime })
 }
 
-const isBlank = (str: string) => {
-  return !str || /^\s*$/.test(str)
-}
-
+/**
+ * Handles group expansion toggling
+ * @param event - Mouse event
+ */
 const handleGroupToggle = (event: Event) => {
   event.stopPropagation()
   if (props.id) {
@@ -104,13 +185,16 @@ const handleGroupToggle = (event: Event) => {
   }
 }
 
-const visibleChildRows = computed(() => {
-  if (!isGroup.value || !isExpanded.value) return []
-  return props.children || []
-})
+// -----------------------------
+// 8. PROVIDE/INJECT SETUP
+// -----------------------------
+
+// Provide bar container reference to child components
+provide(BAR_CONTAINER_KEY, barContainer)
 </script>
 
 <template>
+  <!-- Main row component -->
   <div
     :class="rowClasses"
     :style="rowStyle"
@@ -121,6 +205,7 @@ const visibleChildRows = computed(() => {
     @mouseleave="isHovering = false"
     role="list"
   >
+    <!-- Row label (shown only when labelColumnTitle is not set) -->
     <div
       v-if="!isBlank(label) && !labelColumnTitle"
       class="g-gantt-row-label"
@@ -128,26 +213,32 @@ const visibleChildRows = computed(() => {
       :style="{ background: colors.primary, color: colors.text }"
       @click="isGroup ? handleGroupToggle($event) : undefined"
     >
+      <!-- Expand/collapse button for groups -->
       <button v-if="isGroup" class="group-toggle-button" @click="handleGroupToggle($event)">
         <FontAwesomeIcon :icon="isExpanded ? faChevronDown : faChevronRight" class="group-icon" />
       </button>
+      <!-- Row label content -->
       <slot name="label">
         {{ label }}
       </slot>
     </div>
+    <!-- Bar container -->
     <div ref="barContainer" class="g-gantt-row-bars-container" v-bind="$attrs">
       <transition-group name="bar-transition" tag="div">
+        <!-- Render bars for this row -->
         <g-gantt-bar
           v-for="bar in bars"
           :key="bar.ganttBarConfig.id"
           :bar="bar"
           :class="{ 'g-gantt-group-bar': isGroup }"
         >
+          <!-- Pass bar label slot to children -->
           <slot name="bar-label" :bar="bar" v-if="!isGroup" />
         </g-gantt-bar>
       </transition-group>
     </div>
   </div>
+  <!-- Child rows (rendered when group is expanded) -->
   <div v-if="isGroup && isExpanded" class="g-gantt-row-children">
     <g-gantt-row
       v-for="child in visibleChildRows"
@@ -155,6 +246,7 @@ const visibleChildRows = computed(() => {
       v-bind="child"
       :highlightOnHover="highlightOnHover"
     >
+      <!-- Forward all slots to child rows -->
       <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps: SlotData">
         <slot :name="name" v-bind="slotProps" />
       </template>

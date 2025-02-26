@@ -26,7 +26,7 @@ interface DragResult {
 /**
  * Complete state of the touch drag operation
  */
-interface TouchDragState {
+export interface TouchDragState {
   isDragging: boolean
   startY: number
   currentY: number

@@ -1,20 +1,47 @@
 <script setup lang="ts">
+// -----------------------------
+// 1. EXTERNAL IMPORTS
+// -----------------------------
 import { toRefs, ref, watch } from "vue"
+
+// -----------------------------
+// 2. INTERNAL IMPORTS
+// -----------------------------
+// Provider
 import provideConfig from "../provider/provideConfig"
+
+// Types
 import type { TimeaxisUnit } from "../types"
 
+// -----------------------------
+// 3. PROPS AND CONFIGURATION
+// -----------------------------
 const props = defineProps<{
   unit: TimeaxisUnit | undefined
   modelValue: boolean
   targetElement: HTMLElement | null
 }>()
 
+// Destructure props for reactive usage
 const { unit, targetElement } = toRefs(props)
+
+// Get font configuration from global provider
 const { font } = provideConfig()
 
+// -----------------------------
+// 4. INTERNAL STATE
+// -----------------------------
+// Track tooltip position
 const tooltipTop = ref("0px")
 const tooltipLeft = ref("0px")
 
+// -----------------------------
+// 5. WATCHERS
+// -----------------------------
+/**
+ * Update tooltip position when unit or targetElement changes
+ * Positions tooltip above the target element
+ */
 watch(
   [() => props.unit, () => props.targetElement],
   async () => {

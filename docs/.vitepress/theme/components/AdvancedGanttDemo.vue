@@ -41,6 +41,7 @@ const labelColumnWidth = ref(100)
 const commands = ref(true)
 const width = ref('100%')
 const showLabel = ref(true)
+const barLabelEditable = ref(true)
 const showProgress = ref(true)
 
 
@@ -580,8 +581,14 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
-                Show Label:
+                Show Bar Label:
                 <input type="checkbox" v-model="showLabel">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Edit Bar Label:
+                <input type="checkbox" v-model="barLabelEditable">
               </label>
             </div>
             <div class="setting-item">
@@ -749,6 +756,7 @@ const formattedEventLog = computed(() => {
         :default-progress-resizable="defaultProgressResizable"
         :show-progress="showProgress"
         :showLabel="showLabel"
+        :barLabelEditable="barLabelEditable"
         :milestones="milestones"
         :enableConnectionCreation="enableConnectionCreation"
         :enableConnectionDeletion="enableConnectionDeletion"
@@ -763,6 +771,7 @@ const formattedEventLog = computed(() => {
         @connection-start="handleEvent($event, 'Connection Start')"
         @connection-complete="handleEvent($event, 'Connection Complete')"
         @connection-delete="handleEvent($event, 'Connection Deleted')"
+        @label-edit="handleEvent($event, 'Bar Label Edited')"
       >
         <g-gantt-row
           v-for="row in sampleData"
