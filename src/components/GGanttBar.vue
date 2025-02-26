@@ -23,7 +23,7 @@ import provideEmitBarEvent from "../provider/provideEmitBarEvent"
 import provideConfig from "../provider/provideConfig"
 import { BAR_CONTAINER_KEY, GANTT_ID_KEY } from "../provider/symbols"
 import useBarSelector from "../composables/useBarSelector"
-import type { ConnectionCreationService } from "../composables/useConnectionCreation"
+import type { UseConnectionCreationReturn } from "../composables/useConnectionCreation"
 
 // -----------------------------
 // 3. PROPS AND CONFIGURATION
@@ -36,7 +36,7 @@ const props = defineProps<{
 // 4. INTERNAL STATE
 // -----------------------------
 const ganttId = inject(GANTT_ID_KEY)!
-const connectionCreation = inject<ConnectionCreationService>("connectionCreation")
+const connectionCreation = inject<UseConnectionCreationReturn>("connectionCreation")
 
 const emitBarEvent = provideEmitBarEvent()
 const config = provideConfig()

@@ -1,5 +1,3 @@
-// composables/useConnectionCreation.ts
-
 import { ref, computed, type ComputedRef, type Ref } from "vue"
 import type {
   GGanttChartConfig,
@@ -36,8 +34,17 @@ export interface UseConnectionCreationReturn {
   canBeConnectionTarget: ComputedRef<(bar: GanttBarObject) => boolean>
 }
 
-export interface ConnectionCreationService extends UseConnectionCreationReturn {}
-
+/**
+ * A composable that manages the creation and manipulation of connections between bars in the Gantt chart
+ * Allows users to draw connections between bars through drag-and-drop interactions
+ * Handles validation, visual feedback, and actual connection creation
+ *
+ * @param config - Gantt chart configuration
+ * @param rowManager - Row management utilities
+ * @param emit - Function to emit events
+ * @param reinitializeConnections - Function to reinitialize connections after creation/modification
+ * @returns Object containing connection state and management methods
+ */
 export function useConnectionCreation(
   config: GGanttChartConfig,
   rowManager: UseRowsReturn,
@@ -49,6 +56,10 @@ export function useConnectionCreation(
   },
   reinitializeConnections: () => void
 ): UseConnectionCreationReturn {
+  /**
+   * Connection creation state
+   * Contains information about source bar, connection point, and mouse position
+   */
   const connectionState = ref<ConnectionCreationState>({
     isCreating: false,
     sourceBar: null,
@@ -57,12 +68,23 @@ export function useConnectionCreation(
     mouseY: 0
   })
 
+  /**
+   * Connection point hover state
+   * Tracks which connection points the user is hovering over
+   */
   const hoverState = ref<ConnectionPointHoverState>({
     isVisible: false,
     barId: null,
     point: null
   })
 
+  /**
+   * Validates a potential connection between two bars
+   * Checks that the connection is logically valid and not a duplicate
+   * @param sourceBar - Source bar of the connection
+   * @param targetBar - Target bar of the connection
+   * @returns Object containing connection validity information
+   */
   const validateConnection = (
     sourceBar: GanttBarObject,
     targetBar: GanttBarObject
@@ -81,6 +103,13 @@ export function useConnectionCreation(
     return { isValid: true }
   }
 
+  /**
+   * Starts the creation of a connection
+   * Sets up initial state and emits connection start event
+   * @param bar - Source bar for the connection
+   * @param point - Connection point (start or end of the bar)
+   * @param e - Mouse event that initiated creation
+   */
   const startConnectionCreation = (bar: GanttBarObject, point: ConnectionPoint, e: MouseEvent) => {
     connectionState.value = {
       isCreating: true,
@@ -97,6 +126,11 @@ export function useConnectionCreation(
     })
   }
 
+  /**
+   * Updates connection position during dragging
+   * Tracks mouse position and emits drag events
+   * @param e - Mouse move event during drag
+   */
   const updateConnectionDrag = (e: MouseEvent) => {
     if (!connectionState.value.isCreating) return
 
@@ -112,6 +146,13 @@ export function useConnectionCreation(
     })
   }
 
+  /**
+   * Completes the creation of a connection
+   * Validates and creates the connection between specified bars
+   * @param targetBar - Target bar for the connection
+   * @param targetPoint - Connection point on the target bar
+   * @param e - Mouse event that completed the connection
+   */
   const completeConnection = (
     targetBar: GanttBarObject,
     targetPoint: ConnectionPoint,
@@ -153,6 +194,13 @@ export function useConnectionCreation(
     resetConnectionState()
   }
 
+  /**
+   * Handles connection point hover events
+   * Updates hover state when user enters or leaves a connection point
+   * @param barId - ID of the bar being hovered
+   * @param point - Connection point (start or end)
+   * @param isEnter - Whether mouse is entering or leaving the point
+   */
   const handleConnectionPointHover = (
     barId: string,
     point: ConnectionPoint | null,
@@ -165,6 +213,11 @@ export function useConnectionCreation(
     }
   }
 
+  /**
+   * Cancels the creation of a connection
+   * Resets state and emits cancellation event
+   * @param e - Mouse event that caused cancellation
+   */
   const cancelConnectionCreation = (e: MouseEvent) => {
     if (connectionState.value.sourceBar && connectionState.value.sourcePoint) {
       emit("connection-cancel", {
@@ -176,6 +229,10 @@ export function useConnectionCreation(
     resetConnectionState()
   }
 
+  /**
+   * Resets connection creation state
+   * Used after completion or cancellation of a connection
+   */
   const resetConnectionState = () => {
     connectionState.value = {
       isCreating: false,
@@ -186,6 +243,10 @@ export function useConnectionCreation(
     }
   }
 
+  /**
+   * Determines if a bar can be a connection target
+   * Checks if connection from current bar to specified bar is valid
+   */
   const canBeConnectionTarget = computed(() => (bar: GanttBarObject) => {
     if (!connectionState.value.sourceBar) return false
     return validateConnection(connectionState.value.sourceBar, bar).isValid
