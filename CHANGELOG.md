@@ -4,11 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [v3.2.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.2.0) (2025-02-26)
+## [v3.3.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.3.0) (2025-02-26)
 
-[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.1.2...v3.2.0)
-
-
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.1.2...v3.3.0)
 
 **✨ New Features:**
 
