@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v3.2.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.2.0) (2025-02-26)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.1.2...v3.2.0)
+
+
+
+**✨ New Features:**
+
+- Bar label editable
+
+**🐛 Fix:**
+
+- conflict when using uuid with, the ID is sanitized without harming the data
+
 ## [v3.1.2](https://github.com/Xeyos88/HyVueGantt/tree/v3.1.2) (2025-02-24)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.1.1...v3.1.2)
