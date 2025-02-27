@@ -16,7 +16,7 @@ import useDayjsHelper from "../composables/useDayjsHelper"
 
 // Types and Constants
 import type { GanttBarObject } from "../types"
-import { CHART_AREA_KEY, CHART_AREA_WRAPPER_KEY } from "../provider/symbols"
+import { CHART_AREA_KEY, CHART_WRAPPER_KEY } from "../provider/symbols"
 
 // Providers
 import provideConfig from "../provider/provideConfig"
@@ -27,7 +27,7 @@ import provideConfig from "../provider/provideConfig"
 
 // Component Refs
 const chartAreaEl = inject(CHART_AREA_KEY)
-const chartWrapperEl = inject(CHART_AREA_WRAPPER_KEY)
+const chartWrapperEl = inject(CHART_WRAPPER_KEY)
 const hitBars = ref<GanttBarObject[]>([])
 
 // -----------------------------
@@ -55,10 +55,11 @@ const datetime = computed(() => mapPositionToTime(leftOffset.value))
 // -----------------------------
 
 watchThrottled(leftOffset, () => {
-  // Ideally this can be a reactive computed value. Need to measure when having big dataset
+  // Get all the bars. Ideally this can be a reactive computed value. Need to measure when having big dataset
   const bars = rowManager.getFlattenedRows().flatMap(row => row.bars)
   const hitBarsElement = []
   const cursorTime = toDayjs(datetime.value)
+  // For each bar, we check if current time pointed by the cursor is in the bar time range
   for (let i = 0; i < bars.length; i++) {
     const element = bars[i]!;
     const begin = toDayjs(element[barStart.value])
