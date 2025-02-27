@@ -47,6 +47,7 @@ import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
 import GGanttMilestone from "./GGanttMilestone.vue"
 import GGanttRow from "./GGanttRow.vue"
+import GGanttPointerMarker from './GGanttPointerMarker.vue'
 
 // Composables
 import { useConnections } from "../composables/useConnections"
@@ -63,7 +64,7 @@ import useBarSelector from "../composables/useBarSelector"
 // Types and Constants
 import { colorSchemes, type ColorSchemeKey } from "../color-schemes"
 import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
-import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY, GANTT_ID_KEY } from "../provider/symbols"
+import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY, GANTT_ID_KEY, CHART_AREA_KEY, CHART_WRAPPER_KEY } from "../provider/symbols"
 import type {
   GanttBarObject,
   GGanttChartProps,
@@ -77,6 +78,7 @@ import type {
 // Props
 const props = withDefaults(defineProps<GGanttChartProps>(), {
   currentTimeLabel: "",
+  pointerMarkerLabel: "",
   dateFormat: DEFAULT_DATE_FORMAT,
   precision: "day",
   width: "100%",
@@ -764,6 +766,8 @@ provide(CONFIG_KEY, {
 provide(EMIT_BAR_EVENT_KEY, emitBarEvent)
 provide(BOOLEAN_KEY, { ...props })
 provide(GANTT_ID_KEY, id.value)
+provide(CHART_AREA_KEY, ganttChart)
+provide(CHART_WRAPPER_KEY, ganttWrapper)
 </script>
 
 <template>
@@ -854,6 +858,16 @@ provide(GANTT_ID_KEY, id.value)
                 <slot name="current-time-label" />
               </template>
             </g-gantt-current-time>
+
+            <g-gantt-pointer-marker v-if="pointerMarker">
+              <template #pointer-marker-label="{ datetime }">
+                <slot name="pointer-marker-label" v-bind="{ datetime }" />
+              </template>
+
+              <template #pointer-marker-tooltips="{ hitBars }">
+                <slot name="pointer-marker-tooltips" v-bind="{ hitBars }" />
+              </template>
+            </g-gantt-pointer-marker>
 
             <g-gantt-milestone
               v-for="milestone in milestones"
