@@ -14,12 +14,15 @@ import provideConfig from "../provider/provideConfig"
 // Utilities
 import { capitalizeWords } from "../composables/useTimeaxisUnits"
 import useDayjsHelper from "../composables/useDayjsHelper"
+import { ganttWidth } from "../composables/useSimpleStore"
 
 // Components
 import GGanttHolidayTooltip from "./GGanttHolidayTooltip.vue"
+import GGanttEventTooltip from "./GGanttEventTooltip.vue"
 
 // Types
-import type { TimeaxisData, TimeaxisUnit, TimeUnit } from "@/types"
+import type { TimeaxisData, TimeaxisUnit, TimeUnit, TimeaxisEvent } from "@/types"
+import dayjs from "dayjs"
 
 // -----------------------------
 // 3. PROPS AND CONFIGURATION
@@ -50,10 +53,23 @@ const hoveredUnit = ref<TimeaxisUnit | undefined>()
 const showTooltip = ref(false)
 const hoveredElement = ref<HTMLElement | null>(null)
 
+// Event tooltip state
+const hoveredEvent = ref<TimeaxisEvent | undefined>()
+const showEventTooltip = ref(false)
+const hoveredEventElement = ref<HTMLElement | null>(null)
+
 // -----------------------------
 // 5. CONFIGURATION FROM PROVIDER
 // -----------------------------
-const { precision, colors, holidayHighlight, dayOptionLabel, enableMinutes } = provideConfig()
+const {
+  precision,
+  colors,
+  holidayHighlight,
+  dayOptionLabel,
+  enableMinutes,
+  showEventsAxis,
+  eventsAxisHeight
+} = provideConfig()
 
 // -----------------------------
 // 6. HELPER FUNCTIONS
@@ -131,6 +147,28 @@ const handleUnitMouseLeave = () => {
   hoveredElement.value = null
 }
 
+/**
+ * Handles mouse enter events on event units
+ * Shows event tooltip when hovering over events
+ * @param event - Timeaxis event being hovered
+ * @param mouseEvent - Mouse event
+ */
+const handleEventMouseEnter = (event: TimeaxisEvent, mouseEvent: MouseEvent) => {
+  hoveredEvent.value = event
+  hoveredEventElement.value = mouseEvent.currentTarget as HTMLElement
+  showEventTooltip.value = true
+}
+
+/**
+ * Handles mouse leave events on event units
+ * Hides event tooltip
+ */
+const handleEventMouseLeave = () => {
+  showEventTooltip.value = false
+  hoveredEvent.value = undefined
+  hoveredEventElement.value = null
+}
+
 // -----------------------------
 // 8. DISPLAY FORMATTING
 // -----------------------------
@@ -170,6 +208,52 @@ const formatTimeUnitLabel = (unit: TimeaxisUnit, unitType: "upper" | "lower") =>
   return result
 }
 
+/**
+ * Computed property for the height of the events axis
+ * Returns the configured height or a default value
+ */
+const eventsAxisHeightValue = computed(() => {
+  return eventsAxisHeight.value || 25
+})
+
+/**
+ * Computed property for showing the events axis
+ * Returns true if events axis should be shown and there are events
+ */
+const shouldShowEventsAxis = computed(() => {
+  return showEventsAxis.value && timeaxisUnits.value.result.events.length > 0
+})
+
+const eventPositions = computed(() => {
+  if (!timeaxisUnits.value.result.events.length) return []
+
+  const { chartStartDayjs, chartEndDayjs } = useDayjsHelper()
+  const totalMinutes = chartEndDayjs.value.diff(chartStartDayjs.value, "minutes")
+
+  return timeaxisUnits.value.result.events.map((event) => {
+    const eventStartDayjs = dayjs(event.startDate)
+    const eventEndDayjs = dayjs(event.endDate)
+
+    const startTime = eventStartDayjs.isBefore(chartStartDayjs.value)
+      ? chartStartDayjs.value
+      : eventStartDayjs
+
+    const endTime = eventEndDayjs.isAfter(chartEndDayjs.value) ? chartEndDayjs.value : eventEndDayjs
+
+    const startMinutes = startTime.diff(chartStartDayjs.value, "minutes")
+    const endMinutes = endTime.diff(chartStartDayjs.value, "minutes")
+
+    const xPosition = (startMinutes / totalMinutes) * ganttWidth.value
+    const width = Math.max(((endMinutes - startMinutes) / totalMinutes) * ganttWidth.value, 2)
+
+    return {
+      ...event,
+      calculatedWidth: `${width}px`,
+      calculatedX: xPosition
+    }
+  })
+})
+
 // Expose timeaxisElement reference to parent component
 defineExpose({ timeaxisElement })
 </script>
@@ -181,7 +265,10 @@ defineExpose({ timeaxisElement })
     @mousedown="handleMouseDown"
     role="tablist"
     aria-label="Time Axis"
-    :style="{ borderBottom: `1px solid ${colors.gridAndBorder}` }"
+    :style="{
+      borderBottom: `1px solid ${colors.gridAndBorder}`,
+      height: shouldShowEventsAxis ? `${80 + eventsAxisHeightValue}px` : '80px'
+    }"
   >
     <!-- Upper time units (months, years, etc.) -->
     <div class="g-timeunits-container">
@@ -261,11 +348,46 @@ defineExpose({ timeaxisElement })
         </div>
       </div>
     </div>
+    <!-- Events axis (third level) -->
+    <div
+      v-if="shouldShowEventsAxis"
+      class="g-events-container"
+      :style="{
+        height: `${eventsAxisHeightValue}px`,
+        background: colors.background,
+        borderTop: `1px solid ${colors.gridAndBorder}`
+      }"
+    >
+      <div
+        v-for="event in eventPositions"
+        :key="event.id"
+        class="g-timeaxis-event"
+        :style="{
+          left: `${event.xPosition}px`,
+          width: event.width,
+          backgroundColor: event.backgroundColor || colors.primary,
+          color: event.color || colors.text,
+          borderColor: event.color || colors.primary
+        }"
+        @mouseenter="(e) => handleEventMouseEnter(event, e)"
+        @mouseleave="handleEventMouseLeave"
+      >
+        <slot name="timeaxis-event" :event="event">
+          {{ event.label }}
+        </slot>
+      </div>
+    </div>
     <!-- Holiday tooltip -->
     <g-gantt-holiday-tooltip
       :model-value="showTooltip"
       :unit="hoveredUnit"
       :target-element="hoveredElement"
+    />
+    <!-- Event tooltip -->
+    <g-gantt-event-tooltip
+      :model-value="showEventTooltip"
+      :event="hoveredEvent"
+      :target-element="hoveredEventElement"
     />
   </div>
 </template>
@@ -330,5 +452,38 @@ defineExpose({ timeaxisElement })
   display: flex;
   width: 100%;
   line-height: 20px;
+}
+
+.g-events-container {
+  display: flex;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.g-timeaxis-event {
+  position: absolute;
+  height: calc(100% - 6px);
+  top: 3px;
+  border-radius: 3px;
+  font-size: 65%;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid;
+  box-sizing: border-box;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.g-timeaxis-event:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 5;
 }
 </style>

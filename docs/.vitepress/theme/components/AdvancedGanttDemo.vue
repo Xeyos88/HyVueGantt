@@ -345,6 +345,18 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
   }
 ])
 
+const events = ref([
+  {
+    id: 'visibility-1',
+    label: 'Prima finestra di visibilità',
+    startDate: `${year}-${month}-02 15:00`,
+    endDate: `${year}-${month}-02 17:00`,
+    backgroundColor: '#4a7bec',
+    color: 'white',
+    description: 'Finestra di visibilità ottimale per il satellite Alpha'
+  }
+]);
+
 const milestones = ref([
   {
     id: 'milestone1',
@@ -776,6 +788,9 @@ const formattedEventLog = computed(() => {
         :enableConnectionCreation="enableConnectionCreation"
         :enableConnectionDeletion="enableConnectionDeletion"
         :utc="utc"
+        :timeaxis-events="events"
+        :show-events-axis="true"
+        :events-axis-height="30"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"

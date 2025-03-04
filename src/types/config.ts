@@ -9,7 +9,8 @@ import type {
   LabelColumnConfig,
   SortState,
   TimeUnit,
-  MarkerConnection
+  MarkerConnection,
+  TimeaxisEvent
 } from "./chart"
 import type { ColorScheme } from "./style"
 
@@ -51,6 +52,9 @@ export interface GGanttChartProps {
   sortable?: boolean
   labelResizable?: boolean
   milestones?: GanttMilestone[]
+  timeaxisEvents?: TimeaxisEvent[]
+  showEventsAxis?: boolean
+  eventsAxisHeight?: number
   holidayHighlight?: string
   rowClass?: (row?: ChartRow) => string
   rowLabelClass?: (row?: ChartRow) => string
