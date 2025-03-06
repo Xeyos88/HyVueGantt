@@ -92,7 +92,9 @@ const {
   labelResizable,
   enableRowDragAndDrop,
   hideTimeaxis,
-  sortable
+  sortable,
+  showEventsAxis,
+  eventsAxisHeight
 } = provideConfig()
 
 /**
@@ -235,6 +237,11 @@ const columnSortableStates = computed(() =>
     {} as Record<string, boolean>
   )
 )
+
+const headerHeight = computed(() => {
+  if (hideTimeaxis.value) return 0
+  return showEventsAxis.value ? 80 + (eventsAxisHeight.value || 25) : 80
+})
 
 // -----------------------------
 // 9. TOUCH HANDLING
@@ -703,7 +710,12 @@ defineExpose({
     <div
       class="g-label-column-header"
       v-if="!hideTimeaxis"
-      :style="{ background: colors.primary, borderBottom: `1px solid ${colors.gridAndBorder}` }"
+      :style="{
+        background: colors.primary,
+        borderBottom: `1px solid ${colors.gridAndBorder}`,
+        height: `${headerHeight}px`,
+        minHeight: `${headerHeight}px`
+      }"
     >
       <template v-for="column in columns" :key="column">
         <div

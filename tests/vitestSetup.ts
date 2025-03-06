@@ -94,7 +94,10 @@ beforeAll(() => {
       sortable: ref(true),
       enableRowDragAndDrop: ref(true),
       showLabel: ref(true),
-      utc: ref(false)
+      utc: ref(false),
+      showEventsAxis: ref(true),
+      eventsAxisHeight: ref(30),
+      timeaxisEvents: ref([])
     },
     [EMIT_BAR_EVENT_KEY]: () => {},
     [BAR_CONTAINER_KEY]: ref(barContainerElement),

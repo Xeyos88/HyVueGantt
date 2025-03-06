@@ -18,7 +18,8 @@ describe("GGanttTimeaxis", () => {
               { label: "1", value: "1", width: "10px", date: new Date() },
               { label: "2", value: "2", width: "10px", date: new Date() }
             ],
-            upperUnits: []
+            upperUnits: [],
+            events: []
           },
           globalMinuteStep: []
         },
