@@ -106,7 +106,9 @@ Here's a minimal example of using the GGanttChart component:
 | connection-cancel | `{ sourceBar: GanttBarObject, connectionPoint: ConnectionPoint, e: MouseEvent }` | Cancels the creation of a connection |
 | connection-delete | `{ sourceBar: GanttBarObject, targetBar: GanttBarObject, e: MouseEvent }` | Delete a connection |
 | label-edit | `{ sourceBar: GanttBarObject, e: MouseEvent, oldValue: string, newValue: string }` | Edit bar label |
-
+| timeaxisEvents | `TimeaxisEvent[]` | `[]` | Array of events to display on the time axis |
+| showEventsAxis | `boolean` | `true` | Controls the visibility of the events axis |
+| eventsAxisHeight | `number` | `25` | Sets the height of the events axis in pixels |
 
 ### Slots
 
@@ -120,6 +122,7 @@ Here's a minimal example of using the GGanttChart component:
 | milestone | `{ bar: GanttBarObject }` | Custom milestones content |
 | milestone-`{milestoneId}` | `{ bar: GanttBarObject }` | Custom specific milestone content |
 | commands | `CommandSlotProps` | Customization of the command section |
+| timeaxis-event | `{ event: TimeaxisEvent }` | Custom template for timeline events displayed on the events axis |
 
 ## Command Slot Usage
 

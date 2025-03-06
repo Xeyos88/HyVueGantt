@@ -44,3 +44,32 @@ You can customize the time scale appearance:
   :locale="'en'"
 />
 ```
+
+## Events Axis
+
+The Gantt chart supports a third axis specifically for displaying timeline events such as releases, milestones, or any time-bound occurrences. This events axis appears below the regular time units and provides visual cues for important dates or periods.
+
+### Configuring Events
+
+Events are defined using the `timeaxisEvents` property, which accepts an array of `TimeaxisEvent` objects:
+
+```typescript
+const events = [
+  {
+    id: '1',
+    label: 'Release v1.0',
+    startDate: '2024-01-15',
+    endDate: '2024-01-15',
+    backgroundColor: '#42b883',
+    color: '#ffffff',
+    description: 'Product release v1.0'
+  },
+  {
+    id: '2',
+    label: 'Maintenance',
+    startDate: '2024-02-10',
+    endDate: '2024-02-12',
+    backgroundColor: '#e67e22',
+    description: 'Scheduled maintenance'
+  }
+]
