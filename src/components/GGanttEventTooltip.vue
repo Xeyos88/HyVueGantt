@@ -60,7 +60,7 @@ watch(
     await nextTick()
 
     const rect = targetElement.value.getBoundingClientRect()
-    tooltipTop.value = `${rect.top - 40}px`
+    tooltipTop.value = `${rect.top - 95}px`
     tooltipLeft.value = `${rect.left + rect.width / 2}px`
   },
   { immediate: true }

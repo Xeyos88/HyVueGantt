@@ -44,6 +44,8 @@ const width = ref('100%')
 const showLabel = ref(true)
 const barLabelEditable = ref(true)
 const showProgress = ref(true)
+const showEventsAxis = ref(true)
+const eventsAxisHeight = ref(30)
 
 
 // Time Highlight Configuration
@@ -348,12 +350,17 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
 const events = ref([
   {
     id: 'visibility-1',
-    label: 'Prima finestra di visibilità',
+    label: 'First develop period',
     startDate: `${year}-${month}-02 15:00`,
-    endDate: `${year}-${month}-02 17:00`,
-    backgroundColor: '#4a7bec',
-    color: 'white',
-    description: 'Finestra di visibilità ottimale per il satellite Alpha'
+    endDate: `${year}-${month}-03 17:00`,
+    description: 'First custom event period'
+  },
+  {
+    id: 'visibility-2',
+    label: 'Second develop period',
+    startDate: `${year}-${month}-05 05:00`,
+    endDate: `${year}-${month}-08 12:00`,
+    description: 'Second custom event period'
   }
 ]);
 
@@ -619,6 +626,12 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
+                Show Event Axis:
+                <input type="checkbox" v-model="showEventsAxis">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
                 Hide Timeline:
                 <input type="checkbox" v-model="hideTimeaxis">
               </label>
@@ -633,6 +646,12 @@ const formattedEventLog = computed(() => {
               <label>
                 Row Height:
                 <input type="number" v-model="rowHeight">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Event Axis Height:
+                <input type="number" v-model="eventsAxisHeight">
               </label>
             </div>
             <div class="setting-item">
@@ -789,8 +808,8 @@ const formattedEventLog = computed(() => {
         :enableConnectionDeletion="enableConnectionDeletion"
         :utc="utc"
         :timeaxis-events="events"
-        :show-events-axis="true"
-        :events-axis-height="30"
+        :showEventsAxis="showEventsAxis"
+        :eventsAxisHeight="eventsAxisHeight"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"
