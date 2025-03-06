@@ -354,8 +354,7 @@ defineExpose({ timeaxisElement })
       class="g-events-container"
       :style="{
         height: `${eventsAxisHeightValue}px`,
-        background: colors.background,
-        borderTop: `1px solid ${colors.gridAndBorder}`
+        background: colors.background
       }"
     >
       <div
@@ -363,8 +362,8 @@ defineExpose({ timeaxisElement })
         :key="event.id"
         class="g-timeaxis-event"
         :style="{
-          left: `${event.xPosition}px`,
-          width: event.width,
+          left: `${event.calculatedX}px`,
+          width: event.calculatedWidth,
           backgroundColor: event.backgroundColor || colors.primary,
           color: event.color || colors.text,
           borderColor: event.color || colors.primary
@@ -463,10 +462,8 @@ defineExpose({ timeaxisElement })
 }
 
 .g-timeaxis-event {
+  height: 100%;
   position: absolute;
-  height: calc(100% - 6px);
-  top: 3px;
-  border-radius: 3px;
   font-size: 65%;
   padding: 0 6px;
   display: flex;
