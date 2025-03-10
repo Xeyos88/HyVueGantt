@@ -860,12 +860,8 @@ provide(CHART_WRAPPER_KEY, ganttWrapper)
             </g-gantt-current-time>
 
             <g-gantt-pointer-marker v-if="pointerMarker">
-              <template #pointer-marker-label="{ datetime }">
-                <slot name="pointer-marker-label" v-bind="{ datetime }" />
-              </template>
-
-              <template #pointer-marker-tooltips="{ hitBars }">
-                <slot name="pointer-marker-tooltips" v-bind="{ hitBars }" />
+              <template #pointer-marker-tooltips="{ hitBars, datetime }">
+                <slot name="pointer-marker-tooltips" v-bind="{ hitBars, datetime }" />
               </template>
             </g-gantt-pointer-marker>
 

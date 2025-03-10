@@ -2,8 +2,8 @@
 // -----------------------------
 // 1. EXTERNAL IMPORTS
 // -----------------------------
-import { ref, computed, inject } from "vue"
-import { useMouseInElement, watchThrottled } from "@vueuse/core"
+import { ref, computed, inject, useTemplateRef } from "vue"
+import { computedWithControl, useElementBounding, useMouseInElement, watchThrottled } from "@vueuse/core"
 
 // -----------------------------
 // 2. INTERNAL IMPORTS
@@ -29,19 +29,22 @@ import provideConfig from "../provider/provideConfig"
 const chartAreaEl = inject(CHART_AREA_KEY)
 const chartWrapperEl = inject(CHART_WRAPPER_KEY)
 const hitBars = ref<GanttBarObject[]>([])
+const tooltipContainer = useTemplateRef('tooltip')
 
 // -----------------------------
 // 5. COMPOSABLES & PROVIDERS
 // -----------------------------
 
-const { colors, pointerMarkerLabel, barStart, barEnd } = provideConfig()
+const { colors, barStart, barEnd } = provideConfig()
 const { mapPositionToTime } = useTimePositionMapping()
 const rowManager = inject<UseRowsReturn>("useRows")!
 const { toDayjs } = useDayjsHelper()
 
 // Mouse / pointer tracker
 const { elementX } = useMouseInElement(chartAreaEl)
-const { isOutside, elementY } = useMouseInElement(chartWrapperEl)
+const { isOutside, x } = useMouseInElement(chartWrapperEl)
+const { width } = useElementBounding(tooltipContainer)
+const { top } = useElementBounding(chartWrapperEl)
 
 // -----------------------------
 // 6. COMPUTED PROPERTIES
@@ -49,25 +52,25 @@ const { isOutside, elementY } = useMouseInElement(chartWrapperEl)
 
 const leftOffset = computed<number>((prev) => isOutside.value ? (prev ?? 0) : elementX.value)
 const datetime = computed(() => mapPositionToTime(leftOffset.value))
+const bars = computedWithControl(rowManager.getFlattenedRows, () => rowManager.getFlattenedRows().flatMap(row => row.bars))
 
 // -----------------------------
 // 11. WATCHERS
 // -----------------------------
 
 watchThrottled(leftOffset, () => {
-  // Get all the bars. Ideally this can be a reactive computed value. Need to measure when having big dataset
-  const bars = rowManager.getFlattenedRows().flatMap(row => row.bars)
   const hitBarsElement = []
   const cursorTime = toDayjs(datetime.value)
   // For each bar, we check if current time pointed by the cursor is in the bar time range
-  for (let i = 0; i < bars.length; i++) {
-    const element = bars[i]!;
+  for (let i = 0; i < bars.value.length; i++) {
+    const element = bars.value[i]!;
     const begin = toDayjs(element[barStart.value])
     const end = toDayjs(element[barEnd.value])
     if (cursorTime.isBetween(begin, end)) {
       hitBarsElement.push(element)
     }
   }
+  // Should be a computed instead of ref
   hitBars.value = hitBarsElement
 }, { throttle: 200 })
 </script>
@@ -76,23 +79,33 @@ watchThrottled(leftOffset, () => {
   <div class="g-grid-pointer-marker-container" :style="{
     left: `${leftOffset}px`
   }">
-    <!-- Alternative is to make it fixed in the chart somewhere like a legend -->
-    <div class="g-grid-pointer-marker-tooltips" :style="{ top: `${elementY}px` }">
-      <slot name="pointer-marker-tooltips" v-bind="{ hitBars }">
-        <!-- Just to demonstrate the capabilities -->
-        <div style="display: flex; flex-direction: column;" :style="{ backgroundColor: `${colors.toast}` }">
-          <span v-for="bar in hitBars" :key="bar.ganttBarConfig.id">Task ID: {{ bar.ganttBarConfig.id }}</span>
-        </div>
-      </slot>
-    </div>
     <div class="g-grid-pointer-marker-marker" :style="{
       border: `1px dashed ${colors.markerCurrentTime}`
     }" />
-    <span class="g-grid-pointer-marker-text" :style="{ color: colors.markerCurrentTime }">
-      <slot name="pointer-marker-label" v-bind="{ datetime }">
-        {{ pointerMarkerLabel }} {{ datetime }}
-      </slot>
-    </span>
+    <teleport to="body">
+      <transition name="g-fade" mode="out-in">
+        <div
+          v-if="!isOutside"
+          ref="tooltip"
+          class="g-grid-pointer-marker-tooltip"
+          :style="{
+            top: `${top}px`,
+            left: `${x-(width/2)}px`
+          }"
+        >
+        <slot name="pointer-marker-tooltips" v-bind="{ hitBars, datetime }">
+          <div class="g-grid-pointer-marker-tooltip-content" :style="{ background: colors.primary, color: colors.text }">
+            <div style="font-weight: bold;">Event at {{ datetime }}</div>
+            <ul>
+              <li v-for="bar in hitBars" :key="bar.ganttBarConfig.id">
+                {{ bar.ganttBarConfig.label ?? bar.ganttBarConfig.id }}
+              </li>
+            </ul>
+          </div>
+        </slot>
+        </div>
+      </transition>
+    </teleport>
   </div>
 </template>
 
@@ -105,8 +118,19 @@ watchThrottled(leftOffset, () => {
   pointer-events: none;
 }
 
-.g-grid-pointer-marker-tooltips {
-  position: absolute;
+.g-grid-pointer-marker-tooltip {
+  position: fixed;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  z-index: 1000;
+  min-width: 200px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateY(-100%);
+}
+
+.g-grid-pointer-marker-tooltip-content {
+  padding: 8px;
 }
 
 .g-grid-pointer-marker-marker {
