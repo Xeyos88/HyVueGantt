@@ -26,6 +26,7 @@ const dateFormat = ref('YYYY-MM-DD HH:mm')
 const enableMinutes = ref(false)
 const currentTime = ref(true)
 const currentTimeLabel = ref('Now')
+const pointerMarker = ref(true)
 const locale = ref('en')
 const utc = ref(false)
 
@@ -102,6 +103,7 @@ const customSlots = ref({
   barLabel: false,
   barTooltip: false,
   currentTimeLabel: false,
+  pointerMarkerTooltips: false,
   upperTimeunit: false
 })
 
@@ -564,6 +566,12 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
+                Custom Pointer Marker Tooltips:
+                <input type="checkbox" v-model="customSlots.pointerMarkerTooltips">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
                 Custom Time Unit:
                 <input type="checkbox" v-model="customSlots.upperTimeunit">
               </label>
@@ -680,6 +688,12 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
+                Show Pointer Marker:
+                <input type="checkbox" v-model="pointerMarker">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
                 Push on Overlap:
                 <input type="checkbox" v-model="pushOnOverlap">
               </label>
@@ -770,6 +784,7 @@ const formattedEventLog = computed(() => {
         :max-rows="maxRows"
         :current-time="currentTime"
         :current-time-label="currentTimeLabel"
+        :pointer-marker="pointerMarker"
         :date-format="dateFormat"
         :highlighted-hours="highlightedHours"
         :highlighted-days-in-week="highlightedDaysInWeek"
@@ -897,6 +912,20 @@ const formattedEventLog = computed(() => {
           <div class="custom-time-label">
             <span class="time-icon">⌚</span>
             <span>{{ new Date().toLocaleTimeString() }}</span>
+          </div>
+        </template>
+
+        <!-- Custom Pointer Marker Tooltips Slot -->
+        <template v-if="customSlots.pointerMarkerTooltips" #pointer-marker-tooltips="{ hitBars, datetime }">
+          <div style="background: crimson;">
+            <div>{{ datetime }}</div>
+            <div>
+              <ul>
+                <li v-for="bar in hitBars" :key="bar.ganttBarConfig.id">
+                  {{ bar.ganttBarConfig.label ?? bar.ganttBarConfig.id }}
+                </li>
+              </ul>
+            </div>
           </div>
         </template>
 

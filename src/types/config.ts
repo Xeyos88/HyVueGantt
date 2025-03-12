@@ -22,6 +22,7 @@ export interface GGanttChartProps {
   barEnd: string
   currentTime?: boolean
   currentTimeLabel?: string
+  pointerMarker?: boolean
   dateFormat?: string | false
   width?: string
   hideTimeaxis?: boolean
