@@ -22,7 +22,7 @@ import { CHART_AREA_KEY, CHART_WRAPPER_KEY } from "../provider/symbols"
 import provideConfig from "../provider/provideConfig"
 
 // -----------------------------
-// 4. INTERNAL STATE
+// 3. INTERNAL STATE
 // -----------------------------
 
 // Component Refs
@@ -32,7 +32,7 @@ const hitBars = ref<GanttBarObject[]>([])
 const tooltipContainer = useTemplateRef('tooltip')
 
 // -----------------------------
-// 5. COMPOSABLES & PROVIDERS
+// 4. COMPOSABLES & PROVIDERS
 // -----------------------------
 
 const { colors, barStart, barEnd } = provideConfig()
@@ -43,21 +43,38 @@ const { toDayjs } = useDayjsHelper()
 // Mouse / pointer tracker
 const { elementX } = useMouseInElement(chartAreaEl)
 const { isOutside, x } = useMouseInElement(chartWrapperEl)
-const { width } = useElementBounding(tooltipContainer)
-const { top } = useElementBounding(chartWrapperEl)
+const { width, height } = useElementBounding(tooltipContainer)
+const { top, bottom } = useElementBounding(chartWrapperEl)
 
 // -----------------------------
-// 6. COMPUTED PROPERTIES
+// 5. COMPUTED PROPERTIES
 // -----------------------------
 
 const leftOffset = computed<number>((prev) => isOutside.value ? (prev ?? 0) : elementX.value)
 const datetime = computed(() => mapPositionToTime(leftOffset.value))
 const bars = computedWithControl(rowManager.getFlattenedRows, () => rowManager.getFlattenedRows().flatMap(row => row.bars))
+const tooltipStylePosition = computed(() => {
+  // Try to check if the tooltip will be outside of the viewport or not
+  // Since we have the value from composable already, this is without IntersectionObserver
+  if (top.value - height.value > 0) {
+    return {
+      top: `${top.value}px`,
+      transform: `translateY(-100%)`,
+      left: `${x.value-(width.value/2)}px`
+    }
+  }
+
+  return {
+      top: `${bottom.value}px`,
+      left: `${x.value-(width.value/2)}px`
+    }
+})
 
 // -----------------------------
-// 11. WATCHERS
+// 6. WATCHERS
 // -----------------------------
 
+// Can probably be a computed instead of watcher, but there is no throttled computed
 watchThrottled(leftOffset, () => {
   const hitBarsElement = []
   const cursorTime = toDayjs(datetime.value)
@@ -70,7 +87,6 @@ watchThrottled(leftOffset, () => {
       hitBarsElement.push(element)
     }
   }
-  // Should be a computed instead of ref
   hitBars.value = hitBarsElement
 }, { throttle: 200 })
 </script>
@@ -88,10 +104,7 @@ watchThrottled(leftOffset, () => {
           v-if="!isOutside"
           ref="tooltip"
           class="g-grid-pointer-marker-tooltip"
-          :style="{
-            top: `${top}px`,
-            left: `${x-(width/2)}px`
-          }"
+          :style="tooltipStylePosition"
         >
         <slot name="pointer-marker-tooltips" v-bind="{ hitBars, datetime }">
           <div class="g-grid-pointer-marker-tooltip-content" :style="{ background: colors.primary, color: colors.text }">
@@ -126,7 +139,6 @@ watchThrottled(leftOffset, () => {
   z-index: 1000;
   min-width: 200px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transform: translateY(-100%);
 }
 
 .g-grid-pointer-marker-tooltip-content {
