@@ -9,6 +9,7 @@ export interface ColorScheme {
   quartenary: Color
   hoverHighlight: Color
   markerCurrentTime: Color
+  markerPointer: Color
   text: Color
   background: Color
   toast?: Color

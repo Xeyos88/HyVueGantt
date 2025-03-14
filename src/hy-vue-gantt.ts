@@ -39,7 +39,8 @@ import type {
   ConnectionDragEvent,
   ConnectionCompleteEvent,
   ConnectionDeleteEvent,
-  LabelEditEvent
+  LabelEditEvent,
+  TimeaxisEvent
 } from "./types"
 
 import "dayjs/locale/it"
@@ -139,7 +140,8 @@ export type {
   ConnectionDragEvent,
   ConnectionCompleteEvent,
   ConnectionDeleteEvent,
-  LabelEditEvent
+  LabelEditEvent,
+  TimeaxisEvent
 }
 export { GGanttChart, GGanttRow }
 

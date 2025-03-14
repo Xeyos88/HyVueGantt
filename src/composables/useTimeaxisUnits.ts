@@ -2,9 +2,10 @@ import { computed, ref, watch } from "vue"
 import type { Dayjs, ManipulateType } from "dayjs"
 import useDayjsHelper from "./useDayjsHelper"
 import provideConfig from "../provider/provideConfig"
-import type { GGanttChartConfig, TimeaxisUnit, TimeUnit } from "../types"
+import type { GGanttChartConfig, TimeaxisEvent, TimeaxisUnit, TimeUnit } from "../types"
 import { useHolidays } from "./useHolidays"
 import dayjs from "dayjs"
+import { ganttWidth } from "./useSimpleStore"
 
 /**
  * Base width for time unit elements (in pixels)
@@ -56,11 +57,20 @@ interface CacheEntry {
 }
 
 /**
+ * Cache entry structure for storing calculated events
+ */
+interface EventsCacheEntry {
+  timestamp: number
+  events: TimeaxisEvent[]
+}
+
+/**
  * Cache structure for both lower and upper units
  */
 interface TimeaxisCache {
   lower: Map<string, CacheEntry>
   upper: Map<string, CacheEntry>
+  events: Map<string, EventsCacheEntry>
 }
 
 /**
@@ -98,22 +108,25 @@ export const capitalizeWords = (str: string): string => {
  * - Automatic precision adjustment
  * - Performance optimizations for large datasets
  * - Timestamp-based calculations for week handling
+ * - Events positioning and visualization on the third axis
  *
  * @param config - Optional Gantt chart configuration
  * @returns Object containing timeaxis state and control methods
  */
 export default function useTimeaxisUnits(config: GGanttChartConfig = provideConfig()) {
   const { getHolidayInfo } = useHolidays(config)
-  const { precision: configPrecision, holidayHighlight, locale } = config
+  const { precision: configPrecision, holidayHighlight, locale, timeaxisEvents } = config
 
   // Internal state
   const internalPrecision = ref<TimeUnit>(configPrecision.value)
   const zoomLevel = ref(DEFAULT_ZOOM)
+  const processedTimeaxisEvents = ref<TimeaxisEvent[]>([])
 
   // Cache initialization
   const cache: TimeaxisCache = {
     lower: new Map(),
-    upper: new Map()
+    upper: new Map(),
+    events: new Map()
   }
 
   /**
@@ -197,6 +210,13 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
   }
 
   /**
+   * Generates cache key for events storage
+   */
+  const getEventsCacheKey = (startDate: Dayjs, endDate: Dayjs, zoom: number) => {
+    return `${startDate.valueOf()}-${endDate.valueOf()}-${zoom}`
+  }
+
+  /**
    * Retrieves units from cache if available and valid
    */
   const getFromCache = (cacheMap: Map<string, CacheEntry>, key: string): TimeaxisUnit[] | null => {
@@ -212,12 +232,37 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
   }
 
   /**
+   * Retrieves events from cache if available and valid
+   */
+  const getEventsFromCache = (key: string): TimeaxisEvent[] | null => {
+    const entry = cache.events.get(key)
+    if (!entry) return null
+
+    if (Date.now() - entry.timestamp > CACHE_TTL) {
+      cache.events.delete(key)
+      return null
+    }
+
+    return entry.events
+  }
+
+  /**
    * Stores units in cache with timestamp
    */
   const setInCache = (cacheMap: Map<string, CacheEntry>, key: string, units: TimeaxisUnit[]) => {
     cacheMap.set(key, {
       timestamp: Date.now(),
       units
+    })
+  }
+
+  /**
+   * Stores events in cache with timestamp
+   */
+  const setEventsInCache = (key: string, events: TimeaxisEvent[]) => {
+    cache.events.set(key, {
+      timestamp: Date.now(),
+      events
     })
   }
 
@@ -257,6 +302,74 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     }
   }
 
+  /**
+   * Calculates position and dimensions for timeline events
+   * @param events - Events to process and position
+   * @returns Processed events with position and dimension information
+   */
+  const updateEventPositions = () => {
+    if (!timeaxisEvents.value?.length) {
+      processedTimeaxisEvents.value = []
+      return
+    }
+
+    const { chartStartDayjs, chartEndDayjs } = useDayjsHelper(config)
+    const totalMinutes = chartEndDayjs.value.diff(chartStartDayjs.value, "minutes")
+
+    const eventsCacheKey = getEventsCacheKey(
+      chartStartDayjs.value,
+      chartEndDayjs.value,
+      zoomLevel.value
+    )
+
+    const cachedEvents = getEventsFromCache(eventsCacheKey)
+    if (cachedEvents) {
+      processedTimeaxisEvents.value = cachedEvents
+      return
+    }
+
+    const processedEvents = timeaxisEvents.value.map((event) => {
+      const eventStartDayjs = dayjs(event.startDate)
+      const eventEndDayjs = dayjs(event.endDate)
+
+      if (
+        eventEndDayjs.isBefore(chartStartDayjs.value) ||
+        eventStartDayjs.isAfter(chartEndDayjs.value)
+      ) {
+        return {
+          ...event,
+          width: "0px",
+          xPosition: 0
+        }
+      }
+
+      const startTime = eventStartDayjs.isBefore(chartStartDayjs.value)
+        ? chartStartDayjs.value
+        : eventStartDayjs
+
+      const endTime = eventEndDayjs.isAfter(chartEndDayjs.value)
+        ? chartEndDayjs.value
+        : eventEndDayjs
+
+      const startMinutes = startTime.diff(chartStartDayjs.value, "minutes")
+      const endMinutes = endTime.diff(chartStartDayjs.value, "minutes")
+
+      const startPosition = (startMinutes / totalMinutes) * ganttWidth.value
+      const endPosition = (endMinutes / totalMinutes) * ganttWidth.value
+      const width = Math.max(endPosition - startPosition, 2)
+
+      return {
+        ...event,
+        width: `${width}px`,
+        xPosition: startPosition
+      }
+    })
+
+    processedTimeaxisEvents.value = processedEvents
+
+    setEventsInCache(eventsCacheKey, processedEvents)
+  }
+
   watch(
     () => configPrecision.value,
     () => {
@@ -270,6 +383,18 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     cache.lower.clear()
     cache.upper.clear()
   })
+
+  watch(ganttWidth, () => {
+    updateEventPositions()
+  })
+
+  watch(
+    [() => timeaxisEvents.value, () => config.chartStart.value, () => config.chartEnd.value],
+    () => {
+      updateEventPositions()
+    },
+    { deep: true }
+  )
 
   /**
    * Main computed property for time axis units
@@ -309,7 +434,7 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     const upperCacheKey = getCacheKey(
       chartStartDayjs.value,
       chartEndDayjs.value,
-      upperPrecision.value as TimeUnit, // Cast to TimeUnit type
+      upperPrecision.value as TimeUnit,
       zoomLevel.value
     )
 
@@ -361,6 +486,10 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
       setInCache(cache.upper, upperCacheKey, upperUnits)
     }
 
+    if (timeaxisEvents.value?.length && processedTimeaxisEvents.value.length === 0) {
+      updateEventPositions()
+    }
+
     const minuteSteps = calculateMinuteSteps()
 
     cleanExpiredCache()
@@ -368,7 +497,8 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     return {
       result: {
         upperUnits,
-        lowerUnits
+        lowerUnits,
+        events: processedTimeaxisEvents.value
       },
       globalMinuteStep: minuteSteps
     }
@@ -412,6 +542,11 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
         cache.upper.delete(key)
       }
     }
+    for (const [key, entry] of cache.events.entries()) {
+      if (now - entry.timestamp > CACHE_TTL) {
+        cache.events.delete(key)
+      }
+    }
   }
 
   /**
@@ -443,12 +578,21 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
 
   // Clear cache when main dependencies change
   watch(
-    [() => config.chartStart.value, () => config.chartEnd.value, internalPrecision, zoomLevel],
+    [
+      () => config.chartStart.value,
+      () => config.chartEnd.value,
+      internalPrecision,
+      zoomLevel,
+      () => config.timeaxisEvents.value
+    ],
     () => {
       cache.lower.clear()
       cache.upper.clear()
+      cache.events.clear()
+      updateEventPositions()
     }
   )
+  updateEventPositions()
 
   return {
     timeaxisUnits,

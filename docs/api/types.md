@@ -71,6 +71,16 @@ interface GanttMilestone {
   description?: string
   color?: string
 }
+
+interface TimeaxisEvent {
+  id: string;              
+  label: string;          
+  startDate: string | Date; 
+  endDate: string | Date;   
+  color?: string;          
+  backgroundColor?: string; 
+  description?: string;    
+}
 ```
 
 ## Label Data Types

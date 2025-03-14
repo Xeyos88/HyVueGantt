@@ -50,9 +50,22 @@ export interface GanttMilestone {
   color?: string
 }
 
+export interface TimeaxisEvent {
+  id: string
+  label: string
+  startDate: string | Date
+  endDate: string | Date
+  color?: string
+  backgroundColor?: string
+  description?: string
+  width?: string
+  xPosition?: number
+}
+
 export interface TimeaxisResult {
   upperUnits: TimeaxisUnit[]
   lowerUnits: TimeaxisUnit[]
+  events: TimeaxisEvent[]
 }
 
 export interface TimeaxisData {
