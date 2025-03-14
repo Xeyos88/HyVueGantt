@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v3.4.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.4.0) (2025-03-14)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.3.0...v3.4.0)
+
+
+
+**✨ New Features:**
+
+- change tooltip position depending on chart position on page
+- Events time axis
+- Events time axis
+- MVP pointer marker
+
+**🐛 Fix:**
+
+- Mismatched variable name
+
 ## [v3.3.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.3.0) (2025-02-26)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.1.2...v3.3.0)
