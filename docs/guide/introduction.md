@@ -4,13 +4,16 @@ A powerful and flexible Gantt chart component for Vue 3 applications. This compo
 
 ## Features
 
-- 📅 **Flexible Time Management**: Support for various time units (hours, days, weeks, months)
-- 🎨 **Customizable Styling**: Multiple built-in color schemes and custom styling options
-- 🔗 **Bar Connections**: Visual connections between bars with different styles
-- 📱 **Responsive**: Works across different screen sizes
-- ⌨️ **Keyboard Navigation**: Full keyboard support for accessibility
-- 🎯 **Drag & Drop**: Intuitive drag and drop interface
-- 🔄 **Real-time Updates**: Live updates and animations
+- 📅 **Flexible Time Management**: Support for various time units (hours, days, weeks, months) with customizable date formats
+- 🎨 **Customizable Styling**: Multiple built-in color schemes and comprehensive styling options for every element
+- 🔗 **Bar Connections**: Create visual dependencies between tasks with various connection styles and animations
+- 📱 **Responsive Design**: Adaptive layout that works across different screen sizes and devices
+- ⌨️ **Keyboard Navigation**: Full keyboard support for accessibility and efficient operation
+- 🔄 **Drag & Drop Interactions**: Intuitive drag and drop interface with overlap prevention and push behavior
+- 📊 **Grouping & Hierarchies**: Support for hierarchical task structures with collapsible groups
+- 📝 **Editing Capabilities**: In-place editing of task labels and progress indicators
+- ⏱️ **Real-time Updates**: Live updates and animations for dynamic data visualization
+- 🔄 **History Management**: Built-in undo/redo functionality for user operations
 
 ## Why Hyper Vue Gantt?
 
