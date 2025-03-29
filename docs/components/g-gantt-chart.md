@@ -78,7 +78,8 @@ Here's a minimal example of using the GGanttChart component:
 | enableConnectionDelete | `boolean` | `false` | Enable the possibility to delete connections |
 | utc | `boolean` | `false` | Set the current time position based on UTC |
 | barLabelEditable | `boolean` | `false` | Enable the possibility to edit a bar label |
-
+| exportEnabled | `boolean` | `true` | Enable the export functionality |
+| exportOptions | `ExportOptions` | `{}` | Configure export options |
 
 ### Events
 
@@ -109,6 +110,9 @@ Here's a minimal example of using the GGanttChart component:
 | timeaxisEvents | `TimeaxisEvent[]` | `[]` | Array of events to display on the time axis |
 | showEventsAxis | `boolean` | `true` | Controls the visibility of the events axis |
 | eventsAxisHeight | `number` | `25` | Sets the height of the events axis in pixels |
+| export-start | `format: string` | Emitted when the export process starts |
+| export-success | `result: ExportResult` | Emitted when the export process completes successfully |
+| export-error | `error: string` | Emitted when the export process encounters an error |
 
 ### Slots
 
@@ -157,6 +161,9 @@ interface CommandSlotProps {
   redo: () => void                      // Redo last undone action
   canUndo: ComputedRef<boolean>         // Whether undo is available
   canRedo: ComputedRef<boolean>         // Whether redo is available
+
+  // Export Controls
+  export: () => void                    // Trigger chart export
 }
 ```
 
@@ -184,7 +191,8 @@ Here's an example of customizing the command section:
       canRedo,
       isAtTop,
       isAtBottom,
-      zoomLevel
+      zoomLevel,
+      export
     }">
       <div class="custom-commands">
         <!-- Zoom Controls -->
@@ -206,6 +214,11 @@ Here's an example of customizing the command section:
         <div class="history">
           <button @click="undo" :disabled="!canUndo">Undo</button>
           <button @click="redo" :disabled="!canRedo">Redo</button>
+        </div>
+
+        <!-- Export Controls -->
+        <div class="export">
+          <button @click="export">Export</button>
         </div>
       </div>
     </template>

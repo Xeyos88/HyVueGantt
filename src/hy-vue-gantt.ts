@@ -40,7 +40,9 @@ import type {
   ConnectionCompleteEvent,
   ConnectionDeleteEvent,
   LabelEditEvent,
-  TimeaxisEvent
+  TimeaxisEvent,
+  ExportOptions,
+  ExportResult
 } from "./types"
 
 import "dayjs/locale/it"
@@ -141,7 +143,9 @@ export type {
   ConnectionCompleteEvent,
   ConnectionDeleteEvent,
   LabelEditEvent,
-  TimeaxisEvent
+  TimeaxisEvent,
+  ExportOptions,
+  ExportResult
 }
 export { GGanttChart, GGanttRow }
 

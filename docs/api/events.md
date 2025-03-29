@@ -90,6 +90,14 @@ export interface LabelEditEvent {
 @group-expansion="(event: { rowId: string | number }) => void"
 ```
 
+## Export  Events
+
+```typescript
+@export-start="(format: string) => void"
+@export-success="(result: ExportResult) => void"
+@export-error="(error: string) => void"
+```
+
 ## Connection Events
 
 ```typescript

@@ -371,9 +371,11 @@ defineExpose({ timeaxisElement })
         @mouseenter="(e) => handleEventMouseEnter(event, e)"
         @mouseleave="handleEventMouseLeave"
       >
-        <slot name="timeaxis-event" :event="event">
-          {{ event.label }}
-        </slot>
+        <div class="g-timeaxis-event-label">
+          <slot name="timeaxis-event" :event="event">
+            {{ event.label }}
+          </slot>
+        </div>
       </div>
     </div>
     <!-- Holiday tooltip -->
