@@ -148,12 +148,9 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   exportOptions: () => ({
     format: "pdf",
     quality: 0.95,
-    showGrid: true,
     paperSize: "a4",
     orientation: "landscape",
     scale: 1.5,
-    includeHeader: true,
-    includeTimeline: true,
     margin: 10
   })
 })
@@ -412,13 +409,10 @@ const handleExport = async (options?: Partial<ExportOptions>): Promise<ExportRes
   const mergedOptions: ExportOptions = {
     format: props.exportOptions.format || "pdf",
     quality: props.exportOptions.quality,
-    showGrid: props.exportOptions.showGrid,
     filename: props.exportOptions.filename,
     paperSize: props.exportOptions.paperSize,
     orientation: props.exportOptions.orientation,
     scale: props.exportOptions.scale,
-    includeHeader: props.exportOptions.includeHeader,
-    includeTimeline: props.exportOptions.includeTimeline,
     margin: props.exportOptions.margin,
     ...options
   }

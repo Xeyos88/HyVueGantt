@@ -93,12 +93,9 @@ const exportMargin = ref(10)
 const exportOptions = computed<ExportOptions>(() => ({
   format: exportFormat.value,
   quality: exportQuality.value,
-  showGrid: exportShowGrid.value,
   paperSize: exportPaperSize.value,
   orientation: exportOrientation.value,
   scale: exportScale.value,
-  includeHeader: exportIncludeHeader.value,
-  includeTimeline: exportIncludeTimeline.value,
   margin: exportMargin.value,
   filename: `gantt-export-${new Date().toISOString().slice(0, 10)}`
 }))
@@ -622,24 +619,6 @@ const formattedEventLog = computed(() => {
               <label>
                 Margin (px):
                 <input type="number" v-model="exportMargin" min="0" max="50">
-              </label>
-            </div>
-            <div class="setting-item">
-              <label>
-                Show Grid:
-                <input type="checkbox" v-model="exportShowGrid">
-              </label>
-            </div>
-            <div class="setting-item">
-              <label>
-                Include Header:
-                <input type="checkbox" v-model="exportIncludeHeader">
-              </label>
-            </div>
-            <div class="setting-item">
-              <label>
-                Include Timeline:
-                <input type="checkbox" v-model="exportIncludeTimeline">
               </label>
             </div>
           </div>
