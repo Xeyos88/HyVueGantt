@@ -81,12 +81,10 @@ const enableConnectionDeletion = ref(true)
 const exportEnabled = ref(true)
 const exportFormat = ref<'pdf' | 'png' | 'svg' | 'excel'>('pdf')
 const exportQuality = ref(0.95)
-const exportShowGrid = ref(true)
 const exportPaperSize = ref<'a4' | 'a3' | 'letter' | 'legal'>('a4')
 const exportOrientation = ref<'portrait' | 'landscape'>('landscape')
 const exportScale = ref(1.5)
-const exportIncludeHeader = ref(true)
-const exportIncludeTimeline = ref(true)
+const exportColumnLabel = ref(true)
 const exportMargin = ref(10)
 
 // Computed export options object
@@ -97,7 +95,8 @@ const exportOptions = computed<ExportOptions>(() => ({
   orientation: exportOrientation.value,
   scale: exportScale.value,
   margin: exportMargin.value,
-  filename: `gantt-export-${new Date().toISOString().slice(0, 10)}`
+  filename: `gantt-export-${new Date().toISOString().slice(0, 10)}`,
+  exportColumnLabel: exportColumnLabel.value
 }))
 
 const multiColumnOptions = ['Label','StartDate','EndDate','Id','Duration', 'Progress']
@@ -571,6 +570,12 @@ const formattedEventLog = computed(() => {
               <label>
                 Enable Export:
                 <input type="checkbox" v-model="exportEnabled">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Enable Column Label:
+                <input type="checkbox" v-model="exportColumnLabel">
               </label>
             </div>
             <div class="setting-item">

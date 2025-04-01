@@ -151,7 +151,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
     paperSize: "a4",
     orientation: "landscape",
     scale: 1.5,
-    margin: 10
+    margin: 10,
+    exportColumnLabel: true
   })
 })
 
@@ -170,6 +171,7 @@ const isDraggingTimeaxis = ref(false)
 const lastMouseX = ref(0)
 
 // Component Refs
+const gGantt = ref<HTMLElement | null>(null)
 const ganttChart = ref<HTMLElement | null>(null)
 const ganttWrapper = ref<HTMLElement | null>(null)
 const timeaxisComponent = ref<
@@ -398,12 +400,17 @@ watch(
   }
 )
 
-const { exportChart, downloadExport, isExporting } = useExport(() => ganttChart.value, rowManager, {
-  barStart: toRef(props, "barStart"),
-  barEnd: toRef(props, "barEnd"),
-  dateFormat: toRef(props, "dateFormat"),
-  precision: toRef(props, "precision")
-})
+const { exportChart, downloadExport, isExporting } = useExport(
+  () => ganttChart.value,
+  () => gGantt.value,
+  rowManager,
+  {
+    barStart: toRef(props, "barStart"),
+    barEnd: toRef(props, "barEnd"),
+    dateFormat: toRef(props, "dateFormat"),
+    precision: toRef(props, "precision")
+  }
+)
 
 const handleExport = async (options?: Partial<ExportOptions>): Promise<ExportResult> => {
   const mergedOptions: ExportOptions = {
@@ -874,7 +881,7 @@ defineExpose({
     ref="ganttContainer"
     :id="id"
   >
-    <div class="g-gantt-rounded-wrapper">
+    <div class="g-gantt-rounded-wrapper" ref="gGantt">
       <!-- Chart Layout Section -->
       <div class="g-gantt-main-layout" aria-controls="gantt-controls">
         <div v-if="labelColumnTitle" class="g-gantt-label-section" :style="labelSectionStyle">

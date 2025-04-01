@@ -7,6 +7,7 @@ export interface ExportOptions {
   orientation?: "portrait" | "landscape"
   scale?: number
   margin?: number
+  exportColumnLabel?: boolean
 }
 
 export interface ExportResult {

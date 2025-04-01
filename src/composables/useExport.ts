@@ -15,6 +15,7 @@ import dayjs from "dayjs"
  */
 export function useExport(
   getChartElement: () => HTMLElement | null,
+  getWrapperElement: () => HTMLElement | null,
   rowManager: UseRowsReturn,
   config: {
     barStart: Ref<string>
@@ -33,17 +34,27 @@ export function useExport(
    * @param element - DOM element to pre-process
    * @returns Pre-processed DOM element
    */
-  const prepareElementForExport = (element: HTMLElement): HTMLElement => {
-    const clonedElement = element.cloneNode(true) as HTMLElement
+  const prepareElementForExport = (
+    element: HTMLElement,
+    wrapperELement: HTMLElement,
+    options: ExportOptions
+  ): HTMLElement => {
+    const clonedElement = wrapperELement.cloneNode(true) as HTMLElement
 
     clonedElement.style.width = element.offsetWidth + "px"
     clonedElement.style.height = element.offsetHeight + "px"
 
-    console.log(clonedElement)
-
     const textSelectors = [".g-gantt-bar-label > div", ".g-timeunit-min", ".label-unit"]
 
     const textElements = clonedElement.querySelectorAll(textSelectors.join(", "))
+
+    const commands = clonedElement.querySelector(".g-gantt-command") as HTMLElement
+    commands.style.display = "none"
+
+    if (!options.exportColumnLabel) {
+      const columnLabels = clonedElement.querySelector(".g-gantt-label-section") as HTMLElement
+      columnLabels.style.display = "none"
+    }
 
     textElements.forEach((el) => {
       const element = el as HTMLElement
@@ -56,6 +67,26 @@ export function useExport(
       element.style.fontSize = "10px"
 
       element.style.transform = "translateY(-25%)"
+    })
+
+    const ellipsisElements = clonedElement.querySelectorAll(
+      ".cell-content, .text-ellipsis, .text-ellipsis-value"
+    )
+    ellipsisElements.forEach((el) => {
+      const element = el as HTMLElement
+      element.style.overflow = "visible"
+      element.style.alignItems = "center"
+      element.style.whiteSpace = "normal"
+      element.style.textOverflow = "ellipsis"
+      element.style.fontSize = "10px"
+      element.style.transform = "translateY(-1%)"
+    })
+
+    const rows = clonedElement.querySelectorAll(".g-label-column-row")
+    rows.forEach((row) => {
+      const rowElement = row as HTMLElement
+      rowElement.style.overflow = "visible"
+      rowElement.style.flexWrap = "wrap"
     })
 
     const barLabels = clonedElement.querySelectorAll(".g-gantt-bar-label")
@@ -131,7 +162,8 @@ export function useExport(
 
     try {
       const element = getChartElement()
-      if (!element) {
+      const wrapper = getWrapperElement()
+      if (!element || !wrapper) {
         throw new Error("Gantt chart element not found")
       }
 
@@ -139,17 +171,17 @@ export function useExport(
 
       switch (options.format) {
         case "pdf":
-          return await exportToPdf(element, {
+          return await exportToPdf(element, wrapper, {
             ...options,
             filename: filename + ".pdf"
           })
         case "png":
-          return await exportToPng(element, {
+          return await exportToPng(element, wrapper, {
             ...options,
             filename: filename + ".png"
           })
         case "svg":
-          return await exportToSvg(element, {
+          return await exportToSvg(element, wrapper, {
             ...options,
             filename: filename + ".svg"
           })
@@ -185,10 +217,11 @@ export function useExport(
    */
   const exportToPdf = async (
     element: HTMLElement,
+    wrapper: HTMLElement,
     options: ExportOptions
   ): Promise<ExportResult> => {
     try {
-      const processedElement = prepareElementForExport(element)
+      const processedElement = prepareElementForExport(element, wrapper, options)
 
       const tempContainer = document.createElement("div")
       tempContainer.style.position = "absolute"
@@ -309,10 +342,11 @@ export function useExport(
    */
   const exportToPng = async (
     element: HTMLElement,
+    wrapper: HTMLElement,
     options: ExportOptions
   ): Promise<ExportResult> => {
     try {
-      const processedElement = prepareElementForExport(element)
+      const processedElement = prepareElementForExport(element, wrapper, options)
 
       const tempContainer = document.createElement("div")
       tempContainer.style.position = "absolute"
@@ -379,10 +413,11 @@ export function useExport(
    */
   const exportToSvg = async (
     element: HTMLElement,
+    wrapper: HTMLElement,
     options: ExportOptions
   ): Promise<ExportResult> => {
     try {
-      const processedElement = prepareElementForExport(element)
+      const processedElement = prepareElementForExport(element, wrapper, options)
 
       const tempContainer = document.createElement("div")
       tempContainer.style.position = "absolute"

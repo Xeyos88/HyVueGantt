@@ -76,9 +76,12 @@
     "@vueuse/core": "^12.0.0",
     "date-holidays": "^3.23.14",
     "dayjs": "^1.11.13",
+    "jspdf": "^3.0.1",
+    "html2canvas": "^1.4.1",
     "lodash-es": "^4.17.21",
     "uuid": "^11.0.5",
-    "vue": "^3.5.13"
+    "vue": "^3.5.13",
+    "xlsx": "^0.18.5"
   },
   "homepage": "https://xeyos88.github.io/HyVueGantt/",
   "keywords": [
