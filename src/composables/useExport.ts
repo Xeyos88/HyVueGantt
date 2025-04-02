@@ -1,5 +1,5 @@
 import { ref, type Ref } from "vue"
-import type { ExportOptions, ExportResult, TimeUnit } from "../types"
+import type { ChartRow, ExportOptions, ExportResult, GanttBarObject, TimeUnit } from "../types"
 import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
 import * as XLSX from "xlsx"
@@ -495,13 +495,23 @@ export function useExport(
    */
   const exportToExcel = async (options: ExportOptions): Promise<ExportResult> => {
     try {
-      const flattenedRows = rowManager.getFlattenedRows()
+      const workbook = XLSX.utils.book_new()
 
-      const excelData = [] as any[][]
+      const getAllRows = (rows: ChartRow[]): ChartRow[] => {
+        return rows.flatMap((row) => {
+          if (!row.children?.length) {
+            return [row]
+          }
+          return [row, ...getAllRows(row.children)]
+        })
+      }
 
-      excelData.push(["ID", "Task", "Start Date", "End Date", "Duration", "Progress (%)"])
+      const allRows = getAllRows(rowManager.rows.value)
 
-      flattenedRows.forEach((row, index) => {
+      const firstSheetData = [] as any[][]
+      firstSheetData.push(["ID", "Task", "Start Date", "End Date", "Duration", "Progress (%)"])
+
+      allRows.forEach((row, index) => {
         let startDate = "-"
         let endDate = "-"
         let duration = "-"
@@ -548,20 +558,117 @@ export function useExport(
           }
         }
 
-        excelData.push([row.id || index + 1, row.label, startDate, endDate, duration, progress])
+        firstSheetData.push([
+          row.id || index + 1,
+          row.label,
+          startDate,
+          endDate,
+          duration,
+          progress
+        ])
       })
 
-      const workbook = XLSX.utils.book_new()
-      const worksheet = XLSX.utils.aoa_to_sheet(excelData)
+      const worksheet1 = XLSX.utils.aoa_to_sheet(firstSheetData)
+      XLSX.utils.book_append_sheet(workbook, worksheet1, "Gantt Rows")
 
-      const headerRange = XLSX.utils.decode_range(worksheet["!ref"] || "A1")
-      for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
-        const cellRef = XLSX.utils.encode_cell({ r: 0, c: col })
-        if (!worksheet[cellRef]) worksheet[cellRef] = {}
-        worksheet[cellRef].s = { font: { bold: true } }
+      const secondSheetData = [] as any[][]
+      secondSheetData.push([
+        "Bar ID",
+        "Label",
+        "Parent Row",
+        "Row ID",
+        "Start Date",
+        "End Date",
+        "Duration",
+        "Progress (%)",
+        "Connections",
+        "Milestone"
+      ])
+
+      const processedBarIds = new Set<string>()
+
+      const allBars: {
+        bar: GanttBarObject
+        rowLabel: string
+        rowId: string | number
+      }[] = []
+
+      const collectBars = (rows: ChartRow[]) => {
+        rows.forEach((row) => {
+          row.bars.forEach((bar) => {
+            if (!processedBarIds.has(bar.ganttBarConfig.id)) {
+              processedBarIds.add(bar.ganttBarConfig.id)
+              allBars.push({
+                bar,
+                rowLabel: row.label,
+                rowId: row.id || ""
+              })
+            }
+          })
+
+          if (row.children && row.children.length > 0) {
+            collectBars(row.children)
+          }
+        })
       }
 
-      const colWidths = [
+      collectBars(rowManager.rows.value)
+
+      allBars.forEach((item) => {
+        const { bar, rowLabel, rowId } = item
+        const barConfig = bar.ganttBarConfig
+
+        const startDate = dayjs(bar[config.barStart.value]).format(
+          config.dateFormat.value || "YYYY-MM-DD HH:mm"
+        )
+
+        const endDate = dayjs(bar[config.barEnd.value]).format(
+          config.dateFormat.value || "YYYY-MM-DD HH:mm"
+        )
+
+        const durationValue = dayjs(bar[config.barEnd.value]).diff(
+          dayjs(bar[config.barStart.value]),
+          config.precision.value
+        )
+
+        const duration = `${durationValue}${config.precision.value.charAt(0)}`
+
+        const progress =
+          barConfig.progress !== undefined ? `${Math.round(barConfig.progress)}%` : "-"
+
+        const connections =
+          barConfig.connections && barConfig.connections.length > 0
+            ? barConfig.connections.map((conn) => conn.targetId).join(", ")
+            : "-"
+
+        const milestone = barConfig.milestoneId ? barConfig.milestoneId : "-"
+
+        secondSheetData.push([
+          barConfig.id,
+          barConfig.label || "",
+          rowLabel,
+          rowId,
+          startDate,
+          endDate,
+          duration,
+          progress,
+          connections,
+          milestone
+        ])
+      })
+
+      const worksheet2 = XLSX.utils.aoa_to_sheet(secondSheetData)
+      XLSX.utils.book_append_sheet(workbook, worksheet2, "Bars Detail")
+      ;[worksheet1, worksheet2].forEach((worksheet) => {
+        const headerRange = XLSX.utils.decode_range(worksheet["!ref"] || "A1")
+        for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
+          const cellRef = XLSX.utils.encode_cell({ r: 0, c: col })
+          if (!worksheet[cellRef]) worksheet[cellRef] = {}
+          worksheet[cellRef].s = { font: { bold: true } }
+        }
+      })
+
+      const colWidths1 = [
         { wch: 10 },
         { wch: 40 },
         { wch: 20 },
@@ -569,9 +676,21 @@ export function useExport(
         { wch: 10 },
         { wch: 15 }
       ]
-      worksheet["!cols"] = colWidths
+      worksheet1["!cols"] = colWidths1
 
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Gantt Chart")
+      const colWidths2 = [
+        { wch: 15 },
+        { wch: 30 },
+        { wch: 30 },
+        { wch: 10 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 10 },
+        { wch: 15 },
+        { wch: 30 },
+        { wch: 20 }
+      ]
+      worksheet2["!cols"] = colWidths2
 
       const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" })
       const blob = new Blob([excelBuffer], {
@@ -584,7 +703,8 @@ export function useExport(
         filename: options.filename || "gantt-chart.xlsx"
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Errore exporting in Excel"
+      const errorMessage = error instanceof Error ? error.message : "Error exporting to Excel"
+      console.error("Error during Excel export:", error)
       return {
         success: false,
         data: null,

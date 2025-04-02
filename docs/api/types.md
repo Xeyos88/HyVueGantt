@@ -115,6 +115,7 @@ interface ExportOptions {
   orientation?: "portrait" | "landscape";
   scale?: number;
   margin?: number;
+  exportColumnLabel?: boolean
 }
 
 interface ExportResult {

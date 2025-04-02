@@ -334,6 +334,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
             ganttBarConfig: {
               id: 'bar10',
               label: 'Task B',
+              milestoneId: 'milestone1',
               style: { background: '#8e44ad' },
               bundle: 'bundle1',
               progress: 45,
