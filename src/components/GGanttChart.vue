@@ -15,7 +15,9 @@ import {
   faExpandAlt,
   faCompressAlt,
   faUndo,
-  faRedo
+  faRedo,
+  faFileExport,
+  faSpinner
 } from "@fortawesome/free-solid-svg-icons"
 import {
   computed,
@@ -47,7 +49,7 @@ import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
 import GGanttMilestone from "./GGanttMilestone.vue"
 import GGanttRow from "./GGanttRow.vue"
-import GGanttPointerMarker from './GGanttPointerMarker.vue'
+import GGanttPointerMarker from "./GGanttPointerMarker.vue"
 
 // Composables
 import { useConnections } from "../composables/useConnections"
@@ -60,11 +62,19 @@ import useTimeaxisUnits from "../composables/useTimeaxisUnits"
 import { useSectionResize } from "../composables/useSectionResize"
 import { useConnectionCreation } from "../composables/useConnectionCreation"
 import useBarSelector from "../composables/useBarSelector"
+import { useExport } from "../composables/useExport"
 
 // Types and Constants
 import { colorSchemes, type ColorSchemeKey } from "../color-schemes"
 import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
-import { BOOLEAN_KEY, CONFIG_KEY, EMIT_BAR_EVENT_KEY, GANTT_ID_KEY, CHART_AREA_KEY, CHART_WRAPPER_KEY } from "../provider/symbols"
+import {
+  BOOLEAN_KEY,
+  CONFIG_KEY,
+  EMIT_BAR_EVENT_KEY,
+  GANTT_ID_KEY,
+  CHART_AREA_KEY,
+  CHART_WRAPPER_KEY
+} from "../provider/symbols"
 import type {
   GanttBarObject,
   GGanttChartProps,
@@ -72,7 +82,9 @@ import type {
   ColorScheme,
   ChartRow,
   RowDragEvent,
-  GGanttChartEmits
+  GGanttChartEmits,
+  ExportOptions,
+  ExportResult
 } from "../types"
 
 // Props
@@ -131,7 +143,17 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   enableConnectionCreation: false,
   enableConnectionDeletion: false,
   utc: false,
-  barLabelEditable: false
+  barLabelEditable: false,
+  exportEnabled: true,
+  exportOptions: () => ({
+    format: "pdf",
+    quality: 0.95,
+    paperSize: "a4",
+    orientation: "landscape",
+    scale: 1.5,
+    margin: 10,
+    exportColumnLabel: true
+  })
 })
 
 // Events
@@ -149,6 +171,7 @@ const isDraggingTimeaxis = ref(false)
 const lastMouseX = ref(0)
 
 // Component Refs
+const gGantt = ref<HTMLElement | null>(null)
 const ganttChart = ref<HTMLElement | null>(null)
 const ganttWrapper = ref<HTMLElement | null>(null)
 const timeaxisComponent = ref<
@@ -369,14 +392,78 @@ watch(
   () => scrollPosition.value,
   () => {
     if (connectionState.value.isCreating) {
-      // Forza il ricalcolo delle coordinate
       const container = ganttContainer.value?.querySelector(".g-gantt-rows-container")
       if (container) {
-        connectionState.value.mouseX = connectionState.value.mouseX // Trigger update
+        connectionState.value.mouseX = connectionState.value.mouseX
       }
     }
   }
 )
+
+const { exportChart, downloadExport, isExporting } = useExport(
+  () => ganttChart.value,
+  () => gGantt.value,
+  rowManager,
+  {
+    barStart: toRef(props, "barStart"),
+    barEnd: toRef(props, "barEnd"),
+    dateFormat: toRef(props, "dateFormat"),
+    precision: toRef(props, "precision")
+  }
+)
+
+const handleExport = async (options?: Partial<ExportOptions>): Promise<ExportResult> => {
+  const mergedOptions: ExportOptions = {
+    format: props.exportOptions.format || "pdf",
+    quality: props.exportOptions.quality,
+    filename: props.exportOptions.filename,
+    paperSize: props.exportOptions.paperSize,
+    orientation: props.exportOptions.orientation,
+    scale: props.exportOptions.scale,
+    margin: props.exportOptions.margin,
+    ...options
+  }
+
+  emit("export-start", mergedOptions.format)
+
+  try {
+    const result = await exportChart(mergedOptions)
+    if (result.success) {
+      emit("export-success", result)
+    } else {
+      emit("export-error", result.error || "Unknown error")
+    }
+    return result
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    emit("export-error", errorMessage)
+    return {
+      success: false,
+      data: null,
+      error: errorMessage,
+      filename: mergedOptions.filename || "export-error"
+    }
+  }
+}
+
+const selectedExportFormat = ref("")
+
+const triggerExport = async () => {
+  if (!selectedExportFormat.value || isExporting.value) return
+
+  const options = {
+    ...props.exportOptions,
+    format: selectedExportFormat.value as "pdf" | "png" | "svg" | "excel"
+  }
+
+  try {
+    const result = await handleExport(options)
+    downloadExport(result)
+    selectedExportFormat.value = ""
+  } catch (error) {
+    console.error("Error during export:", error)
+  }
+}
 
 // -----------------------------
 // 6. COMPUTED PROPERTIES
@@ -771,6 +858,15 @@ provide(BOOLEAN_KEY, { ...props })
 provide(GANTT_ID_KEY, id.value)
 provide(CHART_AREA_KEY, ganttChart)
 provide(CHART_WRAPPER_KEY, ganttWrapper)
+
+// ---------------------------
+// 13. EXPOSE
+// ---------------------------
+
+defineExpose({
+  exportChart,
+  isExporting
+})
 </script>
 
 <template>
@@ -785,7 +881,7 @@ provide(CHART_WRAPPER_KEY, ganttWrapper)
     ref="ganttContainer"
     :id="id"
   >
-    <div class="g-gantt-rounded-wrapper">
+    <div class="g-gantt-rounded-wrapper" ref="gGantt">
       <!-- Chart Layout Section -->
       <div class="g-gantt-main-layout" aria-controls="gantt-controls">
         <div v-if="labelColumnTitle" class="g-gantt-label-section" :style="labelSectionStyle">
@@ -973,6 +1069,7 @@ provide(CHART_WRAPPER_KEY, ganttWrapper)
           :is-at-top="isAtTop"
           :is-at-bottom="isAtBottom"
           :zoom-level="zoomLevel"
+          :export="() => triggerExport()"
         >
           <div class="g-gantt-command-block">
             <!-- Navigation Controls -->
@@ -1082,6 +1179,29 @@ provide(CHART_WRAPPER_KEY, ganttWrapper)
               </button>
             </div>
           </div>
+          <div class="g-gantt-command-block">
+            <div class="g-gantt-command-export" v-if="exportEnabled">
+              <div class="g-gantt-export-container">
+                <select
+                  v-model="selectedExportFormat"
+                  class="g-gantt-export-select"
+                  :disabled="isExporting"
+                >
+                  <option value="" disabled>Export</option>
+                  <option value="pdf">PDF</option>
+                  <option value="png">PNG</option>
+                  <option value="svg">SVG</option>
+                  <option value="excel">Excel</option>
+                </select>
+                <button @click="triggerExport" :disabled="!selectedExportFormat || isExporting">
+                  <FontAwesomeIcon :icon="faFileExport" class="command-icon" />
+                  <span v-if="isExporting" class="g-gantt-export-loading">
+                    <FontAwesomeIcon :icon="faSpinner" class="fa-spin" />
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
         </slot>
       </div>
     </div>
@@ -1147,7 +1267,8 @@ provide(CHART_WRAPPER_KEY, ganttWrapper)
 .g-gantt-command-vertical,
 .g-gantt-command-zoom,
 .g-gantt-command-history,
-.g-gantt-command-groups {
+.g-gantt-command-groups,
+.g-gantt-export-container {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -1161,9 +1282,26 @@ provide(CHART_WRAPPER_KEY, ganttWrapper)
 .g-gantt-command-slider button:disabled,
 .g-gantt-command-zoom button:disabled,
 .g-gantt-command-groups button:disabled,
-.g-gantt-command-history button:disabled {
+.g-gantt-command-history button:disabled,
+.g-gantt-export-container button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.g-gantt-export-select {
+  border-radius: 4px;
+  font-size: 0.75rem;
+  padding-inline: 2px;
+  padding-block: 0;
+  height: 22px;
+}
+
+.g-gantt-export-loading {
+  margin-left: 4px;
+}
+
+.g-gantt-export-menu button:hover {
+  background: #f5f5f5;
 }
 
 @media screen and (max-width: 768px) {
@@ -1209,6 +1347,11 @@ provide(CHART_WRAPPER_KEY, ganttWrapper)
   .g-gantt-command-zoom,
   .g-gantt-command-history {
     justify-content: center;
+  }
+
+  .g-gantt-command-export {
+    display: flex;
+    align-items: center;
   }
 
   .command-icon {
