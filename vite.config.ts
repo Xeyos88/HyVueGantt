@@ -56,8 +56,11 @@ export default () => {
           "@fortawesome/vue-fontawesome",
           "@fortawesome/free-solid-svg-icons",
           "@vueuse/core",
+          "html2canvas",
+          "jspdf",
           "lodash-es",
-          "uuid"
+          "uuid",
+          "xlsx"
         ],
         output: {
           // Provide global variables to use in the UMD build
@@ -67,7 +70,10 @@ export default () => {
             dayjs: "dayjs",
             "date-holidays": "date-holidays",
             "lodash-es": "lodash-es",
-            uuid: "uuid"
+            uuid: "uuid",
+            html2canvas: "html2canvas",
+            jspdf: "jspdf",
+            xlsx: "xlsx"
           },
           exports: "named"
         }

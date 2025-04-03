@@ -1,5 +1,6 @@
 import type { ConnectionPoint, GanttBarObject } from "./bar"
 import type { ChartRow, SortState } from "./chart"
+import type { ExportResult } from "./export"
 
 export interface GanttBarEvent {
   bar: GanttBarObject
@@ -92,4 +93,7 @@ export interface GGanttChartEmits {
   (e: "connection-cancel", value: ConnectionStartEvent): void
   (e: "connection-delete", value: ConnectionDeleteEvent): void
   (e: "label-edit", value: LabelEditEvent): void
+  (e: "export-start", format: string): void
+  (e: "export-success", result: ExportResult): void
+  (e: "export-error", error: string): void
 }

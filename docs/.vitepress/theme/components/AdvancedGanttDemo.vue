@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
-import type { ConnectionType, ConnectionSpeed, MarkerConnection, TimeUnit, DayOptionLabel, ConnectionPattern, GanttBarConnection, GanttBarObject, ChartRow } from 'hy-vue-gantt'
+import type { ConnectionType, ConnectionSpeed, MarkerConnection, TimeUnit, DayOptionLabel, ConnectionPattern, GanttBarObject, ChartRow, ExportOptions } from 'hy-vue-gantt'
 
 const sections = ref<{ [key: string]: boolean }>({
   timeConfig: false,
   displayConfig: false,
   connectionConfig: false,
   behaviorConfig: false,
-  slotsConfig: false
+  slotsConfig: false,
+  exportConfig: false
+
 })
 
 const toggleSection = (section: string) => {
@@ -75,6 +77,28 @@ const defaultProgressResizable = ref(true)
 const enableConnectionCreation = ref(true)
 const enableConnectionDeletion = ref(true)
 
+// Export Configuration
+const exportEnabled = ref(true)
+const exportFormat = ref<'pdf' | 'png' | 'svg' | 'excel'>('pdf')
+const exportQuality = ref(0.95)
+const exportPaperSize = ref<'a4' | 'a3' | 'letter' | 'legal'>('a4')
+const exportOrientation = ref<'portrait' | 'landscape'>('landscape')
+const exportScale = ref(1.5)
+const exportColumnLabel = ref(true)
+const exportMargin = ref(10)
+
+// Computed export options object
+const exportOptions = computed<ExportOptions>(() => ({
+  format: exportFormat.value,
+  quality: exportQuality.value,
+  paperSize: exportPaperSize.value,
+  orientation: exportOrientation.value,
+  scale: exportScale.value,
+  margin: exportMargin.value,
+  filename: `gantt-export-${new Date().toISOString().slice(0, 10)}`,
+  exportColumnLabel: exportColumnLabel.value
+}))
+
 const multiColumnOptions = ['Label','StartDate','EndDate','Id','Duration', 'Progress']
 const columnsSelected = ref(["Label"])
 const multiColumnLabel = computed(() =>  columnsSelected.value.map((el) => {return {
@@ -96,7 +120,9 @@ const availableConnectionPatterns = ['solid', 'dash', 'dot', 'dashdot']
 const availableConnectionSpeeds = ['slow', 'normal', 'fast']
 const availableMarkerTypes = ['none', 'forward', 'bidirectional']
 const availableDayOptions = ['day', 'name', 'doy', 'number']
-
+const availableExportFormats = ['pdf', 'png', 'svg', 'excel']
+const availablePaperSizes = ['a4', 'a3', 'letter', 'legal']
+const availableOrientations = ['portrait', 'landscape']
 // Slot Customization Settings
 const customSlots = ref({
   commands: false,
@@ -308,6 +334,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
             ganttBarConfig: {
               id: 'bar10',
               label: 'Task B',
+              milestoneId: 'milestone1',
               style: { background: '#8e44ad' },
               bundle: 'bundle1',
               progress: 45,
@@ -536,44 +563,68 @@ const formattedEventLog = computed(() => {
         </div>
 
         <div class="settings-group">
-          <h4 @click="toggleSection('slotConfig')" class="toggle-header">Slot Customization
-            <span :class="{'arrow-down': sections.slotConfig, 'arrow-up': !sections.slotConfig}">▼</span>
+          <h4 @click="toggleSection('exportConfig')" class="toggle-header">Export Settings
+            <span :class="{'arrow-down': sections.exportConfig, 'arrow-up': !sections.exportConfig}">▼</span>
           </h4>
-          <div v-if="sections.slotConfig" class="settings-grid">
+          <div v-if="sections.exportConfig" class="settings-grid">
             <div class="setting-item">
               <label>
-                Custom Commands:
-                <input type="checkbox" v-model="customSlots.commands">
+                Enable Export:
+                <input type="checkbox" v-model="exportEnabled">
               </label>
             </div>
             <div class="setting-item">
               <label>
-                Custom Bar Label:
-                <input type="checkbox" v-model="customSlots.barLabel">
+                Enable Column Label:
+                <input type="checkbox" v-model="exportColumnLabel">
               </label>
             </div>
             <div class="setting-item">
               <label>
-                Custom Bar Tooltip:
-                <input type="checkbox" v-model="customSlots.barTooltip">
+                Format:
+                <select v-model="exportFormat">
+                  <option v-for="format in availableExportFormats" :key="format" :value="format">
+                    {{ format }}
+                  </option>
+                </select>
               </label>
             </div>
             <div class="setting-item">
               <label>
-                Custom Current Time Label:
-                <input type="checkbox" v-model="customSlots.currentTimeLabel">
+                Paper Size:
+                <select v-model="exportPaperSize">
+                  <option v-for="size in availablePaperSizes" :key="size" :value="size">
+                    {{ size }}
+                  </option>
+                </select>
               </label>
             </div>
             <div class="setting-item">
               <label>
-                Custom Pointer Marker Tooltips:
-                <input type="checkbox" v-model="customSlots.pointerMarkerTooltips">
+                Orientation:
+                <select v-model="exportOrientation">
+                  <option v-for="orient in availableOrientations" :key="orient" :value="orient">
+                    {{ orient }}
+                  </option>
+                </select>
               </label>
             </div>
             <div class="setting-item">
               <label>
-                Custom Time Unit:
-                <input type="checkbox" v-model="customSlots.upperTimeunit">
+                Quality (0-1):
+                <input type="number" v-model="exportQuality" min="0.1" max="1" step="0.05">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Scale (0.5-3):
+                <input type="number" v-model="exportScale" min="0.5" max="3" step="0.1">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Margin (px):
+                <input type="number" v-model="exportMargin" min="0" max="50">
               </label>
             </div>
           </div>
@@ -754,6 +805,50 @@ const formattedEventLog = computed(() => {
             </div>
           </div>
         </div>
+
+        <div class="settings-group">
+          <h4 @click="toggleSection('slotConfig')" class="toggle-header">Slot Customization
+            <span :class="{'arrow-down': sections.slotConfig, 'arrow-up': !sections.slotConfig}">▼</span>
+          </h4>
+          <div v-if="sections.slotConfig" class="settings-grid">
+            <div class="setting-item">
+              <label>
+                Custom Commands:
+                <input type="checkbox" v-model="customSlots.commands">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Custom Bar Label:
+                <input type="checkbox" v-model="customSlots.barLabel">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Custom Bar Tooltip:
+                <input type="checkbox" v-model="customSlots.barTooltip">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Custom Current Time Label:
+                <input type="checkbox" v-model="customSlots.currentTimeLabel">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Custom Pointer Marker Tooltips:
+                <input type="checkbox" v-model="customSlots.pointerMarkerTooltips">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Custom Time Unit:
+                <input type="checkbox" v-model="customSlots.upperTimeunit">
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -810,6 +905,8 @@ const formattedEventLog = computed(() => {
         :timeaxis-events="events"
         :showEventsAxis="showEventsAxis"
         :eventsAxisHeight="eventsAxisHeight"
+        :exportEnabled="exportEnabled"
+        :exportOptions="exportOptions"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"
@@ -821,6 +918,9 @@ const formattedEventLog = computed(() => {
         @connection-complete="handleEvent($event, 'Connection Complete')"
         @connection-delete="handleEvent($event, 'Connection Deleted')"
         @label-edit="handleEvent($event, 'Bar Label Edited')"
+        @export-start="handleEvent($event, 'Start Export')"
+        @export-success="handleEvent($event, 'Start Success')"
+        @export-error="handleEvent($event, 'Start Error')"
       >
         <g-gantt-row
           v-for="row in sampleData"

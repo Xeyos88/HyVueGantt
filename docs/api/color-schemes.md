@@ -16,12 +16,12 @@ interface ColorScheme {
   markerCurrentTime: Color;
   text: Color;
   background: Color;
-  toast?: Color;
   commands?: Color;
   rangeHighlight?: Color;
   holidayHighlight?: Color;
   barContainer?: Color;
   rowContainer?: Color;
+  gridAndBorder?: Color;
 }
 ```
 

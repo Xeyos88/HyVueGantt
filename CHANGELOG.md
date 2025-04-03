@@ -8,12 +8,9 @@ All notable changes to this project will be documented in this file.
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.3.0...v3.4.0)
 
-
-
 **✨ New Features:**
 
 - change tooltip position depending on chart position on page
-- Events time axis
 - Events time axis
 - MVP pointer marker
 

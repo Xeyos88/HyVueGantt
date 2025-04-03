@@ -6,10 +6,31 @@ This guide will help you install and setup HyVue Gantt in your Vue 3 project.
 
 Before installing HyVue Gantt, ensure your project meets these prerequisites:
 
-- Vue 3.3 or higher
+- Vue 3.5+ or higher
 - TypeScript 5.0 or higher (recommended but optional)
 - Node.js 16 or higher
 - npm 7 or higher or yarn 1.22 or higher
+
+## Dependencies
+
+HyVue Gantt relies on the following peer dependencies:
+
+```json
+"peerDependencies": {
+  "@fortawesome/free-brands-svg-icons": "^6.7.1",
+  "@fortawesome/free-regular-svg-icons": "^6.7.1",
+  "@fortawesome/free-solid-svg-icons": "^6.7.1",
+  "@fortawesome/vue-fontawesome": "^3.0.8",
+  "@vueuse/core": "^12.0.0",
+  "date-holidays": "^3.23.14",
+  "dayjs": "^1.11.13",
+  "lodash-es": "^4.17.21",
+  "uuid": "^11.0.5",
+  "vue": "^3.5.13"
+}
+```
+
+These dependencies will be installed automatically when you install HyVue Gantt, but you should be aware of them if you need to manage version conflicts or if you already use some of these libraries.
 
 ## Installation Methods
 
@@ -68,14 +89,6 @@ HyVue Gantt includes built-in TypeScript declarations. To get full TypeScript su
   }
 }
 ```
-
-## Additional Dependencies
-
-HyVue Gantt automatically handles these dependencies, but it's good to know they're being used:
-
-- dayjs: For date manipulation
-- @vueuse/core: For Vue composition utilities
-- @fortawesome/fontawesome: For icons
 
 ## What's Next?
 

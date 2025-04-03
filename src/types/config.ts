@@ -13,6 +13,7 @@ import type {
   TimeaxisEvent
 } from "./chart"
 import type { ColorScheme } from "./style"
+import type { ExportOptions } from "./export"
 
 export interface GGanttChartProps {
   chartStart: string | Date
@@ -72,6 +73,8 @@ export interface GGanttChartProps {
   defaultProgressResizable?: boolean
   utc?: boolean
   barLabelEditable?: boolean
+  exportEnabled?: boolean
+  exportOptions?: ExportOptions
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
