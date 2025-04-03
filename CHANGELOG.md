@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v3.5.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.5.0) (2025-04-03)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.4.0...v3.5.0)
+
+
+
+**✨ New Features:**
+
+- Export Gantt in: pdf, png, svg and excel
+
+**📚 Documentation:**
+
+- Update documentation
+
 ## [v3.4.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.4.0) (2025-03-14)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.3.0...v3.4.0)
