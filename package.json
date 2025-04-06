@@ -1,6 +1,6 @@
 {
   "name": "hy-vue-gantt",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "description": "Evolution of vue-ganttastic package",
   "author": "Eugenio Topa (@Xeyos88)",
   "scripts": {
@@ -62,7 +62,7 @@
     "semantic-release": "^24.2.0",
     "terser": "^5.37.0",
     "typescript": "~5.4.3",
-    "vite": "^6.0.9",
+    "vite": "^6.2.5",
     "vite-plugin-dts": "^4.5.0",
     "vitepress": "^1.5.0",
     "vitest": "^3.0.5",
@@ -81,7 +81,7 @@
     "lodash-es": "^4.17.21",
     "uuid": "^11.0.5",
     "vue": "^3.5.13",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
   },
   "homepage": "https://xeyos88.github.io/HyVueGantt/",
   "keywords": [
