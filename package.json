@@ -42,7 +42,9 @@
     "@senojs/rollup-plugin-style-inject": "^0.2.3",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^22.10.1",
+    "@types/papaparse": "^5.3.15",
     "@types/postcss-preset-env": "^7.7.0",
+    "@types/xml2js": "^0.4.14",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vitest/coverage-v8": "^3.0.5",
     "@vue/eslint-config-prettier": "^10.1.0",
@@ -76,12 +78,14 @@
     "@vueuse/core": "^12.0.0",
     "date-holidays": "^3.23.14",
     "dayjs": "^1.11.13",
-    "jspdf": "^3.0.1",
     "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
     "lodash-es": "^4.17.21",
+    "papaparse": "^5.5.2",
     "uuid": "^11.0.5",
     "vue": "^3.5.13",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
+    "xml2js": "^0.6.2"
   },
   "homepage": "https://xeyos88.github.io/HyVueGantt/",
   "keywords": [

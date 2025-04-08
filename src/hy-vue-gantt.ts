@@ -13,6 +13,8 @@ import utc from "dayjs/plugin/utc"
 
 import GGanttChart from "./components/GGanttChart.vue"
 import GGanttRow from "./components/GGanttRow.vue"
+import GGanttImporter from "./components/GGanttImporter.vue"
+
 import type {
   ColorScheme,
   GanttBarObject,
@@ -42,7 +44,13 @@ import type {
   LabelEditEvent,
   TimeaxisEvent,
   ExportOptions,
-  ExportResult
+  ExportResult,
+  ImportFormat,
+  ImportOptions,
+  ImportResult,
+  MSProjectData,
+  JiraData,
+  SpreadsheetRow
 } from "./types"
 
 import "dayjs/locale/it"
@@ -145,15 +153,22 @@ export type {
   LabelEditEvent,
   TimeaxisEvent,
   ExportOptions,
-  ExportResult
+  ExportResult,
+  ImportFormat,
+  ImportOptions,
+  ImportResult,
+  MSProjectData,
+  JiraData,
+  SpreadsheetRow
 }
-export { GGanttChart, GGanttRow }
+export { GGanttChart, GGanttRow, GGanttImporter }
 
 export const hyvuegantt: Plugin = {
   install(app) {
     extendDayjs()
     app.component("GGanttChart", GGanttChart)
     app.component("GGanttRow", GGanttRow)
+    app.component("GGanttImporter", GGanttImporter)
   }
 }
 
