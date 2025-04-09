@@ -4,7 +4,7 @@ export type ImportFormat = "msproject" | "jira" | "csv" | "excel"
 
 export interface ImportOptions {
   format: ImportFormat
-  dateFormat?: string
+  dateFormat?: string | boolean
   mapFields?: Record<string, string>
   skipValidation?: boolean
   onProgress?: (progress: number) => void

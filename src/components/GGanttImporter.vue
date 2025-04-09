@@ -2,7 +2,7 @@
 // -----------------------------
 // 1. EXTERNAL IMPORTS
 // -----------------------------
-import { ref, computed, watch } from "vue"
+import { ref, computed, watch, inject } from "vue"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import {
   faFileImport,
@@ -19,20 +19,16 @@ import { useImport } from "../composables/useImport"
 import type { ImportFormat, ImportOptions, ImportResult } from "../types/import"
 import type { ColorScheme } from "../types"
 import { colorSchemes } from "../color-schemes"
+import { CONFIG_KEY } from "../provider/symbols"
 
 // -----------------------------
 // 3. PROPS AND CONFIGURATION
 // -----------------------------
 const props = defineProps<{
   modelValue?: boolean
-  defaultFormat?: ImportFormat
   title?: string
+  defaultFormat?: ImportFormat
   allowedFormats?: ImportFormat[]
-  dateFormat?: string
-  fontFamily?: string
-  colorScheme?: string | ColorScheme
-  barStartField?: string
-  barEndField?: string
 }>()
 
 const emit = defineEmits<{
@@ -42,7 +38,23 @@ const emit = defineEmits<{
 }>()
 
 // -----------------------------
-// 4. INTERNAL STATE
+// 4. INJECT SHARED CONFIGURATION
+// -----------------------------
+// Inject configuration from parent GGanttChart component
+const config = inject(CONFIG_KEY)
+if (!config) {
+  throw Error("GGanttImporter must be used as a child of GGanttChart!")
+}
+
+// Extract relevant properties from configuration
+const dateFormat = computed(() => config.dateFormat.value)
+const font = computed(() => config.font.value)
+const colorScheme = computed(() => config.colorScheme.value)
+const barStart = computed(() => config.barStart.value)
+const barEnd = computed(() => config.barEnd.value)
+
+// -----------------------------
+// 5. INTERNAL STATE
 // -----------------------------
 const { importFromFile, isImporting, importProgress, lastError } = useImport()
 
@@ -50,8 +62,8 @@ const visible = ref(props.modelValue || false)
 const selectedFormat = ref<ImportFormat>(props.defaultFormat || "msproject")
 const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
-const mapStartField = ref<string>(props.barStartField || "start")
-const mapEndField = ref<string>(props.barEndField || "end")
+const mapStartField = ref<string>(barStart.value)
+const mapEndField = ref<string>(barEnd.value)
 const importWarnings = ref<string[]>([])
 const importSuccess = ref<boolean | null>(null)
 const showOptions = ref(false)
@@ -60,13 +72,13 @@ const activeStep = ref(1)
 // -----------------------------
 // 5. COMPUTED PROPERTIES
 // -----------------------------
-const fontStyle = computed(() => props.fontFamily || "inherit")
+const fontStyle = computed(() => font.value || "inherit")
 
 const colors = computed<ColorScheme>(() => {
-  if (typeof props.colorScheme === "string") {
-    return colorSchemes[props.colorScheme as keyof typeof colorSchemes]! || colorSchemes.default
+  if (typeof colorScheme.value === "string") {
+    return colorSchemes[colorScheme.value as keyof typeof colorSchemes]! || colorSchemes.default
   }
-  return props.colorScheme! || colorSchemes.default
+  return colorScheme.value! || colorSchemes.default
 })
 
 const textStyle = computed(() => colors.value.text)
@@ -77,9 +89,9 @@ const tertiaryStyle = computed(() => colors.value.ternary)
 
 // Colors for specific elements
 const accentColor = computed(() => colors.value.rangeHighlight || "#4a9eff")
-const successColor = computed(() => "#4caf50") // Keep green as success color
-const errorColor = computed(() => "#f44336") // Red for errors
-const warningColor = computed(() => "#ffc107") // Yellow for warnings
+const successColor = computed(() => "#4caf50")
+const errorColor = computed(() => "#f44336")
+const warningColor = computed(() => "#ffc107")
 
 const availableFormats = computed(() => {
   const formats: { value: ImportFormat; label: string }[] = [
@@ -110,23 +122,17 @@ watch(visible, (newVal) => {
   emit("update:modelValue", newVal)
 })
 
-watch(
-  () => props.barStartField,
-  (newVal) => {
-    if (newVal) {
-      mapStartField.value = newVal
-    }
+watch(barStart, (newVal) => {
+  if (newVal) {
+    mapStartField.value = newVal
   }
-)
+})
 
-watch(
-  () => props.barEndField,
-  (newVal) => {
-    if (newVal) {
-      mapEndField.value = newVal
-    }
+watch(barEnd, (newVal) => {
+  if (newVal) {
+    mapEndField.value = newVal
   }
-)
+})
 
 // -----------------------------
 // 7. METHODS
@@ -164,7 +170,7 @@ const startImport = async () => {
 
   const options: ImportOptions = {
     format: selectedFormat.value,
-    dateFormat: props.dateFormat,
+    dateFormat: dateFormat.value,
     mapFields: {
       startDate: mapStartField.value,
       endDate: mapEndField.value

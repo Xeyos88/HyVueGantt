@@ -13,7 +13,6 @@ import utc from "dayjs/plugin/utc"
 
 import GGanttChart from "./components/GGanttChart.vue"
 import GGanttRow from "./components/GGanttRow.vue"
-import GGanttImporter from "./components/GGanttImporter.vue"
 
 import type {
   ColorScheme,
@@ -161,14 +160,13 @@ export type {
   JiraData,
   SpreadsheetRow
 }
-export { GGanttChart, GGanttRow, GGanttImporter }
+export { GGanttChart, GGanttRow }
 
 export const hyvuegantt: Plugin = {
   install(app) {
     extendDayjs()
     app.component("GGanttChart", GGanttChart)
     app.component("GGanttRow", GGanttRow)
-    app.component("GGanttImporter", GGanttImporter)
   }
 }
 

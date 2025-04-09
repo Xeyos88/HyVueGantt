@@ -68,9 +68,7 @@ export function useImport() {
         if (err) {
           reject(new Error(`Failed to parse MS Project XML: ${err.message}`))
         } else {
-          // Normalize structure if needed
           if (result.Project && result.Project.Tasks) {
-            // Ensure Task is always an array
             if (!Array.isArray(result.Project.Tasks.Task)) {
               result.Project.Tasks.Task = [result.Project.Tasks.Task]
             }
@@ -95,7 +93,6 @@ export function useImport() {
       skipEmptyLines: true,
       dynamicTyping: true,
       transformHeader: (header) => {
-        // Normalize headers by removing spaces and lowercasing
         return header.trim().toLowerCase().replace(/\s+/g, "_")
       }
     })
@@ -117,7 +114,6 @@ export function useImport() {
   const parseExcel = (content: ArrayBuffer): SpreadsheetRow[] => {
     const workbook = XLSX.read(content, { type: "array" })
 
-    // Use first sheet by default
     const firstSheetName = workbook.SheetNames[0]
     if (!firstSheetName) {
       throw new Error("No sheets found in Excel file")
@@ -146,13 +142,11 @@ export function useImport() {
     const warnings: string[] = []
     const allTasks = data.Tasks.Task || []
 
-    // Create a map of all tasks for easy lookup
     const taskMap = new Map<string, MSProjectTask>()
     for (const task of allTasks) {
       taskMap.set(task.UID, task)
     }
 
-    // Create a map for task's parent relationship
     const parentChildMap = new Map<string, string[]>()
     allTasks.forEach((task) => {
       if (task.ParentTaskUID) {
@@ -163,7 +157,6 @@ export function useImport() {
       }
     })
 
-    // Process tasks and build hierarchical structure
     const rootTasks = allTasks.filter(
       (task) => !task.ParentTaskUID || !taskMap.has(task.ParentTaskUID) || task.OutlineLevel === 1
     )
@@ -173,7 +166,6 @@ export function useImport() {
      */
     const buildRows = (tasks: MSProjectTask[]): ChartRow[] => {
       return tasks.map((task) => {
-        // Create bar config
         const barConfig: GanttBarConfig = {
           id: `task-${task.UID}`,
           label: task.Name,
@@ -182,31 +174,25 @@ export function useImport() {
           connections: []
         }
 
-        // Process duration and dates
         let startDate = task.Start
         let endDate = task.Finish
 
         if (!startDate || !endDate) {
           warnings.push(`Task "${task.Name}" has missing date information`)
-          // Set default dates if missing
           startDate = dayjs().format("YYYY-MM-DD")
           endDate = dayjs().add(1, "day").format("YYYY-MM-DD")
         }
 
-        // Create the bar object
         const barObject: GanttBarObject = {
           [options.mapFields?.startDate || "start"]: startDate,
           [options.mapFields?.endDate || "end"]: endDate,
           ganttBarConfig: barConfig
         }
 
-        // Process dependencies
         if (task.PredecessorLink && Array.isArray(task.PredecessorLink)) {
           task.PredecessorLink.forEach((link) => {
-            // Find the predecessor task and add a connection FROM the predecessor TO this task
             const predecessorTask = taskMap.get(link.PredecessorUID)
             if (predecessorTask) {
-              // Add connection from predecessor to current task
               const existingBarIndex = allTasks.findIndex((t) => t.UID === predecessorTask.UID)
               if (existingBarIndex !== -1) {
                 if (!allTasks[existingBarIndex]!.connections) {
@@ -221,21 +207,17 @@ export function useImport() {
           })
         }
 
-        // Create chart row
         const chartRow: ChartRow = {
           id: task.UID,
           label: task.Name,
           bars: [barObject]
         }
 
-        // Add milestone flag if applicable
         if (task.Milestone) {
           barConfig.class = "milestone"
-          // For milestones typically the end date equals start date
           barObject[options.mapFields?.endDate || "end"] = startDate
         }
 
-        // Process child tasks recursively
         const childIds = parentChildMap.get(task.UID) || []
         if (childIds.length > 0) {
           const childTasks = childIds
@@ -267,13 +249,13 @@ export function useImport() {
 
     switch (type) {
       case 0:
-        return "straight" // FS
+        return "straight"
       case 1:
-        return "bezier" // SS
+        return "bezier"
       case 2:
-        return "bezier" // FF
+        return "bezier"
       case 3:
-        return "squared" // SF
+        return "squared"
       default:
         return "straight"
     }
@@ -293,23 +275,19 @@ export function useImport() {
     const warnings: string[] = []
     const issues = data.issues || []
 
-    // Create a map of all issues for easy lookup
     const issueMap = new Map()
     for (const issue of issues) {
       issueMap.set(issue.id, issue)
     }
 
-    // Find root issues (no parent or parent not in the dataset)
     const rootIssues = issues.filter(
       (issue) => !issue.fields.parent || !issueMap.has(issue.fields.parent.id)
     )
 
-    // Build issue tree
     const buildRows = (issues: JiraIssue[]): ChartRow[] => {
       return issues.map((issue) => {
         const { fields } = issue
 
-        // Determine start and end dates
         let startDate = fields.created
         let endDate = fields.duedate || fields.updated
 
@@ -319,7 +297,6 @@ export function useImport() {
           endDate = dayjs().add(7, "day").format("YYYY-MM-DD")
         }
 
-        // Calculate progress based on status
         let progress = 0
         if (fields.status) {
           switch (fields.status.name.toLowerCase()) {
@@ -336,14 +313,12 @@ export function useImport() {
               progress = 100
               break
             default:
-              // Try to estimate progress from status name
               if (fields.status.name.toLowerCase().includes("progress")) {
                 progress = 50
               }
           }
         }
 
-        // Create bar config
         const barConfig: GanttBarConfig = {
           id: `issue-${issue.key}`,
           label: fields.summary,
@@ -351,17 +326,13 @@ export function useImport() {
           connections: []
         }
 
-        // Add issue type as CSS class
         if (fields.issuetype) {
           barConfig.class = fields.issuetype.name.toLowerCase().replace(/\s+/g, "-")
         }
 
-        // Process links/dependencies
         if (fields.issuelinks && Array.isArray(fields.issuelinks)) {
           fields.issuelinks.forEach((link) => {
-            // Invert the connection direction - issues that this issue depends on should point to this issue
             if (link.outwardIssue) {
-              // Find the source issue and add a connection FROM the source TO this issue
               const sourceIssue = issues.find((i) => i.key === link.outwardIssue!.key)
               if (sourceIssue) {
                 const sourceIssueConfig = sourceIssue.fields.barConfig || { connections: [] }
@@ -378,21 +349,18 @@ export function useImport() {
           })
         }
 
-        // Create bar object
         const barObject: GanttBarObject = {
           [options.mapFields?.startDate || "start"]: startDate,
           [options.mapFields?.endDate || "end"]: endDate,
           ganttBarConfig: barConfig
         }
 
-        // Create chart row
         const chartRow: ChartRow = {
           id: issue.id,
           label: fields.summary,
           bars: [barObject]
         }
 
-        // Process subtasks recursively
         if (fields.subtasks && Array.isArray(fields.subtasks) && fields.subtasks.length > 0) {
           chartRow.children = buildRows(fields.subtasks)
         }
@@ -414,14 +382,11 @@ export function useImport() {
   const ensureDateHasTime = (dateStr: string | null | undefined): string => {
     if (!dateStr) return dayjs().format("YYYY-MM-DD HH:mm:ss")
 
-    // Try to parse the date
     const date = dayjs(dateStr)
     if (!date.isValid()) {
       return dayjs().format("YYYY-MM-DD HH:mm:ss")
     }
 
-    // Check if there's a time component by testing if hours and minutes are 0
-    // and the original string doesn't contain time indicators
     const hasTimeComponent =
       date.hour() !== 0 ||
       date.minute() !== 0 ||
@@ -446,7 +411,6 @@ export function useImport() {
   ): { rows: ChartRow[]; warnings: string[] } => {
     const warnings: string[] = []
 
-    // Map field names to expected properties
     const fieldMap = {
       id: ["id", "taskid", "task_id", "key"],
       name: ["name", "task", "taskname", "task_name", "summary", "title"],
@@ -470,7 +434,6 @@ export function useImport() {
       ...options.mapFields
     }
 
-    // Normalize field names from the data
     const normalizeFieldName = (
       row: SpreadsheetRow,
       fieldOptions: string[]
@@ -485,7 +448,6 @@ export function useImport() {
       return undefined
     }
 
-    // Build a map of tasks by ID for easy lookup
     const rowsById = new Map<
       string | number,
       SpreadsheetRow & {
@@ -494,7 +456,6 @@ export function useImport() {
       }
     >()
 
-    // First pass: identify all tasks and setup parent-child relationships
     data.forEach((row) => {
       const idField = normalizeFieldName(row, fieldMap.id as string[])
       const id = idField ? row[idField] : undefined
@@ -507,7 +468,6 @@ export function useImport() {
       rowsById.set(id, { ...row, children: [], barConfig: { id: `task-${id}`, connections: [] } })
     })
 
-    // Second pass: establish parent-child relationships and process dependencies
     data.forEach((row) => {
       const idField = normalizeFieldName(row, fieldMap.id as string[])
       const id = idField ? row[idField] : undefined
@@ -524,23 +484,18 @@ export function useImport() {
         }
       }
 
-      // Process dependencies - this is where we need to fix the direction
       const dependenciesField = normalizeFieldName(row, fieldMap.dependencies as string[])
       if (dependenciesField && row[dependenciesField]) {
         const dependencies = String(row[dependenciesField]).split(/[,;]\s*/)
 
         dependencies.forEach((depId) => {
-          // Try to find the dependency by ID, accounting for potential type differences
           const depIdAsNumber = Number(depId)
           const depIdAsString = String(depId)
 
-          // Check if dependency exists in either format
           const dependencyExists = rowsById.has(depIdAsNumber) || rowsById.has(depIdAsString)
           const dependencyRow = rowsById.get(depIdAsNumber) || rowsById.get(depIdAsString)
 
           if (dependencyExists && dependencyRow) {
-            // Inverto la direzione delle dipendenze
-            // Aggiungo una connessione DAL predecessore (depId) A questo task (id)
             if (dependencyRow.barConfig) {
               dependencyRow.barConfig.connections = dependencyRow.barConfig.connections || []
               dependencyRow.barConfig.connections.push({
@@ -555,7 +510,6 @@ export function useImport() {
       }
     })
 
-    // Identify root rows (no parent or parent not in dataset)
     const rootIds = Array.from(rowsById.keys()).filter((id) => {
       const row = rowsById.get(id)
       if (!row) return false
@@ -566,7 +520,6 @@ export function useImport() {
       return !parentId || !rowsById.has(parentId)
     })
 
-    // Build Gantt rows recursively
     const buildRows = (ids: (string | number)[]): ChartRow[] => {
       return ids.map((id) => {
         const row = rowsById.get(id)
@@ -616,7 +569,6 @@ export function useImport() {
             row[milestoneField] === 1
           : false
 
-        // CORREZIONE: Gestione migliore dei formati di data con ore
         let start = startDate
           ? ensureDateHasTime(String(startDate))
           : dayjs().format("YYYY-MM-DD HH:mm:ss")
@@ -628,7 +580,6 @@ export function useImport() {
           end = start
         }
 
-        // Get bar config with any connections already set up during dependency processing
         const barConfig: GanttBarConfig = {
           ...row.barConfig,
           id: `task-${id}`,

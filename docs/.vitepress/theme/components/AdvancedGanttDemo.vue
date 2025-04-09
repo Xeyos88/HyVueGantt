@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { GGanttChart, GGanttRow, GGanttImporter } from 'hy-vue-gantt'
+import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
 import type { ConnectionType, ConnectionSpeed, MarkerConnection, TimeUnit, DayOptionLabel, ConnectionPattern, GanttBarObject, ChartRow, ExportOptions, ImportResult } from 'hy-vue-gantt'
 
 const sections = ref<{ [key: string]: boolean }>({
@@ -161,11 +161,10 @@ const addEventLog = (type: string, data: any) => {
 const handleEvent = (event: any, type: string) => {
   addEventLog(type, event)
 }
-// Import Handler
+
 const handleImport = (result: ImportResult) => {
-  console.log(result.data?.rows)
   if (result.success && result.data) {
-    sampleData.value = result.data.rows
+    showImporter.value = false
     
     /*if (result.data.chartStart) {
       chartStart.value = result.data.chartStart instanceof Date 
@@ -955,6 +954,10 @@ const formattedEventLog = computed(() => {
         :eventsAxisHeight="eventsAxisHeight"
         :exportEnabled="exportEnabled"
         :exportOptions="exportOptions"
+        :show-importer="showImporter"
+        :importer-title="'Import project data'"
+        :importer-default-format="'csv'"
+        :importer-allowed-formats="['msproject', 'jira', 'csv', 'excel']"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"
@@ -969,6 +972,7 @@ const formattedEventLog = computed(() => {
         @export-start="handleEvent($event, 'Start Export')"
         @export-success="handleEvent($event, 'Start Success')"
         @export-error="handleEvent($event, 'Start Error')"
+        @import-data="handleImport"
       >
         <g-gantt-row
           v-for="row in sampleData"
@@ -1085,20 +1089,6 @@ const formattedEventLog = computed(() => {
           </div>
         </template>
       </g-gantt-chart>
-
-      <!-- Importer Component -->
-      <GGanttImporter
-        v-model="showImporter"
-        title="Import project data"
-        :allowed-formats="['msproject', 'jira', 'csv', 'excel']"
-        date-format="YYYY-MM-DD"
-        :color-scheme="colorScheme"
-        :font-family="font"
-        :bar-start-field="'start'"
-        :bar-end-field="'end'"
-        @import="handleImport"
-      />
-
       <!-- Event Log Panel -->
       <div class="event-log">
         <h4>Event Log</h4>
