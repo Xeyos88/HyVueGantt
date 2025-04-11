@@ -59,7 +59,7 @@ const barEnd = computed(() => config.barEnd.value)
 const { importFromFile, isImporting, importProgress, lastError } = useImport()
 
 const visible = ref(props.modelValue || false)
-const selectedFormat = ref<ImportFormat>(props.defaultFormat || "msproject")
+const selectedFormat = ref<ImportFormat>(props.defaultFormat || "csv")
 const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const mapStartField = ref<string>(barStart.value)
@@ -95,7 +95,6 @@ const warningColor = computed(() => "#ffc107")
 
 const availableFormats = computed(() => {
   const formats: { value: ImportFormat; label: string }[] = [
-    { value: "msproject", label: "MS Project (XML/MPP)" },
     { value: "jira", label: "Jira (JSON)" },
     { value: "csv", label: "CSV" },
     { value: "excel", label: "Excel (XLSX/XLS)" }
@@ -146,11 +145,8 @@ const handleFileSelect = (event: Event) => {
   if (input.files && input.files.length > 0) {
     selectedFile.value = input.files[0]!
 
-    // Auto-detect format from file extension
     const fileName = selectedFile.value.name.toLowerCase()
-    if (fileName.endsWith(".xml") || fileName.endsWith(".mpp")) {
-      selectedFormat.value = "msproject"
-    } else if (fileName.endsWith(".json")) {
+    if (fileName.endsWith(".json")) {
       selectedFormat.value = "jira"
     } else if (fileName.endsWith(".csv")) {
       selectedFormat.value = "csv"
@@ -361,8 +357,6 @@ const close = () => {
                     availableFormats
                       .map((f) => {
                         switch (f.value) {
-                          case 'msproject':
-                            return '.xml,.mpp'
                           case 'jira':
                             return '.json'
                           case 'csv':

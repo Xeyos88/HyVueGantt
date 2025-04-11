@@ -2,6 +2,8 @@
 import { ref, computed } from 'vue'
 import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
 import type { ConnectionType, ConnectionSpeed, MarkerConnection, TimeUnit, DayOptionLabel, ConnectionPattern, GanttBarObject, ChartRow, ExportOptions, ImportResult } from 'hy-vue-gantt'
+import { downloadSampleCSV } from './CSVGenerator'
+import {downloadSampleJIRA} from './JIRAGEnerator'
 
 const sections = ref<{ [key: string]: boolean }>({
   timeConfig: false,
@@ -672,6 +674,24 @@ const formattedEventLog = computed(() => {
                 style="width: 100%; padding: 8px; background: #42b883; color: white; border: none; border-radius: 4px; cursor: pointer;"
               >
                 Open Importer
+              </button>
+            </div>
+            <div class="setting-item">
+              <button
+                class="download-csv-button"
+                @click="downloadSampleCSV"
+                style="width: 100%; padding: 8px; background: #42b883; color: white; border: none; border-radius: 4px; cursor: pointer;"
+              >
+                Download Example CSV
+              </button>
+            </div>
+            <div class="setting-item">
+              <button
+                class="download-csv-button"
+                @click="downloadSampleJIRA"
+                style="width: 100%; padding: 8px; background: #42b883; color: white; border: none; border-radius: 4px; cursor: pointer;"
+              >
+                Download Example JIRA
               </button>
             </div>
           </div>

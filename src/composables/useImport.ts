@@ -1,18 +1,21 @@
 import { ref } from "vue"
 import dayjs from "dayjs"
-import type { ChartRow, GanttBarObject, GanttBarConfig } from "../types"
+import type {
+  ChartRow,
+  GanttBarObject,
+  GanttBarConfig,
+  BaseConnection,
+  ConnectionType
+} from "../types"
 import type {
   ImportOptions,
   ImportResult,
-  MSProjectData,
   JiraData,
   SpreadsheetRow,
   ImportFormat,
-  JiraIssue,
-  MSProjectTask
+  JiraIssue
 } from "../types/import"
 import * as XLSX from "xlsx"
-import { parseString } from "xml2js"
 import Papa from "papaparse"
 
 /**
@@ -39,8 +42,6 @@ export function useImport() {
   ): Promise<any> => {
     try {
       switch (format) {
-        case "msproject":
-          return await parseMsProject(content.toString())
         case "jira":
           return JSON.parse(content.toString())
         case "csv":
@@ -54,31 +55,6 @@ export function useImport() {
       const errorMessage = error instanceof Error ? error.message : "Unknown error during parsing"
       throw new Error(`Failed to parse file: ${errorMessage}`)
     }
-  }
-
-  /**
-   * Parses MS Project XML format
-   *
-   * @param xmlContent - XML content to parse
-   * @returns Promise with parsed data
-   */
-  const parseMsProject = async (xmlContent: string): Promise<MSProjectData> => {
-    return new Promise((resolve, reject) => {
-      parseString(xmlContent, { explicitArray: false }, (err, result) => {
-        if (err) {
-          reject(new Error(`Failed to parse MS Project XML: ${err.message}`))
-        } else {
-          if (result.Project && result.Project.Tasks) {
-            if (!Array.isArray(result.Project.Tasks.Task)) {
-              result.Project.Tasks.Task = [result.Project.Tasks.Task]
-            }
-            resolve(result.Project)
-          } else {
-            reject(new Error("Invalid MS Project XML structure"))
-          }
-        }
-      })
-    })
   }
 
   /**
@@ -129,139 +105,6 @@ export function useImport() {
   }
 
   /**
-   * Converts MS Project data to Gantt chart format
-   *
-   * @param data - MS Project data
-   * @param options - Import options
-   * @returns Rows in Gantt chart format
-   */
-  const convertMsProjectToGantt = (
-    data: MSProjectData,
-    options: ImportOptions
-  ): { rows: ChartRow[]; warnings: string[] } => {
-    const warnings: string[] = []
-    const allTasks = data.Tasks.Task || []
-
-    const taskMap = new Map<string, MSProjectTask>()
-    for (const task of allTasks) {
-      taskMap.set(task.UID, task)
-    }
-
-    const parentChildMap = new Map<string, string[]>()
-    allTasks.forEach((task) => {
-      if (task.ParentTaskUID) {
-        if (!parentChildMap.has(task.ParentTaskUID)) {
-          parentChildMap.set(task.ParentTaskUID, [])
-        }
-        parentChildMap.get(task.ParentTaskUID)?.push(task.UID)
-      }
-    })
-
-    const rootTasks = allTasks.filter(
-      (task) => !task.ParentTaskUID || !taskMap.has(task.ParentTaskUID) || task.OutlineLevel === 1
-    )
-
-    /**
-     * Recursively builds chart rows from tasks
-     */
-    const buildRows = (tasks: MSProjectTask[]): ChartRow[] => {
-      return tasks.map((task) => {
-        const barConfig: GanttBarConfig = {
-          id: `task-${task.UID}`,
-          label: task.Name,
-          progress: task.PercentComplete || 0,
-          immobile: false,
-          connections: []
-        }
-
-        let startDate = task.Start
-        let endDate = task.Finish
-
-        if (!startDate || !endDate) {
-          warnings.push(`Task "${task.Name}" has missing date information`)
-          startDate = dayjs().format("YYYY-MM-DD")
-          endDate = dayjs().add(1, "day").format("YYYY-MM-DD")
-        }
-
-        const barObject: GanttBarObject = {
-          [options.mapFields?.startDate || "start"]: startDate,
-          [options.mapFields?.endDate || "end"]: endDate,
-          ganttBarConfig: barConfig
-        }
-
-        if (task.PredecessorLink && Array.isArray(task.PredecessorLink)) {
-          task.PredecessorLink.forEach((link) => {
-            const predecessorTask = taskMap.get(link.PredecessorUID)
-            if (predecessorTask) {
-              const existingBarIndex = allTasks.findIndex((t) => t.UID === predecessorTask.UID)
-              if (existingBarIndex !== -1) {
-                if (!allTasks[existingBarIndex]!.connections) {
-                  allTasks[existingBarIndex]!.connections = []
-                }
-                allTasks[existingBarIndex]!.connections.push({
-                  targetId: `task-${task.UID}`,
-                  type: mapDependencyType(link.Type)
-                })
-              }
-            }
-          })
-        }
-
-        const chartRow: ChartRow = {
-          id: task.UID,
-          label: task.Name,
-          bars: [barObject]
-        }
-
-        if (task.Milestone) {
-          barConfig.class = "milestone"
-          barObject[options.mapFields?.endDate || "end"] = startDate
-        }
-
-        const childIds = parentChildMap.get(task.UID) || []
-        if (childIds.length > 0) {
-          const childTasks = childIds
-            .map((id) => taskMap.get(id))
-            .filter((task): task is MSProjectTask => !!task)
-
-          chartRow.children = buildRows(childTasks)
-        }
-
-        return chartRow
-      })
-    }
-
-    return {
-      rows: buildRows(rootTasks),
-      warnings
-    }
-  }
-
-  /**
-   * Maps MS Project dependency type to Gantt connection type
-   */
-  const mapDependencyType = (type: number): "bezier" | "straight" | "squared" => {
-    // MS Project dependency types:
-    // 0 = Finish-to-Start (FS) - most common
-    // 1 = Start-to-Start (SS)
-    // 2 = Finish-to-Finish (FF)
-    // 3 = Start-to-Finish (SF) - rarely used
-
-    switch (type) {
-      case 0:
-        return "straight"
-      case 1:
-        return "bezier"
-      case 2:
-        return "bezier"
-      case 3:
-        return "squared"
-      default:
-        return "straight"
-    }
-  }
-
-  /**
    * Converts Jira data to Gantt chart format
    *
    * @param data - Jira data
@@ -275,15 +118,125 @@ export function useImport() {
     const warnings: string[] = []
     const issues = data.issues || []
 
-    const issueMap = new Map()
-    for (const issue of issues) {
-      issueMap.set(issue.id, issue)
-    }
+    // Create maps for efficient lookups
+    const issueMap = new Map<string, JiraIssue>()
+    const barConfigMap = new Map<string, GanttBarConfig>()
 
+    // Mappa per raccogliere tutte le connessioni
+    // Ora utilizziamo il tipo corretto BaseConnection
+    const connectionsMap = new Map<string, BaseConnection[]>()
+
+    // Prima passiamo attraverso tutti gli elementi e creiamo le configurazioni di base
+    issues.forEach((issue) => {
+      issueMap.set(issue.id, issue)
+
+      // Crea la configurazione di base per ogni issue
+      const barConfig: GanttBarConfig = {
+        id: `issue-${issue.key}`,
+        label: issue.fields.summary,
+        progress: calculateProgress(issue.fields.status),
+        connections: [] // Iniziamo con un array vuoto
+      }
+
+      if (issue.fields.issuetype) {
+        barConfig.class = issue.fields.issuetype.name.toLowerCase().replace(/\s+/g, "-")
+      }
+
+      barConfigMap.set(issue.key, barConfig)
+    })
+
+    // Ora processiamo tutti i collegamenti
+    issues.forEach((issue) => {
+      if (issue.fields.issuelinks && Array.isArray(issue.fields.issuelinks)) {
+        issue.fields.issuelinks.forEach((link) => {
+          // Gestiamo i link in uscita (outwardIssue)
+          if (link.outwardIssue) {
+            const sourceKey = issue.key
+            const targetKey = link.outwardIssue.key
+
+            if (!connectionsMap.has(sourceKey)) {
+              connectionsMap.set(sourceKey, [])
+            }
+
+            // Creiamo un oggetto BaseConnection valido
+            const connection: BaseConnection = {
+              targetId: `issue-${targetKey}`,
+              type: mapLinkTypeToConnectionType(link.type?.name)
+            }
+
+            connectionsMap.get(sourceKey)?.push(connection)
+          }
+
+          // Gestiamo i link in entrata (inwardIssue)
+          if (link.inwardIssue) {
+            const sourceKey = link.inwardIssue.key
+            const targetKey = issue.key
+
+            if (!connectionsMap.has(sourceKey)) {
+              connectionsMap.set(sourceKey, [])
+            }
+
+            // Creiamo un oggetto BaseConnection valido
+            const connection: BaseConnection = {
+              targetId: `issue-${targetKey}`,
+              type: mapLinkTypeToConnectionType(link.type?.name)
+            }
+
+            connectionsMap.get(sourceKey)?.push(connection)
+          }
+        })
+      }
+    })
+
+    // Create a map to organize child issues by parent ID
+    const childrenMap = new Map<string, JiraIssue[]>()
+
+    // First, process explicit subtasks in issue.fields.subtasks
+    issues.forEach((issue) => {
+      if (
+        issue.fields.subtasks &&
+        Array.isArray(issue.fields.subtasks) &&
+        issue.fields.subtasks.length > 0
+      ) {
+        issue.fields.subtasks.forEach((subtask) => {
+          // Ensure the subtask is also present in our issues array
+          const fullSubtask = issues.find((i) => i.id === subtask.id) || subtask
+
+          if (!childrenMap.has(issue.id)) {
+            childrenMap.set(issue.id, [])
+          }
+          childrenMap.get(issue.id)?.push(fullSubtask)
+        })
+      }
+    })
+
+    // Then, process issues with parent references
+    issues.forEach((issue) => {
+      if (issue.fields.parent && issue.fields.parent.id) {
+        const parentId = issue.fields.parent.id
+
+        // Skip if this is already handled as an explicit subtask
+        const isExplicitSubtask = issues.some(
+          (parentIssue) =>
+            parentIssue.id === parentId &&
+            parentIssue.fields.subtasks?.some((st) => st.id === issue.id)
+        )
+
+        if (!isExplicitSubtask) {
+          if (!childrenMap.has(parentId)) {
+            childrenMap.set(parentId, [])
+          }
+          childrenMap.get(parentId)?.push(issue)
+        }
+      }
+    })
+
+    // Find root issues - those without parents or with parents not in our data set
     const rootIssues = issues.filter(
       (issue) => !issue.fields.parent || !issueMap.has(issue.fields.parent.id)
     )
 
+    // Recursive function to build the Gantt rows
     const buildRows = (issues: JiraIssue[]): ChartRow[] => {
       return issues.map((issue) => {
         const { fields } = issue
@@ -297,57 +250,17 @@ export function useImport() {
           endDate = dayjs().add(7, "day").format("YYYY-MM-DD")
         }
 
-        let progress = 0
-        if (fields.status) {
-          switch (fields.status.name.toLowerCase()) {
-            case "to do":
-            case "open":
-              progress = 0
-              break
-            case "in progress":
-              progress = 50
-              break
-            case "done":
-            case "closed":
-            case "resolved":
-              progress = 100
-              break
-            default:
-              if (fields.status.name.toLowerCase().includes("progress")) {
-                progress = 50
-              }
-          }
-        }
-
-        const barConfig: GanttBarConfig = {
+        // Ottieni la configurazione della barra e aggiungi le connessioni
+        const barConfig = barConfigMap.get(issue.key) || {
           id: `issue-${issue.key}`,
           label: fields.summary,
-          progress,
+          progress: calculateProgress(fields.status),
           connections: []
         }
 
-        if (fields.issuetype) {
-          barConfig.class = fields.issuetype.name.toLowerCase().replace(/\s+/g, "-")
-        }
-
-        if (fields.issuelinks && Array.isArray(fields.issuelinks)) {
-          fields.issuelinks.forEach((link) => {
-            if (link.outwardIssue) {
-              const sourceIssue = issues.find((i) => i.key === link.outwardIssue!.key)
-              if (sourceIssue) {
-                const sourceIssueConfig = sourceIssue.fields.barConfig || { connections: [] }
-                if (!sourceIssueConfig.connections) {
-                  sourceIssueConfig.connections = []
-                }
-                sourceIssueConfig.connections.push({
-                  targetId: `issue-${issue.key}`,
-                  type: "straight"
-                })
-                sourceIssue.fields.barConfig = sourceIssueConfig
-              }
-            }
-          })
-        }
+        // Aggiungi le connessioni dalla mappa
+        const connections = connectionsMap.get(issue.key) || []
+        barConfig.connections = connections
 
         const barObject: GanttBarObject = {
           [options.mapFields?.startDate || "start"]: startDate,
@@ -361,18 +274,72 @@ export function useImport() {
           bars: [barObject]
         }
 
-        if (fields.subtasks && Array.isArray(fields.subtasks) && fields.subtasks.length > 0) {
-          chartRow.children = buildRows(fields.subtasks)
+        // Get children from our map (includes both subtasks and parent references)
+        const children = childrenMap.get(issue.id) || []
+        if (children.length > 0) {
+          chartRow.children = buildRows(children)
         }
 
         return chartRow
       })
     }
 
+    // Start building rows from root issues
     return {
       rows: buildRows(rootIssues),
       warnings
     }
+  }
+
+  /**
+   * Helper function to calculate progress based on JIRA status
+   */
+  function calculateProgress(status: any): number {
+    if (!status) return 0
+
+    switch (status.name.toLowerCase()) {
+      case "to do":
+      case "open":
+      case "nuovo":
+        return 0
+
+      case "in progress":
+      case "in corso":
+        return 50
+
+      case "done":
+      case "closed":
+      case "resolved":
+      case "completato":
+        return 100
+
+      default:
+        if (status.name.toLowerCase().includes("progress")) {
+          return 50
+        }
+        return 0
+    }
+  }
+
+  /**
+   * Maps JIRA link types to connection types
+   * Ora restituisce esplicitamente un valore ConnectionType
+   */
+  function mapLinkTypeToConnectionType(linkType: string | undefined): ConnectionType {
+    if (!linkType) return "straight"
+
+    const lowerType = linkType.toLowerCase()
+
+    if (lowerType.includes("block")) {
+      return "squared" // Questo deve essere un valore valido di ConnectionType
+    }
+
+    if (lowerType.includes("depend") || lowerType.includes("relate")) {
+      return "bezier" // Questo deve essere un valore valido di ConnectionType
+    }
+
+    // Default: collegamenti diritti per altri tipi
+    return "straight" // Questo deve essere un valore valido di ConnectionType
   }
 
   /**
@@ -637,9 +604,11 @@ export function useImport() {
       }
 
       const content = await readFileContent(file, format)
+
       importProgress.value = 20
 
       const parsedData = await parseFileContent(content, format)
+
       importProgress.value = 50
 
       const { rows, warnings, chartStart, chartEnd } = await convertToGantt(
@@ -647,94 +616,6 @@ export function useImport() {
         format,
         options
       )
-      importProgress.value = 80
-
-      if (!options.skipValidation) {
-        validateImportedData(rows, warnings)
-      }
-
-      importProgress.value = 100
-
-      if (options.onProgress) {
-        options.onProgress(100)
-      }
-
-      return {
-        success: true,
-        data: {
-          rows,
-          chartStart,
-          chartEnd
-        },
-        warnings
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error during import"
-      lastError.value = errorMessage
-
-      return {
-        success: false,
-        error: errorMessage
-      }
-    } finally {
-      isImporting.value = false
-    }
-  }
-
-  /**
-   * Imports data from a string or object
-   *
-   * @param data - Data to import
-   * @param options - Import options
-   * @returns Promise with import result
-   */
-  const importFromData = async (
-    data: string | object,
-    options: ImportOptions
-  ): Promise<ImportResult> => {
-    isImporting.value = true
-    importProgress.value = 0
-    lastError.value = null
-
-    try {
-      let parsedData
-
-      if (typeof data === "string") {
-        if (!options.format) {
-          if (data.trim().startsWith("{") || data.trim().startsWith("[")) {
-            options.format = "jira"
-          } else if (data.trim().startsWith("<?xml") || data.trim().startsWith("<Project")) {
-            options.format = "msproject"
-          } else if (data.includes(",") || data.includes(";")) {
-            options.format = "csv"
-          } else {
-            throw new Error("Could not determine format from string data")
-          }
-        }
-
-        parsedData = await parseFileContent(data, options.format)
-      } else {
-        parsedData = data
-
-        if (!options.format) {
-          if ("issues" in parsedData) {
-            options.format = "jira"
-          } else if ("Tasks" in parsedData) {
-            options.format = "msproject"
-          } else {
-            options.format = "csv"
-          }
-        }
-      }
-
-      importProgress.value = 40
-
-      const { rows, warnings, chartStart, chartEnd } = await convertToGantt(
-        parsedData,
-        options.format,
-        options
-      )
-
       importProgress.value = 80
 
       if (!options.skipValidation) {
@@ -778,9 +659,7 @@ export function useImport() {
   const detectFormatFromFile = (file: File): ImportFormat => {
     const fileName = file.name.toLowerCase()
 
-    if (fileName.endsWith(".xml") || fileName.endsWith(".mpp")) {
-      return "msproject"
-    } else if (fileName.endsWith(".json")) {
+    if (fileName.endsWith(".json")) {
       return "jira"
     } else if (fileName.endsWith(".csv")) {
       return "csv"
@@ -846,9 +725,6 @@ export function useImport() {
     let result
 
     switch (format) {
-      case "msproject":
-        result = convertMsProjectToGantt(data, options)
-        break
       case "jira":
         result = convertJiraToGantt(data, options)
         break
@@ -963,7 +839,6 @@ export function useImport() {
 
   return {
     importFromFile,
-    importFromData,
     isImporting,
     importProgress,
     lastError

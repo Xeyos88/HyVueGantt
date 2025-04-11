@@ -1,6 +1,6 @@
 import type { ColorScheme } from "./style"
 
-export type ImportFormat = "msproject" | "jira" | "csv" | "excel"
+export type ImportFormat = "jira" | "csv" | "excel"
 
 export interface ImportOptions {
   format: ImportFormat
@@ -20,30 +20,6 @@ export interface ImportResult {
   }
   error?: string
   warnings?: string[]
-}
-
-export interface MSProjectTask {
-  UID: string
-  ID: number
-  Name: string
-  Start?: string
-  Finish?: string
-  Duration?: string
-  PercentComplete?: number
-  OutlineLevel?: number
-  Summary?: boolean
-  PredecessorLink?: Array<{ PredecessorUID: string; Type: number }>
-  ParentTaskUID?: string
-  Milestone?: boolean
-  Notes?: string
-  [key: string]: any
-}
-
-export interface MSProjectData {
-  Tasks: {
-    Task: MSProjectTask[]
-  }
-  [key: string]: any
 }
 
 export interface JiraIssue {

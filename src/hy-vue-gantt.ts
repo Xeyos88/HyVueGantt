@@ -47,7 +47,6 @@ import type {
   ImportFormat,
   ImportOptions,
   ImportResult,
-  MSProjectData,
   JiraData,
   SpreadsheetRow
 } from "./types"
@@ -156,7 +155,6 @@ export type {
   ImportFormat,
   ImportOptions,
   ImportResult,
-  MSProjectData,
   JiraData,
   SpreadsheetRow
 }
