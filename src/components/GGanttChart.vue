@@ -159,7 +159,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   showImporter: false,
   importerTitle: "Import data",
   importerDefaultFormat: "csv",
-  importerAllowedFormats: () => ["jira", "csv", "excel"],
+  importerAllowedFormats: () => ["jira", "csv"],
   importerBarStartField: "start",
   importerBarEndField: "end"
 })

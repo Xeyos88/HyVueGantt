@@ -97,7 +97,6 @@ const availableFormats = computed(() => {
   const formats: { value: ImportFormat; label: string }[] = [
     { value: "jira", label: "Jira (JSON)" },
     { value: "csv", label: "CSV" },
-    { value: "excel", label: "Excel (XLSX/XLS)" }
   ]
 
   if (props.allowedFormats && props.allowedFormats.length > 0) {
@@ -150,10 +149,8 @@ const handleFileSelect = (event: Event) => {
       selectedFormat.value = "jira"
     } else if (fileName.endsWith(".csv")) {
       selectedFormat.value = "csv"
-    } else if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
-      selectedFormat.value = "excel"
-    }
-
+    } 
+    
     activeStep.value = 2
   }
 }
@@ -361,8 +358,6 @@ const close = () => {
                             return '.json'
                           case 'csv':
                             return '.csv'
-                          case 'excel':
-                            return '.xlsx,.xls'
                           default:
                             return ''
                         }

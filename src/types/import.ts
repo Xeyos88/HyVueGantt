@@ -1,6 +1,6 @@
 import type { ColorScheme } from "./style"
 
-export type ImportFormat = "jira" | "csv" | "excel"
+export type ImportFormat = "jira" | "csv"
 
 export interface ImportOptions {
   format: ImportFormat

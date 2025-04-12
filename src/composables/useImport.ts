@@ -15,12 +15,11 @@ import type {
   ImportFormat,
   JiraIssue
 } from "../types/import"
-import * as XLSX from "xlsx"
 import Papa from "papaparse"
 
 /**
  * Composable for importing data from various formats into the Gantt chart
- * Supports MS Project, Jira, CSV, and Excel formats
+ * Supports Jira, CSV formats
  *
  * @returns Object containing import state and methods
  */
@@ -46,8 +45,6 @@ export function useImport() {
           return JSON.parse(content.toString())
         case "csv":
           return parseCsv(content.toString())
-        case "excel":
-          return parseExcel(content as ArrayBuffer)
         default:
           throw new Error(`Format not supported: ${format}`)
       }
@@ -82,29 +79,6 @@ export function useImport() {
   }
 
   /**
-   * Parses Excel format
-   *
-   * @param content - Excel file content as ArrayBuffer
-   * @returns Array of parsed rows
-   */
-  const parseExcel = (content: ArrayBuffer): SpreadsheetRow[] => {
-    const workbook = XLSX.read(content, { type: "array" })
-
-    const firstSheetName = workbook.SheetNames[0]
-    if (!firstSheetName) {
-      throw new Error("No sheets found in Excel file")
-    }
-
-    const worksheet = workbook.Sheets[firstSheetName]!
-    const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(worksheet, {
-      defval: null,
-      raw: false
-    })
-
-    return data
-  }
-
-  /**
    * Converts Jira data to Gantt chart format
    *
    * @param data - Jira data
@@ -118,24 +92,19 @@ export function useImport() {
     const warnings: string[] = []
     const issues = data.issues || []
 
-    // Create maps for efficient lookups
     const issueMap = new Map<string, JiraIssue>()
     const barConfigMap = new Map<string, GanttBarConfig>()
 
-    // Mappa per raccogliere tutte le connessioni
-    // Ora utilizziamo il tipo corretto BaseConnection
     const connectionsMap = new Map<string, BaseConnection[]>()
 
-    // Prima passiamo attraverso tutti gli elementi e creiamo le configurazioni di base
     issues.forEach((issue) => {
       issueMap.set(issue.id, issue)
 
-      // Crea la configurazione di base per ogni issue
       const barConfig: GanttBarConfig = {
         id: `issue-${issue.key}`,
         label: issue.fields.summary,
         progress: calculateProgress(issue.fields.status),
-        connections: [] // Iniziamo con un array vuoto
+        connections: []
       }
 
       if (issue.fields.issuetype) {
@@ -145,11 +114,9 @@ export function useImport() {
       barConfigMap.set(issue.key, barConfig)
     })
 
-    // Ora processiamo tutti i collegamenti
     issues.forEach((issue) => {
       if (issue.fields.issuelinks && Array.isArray(issue.fields.issuelinks)) {
         issue.fields.issuelinks.forEach((link) => {
-          // Gestiamo i link in uscita (outwardIssue)
           if (link.outwardIssue) {
             const sourceKey = issue.key
             const targetKey = link.outwardIssue.key
@@ -158,7 +125,6 @@ export function useImport() {
               connectionsMap.set(sourceKey, [])
             }
 
-            // Creiamo un oggetto BaseConnection valido
             const connection: BaseConnection = {
               targetId: `issue-${targetKey}`,
               type: mapLinkTypeToConnectionType(link.type?.name)
@@ -167,7 +133,6 @@ export function useImport() {
             connectionsMap.get(sourceKey)?.push(connection)
           }
 
-          // Gestiamo i link in entrata (inwardIssue)
           if (link.inwardIssue) {
             const sourceKey = link.inwardIssue.key
             const targetKey = issue.key
@@ -176,7 +141,6 @@ export function useImport() {
               connectionsMap.set(sourceKey, [])
             }
 
-            // Creiamo un oggetto BaseConnection valido
             const connection: BaseConnection = {
               targetId: `issue-${targetKey}`,
               type: mapLinkTypeToConnectionType(link.type?.name)
@@ -188,10 +152,8 @@ export function useImport() {
       }
     })
 
-    // Create a map to organize child issues by parent ID
     const childrenMap = new Map<string, JiraIssue[]>()
 
-    // First, process explicit subtasks in issue.fields.subtasks
     issues.forEach((issue) => {
       if (
         issue.fields.subtasks &&
@@ -199,7 +161,6 @@ export function useImport() {
         issue.fields.subtasks.length > 0
       ) {
         issue.fields.subtasks.forEach((subtask) => {
-          // Ensure the subtask is also present in our issues array
           const fullSubtask = issues.find((i) => i.id === subtask.id) || subtask
 
           if (!childrenMap.has(issue.id)) {
@@ -210,12 +171,10 @@ export function useImport() {
       }
     })
 
-    // Then, process issues with parent references
     issues.forEach((issue) => {
       if (issue.fields.parent && issue.fields.parent.id) {
         const parentId = issue.fields.parent.id
 
-        // Skip if this is already handled as an explicit subtask
         const isExplicitSubtask = issues.some(
           (parentIssue) =>
             parentIssue.id === parentId &&
@@ -231,12 +190,10 @@ export function useImport() {
       }
     })
 
-    // Find root issues - those without parents or with parents not in our data set
     const rootIssues = issues.filter(
       (issue) => !issue.fields.parent || !issueMap.has(issue.fields.parent.id)
     )
 
-    // Recursive function to build the Gantt rows
     const buildRows = (issues: JiraIssue[]): ChartRow[] => {
       return issues.map((issue) => {
         const { fields } = issue
@@ -250,7 +207,6 @@ export function useImport() {
           endDate = dayjs().add(7, "day").format("YYYY-MM-DD")
         }
 
-        // Ottieni la configurazione della barra e aggiungi le connessioni
         const barConfig = barConfigMap.get(issue.key) || {
           id: `issue-${issue.key}`,
           label: fields.summary,
@@ -258,7 +214,6 @@ export function useImport() {
           connections: []
         }
 
-        // Aggiungi le connessioni dalla mappa
         const connections = connectionsMap.get(issue.key) || []
         barConfig.connections = connections
 
@@ -274,7 +229,6 @@ export function useImport() {
           bars: [barObject]
         }
 
-        // Get children from our map (includes both subtasks and parent references)
         const children = childrenMap.get(issue.id) || []
         if (children.length > 0) {
           chartRow.children = buildRows(children)
@@ -284,7 +238,6 @@ export function useImport() {
       })
     }
 
-    // Start building rows from root issues
     return {
       rows: buildRows(rootIssues),
       warnings
@@ -331,15 +284,14 @@ export function useImport() {
     const lowerType = linkType.toLowerCase()
 
     if (lowerType.includes("block")) {
-      return "squared" // Questo deve essere un valore valido di ConnectionType
+      return "squared"
     }
 
     if (lowerType.includes("depend") || lowerType.includes("relate")) {
-      return "bezier" // Questo deve essere un valore valido di ConnectionType
+      return "bezier"
     }
 
-    // Default: collegamenti diritti per altri tipi
-    return "straight" // Questo deve essere un valore valido di ConnectionType
+    return "straight"
   }
 
   /**
@@ -366,7 +318,7 @@ export function useImport() {
   }
 
   /**
-   * Converts spreadsheet data (CSV/Excel) to Gantt chart format
+   * Converts spreadsheet data (CSV) to Gantt chart format
    *
    * @param data - Spreadsheet data
    * @param options - Import options
@@ -603,7 +555,7 @@ export function useImport() {
         format = detectFormatFromFile(file)
       }
 
-      const content = await readFileContent(file, format)
+      const content = await readFileContent(file)
 
       importProgress.value = 20
 
@@ -663,8 +615,6 @@ export function useImport() {
       return "jira"
     } else if (fileName.endsWith(".csv")) {
       return "csv"
-    } else if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
-      return "excel"
     }
 
     throw new Error(`Could not determine format from file: ${file.name}`)
@@ -677,10 +627,7 @@ export function useImport() {
    * @param format - Format to read
    * @returns Promise with file content
    */
-  const readFileContent = async (
-    file: File,
-    format: ImportFormat
-  ): Promise<string | ArrayBuffer> => {
+  const readFileContent = async (file: File): Promise<string | ArrayBuffer> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
 
@@ -696,11 +643,7 @@ export function useImport() {
         reject(new Error("Error reading file"))
       }
 
-      if (format === "excel") {
-        reader.readAsArrayBuffer(file)
-      } else {
-        reader.readAsText(file)
-      }
+      reader.readAsText(file)
     })
   }
 
@@ -729,7 +672,6 @@ export function useImport() {
         result = convertJiraToGantt(data, options)
         break
       case "csv":
-      case "excel":
         result = convertSpreadsheetToGantt(data, options)
         break
       default:
