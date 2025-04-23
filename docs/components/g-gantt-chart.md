@@ -80,6 +80,12 @@ Here's a minimal example of using the GGanttChart component:
 | barLabelEditable | `boolean` | `false` | Enable the possibility to edit a bar label |
 | exportEnabled | `boolean` | `true` | Enable the export functionality |
 | exportOptions | `ExportOptions` | `{}` | Configure export options |
+| showImporter | `boolean` | `false` | Controls the visibility of the importer dialog |
+| importerTitle | `string` | `'Import Data'` | Title for the importer dialog |
+| importerDefaultFormat | `ImportFormat` | `'csv'` | Default import format |
+| importerAllowedFormats | `ImportFormat[]` | `['msproject', 'jira', 'csv', 'excel']` | List of allowed import formats |
+| importerBarStartField | `string` | `'start'` | Default field name for bar start dates in imported data |
+| importerBarEndField | `string` | `'end'` | Default field name for bar end dates in imported data |
 
 ### Events
 
@@ -113,6 +119,7 @@ Here's a minimal example of using the GGanttChart component:
 | export-start | `format: string` | Emitted when the export process starts |
 | export-success | `result: ExportResult` | Emitted when the export process completes successfully |
 | export-error | `error: string` | Emitted when the export process encounters an error |
+| import-data | `result: ImportResult` | Emitted when data is imported with the import result |
 
 ### Slots
 

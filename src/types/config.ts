@@ -14,6 +14,7 @@ import type {
 } from "./chart"
 import type { ColorScheme } from "./style"
 import type { ExportOptions } from "./export"
+import type { ImportFormat } from "./import"
 
 export interface GGanttChartProps {
   chartStart: string | Date
@@ -75,6 +76,12 @@ export interface GGanttChartProps {
   barLabelEditable?: boolean
   exportEnabled?: boolean
   exportOptions?: ExportOptions
+  showImporter?: boolean
+  importerTitle?: string
+  importerDefaultFormat?: ImportFormat
+  importerAllowedFormats?: ImportFormat[]
+  importerBarStartField?: string
+  importerBarEndField?: string
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

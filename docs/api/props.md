@@ -19,6 +19,7 @@ interface TimeManagementProps {
   enableMinutes?: boolean;          // Enable minutes precision
   currentTime?: boolean;            // Show current time indicator
   currentTimeLabel?: string;        // Current time indicator label
+  utc?: boolean;                    // Use UTC time for current marker
 }
 ```
 
@@ -46,8 +47,12 @@ interface VisualProps {
   highlightedMonths?: number[];              // Array of months to highlight (0-11, 0 is January)
   highlightedWeek?: number[];                // Array of weeks to highlight (1-53)
   locale?: string;                           // Locale for dayjs
-  markConnection?: MarkConnection            // Type of marker in connections
-
+  markConnection?: MarkConnection;           // Type of marker in connections
+  showLabel?: boolean;                       // Show bar labels
+  showProgress?: boolean;                    // Show progress indicators
+  showEventsAxis?: boolean;                  // Show events axis
+  eventsAxisHeight?: number;                 // Height of events axis
+  timeaxisEvents?: TimeaxisEvent[];          // Events to display on time axis
 }
 ```
 
@@ -57,13 +62,17 @@ Props that control chart behavior:
 
 ```typescript
 interface BehaviorProps {
-  pushOnOverlap?: boolean;          // Push overlapping bars
-  pushOnConnect?: boolean;          // Push connected bars
-  noOverlap?: boolean;              // Prevent bar overlap
-  commands?: boolean;               // Show control commands
-  maxRows?: number;                 // Maximum visible rows
-  initialSortDirection?: SortState; // Initial sort direction
-  enableRowDragAndDrop?: boolean            // Enable row drag and dro
+  pushOnOverlap?: boolean;                  // Push overlapping bars
+  pushOnConnect?: boolean;                  // Push connected bars
+  noOverlap?: boolean;                      // Prevent bar overlap
+  commands?: boolean;                       // Show control commands
+  maxRows?: number;                         // Maximum visible rows
+  initialSortDirection?: SortState;         // Initial sort direction
+  enableRowDragAndDrop?: boolean;           // Enable row drag and drop
+  defaultProgressResizable?: boolean;       // Enable progress bar resizing
+  barLabelEditable?: boolean;               // Allow editing bar labels
+  enableConnectionCreation?: boolean;       // Enable creating connections
+  enableConnectionDeletion?: boolean;       // Enable deleting connections
 }
 ```
 
@@ -73,13 +82,52 @@ Props for configuring bar connections:
 
 ```typescript
 interface ConnectionProps {
-  enableConnections?: boolean;      // Enable connections
-  defaultConnectionType?: ConnectionType; // Default connection type
-  defaultConnectionColor?: string;  // Default connection color
+  enableConnections?: boolean;               // Enable connections
+  defaultConnectionType?: ConnectionType;     // Default connection type
+  defaultConnectionColor?: string;            // Default connection color
   defaultConnectionPattern?: ConnectionPattern; // Default pattern
-  defaultConnectionAnimated?: boolean; // Enable animations
+  defaultConnectionAnimated?: boolean;        // Enable animations
   defaultConnectionAnimationSpeed?: ConnectionSpeed; // Animation speed
 }
+```
+
+### Export Props
+
+Props for configuring chart export functionality:
+
+```typescript
+interface ExportProps {
+  exportEnabled?: boolean;                  // Enable export feature
+  exportOptions?: ExportOptions;            // Export configuration options
+}
+
+interface ExportOptions {
+  format: "pdf" | "png" | "svg" | "excel";  // Export format
+  quality?: number;                         // Image quality (0-1)
+  paperSize?: "a4" | "a3" | "letter" | "legal"; // PDF paper size
+  orientation?: "portrait" | "landscape";    // PDF orientation
+  scale?: number;                           // Export scale factor
+  margin?: number;                          // Margin in pixels
+  filename?: string;                        // Output filename
+  exportColumnLabel?: boolean;              // Include label column in export
+}
+```
+
+### Import Props
+
+Props for configuring chart import functionality:
+
+```typescript
+interface ImportProps {
+  showImporter?: boolean;                    // Show import dialog
+  importerTitle?: string;                    // Import dialog title
+  importerDefaultFormat?: ImportFormat;      // Default import format
+  importerAllowedFormats?: ImportFormat[];   // Allowed import formats
+  importerBarStartField?: string;            // Field name for bar start dates
+  importerBarEndField?: string;              // Field name for bar end dates
+}
+
+type ImportFormat = "jira" | "csv" | "excel";
 ```
 
 ## GGanttRow Props
@@ -89,7 +137,8 @@ interface GGanttRowProps {
   label: string;                   // Row label
   bars: GanttBarObject[];          // Bar data array
   highlightOnHover?: boolean;      // Highlight on hover
-  id?: string | number 
-  children?: { id: string | number; label: string; bars: GanttBarObject[] }[]  
+  id?: string | number;            // Row identifier
+  children?: { id: string | number; label: string; bars: GanttBarObject[] }[]; // Child rows
+  connections?: GanttBarConnection[]; // Row-level connections
 }
 ```

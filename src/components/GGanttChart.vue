@@ -50,6 +50,7 @@ import GGanttConnector from "./GGanttConnector.vue"
 import GGanttMilestone from "./GGanttMilestone.vue"
 import GGanttRow from "./GGanttRow.vue"
 import GGanttPointerMarker from "./GGanttPointerMarker.vue"
+import GGanttImporter from "./GGanttImporter.vue"
 
 // Composables
 import { useConnections } from "../composables/useConnections"
@@ -84,7 +85,8 @@ import type {
   RowDragEvent,
   GGanttChartEmits,
   ExportOptions,
-  ExportResult
+  ExportResult,
+  ImportResult
 } from "../types"
 
 // Props
@@ -153,7 +155,13 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
     scale: 1.5,
     margin: 10,
     exportColumnLabel: true
-  })
+  }),
+  showImporter: false,
+  importerTitle: "Import data",
+  importerDefaultFormat: "csv",
+  importerAllowedFormats: () => ["jira", "csv"],
+  importerBarStartField: "start",
+  importerBarEndField: "end"
 })
 
 // Events
@@ -169,7 +177,7 @@ const slots = useSlots()
 const isDragging = ref(false)
 const isDraggingTimeaxis = ref(false)
 const lastMouseX = ref(0)
-
+const isImporterVisible = ref(props.showImporter)
 // Component Refs
 const gGantt = ref<HTMLElement | null>(null)
 const ganttChart = ref<HTMLElement | null>(null)
@@ -465,6 +473,19 @@ const triggerExport = async () => {
   }
 }
 
+const handleImport = (result: ImportResult) => {
+  if (result.success && result.data) {
+    if (result.data.rows && result.data.rows.length > 0) {
+      rowManager.updateRows(result.data.rows)
+    }
+    emit("import-data", result)
+  }
+}
+
+const closeImporter = () => {
+  isImporterVisible.value = false
+}
+
 // -----------------------------
 // 6. COMPUTED PROPERTIES
 // -----------------------------
@@ -676,7 +697,9 @@ const renderRow = (row: ChartRow) => {
     label: row.label,
     bars: row.bars,
     id: row.id,
-    key: row.id || row.label
+    key: row.id || row.label,
+    children: row.children,
+    connections: row.connections
   })
 }
 
@@ -843,6 +866,13 @@ onUnmounted(() => {
 watch([() => props.chartStart, () => props.chartEnd], () => {
   updateBarPositions()
 })
+
+watch(
+  () => props.showImporter,
+  (newValue) => {
+    isImporterVisible.value = newValue
+  }
+)
 
 // -----------------------------
 // 12. PROVIDERS
@@ -1212,6 +1242,15 @@ defineExpose({
         <slot name="bar-tooltip" v-bind="slotProps" />
       </template>
     </g-gantt-bar-tooltip>
+
+    <g-gantt-importer
+      v-model="isImporterVisible"
+      :title="props.importerTitle"
+      :default-format="props.importerDefaultFormat"
+      :allowed-formats="props.importerAllowedFormats"
+      @import="handleImport"
+      @close="closeImporter"
+    />
   </div>
 </template>
 
