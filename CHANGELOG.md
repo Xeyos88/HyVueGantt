@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v3.6.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.6.0) (2025-05-01)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.5.0...v3.6.0)
+
+
+
+**✨ New Features:**
+
+- Import data from file
+
 ## [v3.5.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.5.0) (2025-04-03)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.4.0...v3.5.0)
