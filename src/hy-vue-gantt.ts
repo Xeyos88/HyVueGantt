@@ -13,6 +13,7 @@ import utc from "dayjs/plugin/utc"
 
 import GGanttChart from "./components/GGanttChart.vue"
 import GGanttRow from "./components/GGanttRow.vue"
+
 import type {
   ColorScheme,
   GanttBarObject,
@@ -42,7 +43,12 @@ import type {
   LabelEditEvent,
   TimeaxisEvent,
   ExportOptions,
-  ExportResult
+  ExportResult,
+  ImportFormat,
+  ImportOptions,
+  ImportResult,
+  JiraData,
+  SpreadsheetRow
 } from "./types"
 
 import "dayjs/locale/it"
@@ -145,7 +151,12 @@ export type {
   LabelEditEvent,
   TimeaxisEvent,
   ExportOptions,
-  ExportResult
+  ExportResult,
+  ImportFormat,
+  ImportOptions,
+  ImportResult,
+  JiraData,
+  SpreadsheetRow
 }
 export { GGanttChart, GGanttRow }
 

@@ -54,6 +54,17 @@ export interface LabelEditEvent {
   newValue: string
   e: MouseEvent
 }
+
+export interface ImportResult {
+  success: boolean;
+  data?: {
+    rows: ChartRow[];
+    chartStart?: string | Date;
+    chartEnd?: string | Date;
+  };
+  error?: string;
+  warnings?: string[];
+}
 ```
 
 ## Bar Events
@@ -90,12 +101,18 @@ export interface LabelEditEvent {
 @group-expansion="(event: { rowId: string | number }) => void"
 ```
 
-## Export  Events
+## Export Events
 
 ```typescript
 @export-start="(format: string) => void"
 @export-success="(result: ExportResult) => void"
 @export-error="(error: string) => void"
+```
+
+## Import Events
+
+```typescript
+@import-data="(result: ImportResult) => void"
 ```
 
 ## Connection Events

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
-import type { ConnectionType, ConnectionSpeed, MarkerConnection, TimeUnit, DayOptionLabel, ConnectionPattern, GanttBarObject, ChartRow, ExportOptions } from 'hy-vue-gantt'
+import type { ConnectionType, ConnectionSpeed, MarkerConnection, TimeUnit, DayOptionLabel, ConnectionPattern, GanttBarObject, ChartRow, ExportOptions, ImportResult } from 'hy-vue-gantt'
+import { downloadSampleCSV } from './CSVGenerator'
+import {downloadSampleJIRA} from './JIRAGEnerator'
 
 const sections = ref<{ [key: string]: boolean }>({
   timeConfig: false,
@@ -9,9 +11,11 @@ const sections = ref<{ [key: string]: boolean }>({
   connectionConfig: false,
   behaviorConfig: false,
   slotsConfig: false,
-  exportConfig: false
-
+  exportConfig: false,
+  importConfig: false
 })
+
+const showImporter = ref(false)
 
 const toggleSection = (section: string) => {
   sections.value[section] = !sections.value[section]
@@ -158,6 +162,34 @@ const addEventLog = (type: string, data: any) => {
 // Event Handlers with Logging
 const handleEvent = (event: any, type: string) => {
   addEventLog(type, event)
+}
+
+const handleImport = (result: ImportResult) => {
+  if (result.success && result.data) {
+    showImporter.value = false
+    
+    /*if (result.data.chartStart) {
+      chartStart.value = result.data.chartStart instanceof Date 
+        ? result.data.chartStart.toISOString().split('T')[0] 
+        : result.data.chartStart.split('T')[0]
+    }
+    
+    if (result.data.chartEnd) {
+      chartEnd.value = result.data.chartEnd instanceof Date 
+        ? result.data.chartEnd.toISOString().split('T')[0] 
+        : result.data.chartEnd.split('T')[0]
+    }*/
+    
+    addEventLog('Import', { 
+      success: true,
+      rowsCount: result.data.rows.length,
+      warnings: result.warnings?.length || 0 
+    })
+  } else {
+    addEventLog('Importazione Fallita', { 
+      error: result.error 
+    })
+  }
 }
 
 export type ChartRowWithOptionalBars = Omit<ChartRow, "bars"> & { bars?: GanttBarObject[] };
@@ -629,6 +661,41 @@ const formattedEventLog = computed(() => {
             </div>
           </div>
         </div>
+
+        <div class="settings-group">
+          <h4 @click="toggleSection('importConfig')" class="toggle-header">Import Data
+            <span :class="{'arrow-down': sections.importConfig, 'arrow-up': !sections.importConfig}">▼</span>
+          </h4>
+          <div v-if="sections.importConfig" class="settings-grid">
+            <div class="setting-item">
+              <button 
+                class="import-button" 
+                @click="showImporter = true"
+                style="width: 100%; padding: 8px; background: #42b883; color: white; border: none; border-radius: 4px; cursor: pointer;"
+              >
+                Open Importer
+              </button>
+            </div>
+            <div class="setting-item">
+              <button
+                class="download-csv-button"
+                @click="downloadSampleCSV"
+                style="width: 100%; padding: 8px; background: #42b883; color: white; border: none; border-radius: 4px; cursor: pointer;"
+              >
+                Download Example CSV
+              </button>
+            </div>
+            <div class="setting-item">
+              <button
+                class="download-csv-button"
+                @click="downloadSampleJIRA"
+                style="width: 100%; padding: 8px; background: #42b883; color: white; border: none; border-radius: 4px; cursor: pointer;"
+              >
+                Download Example JIRA
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="settings-column">
@@ -907,6 +974,10 @@ const formattedEventLog = computed(() => {
         :eventsAxisHeight="eventsAxisHeight"
         :exportEnabled="exportEnabled"
         :exportOptions="exportOptions"
+        :show-importer="showImporter"
+        :importer-title="'Import project data'"
+        :importer-default-format="'csv'"
+        :importer-allowed-formats="['msproject', 'jira', 'csv', 'excel']"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"
@@ -921,6 +992,7 @@ const formattedEventLog = computed(() => {
         @export-start="handleEvent($event, 'Start Export')"
         @export-success="handleEvent($event, 'Start Success')"
         @export-error="handleEvent($event, 'Start Error')"
+        @import-data="handleImport"
       >
         <g-gantt-row
           v-for="row in sampleData"
@@ -999,7 +1071,7 @@ const formattedEventLog = computed(() => {
         <!-- Custom Bar Tooltip Slot -->
         <template v-if="customSlots.barTooltip" #bar-tooltip="{ bar, barStart, barEnd }">
           <div class="custom-tooltip">
-            <div class="tooltip-header">{{ bar.ganttBarConfig.label }}</div>
+            <div class="tooltip-header">{{ bar!.ganttBarConfig.label }}</div>
             <div class="tooltip-content">
               <div>Start: {{ new Date(barStart).toLocaleDateString() }}</div>
               <div>End: {{ new Date(barEnd).toLocaleDateString() }}</div>
@@ -1037,7 +1109,6 @@ const formattedEventLog = computed(() => {
           </div>
         </template>
       </g-gantt-chart>
-
       <!-- Event Log Panel -->
       <div class="event-log">
         <h4>Event Log</h4>
