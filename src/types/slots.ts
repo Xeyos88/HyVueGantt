@@ -184,6 +184,12 @@ export interface GGanttChartSlots {
   "bar-label": (props: { bar: GanttBarObject }) => void
 
   /**
+   * Slot to customize group bar visualization
+   * @param props Group bar properties including width, height and bar data
+   */
+  "group-bar": (props: { width: number; height: number; bar: GanttBarObject }) => void
+
+  /**
    * Slot to customize a specific column in the label
    * @param props Column properties
    */

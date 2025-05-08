@@ -39,6 +39,8 @@ The GGanttRow component represents a single row in the Gantt chart. It manages t
 |-----------|-------|-------------|
 | label | None | Custom row label content |
 | bar-label | `{ bar: GanttBarObject }` | Custom bar label content |
+| group-bar | `{ width: number, height: number, bar: GanttBarObject }` | Custom group bar visualization |
+
 
 ### Bar Configuration (ganttBarConfig)
 

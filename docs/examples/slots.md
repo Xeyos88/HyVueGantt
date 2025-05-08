@@ -207,6 +207,18 @@ The GGanttRow component provides two important slots:
         </div>
       </div>
     </template>
+
+     <!-- Customize group bars -->
+    <template #group-bar="{ width, height, bar }">
+      <div class="custom-group-bar" :style="{ width: width + 'px', height: height + 'px' }">
+        <div class="group-decoration" :style="{ background: 'rgba(0,0,0,0.1)' }">
+          <div class="group-title">{{ bar.ganttBarConfig.label }}</div>
+          <div class="group-progress" 
+               :style="{ width: (bar.ganttBarConfig.progress || 0) + '%' }">
+          </div>
+        </div>
+      </div>
+    </template>
   </g-gantt-row>
 </template>
 ```
@@ -259,6 +271,8 @@ HyVue Gantt slots can be combined to create complex layouts and highly customize
 |-----------|-------|-------------|
 | label | None | Customizes the row label content |
 | bar-label | `{ bar: GanttBarObject }` | Customizes the bar label |
+| group-bar | `{ width: number, height: number, bar: GanttBarObject }` | Customizes the appearance of group bars |
+
 
 ## Best Practices for Using Slots
 
