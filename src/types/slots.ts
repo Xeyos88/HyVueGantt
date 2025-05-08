@@ -190,4 +190,12 @@ export interface GGanttChartSlots {
   [key: `label-column-${keyof LabelColumnSlotProps}`]: (
     props: LabelColumnSlotProps[keyof LabelColumnSlotProps]
   ) => void
+
+  /**
+   * Slot to customize a specific column in the label for group rows
+   * @param props Column properties
+   */
+  [key: `label-column-${keyof LabelColumnSlotProps}-group`]: (
+    props: LabelColumnSlotProps[keyof LabelColumnSlotProps]
+  ) => void
 }

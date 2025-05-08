@@ -1477,6 +1477,11 @@ defineExpose({
 
 button {
   display: flex;
+  padding: 0;
+  background-color: transparent;
+  background-image: none;
+  border: 0;
+  color: v-bind(colors.text);
 }
 
 .g-gantt-chart:focus-within {
