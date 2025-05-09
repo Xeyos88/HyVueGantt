@@ -44,7 +44,8 @@ import type { CSSProperties } from "vue"
 import GGanttGrid from "./GGanttGrid.vue"
 import GGanttLabelColumn from "./GGanttLabelColumn.vue"
 import GGanttTimeaxis from "./GGanttTimeaxis.vue"
-import GGanttBarTooltip from "./GGanttBarTooltip.vue"
+//import GGanttBarTooltip from "./GGanttBarTooltip.vue"
+import GGanttTooltip from "./GGanttTooltip.vue"
 import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
 import GGanttMilestone from "./GGanttMilestone.vue"
@@ -974,6 +975,10 @@ defineExpose({
               <template #timeunit="slotProps">
                 <slot name="timeunit" v-bind="slotProps" />
               </template>
+
+              <template #timeaxis-event="slotProps">
+                <slot name="timeaxis-event" v-bind="slotProps" />
+              </template>
             </g-gantt-timeaxis>
 
             <!-- Optional Components -->
@@ -1237,11 +1242,11 @@ defineExpose({
     </div>
 
     <!-- Tooltip -->
-    <g-gantt-bar-tooltip :model-value="showTooltip || isDragging" :bar="tooltipBar">
+    <g-gantt-tooltip type="bar" :model-value="showTooltip || isDragging" :bar="tooltipBar">
       <template #default="slotProps">
         <slot name="bar-tooltip" v-bind="slotProps" />
       </template>
-    </g-gantt-bar-tooltip>
+    </g-gantt-tooltip>
 
     <g-gantt-importer
       v-model="isImporterVisible"

@@ -583,8 +583,8 @@ onMounted(() => {
       </slot>
     </template>
     <!-- Bar Label -->
-    <div class="g-gantt-bar-label">
-      <slot :bar="bar">
+    <div v-else class="g-gantt-bar-label">
+      <slot name="bar-label" :bar="bar">
         <div v-if="!isGroupBar && showLabel">
           <div v-if="isEditing && barLabelEditable" class="g-gantt-bar-label-edit">
             <input
