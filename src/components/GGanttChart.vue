@@ -975,7 +975,12 @@ defineExpose({
               <template #timeunit="slotProps">
                 <slot name="timeunit" v-bind="slotProps" />
               </template>
-
+              <template #holiday-tooltip="slotProps">
+                <slot name="holiday-tooltip" v-bind="slotProps" />
+              </template>
+              <template #event-tooltip="slotProps">
+                <slot name="event-tooltip" v-bind="slotProps" />
+              </template>
               <template #timeaxis-event="slotProps">
                 <slot name="timeaxis-event" v-bind="slotProps" />
               </template>
