@@ -61,6 +61,35 @@ Slots in HyVue Gantt allow for advanced customization of various interface compo
         {{ label }}
       </div>
     </template>
+
+    <template #holiday-tooltip="{ unit }">
+      <div class="holiday-tooltip">
+        <strong>{{ unit.holidayName }}</strong>
+        <p>Holiday date: {{ formatDate(unit.date) }}</p>
+      </div>
+    </template>
+    
+    <!-- Customize event tooltip -->
+    <template #event-tooltip="{ event, formatDate }">
+      <div class="event-tooltip-custom">
+        <h4>{{ event.label }}</h4>
+        <div class="event-dates">
+          <div>Start: {{ formatDate(event.startDate) }}</div>
+          <div>End: {{ formatDate(event.endDate) }}</div>
+        </div>
+        <div v-if="event.description" class="event-description">
+          {{ event.description }}
+        </div>
+      </div>
+    </template>
+    
+    <!-- Customize event display in the time axis -->
+    <template #timeaxis-event="{ event }">
+      <div class="custom-event-marker">
+        <div class="event-dot"></div>
+        <span>{{ event.label }}</span>
+      </div>
+    </template>
   </g-gantt-chart>
 </template>
 
@@ -264,6 +293,8 @@ HyVue Gantt slots can be combined to create complex layouts and highly customize
 | milestone-`{milestoneId}` | Same as milestone slot | Custom specific milestone content |
 | commands | `CommandSlotProps` | Customization of the command section |
 | timeaxis-event | `{ event: TimeaxisEvent }` | Custom template for timeline events |
+| holiday-tooltip | `{ unit: TimeaxisUnit }` | Customizes the tooltip that appears when hovering over holiday dates |
+| event-tooltip | `{ event: TimeaxisEvent, formatDate: Function }` | Customizes the tooltip that appears when hovering over events in the time axis |
 
 ### GGanttRow Slots
 

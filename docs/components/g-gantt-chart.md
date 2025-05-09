@@ -142,6 +142,8 @@ Here's a minimal example of using the GGanttChart component:
 | milestone-`{milestoneId}` | `{ milestone: GanttMilestone, styleConfig: Object, position: number }` | Custom specific milestone content |
 | commands | `CommandSlotProps` | Customization of the command section |
 | timeaxis-event | `{ event: TimeaxisEvent }` | Custom template for timeline events displayed on the events axis |
+| holiday-tooltip | `{ unit: TimeaxisUnit }` | Customizes the tooltip that appears when hovering over holiday dates in the time axis |
+| event-tooltip | `{ event: TimeaxisEvent, formatDate: Function }` | Customizes the tooltip that appears when hovering over events in the events axis |
 
 ## Command Slot Usage
 
