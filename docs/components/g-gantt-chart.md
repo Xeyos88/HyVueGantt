@@ -128,8 +128,6 @@ Here's a minimal example of using the GGanttChart component:
 | Slot Name | Props | Description |
 |-----------|-------|-------------|
 | default | None | Main content slot for GGanttRow components |
-| label-column-title | None | Custom label column header |
-| label-column-row | `{ row: ChartRow, value: string \| number }` | Customizes the row in the label column |
 | label-column-`{fieldname}` | `{ row: ChartRow, value: string \| number }` | Customizes specific cells based on field name (Label, Id, StartDate, EndDate, Duration, Progress) |
 | label-column-`{fieldname}`-group | `{ row: ChartRow, value: string \| number }` | Customizes specific cells for group rows based on field name |
 | upper-timeunit | `{ label: string, value: string, date: Date }` | Customizes the upper time unit in the time axis |

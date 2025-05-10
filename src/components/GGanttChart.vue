@@ -918,12 +918,6 @@ defineExpose({
         <div v-if="labelColumnTitle" class="g-gantt-label-section" :style="labelSectionStyle">
           <!-- Label Column -->
           <g-gantt-label-column ref="labelColumn" @scroll="handleLabelScroll" @row-drop="dropRow">
-            <template #label-column-title>
-              <slot name="label-column-title" />
-            </template>
-            <template #label-column-row="slotProps">
-              <slot name="label-column-row" v-bind="slotProps" />
-            </template>
             <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
               <slot :name="name" v-bind="slotData" />
             </template>

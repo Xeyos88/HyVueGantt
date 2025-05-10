@@ -8,14 +8,7 @@ Slots in HyVue Gantt allow for advanced customization of various interface compo
 
 ```vue
 <template>
-  <g-gantt-chart>
-    <!-- Customize the column header -->
-    <template #label-column-title>
-      <div class="custom-header">
-        <strong>Project Tasks</strong>
-      </div>
-    </template>
-    
+  <g-gantt-chart>   
     <!-- Customize specific cells -->
     <template #label-column-label="{ row, value }">
       <div class="task-label">
@@ -260,7 +253,6 @@ HyVue Gantt slots can be combined to create complex layouts and highly customize
 <template>
   <g-gantt-chart>
     <!-- Combine different slots for a customized interface -->
-    <template #label-column-title>...</template>
     <template #bar-tooltip>...</template>
     <template #milestone>...</template>
     <template #commands>...</template>
@@ -279,8 +271,6 @@ HyVue Gantt slots can be combined to create complex layouts and highly customize
 | Slot Name | Props | Description |
 |-----------|-------|-------------|
 | default | None | Main content slot for GGanttRow components |
-| label-column-title | None | Custom label column header |
-| label-column-row | `{ row: ChartRow, value: string \| number }` | Customizes the row in the label column |
 | label-column-`{fieldname}` | `{ row: ChartRow, value: string \| number }` | Customizes specific cells based on field name |
 | label-column-`{fieldname}`-group | `{ row: ChartRow, value: string \| number }` | Customizes specific cells for group rows based on field name |
 | upper-timeunit | `{ label: string, value: string, date: Date }` | Customizes upper time units |
