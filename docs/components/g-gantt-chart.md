@@ -123,17 +123,25 @@ Here's a minimal example of using the GGanttChart component:
 
 ### Slots
 
+### Slots
+
 | Slot Name | Props | Description |
 |-----------|-------|-------------|
 | default | None | Main content slot for GGanttRow components |
-| label-column-title | None | Custom label column header |
-| label-column-`{label}` | None | Custom specific label form column|
+| label-column-`{fieldname}` | `{ row: ChartRow, value: string \| number }` | Customizes specific cells based on field name (Label, Id, StartDate, EndDate, Duration, Progress) |
+| label-column-`{fieldname}`-group | `{ row: ChartRow, value: string \| number }` | Customizes specific cells for group rows based on field name |
+| upper-timeunit | `{ label: string, value: string, date: Date }` | Customizes the upper time unit in the time axis |
+| timeunit | `{ label: string, value: string, date: Date }` | Customizes the lower time unit in the time axis |
 | current-time-label | None | Custom current time indicator label |
+| pointer-marker-tooltips | `{ hitBars: GanttBarObject[], datetime: string }` | Customizes the pointer marker tooltips |
+| bar-tooltip | `{ bar: GanttBarObject, barStart: string \| Date, barEnd: string \| Date }` | Custom bar tooltip content |
 | bar-label | `{ bar: GanttBarObject }` | Custom bars label content |
-| milestone | `{ bar: GanttBarObject }` | Custom milestones content |
-| milestone-`{milestoneId}` | `{ bar: GanttBarObject }` | Custom specific milestone content |
+| milestone | `{ milestone: GanttMilestone, styleConfig: Object, position: number }` | Custom milestones content |
+| milestone-`{milestoneId}` | `{ milestone: GanttMilestone, styleConfig: Object, position: number }` | Custom specific milestone content |
 | commands | `CommandSlotProps` | Customization of the command section |
 | timeaxis-event | `{ event: TimeaxisEvent }` | Custom template for timeline events displayed on the events axis |
+| holiday-tooltip | `{ unit: TimeaxisUnit }` | Customizes the tooltip that appears when hovering over holiday dates in the time axis |
+| event-tooltip | `{ event: TimeaxisEvent, formatDate: Function }` | Customizes the tooltip that appears when hovering over events in the events axis |
 
 ## Command Slot Usage
 

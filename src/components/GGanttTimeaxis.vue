@@ -17,8 +17,9 @@ import useDayjsHelper from "../composables/useDayjsHelper"
 import { ganttWidth } from "../composables/useSimpleStore"
 
 // Components
-import GGanttHolidayTooltip from "./GGanttHolidayTooltip.vue"
-import GGanttEventTooltip from "./GGanttEventTooltip.vue"
+//import GGanttHolidayTooltip from "./GGanttHolidayTooltip.vue"
+//import GGanttEventTooltip from "./GGanttEventTooltip.vue"
+import GGanttTooltip from "./GGanttTooltip.vue"
 
 // Types
 import type { TimeaxisData, TimeaxisUnit, TimeUnit, TimeaxisEvent } from "@/types"
@@ -379,17 +380,28 @@ defineExpose({ timeaxisElement })
       </div>
     </div>
     <!-- Holiday tooltip -->
-    <g-gantt-holiday-tooltip
+    <g-gantt-tooltip
+      type="holiday"
       :model-value="showTooltip"
       :unit="hoveredUnit"
       :target-element="hoveredElement"
-    />
+    >
+      <template #holiday-tooltip="slotProps">
+        <slot name="holiday-tooltip" v-bind="slotProps" />
+      </template>
+    </g-gantt-tooltip>
+
     <!-- Event tooltip -->
-    <g-gantt-event-tooltip
+    <g-gantt-tooltip
+      type="event"
       :model-value="showEventTooltip"
       :event="hoveredEvent"
       :target-element="hoveredEventElement"
-    />
+    >
+      <template #event-tooltip="slotProps">
+        <slot name="event-tooltip" v-bind="slotProps" />
+      </template>
+    </g-gantt-tooltip>
   </div>
 </template>
 

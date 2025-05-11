@@ -68,6 +68,7 @@ export default defineConfig({
             { text: "Bar Connections", link: "/examples/connections" },
             { text: "Time Management", link: "/examples/time" },
             { text: "Advanced Features", link: "/examples/advanced" },
+            { text: "Slots", link: "/examples/slots" },
           ]
         },
         {
