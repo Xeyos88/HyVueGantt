@@ -83,9 +83,11 @@ Here's a minimal example of using the GGanttChart component:
 | showImporter | `boolean` | `false` | Controls the visibility of the importer dialog |
 | importerTitle | `string` | `'Import Data'` | Title for the importer dialog |
 | importerDefaultFormat | `ImportFormat` | `'csv'` | Default import format |
-| importerAllowedFormats | `ImportFormat[]` | `['msproject', 'jira', 'csv', 'excel']` | List of allowed import formats |
+| importerAllowedFormats | `ImportFormat[]` | `['jira', 'csv']` | List of allowed import formats |
 | importerBarStartField | `string` | `'start'` | Default field name for bar start dates in imported data |
 | importerBarEndField | `string` | `'end'` | Default field name for bar end dates in imported data |
+| baseUnitWidth | `number` | `24` | Default width in px for one lower unit in timeaxis (min: 20, max: 50) |
+| defaultZoom | `number` | `3` | Default initial zoom value (min: 1, max: 10)  |
 
 ### Events
 
