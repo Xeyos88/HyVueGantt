@@ -162,7 +162,9 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   importerDefaultFormat: "csv",
   importerAllowedFormats: () => ["jira", "csv"],
   importerBarStartField: "start",
-  importerBarEndField: "end"
+  importerBarEndField: "end",
+  baseUnitWidth: 24,
+  defaultZoom: 3
 })
 
 // Events
@@ -189,6 +191,8 @@ const timeaxisComponent = ref<
 const ganttContainer = ref<HTMLElement | null>(null)
 const rowsContainer = ref<HTMLElement | null>(null)
 const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
+const validatedBaseUnitWidth = ref(Math.min(50, Math.max(20, props.baseUnitWidth)))
+const validatedDefaultZoom = ref(Math.min(10, Math.max(1, props.defaultZoom)))
 
 const setLabelWidth = () => {
   return (
@@ -260,6 +264,8 @@ const colors = computed(() => getColorScheme(colorScheme.value))
 // Time Units Management
 const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision } = useTimeaxisUnits({
   ...toRefs(props),
+  baseUnitWidth: validatedBaseUnitWidth,
+  defaultZoom: validatedDefaultZoom,
   colors,
   chartSize
 })
@@ -875,12 +881,28 @@ watch(
   }
 )
 
+watch(
+  () => props.baseUnitWidth,
+  (newValue) => {
+    validatedBaseUnitWidth.value = Math.max(20, newValue)
+  }
+)
+
+watch(
+  () => props.defaultZoom,
+  (newValue) => {
+    validatedDefaultZoom.value = Math.min(10, Math.max(1, newValue))
+  }
+)
+
 // -----------------------------
 // 12. PROVIDERS
 // -----------------------------
 
 provide(CONFIG_KEY, {
   ...toRefs(props),
+  baseUnitWidth: validatedBaseUnitWidth,
+  defaultZoom: validatedDefaultZoom,
   colors,
   chartSize
 })
