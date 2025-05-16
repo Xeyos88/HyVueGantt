@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v3.7.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.7.0) (2025-05-16)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.6.0...v3.7.0)
+
+
+
+**✨ New Features:**
+
+- Added holiday and event tooltip slots
+- Base unit width for lower unit in timeaxis and default zoom level added as props
+- Slot dedicated for bar in row group
+- Slot dedicated for label in row group
+
+**📚 Documentation:**
+
+- Demo slots updated
+- Slots documentation update
+
+**🐛 Fix:**
+
+- Timeaxis event slot
+
 ## [v3.6.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.6.0) (2025-05-01)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.5.0...v3.6.0)
