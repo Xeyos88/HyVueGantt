@@ -1,6 +1,6 @@
 import type { ComputedRef, Ref } from "vue"
 import type { GanttBarObject } from "./bar"
-import type { ChartRow, GanttMilestone } from "./chart"
+import type { ChartRow, GanttMilestone, TimeaxisEvent, TimeaxisUnit } from "./chart"
 
 /**
  * Interface that defines the props for the commands slot
@@ -59,6 +59,9 @@ interface CommandsSlotProps {
 
   /** Current zoom level */
   zoomLevel: Ref<number>
+
+  /** Function to export the chart */
+  export: () => void
 }
 
 /**
@@ -96,17 +99,6 @@ interface LabelColumnSlotProps {
  */
 export interface GGanttChartSlots {
   /**
-   * Slot to customize the label column title
-   */
-  "label-column-title": () => void
-
-  /**
-   * Slot to customize the row in the label column
-   * @param props Row properties
-   */
-  "label-column-row": (props: { row: ChartRow; value: string | number }) => void
-
-  /**
    * Slot to customize the upper time unit in the time axis
    * @param props Time unit properties
    */
@@ -122,6 +114,33 @@ export interface GGanttChartSlots {
    * Slot to customize the current time label
    */
   "current-time-label": () => void
+
+  /**
+   * Slot to customize tooltip for holiday on timeaxis
+   * @param props Holiday unit properties
+   */
+  "holiday-tooltip": (props: { unit: TimeaxisUnit }) => void
+
+  /**
+   * Slot to customize tooltip for events on timeaxis
+   * @param props Event properties and format function
+   */
+  "event-tooltip": (props: {
+    event: TimeaxisEvent
+    formatDate: (date: string | Date) => string
+  }) => void
+
+  /**
+   * Slot to customize the representation of events on timeaxis
+   * @param props Event properties
+   */
+  "timeaxis-event": (props: { event: TimeaxisEvent }) => void
+
+  /**
+   * Slot to customize the pointer marker tooltips
+   * @param props Bars and datetime at pointer position
+   */
+  "pointer-marker-tooltips": (props: { hitBars: GanttBarObject[]; datetime: string | Date }) => void
 
   /**
    * Slot to customize milestone display
@@ -184,10 +203,24 @@ export interface GGanttChartSlots {
   "bar-label": (props: { bar: GanttBarObject }) => void
 
   /**
+   * Slot to customize group bar visualization
+   * @param props Group bar properties including width, height and bar data
+   */
+  "group-bar": (props: { width: number; height: number; bar: GanttBarObject }) => void
+
+  /**
    * Slot to customize a specific column in the label
    * @param props Column properties
    */
   [key: `label-column-${keyof LabelColumnSlotProps}`]: (
+    props: LabelColumnSlotProps[keyof LabelColumnSlotProps]
+  ) => void
+
+  /**
+   * Slot to customize a specific column in the label for group rows
+   * @param props Column properties
+   */
+  [key: `label-column-${keyof LabelColumnSlotProps}-group`]: (
     props: LabelColumnSlotProps[keyof LabelColumnSlotProps]
   ) => void
 }

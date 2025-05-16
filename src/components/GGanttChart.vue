@@ -44,7 +44,8 @@ import type { CSSProperties } from "vue"
 import GGanttGrid from "./GGanttGrid.vue"
 import GGanttLabelColumn from "./GGanttLabelColumn.vue"
 import GGanttTimeaxis from "./GGanttTimeaxis.vue"
-import GGanttBarTooltip from "./GGanttBarTooltip.vue"
+//import GGanttBarTooltip from "./GGanttBarTooltip.vue"
+import GGanttTooltip from "./GGanttTooltip.vue"
 import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
 import GGanttMilestone from "./GGanttMilestone.vue"
@@ -161,7 +162,9 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   importerDefaultFormat: "csv",
   importerAllowedFormats: () => ["jira", "csv"],
   importerBarStartField: "start",
-  importerBarEndField: "end"
+  importerBarEndField: "end",
+  baseUnitWidth: 24,
+  defaultZoom: 3
 })
 
 // Events
@@ -188,6 +191,8 @@ const timeaxisComponent = ref<
 const ganttContainer = ref<HTMLElement | null>(null)
 const rowsContainer = ref<HTMLElement | null>(null)
 const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
+const validatedBaseUnitWidth = ref(Math.min(50, Math.max(20, props.baseUnitWidth)))
+const validatedDefaultZoom = ref(Math.min(10, Math.max(1, props.defaultZoom)))
 
 const setLabelWidth = () => {
   return (
@@ -259,6 +264,8 @@ const colors = computed(() => getColorScheme(colorScheme.value))
 // Time Units Management
 const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision } = useTimeaxisUnits({
   ...toRefs(props),
+  baseUnitWidth: validatedBaseUnitWidth,
+  defaultZoom: validatedDefaultZoom,
   colors,
   chartSize
 })
@@ -874,12 +881,28 @@ watch(
   }
 )
 
+watch(
+  () => props.baseUnitWidth,
+  (newValue) => {
+    validatedBaseUnitWidth.value = Math.max(20, newValue)
+  }
+)
+
+watch(
+  () => props.defaultZoom,
+  (newValue) => {
+    validatedDefaultZoom.value = Math.min(10, Math.max(1, newValue))
+  }
+)
+
 // -----------------------------
 // 12. PROVIDERS
 // -----------------------------
 
 provide(CONFIG_KEY, {
   ...toRefs(props),
+  baseUnitWidth: validatedBaseUnitWidth,
+  defaultZoom: validatedDefaultZoom,
   colors,
   chartSize
 })
@@ -917,12 +940,6 @@ defineExpose({
         <div v-if="labelColumnTitle" class="g-gantt-label-section" :style="labelSectionStyle">
           <!-- Label Column -->
           <g-gantt-label-column ref="labelColumn" @scroll="handleLabelScroll" @row-drop="dropRow">
-            <template #label-column-title>
-              <slot name="label-column-title" />
-            </template>
-            <template #label-column-row="slotProps">
-              <slot name="label-column-row" v-bind="slotProps" />
-            </template>
             <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
               <slot :name="name" v-bind="slotData" />
             </template>
@@ -973,6 +990,15 @@ defineExpose({
               </template>
               <template #timeunit="slotProps">
                 <slot name="timeunit" v-bind="slotProps" />
+              </template>
+              <template #holiday-tooltip="slotProps">
+                <slot name="holiday-tooltip" v-bind="slotProps" />
+              </template>
+              <template #event-tooltip="slotProps">
+                <slot name="event-tooltip" v-bind="slotProps" />
+              </template>
+              <template #timeaxis-event="slotProps">
+                <slot name="timeaxis-event" v-bind="slotProps" />
               </template>
             </g-gantt-timeaxis>
 
@@ -1237,11 +1263,11 @@ defineExpose({
     </div>
 
     <!-- Tooltip -->
-    <g-gantt-bar-tooltip :model-value="showTooltip || isDragging" :bar="tooltipBar">
+    <g-gantt-tooltip type="bar" :model-value="showTooltip || isDragging" :bar="tooltipBar">
       <template #default="slotProps">
         <slot name="bar-tooltip" v-bind="slotProps" />
       </template>
-    </g-gantt-bar-tooltip>
+    </g-gantt-tooltip>
 
     <g-gantt-importer
       v-model="isImporterVisible"
@@ -1477,6 +1503,11 @@ defineExpose({
 
 button {
   display: flex;
+  padding: 0;
+  background-color: transparent;
+  background-image: none;
+  border: 0;
+  color: v-bind(colors.text);
 }
 
 .g-gantt-chart:focus-within {

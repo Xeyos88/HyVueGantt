@@ -824,6 +824,21 @@ defineExpose({
                     </button>
                     <span class="text-ellipsis-value">
                       <slot
+                        v-if="row.children?.length"
+                        :name="`label-column-${column.field.toLowerCase()}-group`"
+                        :row="row"
+                        :value="getRowValue(row, column, index)"
+                      >
+                        <slot
+                          :name="`label-column-${column.field.toLowerCase()}`"
+                          :row="row"
+                          :value="getRowValue(row, column, index)"
+                        >
+                          {{ getRowValue(row, column, index) }}
+                        </slot>
+                      </slot>
+                      <slot
+                        v-else
                         :name="`label-column-${column.field.toLowerCase()}`"
                         :row="row"
                         :value="getRowValue(row, column, index)"

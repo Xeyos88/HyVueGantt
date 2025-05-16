@@ -11,7 +11,7 @@ import { ganttWidth } from "./useSimpleStore"
  * Base width for time unit elements (in pixels)
  * Used as the foundation for calculating actual widths with zoom
  */
-const BASE_UNIT_WIDTH = 24
+//const BASE_UNIT_WIDTH = 24
 
 /**
  * Zoom level constraints and defaults
@@ -19,7 +19,7 @@ const BASE_UNIT_WIDTH = 24
  */
 const MAX_ZOOM = 10
 const MIN_ZOOM = 1
-const DEFAULT_ZOOM = 3
+//const DEFAULT_ZOOM = 3
 
 /**
  * Cache time-to-live in milliseconds
@@ -115,11 +115,18 @@ export const capitalizeWords = (str: string): string => {
  */
 export default function useTimeaxisUnits(config: GGanttChartConfig = provideConfig()) {
   const { getHolidayInfo } = useHolidays(config)
-  const { precision: configPrecision, holidayHighlight, locale, timeaxisEvents } = config
+  const {
+    precision: configPrecision,
+    holidayHighlight,
+    locale,
+    timeaxisEvents,
+    baseUnitWidth,
+    defaultZoom
+  } = config
 
   // Internal state
   const internalPrecision = ref<TimeUnit>(configPrecision.value)
-  const zoomLevel = ref(DEFAULT_ZOOM)
+  const zoomLevel = ref(defaultZoom.value)
   const processedTimeaxisEvents = ref<TimeaxisEvent[]>([])
 
   // Cache initialization
@@ -159,7 +166,7 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
   /**
    * Current unit width based on base width and zoom level
    */
-  const unitWidth = computed(() => BASE_UNIT_WIDTH * zoomLevel.value)
+  const unitWidth = computed(() => baseUnitWidth.value * zoomLevel.value)
 
   /**
    * Gets the next coarser precision level
@@ -374,7 +381,7 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     () => configPrecision.value,
     () => {
       internalPrecision.value = configPrecision.value
-      zoomLevel.value = DEFAULT_ZOOM
+      zoomLevel.value = defaultZoom.value
     }
   )
 

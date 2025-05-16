@@ -1,12 +1,12 @@
 # Hyper Vue Gantt
 
-A powerful and flexible Gantt chart component for Vue 3 applications. This component is an evolution of vue-ganttastic package, redesigned with TypeScript and enhanced features.
+A powerful and flexible Gantt chart component for Vue 3 applications. This component is an evolution of the vue-ganttastic package, completely redesigned with TypeScript and enhanced features for modern web applications.
 
-<img src="https://github.com/Xeyos88/HyVueGantt/blob/main/docs/.vitepress/public/logo.png?raw=true" alt="logo HyVueGantt" witdh="300" height="300">
+<img src="https://github.com/Xeyos88/HyVueGantt/blob/main/docs/.vitepress/public/logo.png?raw=true" alt="logo HyVueGantt" width="300" height="300">
 
-## Guide and Docs
+## Guide and Documentation
 
-For further guides and references, check out the [documentation](https://xeyos88.github.io/HyVueGantt/).
+For detailed guides and references, check out the [complete documentation](https://xeyos88.github.io/HyVueGantt/).
 
 ## 🚀 Installation
 
@@ -59,24 +59,38 @@ app.mount("#app")
 
 ### Core Features
 
-- 📅 **Flexible Time Management**: Support for various time units (hours, days, weeks, months)
+- 📅 **Flexible Time Management**:
+  - Support for various time units (hours, days, weeks, months)
   - Auto-adjusting precision based on view scale
-  - Custom day format display (number, day, doy, name)
+  - Custom day format display (number, day, day of year, name)
   - Holiday highlighting with tooltips
 - 🎨 **Rich Customization**:
   - Multiple label columns with sorting capability
   - Column resizing
   - Custom column definitions
   - 11 built-in color schemes
+  - Full support for custom components via slots
 - 🔗 **Advanced Bar Management**:
-  - Visual connections between bars with different styles
+  - Visual connections between bars with different styles (straight, bezier, squared)
   - Milestone support with tooltips and constraints
-  - Bundle support for grouped movements
+  - Bundle support for synchronized bar movements
   - Push-on-connect and push-on-overlap behaviors
-- 📱 **Responsive**: Works across different screen sizes
+  - Progress bars with customizable percentages
+- 💾 **Import/Export**:
+
+  - Export to PDF, PNG, SVG, and Excel
+  - Import from CSV and JSON (Jira) formats
+  - Customization options for exports (size, margins, orientation)
+
+- 📱 **Responsive & Touch Support**:
+
+  - Works across different screen sizes
+  - Full touch support for mobile devices
+  - Drag and resize bars on touch devices
+
 - ⌨️ **Keyboard Navigation**: Full keyboard support for accessibility
-- 🎯 **Intuitive Interface**: Drag & drop functionality
-- 🚀 **TypeScript**: Full TypeScript support with predefined types
+- 🎯 **Intuitive Interface**: Drag & drop functionality for rows and bars
+- 🚀 **TypeScript**: Complete TypeScript support with predefined types
 
 ## Advanced Examples
 
@@ -205,6 +219,66 @@ Enable holiday highlighting with custom styling:
 </template>
 ```
 
+### Export and Import
+
+Export your Gantt chart to various formats:
+
+```vue
+<template>
+  <g-gantt-chart
+    export-enabled
+    :export-options="{
+      format: 'pdf',
+      paperSize: 'a4',
+      orientation: 'landscape',
+      filename: 'my-project-gantt'
+    }"
+    @export-success="handleExportSuccess"
+  />
+</template>
+```
+
+Import data from CSV or Jira:
+
+```vue
+<template>
+  <g-gantt-chart
+    show-importer
+    importer-title="Import Data"
+    :importer-allowed-formats="['csv', 'jira']"
+    @import-data="handleImportedData"
+  />
+</template>
+```
+
+### Grouped Rows and Hierarchy
+
+Create hierarchical task structures with expandable groups:
+
+```vue
+<template>
+  <g-gantt-chart ...props>
+    <g-gantt-row
+      label="Project Phase 1"
+      :id="'phase1'"
+      :bars="phaseBars"
+      :children="[
+        {
+          id: 'task1',
+          label: 'Task 1.1',
+          bars: task1Bars
+        },
+        {
+          id: 'task2',
+          label: 'Task 1.2',
+          bars: task2Bars
+        }
+      ]"
+    />
+  </g-gantt-chart>
+</template>
+```
+
 ## TypeScript Support
 
 HyVue Gantt includes comprehensive TypeScript definitions. Example usage with full type support:
@@ -214,7 +288,8 @@ import type {
   GanttBarObject,
   ChartRow,
   ConnectionType,
-  GanttMilestone
+  GanttMilestone,
+  TimeaxisEvent
 } from "hy-vue-gantt"
 
 interface CustomBar extends GanttBarObject {
@@ -230,12 +305,43 @@ const row: ChartRow = {
       customField: "value",
       ganttBarConfig: {
         id: "1",
-        label: "Custom Bar"
+        label: "Custom Bar",
+        connections: []
       }
     }
   ]
 }
 ```
+
+## Available Events
+
+HyVue Gantt provides numerous events to interact with the chart:
+
+```vue
+<template>
+  <g-gantt-chart
+    @click-bar="onBarClick"
+    @dragend-bar="onBarDragEnd"
+    @progress-change="onProgressChange"
+    @connection-complete="onConnectionComplete"
+    @row-drop="onRowDrop"
+    @sort="onSort"
+    @group-expansion="onGroupExpand"
+    @export-success="onExportSuccess"
+    @import-data="onImportData"
+  />
+</template>
+```
+
+## Touch Support
+
+HyVue Gantt provides full touch support for mobile devices:
+
+- Drag and resize bars via touch
+- Pinch to zoom timeline
+- Long press to initiate connections
+- Swipe to navigate
+- Touch-based group expansion/collapse
 
 ## Contributing
 
@@ -250,9 +356,14 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Buy me a coffee
+
+A coffee helps to do a better job! \
+Donate on [paypal](https://www.paypal.com/paypalme/xeyos88).
+
 ## Acknowledgments
 
-This project is based on [vue-ganttastic](https://github.com/zunnzunn/vue-ganttastic) and has been completely rewritten with update TypeScript and enhanced features. Special thanks to the original authors and all contributors.
+This project is based on [vue-ganttastic](https://github.com/zunnzunn/vue-ganttastic) and has been completely rewritten with updated TypeScript and enhanced features. Special thanks to the original authors and all contributors.
 
 ## Screenshots
 

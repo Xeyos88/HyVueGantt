@@ -134,7 +134,15 @@ const customSlots = ref({
   barTooltip: false,
   currentTimeLabel: false,
   pointerMarkerTooltips: false,
-  upperTimeunit: false
+  upperTimeunit: false,
+  labelColumnTitle: false,
+  timeunit: false,
+  holidayTooltip: false,
+  eventTooltip: false,
+  timeaxisEvent: false,
+  groupBar: false,
+  milestone: false,
+  labelColumnField: false
 })
 
 // Custom Styles
@@ -910,8 +918,56 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
-                Custom Time Unit:
+                Custom Time Upper Unit:
                 <input type="checkbox" v-model="customSlots.upperTimeunit">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Custom Time Lower Unit:
+                <input type="checkbox" v-model="customSlots.timeunit">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Holiday Tooltip:
+                <input type="checkbox" v-model="customSlots.holidayTooltip">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Event Tooltip:
+                <input type="checkbox" v-model="customSlots.eventTooltip">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Timeaxis Event:
+                <input type="checkbox" v-model="customSlots.timeaxisEvent">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Group Bar:
+                <input type="checkbox" v-model="customSlots.groupBar">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Generic Milestone:
+                <input type="checkbox" v-model="customSlots.milestone">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Specific Column Title (Label):
+                <input type="checkbox" v-model="customSlots.labelColumnTitle">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Specific Column (Label):
+                <input type="checkbox" v-model="customSlots.labelColumnField">
               </label>
             </div>
           </div>
@@ -977,7 +1033,9 @@ const formattedEventLog = computed(() => {
         :show-importer="showImporter"
         :importer-title="'Import project data'"
         :importer-default-format="'csv'"
-        :importer-allowed-formats="['msproject', 'jira', 'csv', 'excel']"
+        :importer-allowed-formats="['jira', 'csv']"
+        :base-unit-width="200"
+        :default-zoom="5"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"
@@ -1012,6 +1070,24 @@ const formattedEventLog = computed(() => {
               <span class="bar-id">#{{ bar.ganttBarConfig.id }}</span>
             </div>
           </template>
+
+          <!-- Custom group bar -->
+        <template v-if="customSlots.groupBar" #group-bar="{ width, height, bar }">
+          <div class="custom-group-bar" :style="{ width: width + 'px', height: height + 'px' }">
+            <div class="group-header" :style="{ background: bar.ganttBarConfig.style?.background || '#35495e' }">
+              {{ bar.ganttBarConfig.label }}
+            </div>
+            <div class="group-progress-container">
+              <div 
+                class="group-progress" 
+                :style="{ 
+                  width: (bar.ganttBarConfig.progress || 0) + '%',
+                  background: bar.ganttBarConfig.style?.background ? `${bar.ganttBarConfig.style.background}aa` : '#35495eaa'
+                }"
+              ></div>
+            </div>
+          </div>
+        </template>
         </g-gantt-row>
 
         <template #milestone-milestone2="{ milestone }">
@@ -1106,6 +1182,79 @@ const formattedEventLog = computed(() => {
           <div class="custom-timeunit">
             <div class="timeunit-label">{{ label }}</div>
             <div class="timeunit-date">{{ new Date(date).toLocaleDateString() }}</div>
+          </div>
+        </template>
+
+        <!-- Custom label column title -->
+        <template v-if="customSlots.labelColumnTitle" #label-column-title-label>
+          <div class="custom-column-title">
+            <span class="title-icon">📊</span>
+            <span class="title-text">{{ labelColumnTitle }}</span>
+            <div class="column-subtitle">Project Planning</div>
+          </div>
+        </template>
+        <!-- Custom lower time units -->
+        <template v-if="customSlots.timeunit" #timeunit="{ label, date }">
+          <div class="custom-timeunit-lower" :class="{ 'weekend': new Date(date).getDay() % 6 === 0 }">
+            <div class="timeunit-number">{{ new Date(date).getDate() }}</div>
+            <div class="timeunit-day">{{ new Date(date).toLocaleDateString(locale, { weekday: 'short' }) }}</div>
+          </div>
+        </template>
+
+        <!-- Custom holiday tooltip -->
+        <template v-if="customSlots.holidayTooltip" #holiday-tooltip="{ unit }">
+          <div class="custom-holiday-tooltip">
+            <div class="holiday-icon">🎉</div>
+            <div class="holiday-name">{{ unit.holidayName }}</div>
+          </div>
+        </template>
+
+        <!-- Custom event tooltip -->
+        <template v-if="customSlots.eventTooltip" #event-tooltip="{ event, formatDate }">
+          <div class="custom-event-tooltip">
+            <div class="event-tooltip-header">{{ event.label }}</div>
+            <div class="event-tooltip-dates">
+              <div>Start: {{ formatDate(event.startDate) }}</div>
+              <div>End: {{ formatDate(event.endDate) }}</div>
+            </div>
+            <div v-if="event.description" class="event-tooltip-description">
+              {{ event.description }}
+            </div>
+          </div>
+        </template>
+
+        <!-- Custom timeaxis events -->
+        <template v-if="customSlots.timeaxisEvent" #timeaxis-event="{ event }">
+          <div class="custom-timeaxis-event">
+            <span class="event-dot" :style="{ background: event.backgroundColor || '#42b883' }"></span>
+            <span class="event-label">{{ event.label }}</span>
+          </div>
+        </template>
+
+        <!-- Custom generic milestone -->
+        <template v-if="customSlots.milestone" #milestone="{ milestone, styleConfig }">
+          <div class="custom-milestone-generic">
+            <div class="milestone-label">{{ milestone.name }}</div>
+            <div class="milestone-date">{{ new Date(milestone.date).toLocaleDateString(locale, { dateStyle: 'medium' }) }}</div>
+          </div>
+        </template>
+
+        <!-- Custom specific column (Label) -->
+        <template v-if="customSlots.labelColumnField" #label-column-label="{ value, row }">
+          <div class="custom-label-field">
+            <div class="label-field-content">
+              <span class="priority-indicator" 
+                    :class="row.id.toString().includes('task') ? 'high-priority' : 'normal-priority'"></span>
+              <span>{{ value }}</span>
+            </div>
+          </div>
+        </template>
+
+        <!-- Custom specific column for groups (Label) -->
+        <template v-if="customSlots.labelColumnField" #label-column-label-group="{ value, row }">
+          <div class="custom-group-field">
+            <span class="group-indicator">📦</span>
+            <span class="group-label">{{ value }}</span>
           </div>
         </template>
       </g-gantt-chart>
@@ -1385,6 +1534,207 @@ const formattedEventLog = computed(() => {
     background-color: #35496E;
     color: #42B883;
     font-weight: 700;
+}
+
+.custom-column-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+}
+
+.title-icon {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.title-text {
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.column-subtitle {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.custom-row-label {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+}
+
+.row-label-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.row-icon {
+  font-size: 12px;
+}
+
+.row-label-meta {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.custom-timeunit-lower {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: center;
+}
+
+.custom-timeunit-lower.weekend {
+  background-color: rgba(255, 0, 0, 0.1);
+}
+
+.timeunit-number {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.timeunit-day {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.custom-event-tooltip {
+  background: #2a2f42;
+  padding: 8px 12px;
+  border-radius: 4px;
+  min-width: 200px;
+  color: white;
+}
+
+.holiday-name,
+.event-tooltip-header {
+  font-weight: bold;
+  margin-bottom: 2px;
+  color: #42b883;
+}
+
+.holiday-type,
+.holiday-date,
+.event-tooltip-dates,
+.event-tooltip-description {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.custom-timeaxis-event {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  padding: 0 4px;
+}
+
+.event-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.event-label {
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.custom-milestone-generic {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  top: 0;
+}
+
+.milestone-diamond {
+  width: 16px;
+  height: 16px;
+  margin-bottom: 2px;
+}
+
+.milestone-label {
+  font-size: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.milestone-date {
+  font-size: 8px;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.custom-group-bar {
+  display: flex;
+  flex-direction: column;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.group-header {
+  height: 60%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  color: white;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.group-progress-container {
+  height: 40%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.group-progress {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.custom-label-field,
+.custom-group-field {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 8px;
+}
+
+.label-field-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.priority-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.high-priority {
+  background: #e74c3c;
+}
+
+.normal-priority {
+  background: #f1c40f;
+}
+
+.group-indicator {
+  margin-right: 6px;
+}
+
+.group-label {
+  font-weight: bold;
 }
 
 @media (max-width: 1200px) {

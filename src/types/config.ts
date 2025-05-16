@@ -82,6 +82,8 @@ export interface GGanttChartProps {
   importerAllowedFormats?: ImportFormat[]
   importerBarStartField?: string
   importerBarEndField?: string
+  baseUnitWidth?: number
+  defaultZoom?: number
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

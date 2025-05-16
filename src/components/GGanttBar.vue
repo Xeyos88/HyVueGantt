@@ -572,20 +572,19 @@ onMounted(() => {
       />
     </div>
     <!-- SVG for Group Bars -->
-    <svg
-      v-if="isGroupBar"
-      class="group-bar-decoration"
-      :width="xEnd - xStart"
-      :height="rowHeight * 0.7"
-    >
-      <path
-        :d="getGroupBarPath(xEnd - xStart, rowHeight * 0.65)"
-        :fill="config.colors.value.barContainer"
-      />
-    </svg>
+    <template v-if="isGroupBar">
+      <slot name="group-bar" :width="xEnd - xStart" :height="rowHeight * 0.7" :bar="bar">
+        <svg class="group-bar-decoration" :width="xEnd - xStart" :height="rowHeight * 0.7">
+          <path
+            :d="getGroupBarPath(xEnd - xStart, rowHeight * 0.65)"
+            :fill="config.colors.value.barContainer"
+          />
+        </svg>
+      </slot>
+    </template>
     <!-- Bar Label -->
-    <div class="g-gantt-bar-label">
-      <slot :bar="bar">
+    <div v-else class="g-gantt-bar-label">
+      <slot name="bar-label" :bar="bar">
         <div v-if="!isGroupBar && showLabel">
           <div v-if="isEditing && barLabelEditable" class="g-gantt-bar-label-edit">
             <input
@@ -706,11 +705,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding-right: 10px;
+  /*padding-right: 10px;*/
   color: #fff;
   font-size: 0.8em;
   font-weight: 500;
   z-index: 1;
+}
+
+.progress-text {
+  padding-right: 10px;
 }
 
 .g-gantt-progress-handle {

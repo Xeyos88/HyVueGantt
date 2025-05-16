@@ -233,7 +233,9 @@ provide(BAR_CONTAINER_KEY, barContainer)
           :class="{ 'g-gantt-group-bar': isGroup }"
         >
           <!-- Pass bar label slot to children -->
-          <slot name="bar-label" :bar="bar" v-if="!isGroup" />
+          <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps">
+            <slot :name="name" v-bind="slotProps" />
+          </template>
         </g-gantt-bar>
       </transition-group>
     </div>
