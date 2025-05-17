@@ -12,7 +12,7 @@ import { computed, ref } from "vue"
 import provideConfig from "../provider/provideConfig"
 
 // Types
-import type { BarPosition, ConnectionType, MarkerConnection } from "../types"
+import type { BarPosition, ConnectionType, MarkerConnection, ConnectionRelation } from "../types"
 
 // -----------------------------
 // 3. PROPS AND CONFIGURATION
@@ -28,6 +28,7 @@ interface Props {
   animationSpeed?: "slow" | "normal" | "fast"
   marker: MarkerConnection
   isSelected?: boolean
+  relation?: ConnectionRelation
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -37,7 +38,8 @@ const props = withDefaults(defineProps<Props>(), {
   pattern: "solid",
   animated: false,
   animationSpeed: "normal",
-  isSelected: false
+  isSelected: false,
+  relation: "FS" // Valore predefinito
 })
 
 // -----------------------------
@@ -84,21 +86,64 @@ const markerDeltaEnd = computed(() => (hasMarkerEnd.value ? 4 : 0))
 const markerDeltaStart = computed(() => (hasMarkerStart.value ? 4 : 0))
 
 /**
- * Computed SVG path for the connection based on connection type
+ * Determines connection points based on relation type
+ */
+const connectionPoints = computed(() => {
+  const { sourceBar, targetBar, relation } = props
+
+  // Determina i punti di inizio e fine in base al tipo di relazione
+  switch (relation) {
+    case "FS": // Finish to Start (default)
+      return {
+        sourceX: sourceBar.x + sourceBar.width,
+        sourceY: sourceBar.y + sourceBar.height / 2,
+        targetX: targetBar.x,
+        targetY: targetBar.y + targetBar.height / 2
+      }
+    case "SS": // Start to Start
+      return {
+        sourceX: sourceBar.x,
+        sourceY: sourceBar.y + sourceBar.height / 2,
+        targetX: targetBar.x,
+        targetY: targetBar.y + targetBar.height / 2
+      }
+    case "FF": // Finish to Finish
+      return {
+        sourceX: sourceBar.x + sourceBar.width,
+        sourceY: sourceBar.y + sourceBar.height / 2,
+        targetX: targetBar.x + targetBar.width,
+        targetY: targetBar.y + targetBar.height / 2
+      }
+    case "SF": // Start to Finish
+      return {
+        sourceX: sourceBar.x,
+        sourceY: sourceBar.y + sourceBar.height / 2,
+        targetX: targetBar.x + targetBar.width,
+        targetY: targetBar.y + targetBar.height / 2
+      }
+    default:
+      return {
+        sourceX: sourceBar.x + sourceBar.width,
+        sourceY: sourceBar.y + sourceBar.height / 2,
+        targetX: targetBar.x,
+        targetY: targetBar.y + targetBar.height / 2
+      }
+  }
+})
+
+/**
+ * Computed SVG path for the connection based on connection type and relation
  */
 const pathData = computed(() => {
-  const sourceX = props.sourceBar.x + props.sourceBar.width
-  const sourceY = props.sourceBar.y + props.sourceBar.height / 2
-  const targetX = props.targetBar.x
-  const targetY = props.targetBar.y + props.targetBar.height / 2
+  const { sourceX, sourceY, targetX, targetY } = connectionPoints.value
 
   const OFFSET = 20
   const isGoingBack = targetX <= sourceX
 
   switch (props.type) {
     case "straight":
-      // Direct line from source to target
-      return `M ${sourceX},${sourceY} L ${targetX - markerDeltaEnd.value},${targetY}`
+      // Direct line from source to target with marker adjustments
+      return `M ${sourceX + (hasMarkerStart.value ? markerDeltaStart.value : 0)},${sourceY} L ${targetX - markerDeltaEnd.value},${targetY}`
 
     case "squared":
       if (isGoingBack) {
@@ -108,14 +153,14 @@ const pathData = computed(() => {
                 v ${(targetY - sourceY) / 2}
                 h -${Math.abs(targetX - sourceX) + OFFSET * 2}
                 v ${(targetY - sourceY) / 2}
-                h ${OFFSET - markerDeltaEnd.value * 2}`
+                h ${OFFSET - markerDeltaEnd.value}`
       }
 
       // Forward connection with square corners
       return `M ${sourceX + markerDeltaStart.value},${sourceY}
               h ${OFFSET}
               v ${targetY - sourceY}
-              h ${targetX - sourceX - OFFSET - markerDeltaEnd.value * 2}`
+              h ${targetX - sourceX - OFFSET - markerDeltaEnd.value}`
 
     case "bezier":
     default:
@@ -154,6 +199,14 @@ const getStrokeWidth = computed(() => {
     return props.strokeWidth * 1.5
   }
   return props.strokeWidth
+})
+
+const endpointPositions = computed(() => {
+  const { sourceX, sourceY, targetX, targetY } = connectionPoints.value
+  return {
+    source: { x: sourceX, y: sourceY },
+    target: { x: targetX, y: targetY }
+  }
 })
 </script>
 
@@ -243,15 +296,15 @@ const getStrokeWidth = computed(() => {
     <!-- Selection indicators shown when connection is selected -->
     <template v-if="isSelected && enableConnectionDeletion">
       <circle
-        :cx="sourceBar.x + sourceBar.width"
-        :cy="sourceBar.y + sourceBar.height / 2"
+        :cx="endpointPositions.source.x"
+        :cy="endpointPositions.source.y"
         r="6"
         fill="white"
         class="connection-endpoint"
       />
       <circle
-        :cx="targetBar.x"
-        :cy="targetBar.y + targetBar.height / 2"
+        :cx="endpointPositions.target.x"
+        :cy="endpointPositions.target.y"
         r="6"
         fill="white"
         class="connection-endpoint"

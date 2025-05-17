@@ -1,5 +1,6 @@
 import type { CSSProperties } from "vue"
 import type { ConnectionPattern, ConnectionSpeed, ConnectionType } from "./chart"
+import type { ConnectionRelation } from "./chart"
 
 export interface BaseConnection {
   targetId: string
@@ -8,6 +9,7 @@ export interface BaseConnection {
   pattern?: ConnectionPattern
   animated?: boolean
   animationSpeed?: ConnectionSpeed
+  relation?: ConnectionRelation
 }
 
 export type GanttBarConnection = BaseConnection

@@ -115,6 +115,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   defaultConnectionPattern: "solid",
   defaultConnectionAnimated: false,
   defaultConnectionAnimationSpeed: "normal",
+  defaultConnectionRelation: "FS",
   maxRows: 0,
   initialSort: () => ({
     column: "Label",

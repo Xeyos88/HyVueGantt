@@ -222,6 +222,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
             progress: 100,
             connections: [{
               targetId: 'bar2',
+              relation: 'SS'
             }]
           }
         }]
@@ -1034,8 +1035,6 @@ const formattedEventLog = computed(() => {
         :importer-title="'Import project data'"
         :importer-default-format="'csv'"
         :importer-allowed-formats="['jira', 'csv']"
-        :base-unit-width="200"
-        :default-zoom="5"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"
