@@ -213,7 +213,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
         id: 'task1',
         label: 'Setup Project',
         bars: [{
-          start: `${year}-${month}-01`,
+          start: `${year}-${month}-02`,
           end: `${year}-${month}-10`,
           ganttBarConfig: {
             id: 'bar1',
@@ -1014,6 +1014,7 @@ const formattedEventLog = computed(() => {
         :default-connection-animation-speed="defaultConnectionAnimationSpeed"
         :default-connection-animated="defaultConnectionAnimated"
         :default-connection-color="defaultConnectionColor"
+        :default-connection-relation="'SS'"
         :marker-connection="markerConnection"
         :enable-row-drag-and-drop="enableRowDragAndDrop"
         :label-resizable="labelResizable"

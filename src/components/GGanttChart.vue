@@ -1075,11 +1075,12 @@ defineExpose({
                     width: 0,
                     height: 0
                   }"
-                  :type="defaultConnectionType"
+                  :type="'straight'"
                   :color="defaultConnectionColor"
                   :pattern="defaultConnectionPattern"
                   :animated="defaultConnectionAnimated"
                   :animation-speed="defaultConnectionAnimationSpeed"
+                  :relation="defaultConnectionRelation"
                   :style="{ opacity: 0.6 }"
                   :marker="markerConnection"
                 />

@@ -63,7 +63,7 @@ const animationClass = computed(() => {
 /**
  * Unique marker ID for this connection
  */
-const markerId = computed(() => `marker-start-${props.sourceBar.id}-${props.targetBar.id}`)
+const markerId = computed(() => `marker-${props.sourceBar.id}-${props.targetBar.id}`)
 
 /**
  * Whether to show end marker (arrow)
@@ -76,14 +76,9 @@ const hasMarkerEnd = computed(() => props.marker === "bidirectional" || props.ma
 const hasMarkerStart = computed(() => props.marker === "bidirectional")
 
 /**
- * Adjustment value for end marker positioning
+ * Adjustment value for marker positioning
  */
-const markerDeltaEnd = computed(() => (hasMarkerEnd.value ? 4 : 0))
-
-/**
- * Adjustment value for start marker positioning
- */
-const markerDeltaStart = computed(() => (hasMarkerStart.value ? 4 : 0))
+const markerDelta = computed(() => 4)
 
 /**
  * Determines connection points based on relation type
@@ -91,7 +86,6 @@ const markerDeltaStart = computed(() => (hasMarkerStart.value ? 4 : 0))
 const connectionPoints = computed(() => {
   const { sourceBar, targetBar, relation } = props
 
-  // Determina i punti di inizio e fine in base al tipo di relazione
   switch (relation) {
     case "FS": // Finish to Start (default)
       return {
@@ -131,45 +125,112 @@ const connectionPoints = computed(() => {
   }
 })
 
+const STANDARD_OFFSET = 20
+
 /**
  * Computed SVG path for the connection based on connection type and relation
  */
 const pathData = computed(() => {
   const { sourceX, sourceY, targetX, targetY } = connectionPoints.value
+  const { relation, type } = props
 
-  const OFFSET = 20
-  const isGoingBack = targetX <= sourceX
+  const verticalDiff = targetY - sourceY
 
-  switch (props.type) {
+  const extraOffset = relation === "FF" || relation === "SF" ? 20 : 0
+
+  const horizontalSpace = targetX - sourceX
+
+  const isOverlapping = Math.abs(horizontalSpace) < STANDARD_OFFSET * (relation === "FS" ? 1 : 2)
+  const offset = isOverlapping
+    ? Math.max(STANDARD_OFFSET, Math.abs(horizontalSpace) / 2)
+    : STANDARD_OFFSET
+
+  const verticalOffset = verticalDiff === 0 && isOverlapping ? 20 : 0
+
+  const startAdjust = hasMarkerStart.value ? markerDelta.value : 0
+  const endAdjust = hasMarkerEnd.value ? markerDelta.value : 0
+
+  switch (type) {
     case "straight":
-      // Direct line from source to target with marker adjustments
-      return `M ${sourceX + (hasMarkerStart.value ? markerDeltaStart.value : 0)},${sourceY} L ${targetX - markerDeltaEnd.value},${targetY}`
-
-    case "squared":
-      if (isGoingBack) {
-        // Special case for backwards connections with square corners
-        return `M ${sourceX + markerDeltaStart.value},${sourceY}
-                h ${OFFSET}
-                v ${(targetY - sourceY) / 2}
-                h -${Math.abs(targetX - sourceX) + OFFSET * 2}
-                v ${(targetY - sourceY) / 2}
-                h ${OFFSET - markerDeltaEnd.value}`
+      if (isOverlapping) {
+        const midY = (sourceY + targetY) / 2 + verticalOffset * (sourceY > targetY ? -1 : 1)
+        return `M ${sourceX + startAdjust},${sourceY} 
+                Q ${sourceX + offset},${midY} ${(sourceX + targetX) / 2},${midY} 
+                Q ${targetX - offset},${midY} ${targetX - endAdjust},${targetY}`
+      } else {
+        return `M ${sourceX + startAdjust},${sourceY} L ${targetX - endAdjust},${targetY}`
       }
 
-      // Forward connection with square corners
-      return `M ${sourceX + markerDeltaStart.value},${sourceY}
-              h ${OFFSET}
-              v ${targetY - sourceY}
-              h ${targetX - sourceX - OFFSET - markerDeltaEnd.value}`
+    case "squared":
+      if (relation === "FS") {
+        // FS - Finish to Start
+        return `M ${sourceX + startAdjust},${sourceY}
+                  h ${offset / 2}
+                  v ${verticalDiff}
+                  h ${horizontalSpace - offset / 2 - endAdjust}`
+      } else if (relation === "SS") {
+        // SS - Start to Start
+        return `M ${sourceX + startAdjust},${sourceY}
+                  h ${-offset / 2}
+                  v ${verticalDiff}
+                  h ${horizontalSpace + offset / 2 - endAdjust}`
+      } else if (relation === "FF") {
+        // FF - Finish to Finish
+        return `M ${sourceX + startAdjust},${sourceY}
+                h ${offset / 2}
+                v ${verticalDiff / 2}
+                h ${horizontalSpace + offset / 2}
+                v ${verticalDiff / 2}
+                h ${-offset / 2 - endAdjust}`
+      } else if (relation === "SF") {
+        // SF - Start to Finish
+        return `M ${sourceX + startAdjust},${sourceY}
+                h ${-offset / 2}
+                v ${verticalDiff / 2}
+                h ${horizontalSpace + offset * 1.5}
+                v ${verticalDiff / 2}
+                h ${-offset / 2 - endAdjust}`
+      }
+
+      return `M ${sourceX + startAdjust},${sourceY}
+              h ${offset}
+              v ${verticalDiff}
+              h ${horizontalSpace - offset - endAdjust}`
 
     case "bezier":
     default:
-      // Curved connection using Bezier curve
-      const controlPointX = (sourceX + targetX) / 2
-      return `M ${sourceX + markerDeltaStart.value},${sourceY}
-              C ${controlPointX},${sourceY}
-                ${controlPointX},${targetY}
-                ${targetX - markerDeltaEnd.value},${targetY}`
+      let controlOffset = Math.max(Math.abs(horizontalSpace) / 3, offset * 1.5)
+      if (isOverlapping) controlOffset = Math.max(controlOffset, offset * 2)
+
+      if (relation === "FF" || relation === "SF") {
+        const midX = targetX + extraOffset
+
+        return `M ${sourceX + (hasMarkerStart.value ? startAdjust : 0)},${sourceY}
+                C ${midX},${sourceY}
+                  ${midX},${targetY}
+                  ${targetX + (hasMarkerEnd.value ? endAdjust : 0)},${targetY}`
+      } else {
+        let cp1x, cp2x
+
+        switch (relation) {
+          case "FS":
+            cp1x = sourceX + controlOffset
+            cp2x = targetX - controlOffset
+            break
+          case "SS":
+            cp1x = sourceX - controlOffset
+            cp2x = targetX - controlOffset
+            break
+          default:
+            cp1x = sourceX + controlOffset
+            cp2x = targetX - controlOffset
+        }
+
+        return `M ${sourceX + (hasMarkerStart.value ? startAdjust : 0)},${sourceY}
+                C ${cp1x},${sourceY}
+                  ${cp2x},${targetY}
+                  ${targetX - (hasMarkerEnd.value ? endAdjust : 0)},${targetY}`
+      }
   }
 })
 
@@ -283,7 +344,8 @@ const endpointPositions = computed(() => {
       :class="[
         'connector-path',
         animationClass,
-        { selected: isSelected && enableConnectionDeletion }
+        { selected: isSelected && enableConnectionDeletion },
+        `connector-relation-${relation || 'FS'}`
       ]"
       :style="{
         markerStart: hasMarkerStart ? `url(#${markerId})` : 'none',
@@ -293,7 +355,6 @@ const endpointPositions = computed(() => {
       }"
     />
 
-    <!-- Selection indicators shown when connection is selected -->
     <template v-if="isSelected && enableConnectionDeletion">
       <circle
         :cx="endpointPositions.source.x"
@@ -325,6 +386,15 @@ const endpointPositions = computed(() => {
 
 .connector-path.selected {
   filter: drop-shadow(0 0 5px rgba(33, 150, 243, 0.6));
+}
+
+.relation-indicator {
+  font-weight: bold;
+  pointer-events: none;
+  text-shadow:
+    0 0 3px white,
+    0 0 3px white,
+    0 0 3px white;
 }
 
 /* Animation for dash pattern */
