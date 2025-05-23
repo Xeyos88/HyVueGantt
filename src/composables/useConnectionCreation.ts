@@ -114,13 +114,11 @@ export function useConnectionCreation(
     sourcePoint: ConnectionPoint,
     targetPoint: ConnectionPoint
   ): ConnectionRelation => {
-    console.log(`Source point: ${sourcePoint}, Target point: ${targetPoint}`)
-    if (sourcePoint === "end" && targetPoint === "start") return "FS" // Finish to Start
-    if (sourcePoint === "start" && targetPoint === "start") return "SS" // Start to Start
-    if (sourcePoint === "end" && targetPoint === "end") return "FF" // Finish to Finish
-    if (sourcePoint === "start" && targetPoint === "end") return "SF" // Start to Finish
+    if (sourcePoint === "end" && targetPoint === "start") return "FS"
+    if (sourcePoint === "start" && targetPoint === "start") return "SS"
+    if (sourcePoint === "end" && targetPoint === "end") return "FF"
+    if (sourcePoint === "start" && targetPoint === "end") return "SF"
 
-    // Default fallback
     return "FS"
   }
 

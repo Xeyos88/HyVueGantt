@@ -49,11 +49,9 @@ const xDist = ref()
  * Called at regular intervals to keep the marker in sync with real time
  */
 const loopTime = () => {
-  // Use UTC time if configured, otherwise local time
   const now = utc.value ? dayjs().utc() : dayjs()
   currentMoment.value = now
 
-  // Format current time according to chart settings and map to x-coordinate
   const format = dateFormat.value || "YYYY-MM-DD HH:mm:ss"
   xDist.value = mapTimeToPosition(dayjs(currentMoment.value, format).format(format))
 }
