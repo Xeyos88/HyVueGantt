@@ -271,7 +271,7 @@ export function useExport(
       const imgWidth = canvas.width
       const imgHeight = canvas.height
       const ratio = imgWidth / imgHeight
-      let pdfHeight = pdfWidth / ratio
+      const pdfHeight = pdfWidth / ratio
 
       if (pdfHeight > pageHeight - margin * 2) {
         let currentHeight = 0

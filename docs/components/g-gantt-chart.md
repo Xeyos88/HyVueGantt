@@ -57,6 +57,7 @@ Here's a minimal example of using the GGanttChart component:
 | defaultConnectionPattern | `ConnectionPattern` | `'solid'` | Default pattern for connections |
 | defaultConnectionAnimated | `boolean` | `false` | Enable connection animations |
 | defaultConnectionAnimationSpeed | `ConnectionSpeed` | `'normal'` | Speed of connection animations |
+| defaultConnectionRelation | `ConnectionRelation` | `'FD'` | Default type of relation |
 | maxRows | `number` | `0` | Maximum number of visible rows |
 | initialSort | `SortState` | `'none'` | Initial sorting column and direction |
 | initialRows | `ChartRow[]` | `[]` | Initial rows data |

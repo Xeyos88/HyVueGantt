@@ -14,6 +14,7 @@ type ConnectionType = 'bezier' | 'straight' | 'squared';
 type ConnectionPattern = 'solid' | 'dot' | 'dash' | 'dashdot';
 type ConnectionSpeed = 'slow' | 'normal' | 'fast';
 type MarkerConnection = 'none' | 'forward' | 'bidirectional'
+type ConnectionRelation = "FS" | "SS" | "FF" | "SF"
 ```
 
 ## Bar Configuration
@@ -51,6 +52,7 @@ interface GanttBarConnection {
   pattern?: ConnectionPattern;
   animated?: boolean;
   animationSpeed?: ConnectionSpeed;
+  relation?: ConnectionRelation;
 }
 ```
 

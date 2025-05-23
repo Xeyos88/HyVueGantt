@@ -10,7 +10,8 @@ import type {
   SortState,
   TimeUnit,
   MarkerConnection,
-  TimeaxisEvent
+  TimeaxisEvent,
+  ConnectionRelation
 } from "./chart"
 import type { ColorScheme } from "./style"
 import type { ExportOptions } from "./export"
@@ -48,6 +49,7 @@ export interface GGanttChartProps {
   defaultConnectionPattern?: ConnectionPattern
   defaultConnectionAnimated?: boolean
   defaultConnectionAnimationSpeed?: ConnectionSpeed
+  defaultConnectionRelation?: ConnectionRelation
   maxRows?: number
   initialSort?: SortState
   initialRows?: ChartRow[]

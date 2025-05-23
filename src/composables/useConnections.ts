@@ -47,6 +47,7 @@ export function useConnections(
       pattern: conn.pattern ?? props.defaultConnectionPattern,
       animated: conn.animated ?? props.defaultConnectionAnimated,
       animationSpeed: conn.animationSpeed ?? props.defaultConnectionAnimationSpeed,
+      relation: conn.relation ?? props.defaultConnectionRelation,
       isSelected:
         selectedConnection.value?.sourceId === conn.sourceId &&
         selectedConnection.value?.targetId === conn.targetId
@@ -128,7 +129,8 @@ export function useConnections(
             color: conn.color,
             pattern: conn.pattern,
             animated: conn.animated,
-            animationSpeed: conn.animationSpeed
+            animationSpeed: conn.animationSpeed,
+            relation: conn.relation
           })
         })
       }

@@ -73,6 +73,7 @@ The `connections` property in `ganttBarConfig` accepts an array of `GanttBarConn
 | pattern | `'solid' \| 'dot' \| 'dash' \| 'dashdot'` | `'solid'` | Line pattern style |
 | animated | `boolean` | `false` | Whether the connection should be animated |
 | animationSpeed | `'slow' \| 'normal' \| 'fast'` | `'normal'` | Speed of the connection animation |
+| relation | `'SF' \| 'SS' \| 'FS'` | `'FF'` | Define the points of connection between bars. S=START, F=FINISH |
 
 # Keyboard Controls
 
