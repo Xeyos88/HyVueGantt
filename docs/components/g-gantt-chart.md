@@ -58,8 +58,10 @@ Here's a minimal example of using the GGanttChart component:
 | defaultConnectionAnimated | `boolean` | `false` | Enable connection animations |
 | defaultConnectionAnimationSpeed | `ConnectionSpeed` | `'normal'` | Speed of connection animations |
 | defaultConnectionRelation | `ConnectionRelation` | `'FD'` | Default type of relation |
-| maxRows | `number` | `0` | Maximum number of visible rows |
-| initialSort | `SortState` | `'none'` | Initial sorting column and direction |
+| defaultConnectionLabel | `string` | `''` | Default label for all connections |
+| defaultConnectionLabelAlwaysVisible | `boolean` | `false` | Default visibility setting for connection labels |
+| defaultConnectionLabelStyle | `ConnectionLabelStyle` | `{}` | Default styling for connection labels |
+| maxRows | `number` | `0` | Maximum number of visible rows || initialSort | `SortState` | `'none'` | Initial sorting column and direction |
 | initialRows | `ChartRow[]` | `[]` | Initial rows data |
 | currentTime | `boolean` | `false` | Show current time indicator |
 | currentTimeLabel | `string` | `''` | Label for current time indicator |

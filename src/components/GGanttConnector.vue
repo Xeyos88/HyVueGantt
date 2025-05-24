@@ -12,7 +12,13 @@ import { computed, ref } from "vue"
 import provideConfig from "../provider/provideConfig"
 
 // Types
-import type { BarPosition, ConnectionType, MarkerConnection, ConnectionRelation } from "../types"
+import type {
+  BarPosition,
+  ConnectionType,
+  MarkerConnection,
+  ConnectionRelation,
+  ConnectionLabelStyle
+} from "../types"
 
 // -----------------------------
 // 3. PROPS AND CONFIGURATION
@@ -29,6 +35,9 @@ interface Props {
   marker: MarkerConnection
   isSelected?: boolean
   relation?: ConnectionRelation
+  label?: string
+  labelAlwaysVisible?: boolean
+  labelStyle?: ConnectionLabelStyle
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -39,7 +48,10 @@ const props = withDefaults(defineProps<Props>(), {
   animated: false,
   animationSpeed: "normal",
   isSelected: false,
-  relation: "FS" // Valore predefinito
+  relation: "FS",
+  label: "",
+  labelAlwaysVisible: false,
+  labelStyle: () => ({})
 })
 
 // -----------------------------
@@ -79,6 +91,28 @@ const hasMarkerStart = computed(() => props.marker === "bidirectional")
  * Adjustment value for marker positioning
  */
 const markerDelta = computed(() => 4)
+
+/**
+ * Determines if label should be shown
+ */
+const shouldShowLabel = computed(() => {
+  return props.label && (props.labelAlwaysVisible || props.isSelected)
+})
+
+/**
+ * Computed style for the label
+ */
+const labelComputedStyle = computed(() => {
+  const defaultStyle = {
+    fill: props.color,
+    fontWeight: "bold"
+  }
+
+  return {
+    ...defaultStyle,
+    ...props.labelStyle
+  }
+})
 
 /**
  * Determines connection points based on relation type
@@ -355,6 +389,21 @@ const endpointPositions = computed(() => {
       }"
     />
 
+    <!-- Connection label -->
+    <text
+      v-if="shouldShowLabel"
+      :x="(endpointPositions.source.x + endpointPositions.target.x) / 2 - 50"
+      :y="(endpointPositions.source.y + endpointPositions.target.y) / 2 - 20"
+      class="connection-label-container"
+      text-anchor="middle"
+      :style="{
+        pointerEvents: 'none',
+        ...labelComputedStyle
+      }"
+    >
+      {{ label }}
+    </text>
+
     <template v-if="isSelected && enableConnectionDeletion">
       <circle
         :cx="endpointPositions.source.x"
@@ -391,10 +440,6 @@ const endpointPositions = computed(() => {
 .relation-indicator {
   font-weight: bold;
   pointer-events: none;
-  text-shadow:
-    0 0 3px white,
-    0 0 3px white,
-    0 0 3px white;
 }
 
 /* Animation for dash pattern */

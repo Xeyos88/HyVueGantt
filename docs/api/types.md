@@ -53,6 +53,26 @@ interface GanttBarConnection {
   animated?: boolean;
   animationSpeed?: ConnectionSpeed;
   relation?: ConnectionRelation;
+  label?: string;
+  labelAlwaysVisible?: boolean;
+  labelStyle?: ConnectionLabelStyle;
+}
+```
+
+## Connection Label Styling
+
+```typescript
+interface ConnectionLabelStyle {
+  fill?: string;
+  fontSize?: string;
+  fontWeight?: string | number;
+  fontFamily?: string;
+  background?: string;
+  borderRadius?: string;
+  border?: string;
+  opacity?: number;
+  textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
+  [key: string]: any;
 }
 ```
 

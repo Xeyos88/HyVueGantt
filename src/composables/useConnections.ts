@@ -40,7 +40,6 @@ export function useConnections(
     if (!sourceBar || !targetBar) {
       return null
     }
-
     const connectionProps = {
       type: conn.type ?? props.defaultConnectionType,
       color: conn.color ?? props.defaultConnectionColor,
@@ -48,6 +47,9 @@ export function useConnections(
       animated: conn.animated ?? props.defaultConnectionAnimated,
       animationSpeed: conn.animationSpeed ?? props.defaultConnectionAnimationSpeed,
       relation: conn.relation ?? props.defaultConnectionRelation,
+      label: conn.label ?? props.defaultConnectionLabel,
+      labelAlwaysVisible: conn.labelAlwaysVisible ?? props.defaultConnectionLabelAlwaysVisible,
+      labelStyle: conn.labelStyle ?? props.defaultConnectionLabelStyle,
       isSelected:
         selectedConnection.value?.sourceId === conn.sourceId &&
         selectedConnection.value?.targetId === conn.targetId
@@ -130,7 +132,10 @@ export function useConnections(
             pattern: conn.pattern,
             animated: conn.animated,
             animationSpeed: conn.animationSpeed,
-            relation: conn.relation
+            relation: conn.relation,
+            label: conn.label,
+            labelAlwaysVisible: conn.labelAlwaysVisible,
+            labelStyle: conn.labelStyle
           })
         })
       }

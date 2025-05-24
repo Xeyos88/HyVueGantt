@@ -116,6 +116,9 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   defaultConnectionAnimated: false,
   defaultConnectionAnimationSpeed: "normal",
   defaultConnectionRelation: "FS",
+  defaultConnectionLabel: "",
+  defaultConnectionLabelAlwaysVisible: false,
+  defaultConnectionLabelStyle: () => ({}),
   maxRows: 0,
   initialSort: () => ({
     column: "Label",
@@ -518,7 +521,8 @@ const totalWidth = computed(() => {
 const hasGroupRows = computed(() => {
   const checkForGroups = (rows: ChartRow[]): boolean => {
     return rows.some(
-      (row) => row.children?.length! > 0 || (row.children && checkForGroups(row.children))
+      (row) =>
+        (row.children && row.children.length > 0) || (row.children && checkForGroups(row.children))
     )
   }
   return checkForGroups(rows.value)

@@ -84,12 +84,16 @@ Props for configuring bar connections:
 
 ```typescript
 interface ConnectionProps {
-  enableConnections?: boolean;               // Enable connections
-  defaultConnectionType?: ConnectionType;     // Default connection type
-  defaultConnectionColor?: string;            // Default connection color
-  defaultConnectionPattern?: ConnectionPattern; // Default pattern
-  defaultConnectionAnimated?: boolean;        // Enable animations
+  enableConnections?: boolean;                     // Enable connections
+  defaultConnectionType?: ConnectionType;         // Default connection type
+  defaultConnectionColor?: string;                // Default connection color
+  defaultConnectionPattern?: ConnectionPattern;   // Default pattern
+  defaultConnectionAnimated?: boolean;            // Enable animations
   defaultConnectionAnimationSpeed?: ConnectionSpeed; // Animation speed
+  defaultConnectionRelation?: ConnectionRelation; // Default relation type
+  defaultConnectionLabel?: string;                // Default label for connections
+  defaultConnectionLabelAlwaysVisible?: boolean;  // Always show connection labels
+  defaultConnectionLabelStyle?: ConnectionLabelStyle; // Default label styling
 }
 ```
 

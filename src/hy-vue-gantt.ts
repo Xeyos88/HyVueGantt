@@ -40,6 +40,7 @@ import type {
   ConnectionDragEvent,
   ConnectionCompleteEvent,
   ConnectionDeleteEvent,
+  ConnectionRelation,
   LabelEditEvent,
   TimeaxisEvent,
   ExportOptions,
@@ -48,7 +49,8 @@ import type {
   ImportOptions,
   ImportResult,
   JiraData,
-  SpreadsheetRow
+  SpreadsheetRow,
+  ConnectionLabelStyle
 } from "./types"
 
 import "dayjs/locale/it"
@@ -105,6 +107,7 @@ export type {
   ConnectionDragEvent,
   ConnectionCompleteEvent,
   ConnectionDeleteEvent,
+  ConnectionRelation,
   LabelEditEvent,
   TimeaxisEvent,
   ExportOptions,
@@ -113,7 +116,8 @@ export type {
   ImportOptions,
   ImportResult,
   JiraData,
-  SpreadsheetRow
+  SpreadsheetRow,
+  ConnectionLabelStyle
 }
 export { GGanttChart, GGanttRow }
 

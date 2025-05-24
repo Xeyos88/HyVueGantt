@@ -191,7 +191,10 @@ export function useConnectionCreation(
         pattern: config.defaultConnectionPattern.value,
         animated: config.defaultConnectionAnimated.value,
         animationSpeed: config.defaultConnectionAnimationSpeed.value,
-        relation
+        relation,
+        label: config.defaultConnectionLabel?.value,
+        labelAlwaysVisible: config.defaultConnectionLabelAlwaysVisible?.value,
+        labelStyle: config.defaultConnectionLabelStyle?.value
       }
 
       if (!connectionState.value.sourceBar.ganttBarConfig.connections) {
