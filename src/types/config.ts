@@ -16,6 +16,7 @@ import type {
 import type { ColorScheme } from "./style"
 import type { ExportOptions } from "./export"
 import type { ImportFormat } from "./import"
+import type { ConnectionLabelStyle } from "./bar"
 
 export interface GGanttChartProps {
   chartStart: string | Date
@@ -50,6 +51,9 @@ export interface GGanttChartProps {
   defaultConnectionAnimated?: boolean
   defaultConnectionAnimationSpeed?: ConnectionSpeed
   defaultConnectionRelation?: ConnectionRelation
+  defaultConnectionLabel?: string
+  defaultConnectionLabelAlwaysVisible?: boolean
+  defaultConnectionLabelStyle?: ConnectionLabelStyle
   maxRows?: number
   initialSort?: SortState
   initialRows?: ChartRow[]

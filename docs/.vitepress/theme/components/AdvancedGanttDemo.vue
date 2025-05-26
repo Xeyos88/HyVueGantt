@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
-import type { ConnectionType, ConnectionSpeed, MarkerConnection, TimeUnit, DayOptionLabel, ConnectionPattern, GanttBarObject, ChartRow, ExportOptions, ImportResult } from 'hy-vue-gantt'
+import type { ConnectionRelation, ConnectionType, ConnectionSpeed, MarkerConnection, TimeUnit, DayOptionLabel, ConnectionPattern, GanttBarObject, ChartRow, ExportOptions, ImportResult } from 'hy-vue-gantt'
 import { downloadSampleCSV } from './CSVGenerator'
 import {downloadSampleJIRA} from './JIRAGEnerator'
 
@@ -66,7 +66,17 @@ const defaultConnectionPattern = ref<ConnectionPattern>('solid')
 const defaultConnectionAnimationSpeed = ref<ConnectionSpeed>('normal')
 const defaultConnectionAnimated = ref(false)
 const defaultConnectionColor = ref('#ff0000')
+const defaultConnectionLabel = ref('Dependency')
+const defaultConnectionLabelAlwaysVisible = ref(false)
+const defaultConnectionRelation = ref<ConnectionRelation>('FS')
 const markerConnection = ref<MarkerConnection>('forward')
+
+const defaultConnectionLabelStyle = ref({
+  fontSize: '24px',
+  fontWeight: 'bold',
+  fill: '#ff0000'
+})
+
 
 // Behavior Configuration
 const pushOnOverlap = ref(true)
@@ -127,6 +137,22 @@ const availableDayOptions = ['day', 'name', 'doy', 'number']
 const availableExportFormats = ['pdf', 'png', 'svg', 'excel']
 const availablePaperSizes = ['a4', 'a3', 'letter', 'legal']
 const availableOrientations = ['portrait', 'landscape']
+const availableConnectionRelations = ['FS', 'SS', 'FF', 'SF']
+
+const availableFontWeights = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'bold', label: 'Bold' },
+  { value: '100', label: 'Thin (100)' },
+  { value: '200', label: 'Extra Light (200)' },
+  { value: '300', label: 'Light (300)' },
+  { value: '400', label: 'Normal (400)' },
+  { value: '500', label: 'Medium (500)' },
+  { value: '600', label: 'Semi Bold (600)' },
+  { value: '700', label: 'Bold (700)' },
+  { value: '800', label: 'Extra Bold (800)' },
+  { value: '900', label: 'Black (900)' }
+]
+
 // Slot Customization Settings
 const customSlots = ref({
   commands: false,
@@ -222,7 +248,15 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
             progress: 100,
             connections: [{
               targetId: 'bar2',
-              relation: 'SS'
+              relation: 'FS',
+              label: 'Critical Req',
+              labelAlwaysVisible: true,
+              labelStyle: {
+                fill: '#ffff00',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                textTransform: 'uppercase'
+             }
             }]
           }
         }]
@@ -598,6 +632,59 @@ const formattedEventLog = computed(() => {
                     {{ marker }}
                   </option>
                 </select>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Connection Relation:
+                <select v-model="defaultConnectionRelation">
+                  <option v-for="relation in availableConnectionRelations" :key="relation" :value="relation">
+                    {{ relation }}
+                  </option>
+                </select>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label>
+                Connection Label:
+                <input type="text" v-model="defaultConnectionLabel" placeholder="Enter label">
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label>
+                Label Always Visible:
+                <input type="checkbox" v-model="defaultConnectionLabelAlwaysVisible">
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label>
+                Label Font Size:
+                <input 
+                  type="text" 
+                  v-model="defaultConnectionLabelStyle.fontSize" 
+                  placeholder="24px"
+                >
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label>
+                Label Font Weight:
+                <select v-model="defaultConnectionLabelStyle.fontWeight">
+                  <option v-for="weight in availableFontWeights" :key="weight.value" :value="weight.value">
+                    {{ weight.label }}
+                  </option>
+                </select>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <label>
+                Label Color:
+                <input type="color" v-model="defaultConnectionLabelStyle.fill">
               </label>
             </div>
           </div>
@@ -1014,7 +1101,10 @@ const formattedEventLog = computed(() => {
         :default-connection-animation-speed="defaultConnectionAnimationSpeed"
         :default-connection-animated="defaultConnectionAnimated"
         :default-connection-color="defaultConnectionColor"
-        :default-connection-relation="'SS'"
+        :default-connection-relation="defaultConnectionRelation"
+        :default-connection-label="defaultConnectionLabel"
+        :default-connection-label-always-visible="defaultConnectionLabelAlwaysVisible"
+        :default-connection-label-style="defaultConnectionLabelStyle"
         :marker-connection="markerConnection"
         :enable-row-drag-and-drop="enableRowDragAndDrop"
         :label-resizable="labelResizable"

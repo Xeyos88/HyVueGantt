@@ -74,6 +74,9 @@ The `connections` property in `ganttBarConfig` accepts an array of `GanttBarConn
 | animated | `boolean` | `false` | Whether the connection should be animated |
 | animationSpeed | `'slow' \| 'normal' \| 'fast'` | `'normal'` | Speed of the connection animation |
 | relation | `'SF' \| 'SS' \| 'FS'` | `'FF'` | Define the points of connection between bars. S=START, F=FINISH |
+| label | `string` | `undefined` | Text label displayed on the connection |
+| labelAlwaysVisible | `boolean` | `false` | Whether the label should always be visible or only when selected |
+| labelStyle | `ConnectionLabelStyle` | `undefined` | Styling options for the connection label |
 
 # Keyboard Controls
 
@@ -119,23 +122,68 @@ interface GanttBarObject {
 
 ```vue
 <script setup lang="ts">
-const bars = [{
-  start: '2024-01-01',
-  end: '2024-01-15',
-  ganttBarConfig: {
-    id: '1',
-    label: 'Task 1',
-    hasHandles: true,
-    style: {
-      background: '#42b883',
-      borderRadius: '4px'
-    },
-    connections: [{
-      targetId: '2',
-      type: 'straight'
-    }]
+const bars = [
+  {
+    start: '2024-01-01',
+    end: '2024-01-15',
+    ganttBarConfig: {
+      id: '1',
+      label: 'Design Phase',
+      hasHandles: true,
+      style: {
+        background: '#42b883',
+        borderRadius: '4px'
+      },
+      connections: [
+        {
+          targetId: '2',
+          type: 'bezier',
+          color: '#e74c3c',
+          relation: 'FS',
+          label: 'Critical Dependency',
+          labelAlwaysVisible: true,
+          labelStyle: labelStyle
+        }
+      ]
+    }
+  },
+  {
+    start: '2024-01-16',
+    end: '2024-02-15',
+    ganttBarConfig: {
+      id: '2',
+      label: 'Development Phase',
+      style: {
+        background: '#35495e'
+      },
+      connections: [
+        {
+          targetId: '3',
+          type: 'straight',
+          pattern: 'dash',
+          label: 'Review Required',
+          labelAlwaysVisible: false,
+          labelStyle: {
+            color: '#f39c12',
+            fontSize: '10px',
+            fontWeight: '500'
+          }
+        }
+      ]
+    }
+  },
+  {
+    start: '2024-02-16',
+    end: '2024-03-01',
+    ganttBarConfig: {
+      id: '3',
+      label: 'Testing Phase',
+      style: {
+        background: '#ff7e67'
+      }
+    }
   }
-}]
+]
 </script>
 
 <template>
