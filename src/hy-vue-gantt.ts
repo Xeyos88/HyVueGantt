@@ -50,7 +50,8 @@ import type {
   ImportResult,
   JiraData,
   SpreadsheetRow,
-  ConnectionLabelStyle
+  ConnectionLabelStyle,
+  RowSelectionEvent
 } from "./types"
 
 import "dayjs/locale/it"
@@ -117,7 +118,8 @@ export type {
   ImportResult,
   JiraData,
   SpreadsheetRow,
-  ConnectionLabelStyle
+  ConnectionLabelStyle,
+  RowSelectionEvent
 }
 export { GGanttChart, GGanttRow }
 

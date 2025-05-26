@@ -1141,6 +1141,7 @@ const formattedEventLog = computed(() => {
         @export-success="handleEvent($event, 'Start Success')"
         @export-error="handleEvent($event, 'Start Error')"
         @import-data="handleImport"
+        @row-selection="handleEvent($event, 'Row Selection')"
       >
         <g-gantt-row
           v-for="row in sampleData"

@@ -87,7 +87,8 @@ import type {
   GGanttChartEmits,
   ExportOptions,
   ExportResult,
-  ImportResult
+  ImportResult,
+  RowSelectionEvent
 } from "../types"
 
 // Props
@@ -672,6 +673,10 @@ const dropRow = (event: RowDragEvent) => {
   updateBarPositions()
 }
 
+const handleRowSelection = (event: RowSelectionEvent) => {
+  emit("row-selection", event)
+}
+
 // -----------------------------
 // 8. SUPPORT FUNCTIONS
 // -----------------------------
@@ -699,7 +704,8 @@ const renderRow = (row: ChartRow) => {
         bars: row.bars,
         children: row.children,
         id: row.id,
-        key: row.id || row.label
+        key: row.id || row.label,
+        onRowSelection: handleRowSelection
       },
       row._originalNode.children || {}
     )
@@ -711,7 +717,8 @@ const renderRow = (row: ChartRow) => {
     id: row.id,
     key: row.id || row.label,
     children: row.children,
-    connections: row.connections
+    connections: row.connections,
+    onRowSelection: handleRowSelection
   })
 }
 
