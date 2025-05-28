@@ -32,7 +32,7 @@ export interface RowExpansion {
   rowId: string | number
 }
 
-export interface RowSelectionEvent {
+export interface RangeSelectionEvent {
   row: ChartRow
   startDate: string | Date
   endDate: string | Date
@@ -105,5 +105,5 @@ export interface GGanttChartEmits {
   (e: "export-success", result: ExportResult): void
   (e: "export-error", error: string): void
   (e: "import-data", value: ImportResult): void
-  (e: "row-selection", value: RowSelectionEvent): void
+  (e: "range-selection", value: RangeSelectionEvent): void
 }

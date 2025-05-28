@@ -23,7 +23,7 @@ import GGanttBar from "./GGanttBar.vue"
 // Types
 import type { GanttBarConnection, GanttBarObject } from "../types"
 import type { UseRowsReturn } from "../composables/useRows"
-import type { RowSelectionEvent } from "../types"
+import type { RangeSelectionEvent } from "../types"
 
 // -----------------------------
 // 3. PROPS AND CONFIGURATION
@@ -45,7 +45,7 @@ const props = defineProps<{
 // Events that can be emitted by this component
 const emit = defineEmits<{
   (e: "drop", value: { e: MouseEvent; datetime: string | Date }): void
-  (e: "row-selection", value: RowSelectionEvent): void
+  (e: "range-selection", value: RangeSelectionEvent): void
 }>()
 
 /**
@@ -281,7 +281,7 @@ const handleSelectionEnd = (e: MouseEvent) => {
     connections: props.connections
   }
 
-  emit("row-selection", {
+  emit("range-selection", {
     row: rowData,
     startDate: startTime,
     endDate: endTime,
@@ -341,7 +341,7 @@ provide(BAR_CONTAINER_KEY, barContainer)
     </div>
     <!-- Bar container -->
     <div ref="barContainer" class="g-gantt-row-bars-container" v-bind="$attrs">
-      <div v-if="selectionVisible" class="g-gantt-row-selection" :style="selectionStyle" />
+      <div v-if="selectionVisible" class="g-gantt-range-selection" :style="selectionStyle" />
       <transition-group name="bar-transition" tag="div">
         <!-- Render bars for this row -->
         <g-gantt-bar
@@ -365,7 +365,7 @@ provide(BAR_CONTAINER_KEY, barContainer)
       :key="child.id || child.label"
       v-bind="child"
       :highlightOnHover="highlightOnHover"
-      @row-selection="(event: RowSelectionEvent) => $emit('row-selection', event)"
+      @range-selection="(event: RangeSelectionEvent) => $emit('range-selection', event)"
     >
       <!-- Forward all slots to child rows -->
       <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps: SlotData">
@@ -428,7 +428,7 @@ provide(BAR_CONTAINER_KEY, barContainer)
   opacity: 0;
 }
 
-.g-gantt-row-selection {
+.g-gantt-range-selection {
   border-radius: 2px;
   box-sizing: border-box;
 }

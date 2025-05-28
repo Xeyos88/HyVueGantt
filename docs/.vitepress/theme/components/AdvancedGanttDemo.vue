@@ -205,7 +205,7 @@ const handleImport = (result: ImportResult) => {
     /*if (result.data.chartStart) {
       chartStart.value = result.data.chartStart instanceof Date 
         ? result.data.chartStart.toISOString().split('T')[0] 
-        : result.data.chartStart.split('T')[0]
+        : result.data.chartStart.split('T')[0]7
     }
     
     if (result.data.chartEnd) {
@@ -1141,7 +1141,7 @@ const formattedEventLog = computed(() => {
         @export-success="handleEvent($event, 'Start Success')"
         @export-error="handleEvent($event, 'Start Error')"
         @import-data="handleImport"
-        @row-selection="handleEvent($event, 'Row Selection')"
+        @range-selection="handleEvent($event, 'Range Selection')"
       >
         <g-gantt-row
           v-for="row in sampleData"
