@@ -125,6 +125,8 @@ Here's a minimal example of using the GGanttChart component:
 | export-success | `result: ExportResult` | Emitted when the export process completes successfully |
 | export-error | `error: string` | Emitted when the export process encounters an error |
 | import-data | `result: ImportResult` | Emitted when data is imported with the import result |
+| range-selection | `{ row: ChartRow, startDate: string | Date, endDate: string | Date, e: MouseEvent }` | User selects a time range on a row by dragging |
+
 
 ### Slots
 

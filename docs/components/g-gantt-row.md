@@ -32,6 +32,7 @@ The GGanttRow component represents a single row in the Gantt chart. It manages t
 | Event Name | Payload | Description |
 |------------|---------|-------------|
 | drop | `{ e: MouseEvent, datetime: string \| Date }` | Item dropped on row |
+| range-selection | `{ row: ChartRow, startDate: string | Date, endDate: string | Date, e: MouseEvent }` | User selects a time range by dragging across the row |
 
 ### Slots
 

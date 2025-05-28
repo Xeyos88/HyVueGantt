@@ -23,6 +23,7 @@ import GGanttBar from "./GGanttBar.vue"
 // Types
 import type { GanttBarConnection, GanttBarObject } from "../types"
 import type { UseRowsReturn } from "../composables/useRows"
+import type { RangeSelectionEvent } from "../types"
 
 // -----------------------------
 // 3. PROPS AND CONFIGURATION
@@ -44,6 +45,7 @@ const props = defineProps<{
 // Events that can be emitted by this component
 const emit = defineEmits<{
   (e: "drop", value: { e: MouseEvent; datetime: string | Date }): void
+  (e: "range-selection", value: RangeSelectionEvent): void
 }>()
 
 /**
@@ -71,6 +73,12 @@ const barContainer: Ref<HTMLElement | null> = ref(null)
 
 // UI State
 const isHovering = ref(false)
+
+// Selection State
+const isSelecting = ref(false)
+const selectionStartX = ref(0)
+const selectionEndX = ref(0)
+const selectionVisible = ref(false)
 
 // -----------------------------
 // 5. COMPUTED PROPERTIES
@@ -136,6 +144,26 @@ const visibleChildRows = computed(() => {
   return props.children || []
 })
 
+const selectionStyle = computed(() => {
+  if (!selectionVisible.value) return { display: "none" }
+
+  const left = Math.min(selectionStartX.value, selectionEndX.value)
+  const width = Math.abs(selectionEndX.value - selectionStartX.value)
+
+  return {
+    position: "absolute" as const,
+    left: `${left}px`,
+    width: `${width}px`,
+    height: `${rowHeight.value - 4}px`,
+    background: colors.value.rangeHighlight,
+    opacity: 0.6,
+    pointerEvents: "none" as const,
+    zIndex: 1,
+    margin: "auto 0",
+    top: "1px"
+  }
+})
+
 // -----------------------------
 // 6. MAPPING AND UTILITY FUNCTIONS
 // -----------------------------
@@ -185,6 +213,94 @@ const handleGroupToggle = (event: Event) => {
   }
 }
 
+/**
+ * Handles mouse down to start selection
+ * @param e - Mouse event
+ */
+const handleSelectionStart = (e: MouseEvent) => {
+  // Only allow selection on non-group rows and where there are no bars being clicked
+  if (isGroup.value) return
+
+  // Check if we clicked on a bar (avoid interfering with bar functionality)
+  const target = e.target as HTMLElement
+  if (target.closest(".g-gantt-bar")) return
+
+  const container = barContainer.value?.getBoundingClientRect()
+  if (!container) return
+
+  const xPos = e.clientX - container.left
+
+  isSelecting.value = true
+  selectionStartX.value = xPos
+  selectionEndX.value = xPos
+  selectionVisible.value = false
+
+  e.preventDefault()
+
+  document.addEventListener("mousemove", handleSelectionMove)
+  document.addEventListener("mouseup", handleSelectionEnd)
+}
+
+/**
+ * Handles mouse move during selection
+ * @param e - Mouse event
+ */
+const handleSelectionMove = (e: MouseEvent) => {
+  if (!isSelecting.value || !barContainer.value) return
+
+  const container = barContainer.value.getBoundingClientRect()
+  const xPos = Math.max(0, e.clientX - container.left)
+
+  selectionEndX.value = xPos
+  selectionVisible.value = Math.abs(selectionEndX.value - selectionStartX.value) > 5 // Show only if dragged enough
+}
+
+/**
+ * Handles mouse up to complete selection
+ * @param e - Mouse event
+ */
+const handleSelectionEnd = (e: MouseEvent) => {
+  document.removeEventListener("mousemove", handleSelectionMove)
+  document.removeEventListener("mouseup", handleSelectionEnd)
+
+  if (!isSelecting.value || !selectionVisible.value) {
+    resetSelection()
+    return
+  }
+
+  // Convert positions to dates
+  const startTime = mapPositionToTime(Math.min(selectionStartX.value, selectionEndX.value))
+  const endTime = mapPositionToTime(Math.max(selectionStartX.value, selectionEndX.value))
+
+  // Emit selection event
+  const rowData = {
+    id: props.id,
+    label: props.label,
+    bars: props.bars,
+    children: props.children,
+    connections: props.connections
+  }
+
+  emit("range-selection", {
+    row: rowData,
+    startDate: startTime,
+    endDate: endTime,
+    e
+  })
+
+  resetSelection()
+}
+
+/**
+ * Resets selection state
+ */
+const resetSelection = () => {
+  isSelecting.value = false
+  selectionVisible.value = false
+  selectionStartX.value = 0
+  selectionEndX.value = 0
+}
+
 // -----------------------------
 // 8. PROVIDE/INJECT SETUP
 // -----------------------------
@@ -204,6 +320,7 @@ provide(BAR_CONTAINER_KEY, barContainer)
     @mouseover="isHovering = true"
     @mouseleave="isHovering = false"
     role="list"
+    @mousedown="handleSelectionStart"
   >
     <!-- Row label (shown only when labelColumnTitle is not set) -->
     <div
@@ -224,6 +341,7 @@ provide(BAR_CONTAINER_KEY, barContainer)
     </div>
     <!-- Bar container -->
     <div ref="barContainer" class="g-gantt-row-bars-container" v-bind="$attrs">
+      <div v-if="selectionVisible" class="g-gantt-range-selection" :style="selectionStyle" />
       <transition-group name="bar-transition" tag="div">
         <!-- Render bars for this row -->
         <g-gantt-bar
@@ -247,6 +365,7 @@ provide(BAR_CONTAINER_KEY, barContainer)
       :key="child.id || child.label"
       v-bind="child"
       :highlightOnHover="highlightOnHover"
+      @range-selection="(event: RangeSelectionEvent) => $emit('range-selection', event)"
     >
       <!-- Forward all slots to child rows -->
       <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps: SlotData">
@@ -307,5 +426,18 @@ provide(BAR_CONTAINER_KEY, barContainer)
 .bar-transition-leave-to {
   transform: scale(0.8);
   opacity: 0;
+}
+
+.g-gantt-range-selection {
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+.g-gantt-row-bars-container {
+  cursor: crosshair;
+}
+
+.g-gantt-row-bars-container:has(.g-gantt-bar) {
+  cursor: default;
 }
 </style>

@@ -44,7 +44,6 @@ import type { CSSProperties } from "vue"
 import GGanttGrid from "./GGanttGrid.vue"
 import GGanttLabelColumn from "./GGanttLabelColumn.vue"
 import GGanttTimeaxis from "./GGanttTimeaxis.vue"
-//import GGanttBarTooltip from "./GGanttBarTooltip.vue"
 import GGanttTooltip from "./GGanttTooltip.vue"
 import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
@@ -87,7 +86,8 @@ import type {
   GGanttChartEmits,
   ExportOptions,
   ExportResult,
-  ImportResult
+  ImportResult,
+  RangeSelectionEvent
 } from "../types"
 
 // Props
@@ -672,6 +672,10 @@ const dropRow = (event: RowDragEvent) => {
   updateBarPositions()
 }
 
+const handleRangeSelection = (event: RangeSelectionEvent) => {
+  emit("range-selection", event)
+}
+
 // -----------------------------
 // 8. SUPPORT FUNCTIONS
 // -----------------------------
@@ -699,7 +703,8 @@ const renderRow = (row: ChartRow) => {
         bars: row.bars,
         children: row.children,
         id: row.id,
-        key: row.id || row.label
+        key: row.id || row.label,
+        onRangeSelection: handleRangeSelection
       },
       row._originalNode.children || {}
     )
@@ -711,7 +716,8 @@ const renderRow = (row: ChartRow) => {
     id: row.id,
     key: row.id || row.label,
     children: row.children,
-    connections: row.connections
+    connections: row.connections,
+    onRangeSelection: handleRangeSelection
   })
 }
 
