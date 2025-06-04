@@ -11,7 +11,6 @@ import { ganttWidth } from "./useSimpleStore"
  * Base width for time unit elements (in pixels)
  * Used as the foundation for calculating actual widths with zoom
  */
-//const BASE_UNIT_WIDTH = 24
 
 /**
  * Zoom level constraints and defaults
@@ -19,13 +18,12 @@ import { ganttWidth } from "./useSimpleStore"
  */
 const MAX_ZOOM = 10
 const MIN_ZOOM = 1
-//const DEFAULT_ZOOM = 3
 
 /**
  * Cache time-to-live in milliseconds
  * Entries older than this will be automatically removed
  */
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000
 
 /**
  * Extended time unit type that includes additional granularities
@@ -124,12 +122,10 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     defaultZoom
   } = config
 
-  // Internal state
   const internalPrecision = ref<TimeUnit>(configPrecision.value)
   const zoomLevel = ref(defaultZoom.value)
   const processedTimeaxisEvents = ref<TimeaxisEvent[]>([])
 
-  // Cache initialization
   const cache: TimeaxisCache = {
     lower: new Map(),
     upper: new Map(),
@@ -583,7 +579,6 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     }
   }
 
-  // Clear cache when main dependencies change
   watch(
     [
       () => config.chartStart.value,

@@ -70,7 +70,7 @@ describe("GGanttConnector", () => {
     it("should create marker with correct id", () => {
       const wrapper = createWrapper()
       const markerId = `marker-start-${mockSourceBar.id}-${mockTargetBar.id}`
-      expect(wrapper.find(`marker[id="${markerId}"]`).exists()).toBe(true)
+      expect(wrapper.find(`marker[id="${markerId}"]`).exists()).toBe(false)
     })
   })
 

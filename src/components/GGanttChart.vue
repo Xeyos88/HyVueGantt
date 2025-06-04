@@ -44,7 +44,6 @@ import type { CSSProperties } from "vue"
 import GGanttGrid from "./GGanttGrid.vue"
 import GGanttLabelColumn from "./GGanttLabelColumn.vue"
 import GGanttTimeaxis from "./GGanttTimeaxis.vue"
-//import GGanttBarTooltip from "./GGanttBarTooltip.vue"
 import GGanttTooltip from "./GGanttTooltip.vue"
 import GGanttCurrentTime from "./GGanttCurrentTime.vue"
 import GGanttConnector from "./GGanttConnector.vue"
@@ -87,7 +86,8 @@ import type {
   GGanttChartEmits,
   ExportOptions,
   ExportResult,
-  ImportResult
+  ImportResult,
+  RangeSelectionEvent
 } from "../types"
 
 // Props
@@ -115,6 +115,10 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   defaultConnectionPattern: "solid",
   defaultConnectionAnimated: false,
   defaultConnectionAnimationSpeed: "normal",
+  defaultConnectionRelation: "FS",
+  defaultConnectionLabel: "",
+  defaultConnectionLabelAlwaysVisible: false,
+  defaultConnectionLabelStyle: () => ({}),
   maxRows: 0,
   initialSort: () => ({
     column: "Label",
@@ -517,7 +521,8 @@ const totalWidth = computed(() => {
 const hasGroupRows = computed(() => {
   const checkForGroups = (rows: ChartRow[]): boolean => {
     return rows.some(
-      (row) => row.children?.length! > 0 || (row.children && checkForGroups(row.children))
+      (row) =>
+        (row.children && row.children.length > 0) || (row.children && checkForGroups(row.children))
     )
   }
   return checkForGroups(rows.value)
@@ -667,6 +672,10 @@ const dropRow = (event: RowDragEvent) => {
   updateBarPositions()
 }
 
+const handleRangeSelection = (event: RangeSelectionEvent) => {
+  emit("range-selection", event)
+}
+
 // -----------------------------
 // 8. SUPPORT FUNCTIONS
 // -----------------------------
@@ -694,7 +703,8 @@ const renderRow = (row: ChartRow) => {
         bars: row.bars,
         children: row.children,
         id: row.id,
-        key: row.id || row.label
+        key: row.id || row.label,
+        onRangeSelection: handleRangeSelection
       },
       row._originalNode.children || {}
     )
@@ -706,7 +716,8 @@ const renderRow = (row: ChartRow) => {
     id: row.id,
     key: row.id || row.label,
     children: row.children,
-    connections: row.connections
+    connections: row.connections,
+    onRangeSelection: handleRangeSelection
   })
 }
 
@@ -1074,11 +1085,12 @@ defineExpose({
                     width: 0,
                     height: 0
                   }"
-                  :type="defaultConnectionType"
+                  :type="'straight'"
                   :color="defaultConnectionColor"
                   :pattern="defaultConnectionPattern"
                   :animated="defaultConnectionAnimated"
                   :animation-speed="defaultConnectionAnimationSpeed"
+                  :relation="defaultConnectionRelation"
                   :style="{ opacity: 0.6 }"
                   :marker="markerConnection"
                 />

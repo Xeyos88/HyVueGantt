@@ -8,7 +8,8 @@ import type {
   ConnectionCreationState,
   ConnectionValidation,
   ConnectionPointHoverState,
-  ConnectionPoint
+  ConnectionPoint,
+  ConnectionRelation
 } from "../types"
 import type { UseRowsReturn } from "../composables/useRows"
 
@@ -104,6 +105,24 @@ export function useConnectionCreation(
   }
 
   /**
+   * Determines the relation type based on source and target connection points
+   * @param sourcePoint - Connection point from source bar
+   * @param targetPoint - Connection point on target bar
+   * @returns Connection relation type
+   */
+  const determineRelationType = (
+    sourcePoint: ConnectionPoint,
+    targetPoint: ConnectionPoint
+  ): ConnectionRelation => {
+    if (sourcePoint === "end" && targetPoint === "start") return "FS"
+    if (sourcePoint === "start" && targetPoint === "start") return "SS"
+    if (sourcePoint === "end" && targetPoint === "end") return "FF"
+    if (sourcePoint === "start" && targetPoint === "end") return "SF"
+
+    return "FS"
+  }
+
+  /**
    * Starts the creation of a connection
    * Sets up initial state and emits connection start event
    * @param bar - Source bar for the connection
@@ -158,18 +177,24 @@ export function useConnectionCreation(
     targetPoint: ConnectionPoint,
     e: MouseEvent
   ) => {
-    if (!connectionState.value.sourceBar) return
+    if (!connectionState.value.sourceBar || !connectionState.value.sourcePoint) return
 
     const validation = validateConnection(connectionState.value.sourceBar, targetBar)
 
     if (validation.isValid) {
+      const relation = determineRelationType(connectionState.value.sourcePoint, targetPoint)
+
       const newConnection = {
         targetId: targetBar.ganttBarConfig.id,
         type: config.defaultConnectionType.value,
         color: config.defaultConnectionColor.value,
         pattern: config.defaultConnectionPattern.value,
         animated: config.defaultConnectionAnimated.value,
-        animationSpeed: config.defaultConnectionAnimationSpeed.value
+        animationSpeed: config.defaultConnectionAnimationSpeed.value,
+        relation,
+        label: config.defaultConnectionLabel?.value,
+        labelAlwaysVisible: config.defaultConnectionLabelAlwaysVisible?.value,
+        labelStyle: config.defaultConnectionLabelStyle?.value
       }
 
       if (!connectionState.value.sourceBar.ganttBarConfig.connections) {
@@ -185,7 +210,7 @@ export function useConnectionCreation(
       emit("connection-complete", {
         sourceBar: connectionState.value.sourceBar,
         targetBar,
-        sourcePoint: connectionState.value.sourcePoint!,
+        sourcePoint: connectionState.value.sourcePoint,
         targetPoint,
         e
       })

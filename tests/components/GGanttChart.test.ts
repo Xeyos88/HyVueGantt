@@ -3,6 +3,7 @@ import { mount } from "@vue/test-utils"
 import GGanttChart from "../../src/components/GGanttChart.vue"
 import { ref } from "vue"
 import type { ChartRow } from "../../src/types"
+import { connect } from "http2"
 
 vi.mock("@fortawesome/vue-fontawesome", () => ({
   FontAwesomeIcon: {
@@ -249,7 +250,8 @@ describe("GGanttChart", () => {
         label: "Test Label",
         bars: [],
         id: "test-id",
-        key: "test-id"
+        key: "test-id",
+        onRangeSelection: expect.any(Function)
       })
     })
 
@@ -266,7 +268,10 @@ describe("GGanttChart", () => {
         label: "Simple Row",
         bars: [],
         id: "simple-id",
-        key: "simple-id"
+        key: "simple-id",
+        children: undefined,
+        connections: undefined,
+        onRangeSelection: expect.any(Function)
       })
     })
   })

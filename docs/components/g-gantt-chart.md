@@ -57,8 +57,11 @@ Here's a minimal example of using the GGanttChart component:
 | defaultConnectionPattern | `ConnectionPattern` | `'solid'` | Default pattern for connections |
 | defaultConnectionAnimated | `boolean` | `false` | Enable connection animations |
 | defaultConnectionAnimationSpeed | `ConnectionSpeed` | `'normal'` | Speed of connection animations |
-| maxRows | `number` | `0` | Maximum number of visible rows |
-| initialSort | `SortState` | `'none'` | Initial sorting column and direction |
+| defaultConnectionRelation | `ConnectionRelation` | `'FD'` | Default type of relation |
+| defaultConnectionLabel | `string` | `''` | Default label for all connections |
+| defaultConnectionLabelAlwaysVisible | `boolean` | `false` | Default visibility setting for connection labels |
+| defaultConnectionLabelStyle | `ConnectionLabelStyle` | `{}` | Default styling for connection labels |
+| maxRows | `number` | `0` | Maximum number of visible rows || initialSort | `SortState` | `'none'` | Initial sorting column and direction |
 | initialRows | `ChartRow[]` | `[]` | Initial rows data |
 | currentTime | `boolean` | `false` | Show current time indicator |
 | currentTimeLabel | `string` | `''` | Label for current time indicator |
@@ -122,6 +125,8 @@ Here's a minimal example of using the GGanttChart component:
 | export-success | `result: ExportResult` | Emitted when the export process completes successfully |
 | export-error | `error: string` | Emitted when the export process encounters an error |
 | import-data | `result: ImportResult` | Emitted when data is imported with the import result |
+| range-selection | `{ row: ChartRow, startDate: string | Date, endDate: string | Date, e: MouseEvent }` | User selects a time range on a row by dragging |
+
 
 ### Slots
 

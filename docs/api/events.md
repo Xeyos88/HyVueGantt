@@ -42,20 +42,20 @@ interface ConnectionCompleteEvent {
   e: MouseEvent;
 }
 
-export interface ConnectionDeleteEvent {
+interface ConnectionDeleteEvent {
   sourceBar: GanttBarObject
   targetBar: GanttBarObject
   e: MouseEvent
 }
 
-export interface LabelEditEvent {
+interface LabelEditEvent {
   bar: GanttBarObject
   oldValue: string
   newValue: string
   e: MouseEvent
 }
 
-export interface ImportResult {
+interface ImportResult {
   success: boolean;
   data?: {
     rows: ChartRow[];
@@ -64,6 +64,13 @@ export interface ImportResult {
   };
   error?: string;
   warnings?: string[];
+}
+
+interface RangeSelectionEvent {
+  row: ChartRow
+  startDate: string | Date
+  endDate: string | Date
+  e: MouseEvent
 }
 ```
 
@@ -129,4 +136,5 @@ export interface ImportResult {
 
 ```typescript
 @sort="(event: { sortState: SortState }) => void"
+@range-selection="(event: RangeSelectionEvent) => void"
 ```
