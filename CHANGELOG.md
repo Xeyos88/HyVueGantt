@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v3.8.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.8.0) (2025-06-04)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.7.0...v3.8.0)
+
+
+
+**✨ New Features:**
+
+- Bar definition event
+- Connection label
+- Different relation type for connections FS, FF, SS, SF
+
+**📚 Documentation:**
+
+- Update documentations
+
 ## [v3.7.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.7.0) (2025-05-16)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.6.0...v3.7.0)
