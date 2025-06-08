@@ -8,8 +8,6 @@ All notable changes to this project will be documented in this file.
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.7.0...v3.8.0)
 
-
-
 **✨ New Features:**
 
 - Bar definition event

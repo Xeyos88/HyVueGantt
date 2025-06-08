@@ -67,6 +67,9 @@ Here's a minimal example of using the GGanttChart component:
 | currentTimeLabel | `string` | `''` | Label for current time indicator |
 | dateFormat | `string \| false` | `'YYYY-MM-DD HH:mm'` | Format for dates |
 | milestones | `GanttMilestone[]` | `[]` | List of milestone |
+| timeaxisEvents | `TimeaxisEvent[]` | `[]` | Array of events to display on the time axis |
+| showEventsAxis | `boolean` | `false` | Controls the visibility of the events axis |
+| eventsAxisHeight | `number` | `25` | Sets the height of the events axis in pixels |
 | holidayHighlight| `string` | `` | Country Cody of date-holidays |
 | rowClass| `(row: ChartRow) => string` | `` | Method to add classes to data rows |
 | rowLabelClass| `(row: ChartRow) => string` | `` | Method to add classes to label rows |
@@ -118,9 +121,6 @@ Here's a minimal example of using the GGanttChart component:
 | connection-cancel | `{ sourceBar: GanttBarObject, connectionPoint: ConnectionPoint, e: MouseEvent }` | Cancels the creation of a connection |
 | connection-delete | `{ sourceBar: GanttBarObject, targetBar: GanttBarObject, e: MouseEvent }` | Delete a connection |
 | label-edit | `{ sourceBar: GanttBarObject, e: MouseEvent, oldValue: string, newValue: string }` | Edit bar label |
-| timeaxisEvents | `TimeaxisEvent[]` | `[]` | Array of events to display on the time axis |
-| showEventsAxis | `boolean` | `true` | Controls the visibility of the events axis |
-| eventsAxisHeight | `number` | `25` | Sets the height of the events axis in pixels |
 | export-start | `format: string` | Emitted when the export process starts |
 | export-success | `result: ExportResult` | Emitted when the export process completes successfully |
 | export-error | `error: string` | Emitted when the export process encounters an error |

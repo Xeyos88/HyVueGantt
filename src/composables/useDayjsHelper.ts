@@ -3,6 +3,7 @@ import { computed } from "vue"
 
 import type { GanttBarObject, GGanttChartConfig } from "../types"
 import provideConfig from "../provider/provideConfig"
+import { initializeDayjsPlugins } from "./useDayjsInitializer"
 
 /**
  * Default date format used throughout the Gantt chart
@@ -17,6 +18,8 @@ export const DEFAULT_DATE_FORMAT = "YYYY-MM-DD HH:mm"
  * @returns Object containing date manipulation methods and computed properties
  */
 export default function useDayjsHelper(config: GGanttChartConfig = provideConfig()) {
+  initializeDayjsPlugins()
+
   const { chartStart, chartEnd, barStart, barEnd, dateFormat, locale } = config
 
   /**
