@@ -14,6 +14,7 @@ The most basic implementation of a Gantt chart:
     :precision="precision"
     :bar-start="barStart"
     :bar-end="barEnd"
+    :date-format="dateFormat"
   >
     <g-gantt-row
       v-for="row in rows"
@@ -32,6 +33,7 @@ const chartEnd = ref('2024-12-31')
 const precision = ref('day')
 const barStart = ref('start')
 const barEnd = ref('end')
+const dateFormat = "YYYY-MM-DD"
 
 const rows = ref([
   {
