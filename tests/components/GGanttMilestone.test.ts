@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest"
 import { mount } from "@vue/test-utils"
 import GGanttMilestone from "../../src/components/GGanttMilestone.vue"
 
-
 describe("GGanttMilestone", () => {
   const mockMilestone = {
     id: "milestone1",
@@ -16,7 +15,7 @@ describe("GGanttMilestone", () => {
       props: {
         milestone: mockMilestone,
         ...props
-      },
+      }
     })
   }
 
@@ -84,4 +83,4 @@ describe("GGanttMilestone", () => {
       expect(wrapper.exists()).toBe(true)
     })
   })
-}) 
+})

@@ -55,7 +55,7 @@ export default function useDayjsHelper(config: GGanttChartConfig = provideConfig
       return dayjs(input)
     }
     const format = dateFormat.value || DEFAULT_DATE_FORMAT
-    return dayjs(value, format, true)
+    return dayjs(value, format, false)
   }
 
   /**

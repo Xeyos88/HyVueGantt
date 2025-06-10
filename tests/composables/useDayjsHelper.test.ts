@@ -49,7 +49,7 @@ describe("useDayjsHelper", () => {
     it("should convert string date to dayjs object", () => {
       const { toDayjs } = useDayjsHelper(mockConfig)
       const result = toDayjs("2024-01-01")
-      expect(dayjs).toHaveBeenCalledWith("2024-01-01", "YYYY-MM-DD HH:mm", true)
+      expect(dayjs).toHaveBeenCalledWith("2024-01-01", "YYYY-MM-DD HH:mm", false)
     })
 
     it("should convert Date object to dayjs object", () => {
@@ -67,7 +67,7 @@ describe("useDayjsHelper", () => {
         ganttBarConfig: { id: "1" }
       }
       const result = toDayjs(bar, "start")
-      expect(dayjs).toHaveBeenCalledWith("2024-01-01", "YYYY-MM-DD HH:mm", true)
+      expect(dayjs).toHaveBeenCalledWith("2024-01-01", "YYYY-MM-DD HH:mm", false)
     })
 
     it("should handle bar object with end property", () => {
@@ -78,7 +78,7 @@ describe("useDayjsHelper", () => {
         ganttBarConfig: { id: "1" }
       }
       const result = toDayjs(bar, "end")
-      expect(dayjs).toHaveBeenCalledWith("2024-01-02", "YYYY-MM-DD HH:mm", true)
+      expect(dayjs).toHaveBeenCalledWith("2024-01-02", "YYYY-MM-DD HH:mm", false)
     })
   })
 
