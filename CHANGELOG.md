@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v3.9.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.9.0) (2025-06-11)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.8.0...v3.9.0)
+
+
+
+**✨ New Features:**
+
+- added date-format to examples
+
+**🐛 Fix:**
+
+- Dayjs plugins initialization
+
 ## [v3.8.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.8.0) (2025-06-04)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.7.0...v3.8.0)
