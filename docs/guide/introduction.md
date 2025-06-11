@@ -1,4 +1,4 @@
-# Hyper Vue Gantt 
+# Hyper Vue Gantt
 
 A powerful and flexible Gantt chart component for Vue 3 applications. This component is an evolution of [vue-ganttastic](https://github.com/zunnzunn/vue-ganttastic) package.
 
@@ -30,6 +30,7 @@ Hyper Vue Gantt is designed to provide a seamless experience for creating and ma
     :precision="precision"
     :bar-start="barStart"
     :bar-end="barEnd"
+    :date-format="dateFormat"
   >
     <g-gantt-row
       v-for="row in rows"
@@ -46,6 +47,7 @@ const chartEnd = "2024-12-31"
 const precision = "day"
 const barStart = "start"
 const barEnd = "end"
+const dateFormat = "YYYY-MM-DD"
 
 const rows = [
   {
