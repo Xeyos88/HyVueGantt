@@ -68,7 +68,9 @@ app.mount('#app')
 Alternatively, you can import components individually:
 
 ```typescript
-import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
+import { GGanttChart, GGanttRow, extendDayjs } from 'hy-vue-gantt'
+
+extendDayjs()
 
 export default {
   components: {

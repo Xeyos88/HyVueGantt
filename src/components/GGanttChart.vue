@@ -130,7 +130,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   labelResizable: true,
   milestones: () => [],
   timeaxisEvents: () => [],
-  showEventsAxis: true,
+  showEventsAxis: false,
   eventsAxisHeight: 25,
   holidayHighlight: "",
   rowClass: () => "",
