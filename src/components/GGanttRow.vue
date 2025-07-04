@@ -12,10 +12,11 @@ import { faChevronRight, faChevronDown } from "@fortawesome/free-solid-svg-icons
 
 // Composables
 import useTimePositionMapping from "../composables/useTimePositionMapping"
+import useDayjsHelper from "../composables/useDayjsHelper"
 
 // Provider
 import provideConfig from "../provider/provideConfig"
-import { BAR_CONTAINER_KEY } from "../provider/symbols"
+import { BAR_CONTAINER_KEY, INTERNAL_PRECISION_KEY } from "../provider/symbols"
 
 // Components
 import GGanttBar from "./GGanttBar.vue"
@@ -65,8 +66,14 @@ interface SlotData {
 const rowManager = inject<UseRowsReturn>("useRows")!
 
 // Configuration
-const { rowHeight, colors, labelColumnTitle, rowClass } = provideConfig()
+const { rowHeight, colors, labelColumnTitle, rowClass, dateFormat, tick } = provideConfig()
 const { highlightOnHover } = toRefs(props)
+
+const internalPrecision = inject(INTERNAL_PRECISION_KEY)!
+
+// Time Position Mapping
+const { mapPositionToTime, mapTimeToPosition } = useTimePositionMapping()
+const { format, toDayjs } = useDayjsHelper()
 
 // Bar Container Reference
 const barContainer: Ref<HTMLElement | null> = ref(null)
@@ -79,6 +86,12 @@ const isSelecting = ref(false)
 const selectionStartX = ref(0)
 const selectionEndX = ref(0)
 const selectionVisible = ref(false)
+
+// Tooltip State
+const showRangeTooltip = ref(false)
+const tooltipPosition = ref({ x: 0, y: 0 })
+const tooltipStartDate = ref<string | Date>("")
+const tooltipEndDate = ref<string | Date>("")
 
 // -----------------------------
 // 5. COMPUTED PROPERTIES
@@ -164,12 +177,14 @@ const selectionStyle = computed(() => {
   }
 })
 
+/**
+ * Checks if tick-based snapping is enabled
+ */
+const isTickEnabled = computed(() => tick.value && tick.value > 0)
+
 // -----------------------------
 // 6. MAPPING AND UTILITY FUNCTIONS
 // -----------------------------
-
-// Time position mapping
-const { mapPositionToTime } = useTimePositionMapping()
 
 /**
  * Checks if a string is blank (empty or only whitespace)
@@ -178,6 +193,72 @@ const { mapPositionToTime } = useTimePositionMapping()
  */
 const isBlank = (str: string) => {
   return !str || /^\s*$/.test(str)
+}
+
+const snapToTick = (position: number, startPosition: number): number => {
+  if (!isTickEnabled.value) return position
+
+  const startDateTime = mapPositionToTime(startPosition)
+  const currentDateTime = mapPositionToTime(position)
+
+  const startTime = toDayjs(startDateTime)
+  const currentTime = toDayjs(currentDateTime)
+
+  let duration: number
+  let snapUnit: "minute" | "hour" | "day" = "minute"
+  let snapValue = tick.value
+
+  switch (internalPrecision.value) {
+    case "hour":
+      // Tick in minuti
+      duration = currentTime.diff(startTime, "minute")
+      snapUnit = "minute"
+      snapValue = tick.value
+      break
+    case "day":
+      // Tick in ore
+      duration = currentTime.diff(startTime, "hour")
+      snapUnit = "hour"
+      snapValue = tick.value
+      break
+    case "week":
+      // Tick in giorni
+      duration = currentTime.diff(startTime, "day")
+      snapUnit = "day"
+      snapValue = tick.value
+      break
+    case "month":
+      // Tick in settimane (7 giorni)
+      duration = currentTime.diff(startTime, "day")
+      snapUnit = "day"
+      snapValue = tick.value * 7
+      break
+    default:
+      duration = currentTime.diff(startTime, "minute")
+      snapUnit = "minute"
+      snapValue = tick.value
+  }
+
+  const snappedDuration = Math.round(Math.abs(duration) / snapValue) * snapValue
+
+  const snappedTime = startTime.add(snappedDuration, snapUnit)
+  return mapTimeToPosition(format(snappedTime, dateFormat.value) as string)
+}
+
+const updateTooltipPosition = () => {
+  if (!barContainer.value) return
+
+  const container = barContainer.value.getBoundingClientRect()
+
+  const centerX = container.left + (selectionStartX.value + selectionEndX.value) / 2
+
+  tooltipPosition.value = {
+    x: centerX,
+    y: container.top - 10
+  }
+
+  tooltipStartDate.value = mapPositionToTime(Math.min(selectionStartX.value, selectionEndX.value))
+  tooltipEndDate.value = mapPositionToTime(Math.max(selectionStartX.value, selectionEndX.value))
 }
 
 // -----------------------------
@@ -218,10 +299,8 @@ const handleGroupToggle = (event: Event) => {
  * @param e - Mouse event
  */
 const handleSelectionStart = (e: MouseEvent) => {
-  // Only allow selection on non-group rows and where there are no bars being clicked
   if (isGroup.value) return
 
-  // Check if we clicked on a bar (avoid interfering with bar functionality)
   const target = e.target as HTMLElement
   if (target.closest(".g-gantt-bar")) return
 
@@ -234,6 +313,9 @@ const handleSelectionStart = (e: MouseEvent) => {
   selectionStartX.value = xPos
   selectionEndX.value = xPos
   selectionVisible.value = false
+
+  showRangeTooltip.value = true
+  updateTooltipPosition()
 
   e.preventDefault()
 
@@ -249,10 +331,17 @@ const handleSelectionMove = (e: MouseEvent) => {
   if (!isSelecting.value || !barContainer.value) return
 
   const container = barContainer.value.getBoundingClientRect()
-  const xPos = Math.max(0, e.clientX - container.left)
+  let xPos = Math.max(0, e.clientX - container.left)
+
+  if (isTickEnabled.value) {
+    xPos = snapToTick(xPos, selectionStartX.value)
+  }
 
   selectionEndX.value = xPos
-  selectionVisible.value = Math.abs(selectionEndX.value - selectionStartX.value) > 5 // Show only if dragged enough
+  selectionVisible.value = Math.abs(selectionEndX.value - selectionStartX.value) > 5
+  if (selectionVisible.value) {
+    updateTooltipPosition()
+  }
 }
 
 /**
@@ -268,11 +357,9 @@ const handleSelectionEnd = (e: MouseEvent) => {
     return
   }
 
-  // Convert positions to dates
   const startTime = mapPositionToTime(Math.min(selectionStartX.value, selectionEndX.value))
   const endTime = mapPositionToTime(Math.max(selectionStartX.value, selectionEndX.value))
 
-  // Emit selection event
   const rowData = {
     id: props.id,
     label: props.label,
@@ -299,6 +386,7 @@ const resetSelection = () => {
   selectionVisible.value = false
   selectionStartX.value = 0
   selectionEndX.value = 0
+  showRangeTooltip.value = false
 }
 
 // -----------------------------
@@ -373,6 +461,25 @@ provide(BAR_CONTAINER_KEY, barContainer)
       </template>
     </g-gantt-row>
   </div>
+  <!-- AGGIUNTO: Start Tooltip (fixed at selection start) -->
+  <teleport to="body">
+    <transition name="g-fade" mode="out-in">
+      <div
+        v-if="showRangeTooltip && selectionVisible"
+        class="g-gantt-range-tooltip g-gantt-range-tooltip-start"
+        :style="{
+          top: `${tooltipPosition.y}px`,
+          left: `${tooltipPosition.x}px`,
+          background: colors.primary,
+          color: colors.text
+        }"
+      >
+        <div class="g-gantt-range-tooltip-date">
+          {{ format(tooltipStartDate, dateFormat) }} - {{ format(tooltipEndDate, dateFormat) }}
+        </div>
+      </div>
+    </transition>
+  </teleport>
 </template>
 
 <style>
@@ -439,5 +546,62 @@ provide(BAR_CONTAINER_KEY, barContainer)
 
 .g-gantt-row-bars-container:has(.g-gantt-bar) {
   cursor: default;
+}
+
+.g-gantt-range-tooltip {
+  position: fixed;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.6em;
+  z-index: 1000;
+  min-width: 120px;
+  max-width: 240px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateX(-50%) translateY(-100%);
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.g-gantt-range-tooltip-title {
+  font-weight: bold;
+  font-size: 0.9em;
+  margin-bottom: 4px;
+  opacity: 0.9;
+}
+
+.g-gantt-range-tooltip-date {
+  font-size: 1em;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* AGGIUNTO: Fade transition for tooltips */
+.g-fade-enter-active,
+.g-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.g-fade-enter-from,
+.g-fade-leave-to {
+  opacity: 0;
+}
+
+/* Group toggle button styling */
+.group-toggle-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-right: 8px;
+  padding: 2px;
+  border-radius: 2px;
+  transition: background-color 0.2s;
+}
+
+.group-toggle-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.group-icon {
+  font-size: 0.8em;
 }
 </style>
