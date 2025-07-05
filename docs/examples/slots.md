@@ -241,6 +241,39 @@ The GGanttRow component provides two important slots:
         </div>
       </div>
     </template>
+
+    <!-- Custom range selection tooltip -->
+    <template #range-selection-tooltip="{ 
+      startDate, 
+      endDate, 
+      formattedStartDate, 
+      formattedEndDate, 
+      tick, 
+      tickEnabled, 
+      tickUnit 
+    }">
+      <div class="range-tooltip">
+        <div class="tooltip-header">
+          <span class="icon">📅</span>
+          <span v-if="tickEnabled">
+            Selection ({{ tick }} {{ tickUnit }} snap)
+          </span>
+          <span v-else>Free Selection</span>
+        </div>
+          
+        <div class="tooltip-content">
+          <div class="date-line">
+            <strong>From:</strong> {{ formattedStartDate }}
+          </div>
+          <div class="date-line">
+            <strong>To:</strong> {{ formattedEndDate }}
+          </div>
+          <div class="duration-line">
+            <strong>Duration:</strong> {{ calculateDuration(startDate, endDate) }}
+          </div>
+        </div>
+      </div>
+    </template>
   </g-gantt-row>
 </template>
 ```
@@ -293,6 +326,7 @@ HyVue Gantt slots can be combined to create complex layouts and highly customize
 | label | None | Customizes the row label content |
 | bar-label | `{ bar: GanttBarObject }` | Customizes the bar label |
 | group-bar | `{ width: number, height: number, bar: GanttBarObject }` | Customizes the appearance of group bars |
+| range-selection-tooltip | `{ startDate, endDate, formattedStartDate, formattedEndDate, tick, tickEnabled, tickUnit, internalPrecision }` | Custom tooltip for range selection |
 
 
 ## Best Practices for Using Slots

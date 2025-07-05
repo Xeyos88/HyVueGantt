@@ -195,6 +195,31 @@ const isBlank = (str: string) => {
   return !str || /^\s*$/.test(str)
 }
 
+/**
+ * Returns the unit of time for the current precision level
+ * Used for snapping and tooltip display
+ */
+const getTickUnit = (): string => {
+  switch (internalPrecision.value) {
+    case "hour":
+      return "minute"
+    case "day":
+      return "hour"
+    case "week":
+      return "day"
+    case "month":
+      return "week"
+    default:
+      return "minute"
+  }
+}
+
+/**
+ * Snaps a position to the nearest tick based on the current precision
+ * @param position - Current position in pixels
+ * @param startPosition - Starting position for snapping
+ * @returns Snapped position in pixels
+ */
 const snapToTick = (position: number, startPosition: number): number => {
   if (!isTickEnabled.value) return position
 
@@ -210,25 +235,21 @@ const snapToTick = (position: number, startPosition: number): number => {
 
   switch (internalPrecision.value) {
     case "hour":
-      // Tick in minuti
       duration = currentTime.diff(startTime, "minute")
       snapUnit = "minute"
       snapValue = tick.value
       break
     case "day":
-      // Tick in ore
       duration = currentTime.diff(startTime, "hour")
       snapUnit = "hour"
       snapValue = tick.value
       break
     case "week":
-      // Tick in giorni
       duration = currentTime.diff(startTime, "day")
       snapUnit = "day"
       snapValue = tick.value
       break
     case "month":
-      // Tick in settimane (7 giorni)
       duration = currentTime.diff(startTime, "day")
       snapUnit = "day"
       snapValue = tick.value * 7
@@ -474,9 +495,21 @@ provide(BAR_CONTAINER_KEY, barContainer)
           color: colors.text
         }"
       >
-        <div class="g-gantt-range-tooltip-date">
-          {{ format(tooltipStartDate, dateFormat) }} - {{ format(tooltipEndDate, dateFormat) }}
-        </div>
+        <slot
+          name="range-selection-tooltip"
+          :start-date="tooltipStartDate"
+          :end-date="tooltipEndDate"
+          :formatted-start-date="format(tooltipStartDate, dateFormat)"
+          :formatted-end-date="format(tooltipEndDate, dateFormat)"
+          :tick="tick"
+          :tick-enabled="isTickEnabled"
+          :tick-unit="getTickUnit()"
+          :internal-precision="internalPrecision"
+        >
+          <div class="g-gantt-range-tooltip-date">
+            {{ format(tooltipStartDate, dateFormat) }} - {{ format(tooltipEndDate, dateFormat) }}
+          </div>
+        </slot>
       </div>
     </transition>
   </teleport>
