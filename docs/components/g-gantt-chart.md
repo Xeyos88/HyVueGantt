@@ -94,6 +94,7 @@ Here's a minimal example of using the GGanttChart component:
 | importerBarEndField | `string` | `'end'` | Default field name for bar end dates in imported data |
 | baseUnitWidth | `number` | `24` | Default width in px for one lower unit in timeaxis (min: 20, max: 50) |
 | defaultZoom | `number` | `3` | Default initial zoom value (min: 1, max: 10)  |
+| tick | `number` | `0` | Range selection snap interval. When > 0, enables snapped selection based on current precision |
 
 ### Events
 
@@ -126,9 +127,6 @@ Here's a minimal example of using the GGanttChart component:
 | export-error | `error: string` | Emitted when the export process encounters an error |
 | import-data | `result: ImportResult` | Emitted when data is imported with the import result |
 | range-selection | `{ row: ChartRow, startDate: string | Date, endDate: string | Date, e: MouseEvent }` | User selects a time range on a row by dragging |
-
-
-### Slots
 
 ### Slots
 

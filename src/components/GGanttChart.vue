@@ -74,7 +74,8 @@ import {
   EMIT_BAR_EVENT_KEY,
   GANTT_ID_KEY,
   CHART_AREA_KEY,
-  CHART_WRAPPER_KEY
+  CHART_WRAPPER_KEY,
+  INTERNAL_PRECISION_KEY
 } from "../provider/symbols"
 import type {
   GanttBarObject,
@@ -168,7 +169,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   importerBarStartField: "start",
   importerBarEndField: "end",
   baseUnitWidth: 24,
-  defaultZoom: 3
+  defaultZoom: 3,
+  tick: 0
 })
 
 // Events
@@ -922,6 +924,7 @@ provide(BOOLEAN_KEY, { ...props })
 provide(GANTT_ID_KEY, id.value)
 provide(CHART_AREA_KEY, ganttChart)
 provide(CHART_WRAPPER_KEY, ganttWrapper)
+provide(INTERNAL_PRECISION_KEY, internalPrecision)
 
 // ---------------------------
 // 13. EXPOSE
