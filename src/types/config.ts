@@ -90,6 +90,7 @@ export interface GGanttChartProps {
   importerBarEndField?: string
   baseUnitWidth?: number
   defaultZoom?: number
+  tick?: number
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

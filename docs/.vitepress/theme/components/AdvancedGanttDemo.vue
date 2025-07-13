@@ -4,6 +4,7 @@ import { GGanttChart, GGanttRow } from 'hy-vue-gantt'
 import type { ConnectionRelation, ConnectionType, ConnectionSpeed, MarkerConnection, TimeUnit, DayOptionLabel, ConnectionPattern, GanttBarObject, ChartRow, ExportOptions, ImportResult } from 'hy-vue-gantt'
 import { downloadSampleCSV } from './CSVGenerator'
 import {downloadSampleJIRA} from './JIRAGEnerator'
+import dayjs from 'dayjs'
 
 const sections = ref<{ [key: string]: boolean }>({
   timeConfig: false,
@@ -52,6 +53,7 @@ const barLabelEditable = ref(true)
 const showProgress = ref(true)
 const showEventsAxis = ref(true)
 const eventsAxisHeight = ref(30)
+const tick = ref(10)
 
 
 // Time Highlight Configuration
@@ -168,7 +170,8 @@ const customSlots = ref({
   timeaxisEvent: false,
   groupBar: false,
   milestone: false,
-  labelColumnField: false
+  labelColumnField: false,
+  selectionTooltip: false,
 })
 
 // Custom Styles
@@ -220,9 +223,22 @@ const handleImport = (result: ImportResult) => {
       warnings: result.warnings?.length || 0 
     })
   } else {
-    addEventLog('Importazione Fallita', { 
+    addEventLog('Import Failed', { 
       error: result.error 
     })
+  }
+}
+
+const calculateDuration = (startDate: string | Date, endDate: string | Date) => {
+  const start = dayjs(startDate)
+  const end = dayjs(endDate)
+  const diffHours = end.diff(start, 'hour')
+  const diffDays = end.diff(start, 'day')
+  
+  if (diffDays >= 1) {
+    return `${diffDays} days`
+  } else {
+    return `${diffHours} hours`
   }
 }
 
@@ -876,6 +892,12 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
+                Selection Tick:
+                <input type="number" v-model="tick" min="0" step="1">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
                 Commands:
                 <input type="checkbox" v-model="commands">
               </label>
@@ -1030,6 +1052,12 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
+                Range Selection Tooltip:
+                <input type="checkbox" v-model="customSlots.selectionTooltip">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
                 Timeaxis Event:
                 <input type="checkbox" v-model="customSlots.timeaxisEvent">
               </label>
@@ -1126,6 +1154,7 @@ const formattedEventLog = computed(() => {
         :importer-title="'Import project data'"
         :importer-default-format="'csv'"
         :importer-allowed-formats="['jira', 'csv']"
+        :tick="tick"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"
@@ -1153,6 +1182,52 @@ const formattedEventLog = computed(() => {
           :connections="row.connections || []"
           highlightOnHover
         >
+          <!-- Custom Selection Range Slot -->
+          <template v-if="customSlots.selectionTooltip" #range-selection-tooltip="{ 
+            startDate, 
+            endDate, 
+            formattedStartDate, 
+            formattedEndDate, 
+            tick, 
+            tickEnabled, 
+            tickUnit, 
+            internalPrecision 
+          }">
+            <div class="custom-range-tooltip">
+              <div class="custom-tooltip-header">
+                <span class="tooltip-icon">📅</span>
+                <span v-if="tickEnabled">
+                  Selection (Tick: {{ tick }} {{ tickUnit }})
+                </span>
+                <span v-else>
+                  Free Selection
+                </span>
+              </div>
+              
+              <div class="custom-tooltip-body">
+                <div class="date-row">
+                  <span class="date-label">Start: </span>
+                  <span class="date-value">{{ formattedStartDate }}</span>
+                </div>
+                <div class="date-row">
+                  <span class="date-label">End: </span>
+                  <span class="date-value">{{ formattedEndDate }}</span>
+                </div>
+                
+                <div class="duration-row">
+                  <span class="duration-label">Duration: </span>
+                  <span class="duration-value">{{ calculateDuration(startDate, endDate) }}</span>
+                </div>
+                
+                <div class="info-row">
+                  <small class="precision-info">
+                    Precision: {{ internalPrecision }} | 
+                    {{ tickEnabled ? `Snap: ${tick} ${tickUnit}` : 'Snap: OFF' }}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </template>
           <!-- Custom Bar Label Slot -->
           <template v-if="customSlots.barLabel" #bar-label="{ bar }">
             <div class="custom-bar-label">
