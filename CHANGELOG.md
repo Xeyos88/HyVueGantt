@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v3.9.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.9.0) (2025-07-13)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.8.1...v3.9.0)
+
+
+
+**✨ New Features:**
+
+- Tick for range selection and tooltip
+
 ## [v3.8.1](https://github.com/Xeyos88/HyVueGantt/tree/v3.8.1) (2025-06-11)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.8.0...v3.8.1)
