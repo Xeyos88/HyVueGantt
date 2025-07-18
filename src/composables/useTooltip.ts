@@ -1,12 +1,19 @@
-import { ref } from "vue"
+import { ref, type Ref } from "vue"
 import type { GanttBarObject } from "../types"
+
+export interface UseTooltipReturn {
+  showTooltip: Ref<boolean>
+  tooltipBar: Ref<GanttBarObject | undefined>
+  initTooltip: (bar: GanttBarObject) => void
+  clearTooltip: () => void
+}
 
 /**
  * A composable that manages tooltip display and behavior in the Gantt chart
  * Provides timeout-based show/hide functionality and bar reference tracking
  * @returns Object containing tooltip state and control methods
  */
-export function useTooltip() {
+export function useTooltip(): UseTooltipReturn {
   const showTooltip = ref(false)
   const tooltipBar = ref<GanttBarObject | undefined>(undefined)
   let tooltipTimeoutId: ReturnType<typeof setTimeout>

@@ -1,13 +1,44 @@
-import { computed, ref, type Ref, watch } from "vue"
+import { computed, type ComputedRef, ref, type Ref, watch } from "vue"
 import type {
   BarConnection,
   BarPosition,
   ChartRow,
   ConnectionDeleteEvent,
+  ConnectionLabelStyle,
+  ConnectionPattern,
+  ConnectionRelation,
+  ConnectionSpeed,
+  ConnectionType,
   GanttBarObject,
   GGanttChartProps
 } from "../types"
 import type { UseRowsReturn } from "./useRows"
+
+export interface UseConnectionsReturn {
+  connections: Ref<BarConnection[]>
+  barPositions: Ref<Map<string, BarPosition>>
+  getConnectorProps: ComputedRef<
+    (conn: BarConnection) => {
+      sourceBar: BarPosition
+      targetBar: BarPosition
+      type?: ConnectionType
+      color?: string
+      pattern?: ConnectionPattern
+      animated?: boolean
+      animationSpeed?: ConnectionSpeed
+      relation?: ConnectionRelation
+      label?: string
+      labelAlwaysVisible?: boolean
+      labelStyle?: ConnectionLabelStyle | undefined
+      isSelected: boolean
+    } | null
+  >
+  initializeConnections: () => void
+  updateBarPositions: () => Promise<void>
+  handleConnectionClick: (connection: BarConnection) => void
+  selectedConnection: Ref<BarConnection | null>
+  deleteSelectedConnection: () => void
+}
 
 /**
  * A composable that manages connections between bars in the Gantt chart
@@ -24,7 +55,7 @@ export function useConnections(
   emit: {
     (e: "connection-delete", value: ConnectionDeleteEvent): void
   }
-) {
+): UseConnectionsReturn {
   const connections = ref<BarConnection[]>([])
   const barPositions = ref<Map<string, BarPosition>>(new Map())
   const selectedConnection = ref<BarConnection | null>(null)

@@ -13,6 +13,16 @@ interface DragState {
   }
 }
 
+export interface UseRowDragAndDropReturn {
+  dragState: Ref<DragState>
+  handleDragStart: (row: ChartRow, event: DragEvent) => void
+  handleDragOver: (row: ChartRow, event: DragEvent) => void
+  handleDrop: () => void
+  resetOrder: () => void
+  isDescendant: (parent: ChartRow, potentialChild: ChartRow) => boolean
+  findRowIndexById: (rows: ChartRow[], id: string | number) => [number, ChartRow[]]
+}
+
 /**
  * A composable that manages row drag and drop functionality in the Gantt chart
  * Handles row reordering, hierarchical grouping, and drag & drop validation
@@ -28,7 +38,7 @@ export function useRowDragAndDrop(
   isSorted: Ref<boolean>,
   updateRows: (rows: ChartRow[]) => void,
   emit: (event: "row-drop", payload: RowDragEvent) => void
-) {
+): UseRowDragAndDropReturn {
   const dragState = ref<DragState>({
     isDragging: false,
     draggedRow: null,
@@ -48,11 +58,11 @@ export function useRowDragAndDrop(
    * @returns Boolean indicating if drop is valid
    */
   const isValidDrop = (source: ChartRow, target: ChartRow): boolean => {
-    const isParentOfTarget = (row: ChartRow): boolean => {
+    const checkParent = (row: ChartRow): boolean => {
       if (!row.children?.length) return false
-      return row.children.some((child) => child === target || isParentOfTarget(child))
+      return row.children.some((child) => child === target || checkParent(child))
     }
-    return !isParentOfTarget(source)
+    return !checkParent(source)
   }
 
   /**
@@ -113,10 +123,7 @@ export function useRowDragAndDrop(
   }
 
   const isDescendant = (parent: ChartRow, potentialChild: ChartRow): boolean => {
-    if (!parent.children) {
-      return false
-    }
-
+    if (!parent.children) return false
     return parent.children.some(
       (child) => child.id === potentialChild.id || isDescendant(child, potentialChild)
     )
@@ -124,14 +131,14 @@ export function useRowDragAndDrop(
 
   const findRowIndexById = (rows: ChartRow[], id: string | number): [number, ChartRow[]] => {
     for (let i = 0; i < rows.length; i++) {
-      if (rows[i]!.id === id) {
-        return [i, rows]
-      }
-      if (rows[i]!.children?.length) {
-        const [index, parentRows] = findRowIndexById(rows[i]!.children!, id)
-        if (index !== -1) {
-          return [index, parentRows]
-        }
+      const row = rows[i]
+      if (!row) continue
+
+      if (row.id === id) return [i, rows]
+
+      if (row.children?.length) {
+        const [index, parentRows] = findRowIndexById(row.children, id)
+        if (index !== -1) return [index, parentRows]
       }
     }
     return [-1, rows]
@@ -143,6 +150,7 @@ export function useRowDragAndDrop(
    */
   const handleDrop = () => {
     const { draggedRow, dropTarget } = dragState.value
+
     if (!draggedRow || !dropTarget.row || isSorted.value || draggedRow === dropTarget.row) {
       return
     }
@@ -159,10 +167,11 @@ export function useRowDragAndDrop(
     }
 
     const [removed] = sourceParentRows.splice(sourceIndex, 1)
+    if (!removed) return
 
     const insertIndex = dropTarget.position === "after" ? targetIndex + 1 : targetIndex
 
-    targetParentRows.splice(insertIndex, 0, removed!)
+    targetParentRows.splice(insertIndex, 0, removed)
 
     updateRows([...rows.value])
 
