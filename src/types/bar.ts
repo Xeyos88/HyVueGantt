@@ -59,6 +59,17 @@ export interface GanttBarObject {
   ganttBarConfig: GanttBarConfig
 }
 
+type GanttBarConfigWithoutStyles = Omit<
+  GanttBarConfig,
+  "style" | "progressStyle" | "connections"
+> & {
+  connections?: Omit<GanttBarConnection, "labelStyle">[]
+}
+
+export interface GanttBarObjectWithoutStyles extends Omit<GanttBarObject, "ganttBarConfig"> {
+  ganttBarConfig: GanttBarConfigWithoutStyles
+}
+
 export interface BarPosition {
   id: string
   x: number
