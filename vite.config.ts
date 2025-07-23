@@ -45,8 +45,6 @@ export default () => {
           : undefined,
       outDir: process.env.NODE_ENV === "production" ? "lib" : "dist",
       rollupOptions: {
-        // make sure to externalize deps that shouldn't be bundled
-        // into the library
         external: [
           "vue",
           "dayjs",
@@ -65,6 +63,7 @@ export default () => {
         output: {
           // Provide global variables to use in the UMD build
           // for externalized deps
+          compact: true,
           globals: {
             vue: "Vue",
             dayjs: "dayjs",
@@ -76,6 +75,10 @@ export default () => {
             xlsx: "xlsx"
           },
           exports: "named"
+        },
+        treeshake: {
+          preset: "smallest",
+          moduleSideEffects: false
         }
       },
       minify: "terser",
