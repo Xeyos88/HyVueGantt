@@ -138,7 +138,7 @@ Here's a minimal example of using the GGanttChart component:
 | upper-timeunit | `{ label: string, value: string, date: Date }` | Customizes the upper time unit in the time axis |
 | timeunit | `{ label: string, value: string, date: Date }` | Customizes the lower time unit in the time axis |
 | current-time-label | None | Custom current time indicator label |
-| pointer-marker-tooltips | `{ hitBars: GanttBarObject[], datetime: string }` | Customizes the pointer marker tooltips |
+| pointer-marker-tooltips | `{ hitBars: GanttBarObjectWithoutStyles[], datetime: string }` | Customizes the pointer marker tooltips |
 | bar-tooltip | `{ bar: GanttBarObject, barStart: string \| Date, barEnd: string \| Date }` | Custom bar tooltip content |
 | bar-label | `{ bar: GanttBarObject }` | Custom bars label content |
 | milestone | `{ milestone: GanttMilestone, styleConfig: Object, position: number }` | Custom milestones content |

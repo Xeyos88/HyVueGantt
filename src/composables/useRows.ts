@@ -94,11 +94,11 @@ interface HistoryChange {
  * @param customOrder - Map of current row ordering
  * @returns HistoryState object containing current chart state
  */
-function createHistoryState(
+const createHistoryState = (
   rows: ChartRow[],
   expandedGroups: Set<string | number>,
   customOrder: Map<string | number, number>
-): HistoryState {
+): HistoryState => {
   /**
    * Helper function that creates a deep copy of a row's state for history tracking
    * Cleans and normalizes row data for storage
@@ -154,14 +154,14 @@ function createHistoryState(
  * @param originalRows - Current rows to merge with historical data
  * @returns Object containing restored rows, groups and ordering
  */
-function restoreState(
+const restoreState = (
   state: HistoryState,
   originalRows: ChartRow[]
 ): {
   rows: ChartRow[]
   expandedGroups: Set<string | number>
   customOrder: Map<string | number, number>
-} {
+} => {
   /**
    * Restores a single row from history state
    * Preserves original component references while updating data
@@ -202,7 +202,7 @@ function restoreState(
  * @param path - Array of indices representing path to row
  * @returns ID of parent row or undefined if at root
  */
-function findParentId(rows: ChartRow[], path: number[]): string | number | undefined {
+const findParentId = (rows: ChartRow[], path: number[]): string | number | undefined => {
   if (path.length <= 1) return undefined
   let current = rows[path[0]!]
   for (let i = 1; i < path.length - 1; i++) {
@@ -218,7 +218,7 @@ function findParentId(rows: ChartRow[], path: number[]): string | number | undef
  * @param barId - ID of bar to find
  * @returns Found bar object or null if not found
  */
-export function findBarInRows(rows: ChartRow[], barId: string): GanttBarObject | null {
+export const findBarInRows = (rows: ChartRow[], barId: string): GanttBarObject | null => {
   for (const row of rows) {
     const found = row.bars.find((bar) => bar.ganttBarConfig.id === barId)
     if (found) return found
@@ -237,7 +237,7 @@ export function findBarInRows(rows: ChartRow[], barId: string): GanttBarObject |
  * @param id - ID of row to find
  * @returns Found row or null if not found
  */
-function findRowById(rows: ChartRow[], id: string | number): ChartRow | null {
+const findRowById = (rows: ChartRow[], id: string | number): ChartRow | null => {
   for (const row of rows) {
     if (row.id === id) return row
     if (row.children) {
@@ -254,7 +254,7 @@ function findRowById(rows: ChartRow[], id: string | number): ChartRow | null {
  * @param id - ID of row to find path for
  * @returns Array of indices representing path to row
  */
-function findRowPath(rows: ChartRow[], id: string | number): number[] {
+const findRowPath = (rows: ChartRow[], id: string | number): number[] => {
   for (let i = 0; i < rows.length; i++) {
     if (rows[i]!.id === id) return [i]
     if (rows[i]!.children) {
@@ -271,8 +271,8 @@ function findRowPath(rows: ChartRow[], id: string | number): number[] {
  * @param rows - Array of rows to search
  * @returns ID of row containing the bar or empty string if not found
  */
-function findRowIdForBar(barId: string, rows: ChartRow[]): string | number {
-  function searchInRows(rows: ChartRow[]): string | number | null {
+const findRowIdForBar = (barId: string, rows: ChartRow[]): string | number => {
+  const searchInRows = (rows: ChartRow[]): string | number | null => {
     for (const row of rows) {
       if (row.bars.some((bar) => bar.ganttBarConfig.id === barId)) {
         return row.id!
@@ -293,10 +293,10 @@ function findRowIdForBar(barId: string, rows: ChartRow[]): string | number {
  * @param state - Historical state to extract bars from
  * @returns Map of bar IDs to bar objects
  */
-function getAllBarsFromState(state: HistoryState): Map<string, GanttBarObject> {
+const getAllBarsFromState = (state: HistoryState): Map<string, GanttBarObject> => {
   const barsMap = new Map()
 
-  function collectBars(rows: ChartRow[]) {
+  const collectBars = (rows: ChartRow[]) => {
     rows.forEach((row) => {
       row.bars.forEach((bar) => {
         barsMap.set(bar.ganttBarConfig.id, bar)
@@ -320,13 +320,13 @@ function getAllBarsFromState(state: HistoryState): Map<string, GanttBarObject> {
  * @param rows - Reference to current rows
  * @returns Change object or null if no changes
  */
-function compareBarStates(
+const compareBarStates = (
   oldBar: GanttBarObject,
   newBar: GanttBarObject,
   barStart: Ref<string>,
   barEnd: Ref<string>,
   rows: Ref<ChartRow[]>
-): BarHistoryChange | null {
+): BarHistoryChange | null => {
   if (
     oldBar[barStart.value] === newBar[barStart.value] &&
     oldBar[barEnd.value] === newBar[barEnd.value]
@@ -353,13 +353,13 @@ function compareBarStates(
  * @param rows - Reference to current rows
  * @returns Array of detected bar changes
  */
-function compareAllBars(
+const compareAllBars = (
   oldState: HistoryState,
   newState: HistoryState,
   barStart: Ref<string>,
   barEnd: Ref<string>,
   rows: Ref<ChartRow[]>
-): BarHistoryChange[] {
+): BarHistoryChange[] => {
   const changes: BarHistoryChange[] = []
 
   const oldBars = getAllBarsFromState(oldState)
@@ -388,13 +388,13 @@ function compareAllBars(
  * @param rows - Reference to current rows
  * @returns Object containing all detected changes
  */
-function calculateHistoryChanges(
+const calculateHistoryChanges = (
   prevState: HistoryState,
   newState: HistoryState,
   barStart: Ref<string>,
   barEnd: Ref<string>,
   rows: Ref<ChartRow[]>
-): HistoryChange {
+): HistoryChange => {
   const rowChanges: RowHistoryChange[] = []
 
   /**
@@ -403,7 +403,7 @@ function calculateHistoryChanges(
    * @param oldRows - Previous row arrangement
    * @returns Array of detected row position changes
    */
-  function compareRows(oldRows: ChartRow[]) {
+  const compareRows = (oldRows: ChartRow[]) => {
     for (const oldRow of oldRows) {
       if (!oldRow.id) continue
 
@@ -451,7 +451,7 @@ const MAX_HISTORY_STATES = 50
  * @param initialRows - Optional initial rows data
  * @returns UseRowsReturn object containing row management methods and state
  */
-export function useRows(
+export const useRows = (
   slots: Slots,
   {
     barStart,
@@ -463,7 +463,7 @@ export function useRows(
     onGroupExpansion
   }: UseRowsProps,
   initialRows?: Ref<ChartRow[]>
-): UseRowsReturn {
+): UseRowsReturn => {
   const sortState = ref<SortState>({
     column: initialSort!.column,
     direction: initialSort!.direction

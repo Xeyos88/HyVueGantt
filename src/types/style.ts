@@ -1,22 +1,21 @@
-import type * as CSS from "csstype"
-
-type Color = CSS.DataType.Color
+// src/types/style.ts
+import type { GanttColor } from "./css"
 
 export interface ColorScheme {
-  primary: Color
-  secondary: Color
-  ternary: Color
-  quartenary: Color
-  hoverHighlight: Color
-  markerCurrentTime: Color
-  markerPointer: Color
-  text: Color
-  background: Color
-  toast?: Color
-  commands?: Color
-  rangeHighlight?: Color
-  holidayHighlight?: Color
-  barContainer?: Color
-  rowContainer?: Color
-  gridAndBorder?: Color
+  primary: GanttColor
+  secondary: GanttColor
+  ternary: GanttColor
+  quartenary: GanttColor
+  hoverHighlight: GanttColor
+  markerCurrentTime: GanttColor
+  markerPointer: GanttColor
+  text: GanttColor
+  background: GanttColor
+  toast?: GanttColor
+  commands?: GanttColor
+  rangeHighlight?: GanttColor
+  holidayHighlight?: GanttColor
+  barContainer?: GanttColor
+  rowContainer?: GanttColor
+  gridAndBorder?: GanttColor
 }

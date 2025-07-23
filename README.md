@@ -12,7 +12,7 @@ A powerful and flexible Gantt chart component for Vue 3 applications. This compo
 ## 📚 Documentation & Demo
 
 - **[Complete Documentation](https://xeyos88.github.io/HyVueGantt/)** - Comprehensive guides and API reference
-- **[Live Demo](https://xeyos88.github.io/HyVueGantt/examples/advanced)** - Interactive examples and features showcase
+- **[Live Demo](https://xeyos88.github.io/HyVueGantt/live/advanced)** - Interactive examples and features showcase
 - **[Getting Started](https://xeyos88.github.io/HyVueGantt/guide/quick-start)** - Step-by-step tutorial
 
 ## 🚀 Quick Start

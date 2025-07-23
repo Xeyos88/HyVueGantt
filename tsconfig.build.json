@@ -8,7 +8,7 @@
     "declarationDir": "lib_types",
     "declarationMap": true,
     "stripInternal": true,
-    "removeComments": false,
+    "removeComments": true,
     "preserveConstEnums": true,
     "allowImportingTsExtensions": false,
     "skipLibCheck": true,

@@ -1,7 +1,9 @@
-import type { CSSProperties } from "vue"
+// src/types/bar.ts
+import type { GanttCSSProperties } from "./css"
 import type { ConnectionPattern, ConnectionSpeed, ConnectionType } from "./chart"
 import type { ConnectionRelation } from "./chart"
 
+// Define specific properties for connection labels
 export interface ConnectionLabelStyle {
   fill?: string
   fontSize?: string
@@ -42,19 +44,30 @@ export interface GanttBarConfig {
   pushOnConnect?: boolean
   dragLimitLeft?: number
   dragLimitRight?: number
-  style?: CSSProperties
+  style?: GanttCSSProperties // Use our custom type
   class?: string
   connections?: GanttBarConnection[]
   milestoneId?: string
   progress?: number
   progressResizable?: boolean
-  progressStyle?: CSSProperties
+  progressStyle?: GanttCSSProperties // Use our custom type
   _previousLabel?: string
 }
 
 export interface GanttBarObject {
   [key: string]: any
   ganttBarConfig: GanttBarConfig
+}
+
+type GanttBarConfigWithoutStyles = Omit<
+  GanttBarConfig,
+  "style" | "progressStyle" | "connections"
+> & {
+  connections?: Omit<GanttBarConnection, "labelStyle">[]
+}
+
+export interface GanttBarObjectWithoutStyles extends Omit<GanttBarObject, "ganttBarConfig"> {
+  ganttBarConfig: GanttBarConfigWithoutStyles
 }
 
 export interface BarPosition {

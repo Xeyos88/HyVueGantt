@@ -57,6 +57,17 @@ interface GanttBarConnection {
   labelAlwaysVisible?: boolean;
   labelStyle?: ConnectionLabelStyle;
 }
+
+type GanttBarConfigWithoutStyles = Omit<
+  GanttBarConfig,
+  "style" | "progressStyle" | "connections"
+> & {
+  connections?: Omit<GanttBarConnection, "labelStyle">[]
+}
+
+interface GanttBarObjectWithoutStyles extends Omit<GanttBarObject, "ganttBarConfig"> {
+  ganttBarConfig: GanttBarConfigWithoutStyles
+}
 ```
 
 ## Connection Label Styling
