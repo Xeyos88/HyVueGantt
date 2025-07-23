@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v4.0.0](https://github.com/Xeyos88/HyVueGantt/tree/v4.0.0) (2025-07-23)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.9.0...v4.0.0)
+
+
+
+**⚠ BREAKING CHANGES:**
+
+- The pointer-marker-tooltips slot now provides a hitBars object that does not contain the properties of style
+
+**♻️ Refactoring:**
+
+- Package size reduced by 80%!!!
+
+### Note
+
+#### BREAKING CHANGES
+* Package size reduced by 80%!!!
+
 ## [v3.9.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.9.0) (2025-07-13)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.8.1...v3.9.0)
