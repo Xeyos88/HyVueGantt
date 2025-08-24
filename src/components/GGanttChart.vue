@@ -154,7 +154,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   importerBarEndField: "end",
   baseUnitWidth: 24,
   defaultZoom: 3,
-  tick: 0
+  tick: 0,
+  autoScrollToToday: false
 })
 
 // Events
@@ -416,6 +417,31 @@ const { exportChart, downloadExport, isExporting } = useExport(
     precision: toRef(props, "precision")
   }
 )
+
+const autoScrollToToday = () => {
+  if (!props.autoScrollToToday || !ganttWrapper.value) return
+
+  const today = new Date()
+  const chartStart = new Date(props.chartStart)
+  const chartEnd = new Date(props.chartEnd)
+
+  if (today < chartStart || today > chartEnd) {
+    return
+  }
+
+  const totalDuration = chartEnd.getTime() - chartStart.getTime()
+  const todayOffset = today.getTime() - chartStart.getTime()
+  const todayPercent = (todayOffset / totalDuration) * 100
+
+  const maxScroll = totalWidth.value - ganttWrapper.value.clientWidth
+  const targetScroll = (maxScroll * todayPercent) / 100
+
+  const centeredScroll = targetScroll - ganttWrapper.value.clientWidth / 2
+  const finalScroll = Math.max(0, Math.min(maxScroll, centeredScroll))
+
+  ganttWrapper.value.scrollLeft = finalScroll
+  scrollPosition.value = (finalScroll / maxScroll) * 100
+}
 
 const handleExport = async (options?: Partial<ExportOptions>): Promise<ExportResult> => {
   const mergedOptions: ExportOptions = {
@@ -840,6 +866,8 @@ onMounted(() => {
 
   nextTick(() => {
     updateBarPositions()
+    // Auto-scroll to today after the chart is fully initialized
+    autoScrollToToday()
   })
 
   watch(scrollPosition, updateRangeBackground, { immediate: true })
@@ -1212,7 +1240,6 @@ defineExpose({
   display: flex;
   flex-direction: row;
 }
-
 
 /* Basic Command Section Styles */
 .g-gantt-command {
