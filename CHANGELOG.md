@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v4.1.0](https://github.com/Xeyos88/HyVueGantt/tree/v4.1.0) (2025-08-28)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.0.0...v4.1.0)
+
+
+
+**✨ New Features:**
+
+- Auto scroll in current day
+
 ## [v4.0.0](https://github.com/Xeyos88/HyVueGantt/tree/v4.0.0) (2025-07-23)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.9.0...v4.0.0)
