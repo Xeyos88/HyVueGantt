@@ -76,6 +76,7 @@ interface BehaviorProps {
   barLabelEditable?: boolean;               // Allow editing bar labels
   enableConnectionCreation?: boolean;       // Enable creating connections
   enableConnectionDeletion?: boolean;       // Enable deleting connections
+  autoScrollToToday?: boolean;              // Auto-scroll to center today's date on chart load
 }
 ```
 

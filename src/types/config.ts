@@ -91,6 +91,7 @@ export interface GGanttChartProps {
   baseUnitWidth?: number
   defaultZoom?: number
   tick?: number
+  autoScrollToToday?: boolean
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

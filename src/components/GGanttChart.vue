@@ -2,23 +2,6 @@
 // -----------------------------
 // 1. EXTERNAL IMPORTS
 // -----------------------------
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
-import {
-  faAnglesLeft,
-  faAngleLeft,
-  faAngleRight,
-  faAnglesRight,
-  faAngleUp,
-  faAngleDown,
-  faMagnifyingGlassPlus,
-  faMagnifyingGlassMinus,
-  faExpandAlt,
-  faCompressAlt,
-  faUndo,
-  faRedo,
-  faFileExport,
-  faSpinner
-} from "@fortawesome/free-solid-svg-icons"
 import {
   computed,
   nextTick,
@@ -51,6 +34,7 @@ import GGanttMilestone from "./GGanttMilestone.vue"
 import GGanttRow from "./GGanttRow.vue"
 import GGanttPointerMarker from "./GGanttPointerMarker.vue"
 import GGanttImporter from "./GGanttImporter.vue"
+import GGanttCommands from "./GGanttCommands.vue"
 
 // Composables
 import { useConnections } from "../composables/useConnections"
@@ -170,7 +154,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   importerBarEndField: "end",
   baseUnitWidth: 24,
   defaultZoom: 3,
-  tick: 0
+  tick: 0,
+  autoScrollToToday: false
 })
 
 // Events
@@ -432,6 +417,31 @@ const { exportChart, downloadExport, isExporting } = useExport(
     precision: toRef(props, "precision")
   }
 )
+
+const autoScrollToToday = () => {
+  if (!props.autoScrollToToday || !ganttWrapper.value) return
+
+  const today = new Date()
+  const chartStart = new Date(props.chartStart)
+  const chartEnd = new Date(props.chartEnd)
+
+  if (today < chartStart || today > chartEnd) {
+    return
+  }
+
+  const totalDuration = chartEnd.getTime() - chartStart.getTime()
+  const todayOffset = today.getTime() - chartStart.getTime()
+  const todayPercent = (todayOffset / totalDuration) * 100
+
+  const maxScroll = totalWidth.value - ganttWrapper.value.clientWidth
+  const targetScroll = (maxScroll * todayPercent) / 100
+
+  const centeredScroll = targetScroll - ganttWrapper.value.clientWidth / 2
+  const finalScroll = Math.max(0, Math.min(maxScroll, centeredScroll))
+
+  ganttWrapper.value.scrollLeft = finalScroll
+  scrollPosition.value = (finalScroll / maxScroll) * 100
+}
 
 const handleExport = async (options?: Partial<ExportOptions>): Promise<ExportResult> => {
   const mergedOptions: ExportOptions = {
@@ -856,6 +866,8 @@ onMounted(() => {
 
   nextTick(() => {
     updateBarPositions()
+    // Auto-scroll to today after the chart is fully initialized
+    autoScrollToToday()
   })
 
   watch(scrollPosition, updateRangeBackground, { immediate: true })
@@ -1142,137 +1154,39 @@ defineExpose({
           :zoom-level="zoomLevel"
           :export="() => triggerExport()"
         >
-          <div class="g-gantt-command-block">
-            <!-- Navigation Controls -->
-            <div class="g-gantt-command-vertical" v-if="maxRows > 0">
-              <button @click="scrollRowUp" aria-label="Scroll row up" :disabled="isAtTop">
-                <FontAwesomeIcon :icon="faAngleUp" class="command-icon" />
-              </button>
-              <button @click="scrollRowDown" aria-label="Scroll row down" :disabled="isAtBottom">
-                <FontAwesomeIcon :icon="faAngleDown" class="command-icon" />
-              </button>
-            </div>
-            <div class="g-gantt-command-groups" v-if="hasGroupRows">
-              <button
-                @click="rowManager.expandAllGroups()"
-                aria-label="Expand all groups"
-                :disabled="rowManager.areAllGroupsExpanded.value"
-              >
-                <FontAwesomeIcon :icon="faExpandAlt" class="command-icon" />
-              </button>
-              <button
-                @click="rowManager.collapseAllGroups()"
-                aria-label="Collapse all groups"
-                :disabled="rowManager.areAllGroupsCollapsed.value"
-              >
-                <FontAwesomeIcon :icon="faCompressAlt" class="command-icon" />
-              </button>
-            </div>
-          </div>
-
-          <div class="g-gantt-command-fixed">
-            <div class="g-gantt-command-slider">
-              <button
-                :disabled="scrollPosition === 0"
-                @click="handleStep(0, ganttWrapper!)"
-                aria-label="Scroll to start"
-              >
-                <FontAwesomeIcon :icon="faAnglesLeft" class="command-icon" />
-              </button>
-              <button
-                :disabled="scrollPosition === 0"
-                @click="handleStep(scrollPosition - 10, ganttWrapper!)"
-                aria-label="Scroll back"
-              >
-                <FontAwesomeIcon :icon="faAngleLeft" class="command-icon" />
-              </button>
-
-              <!-- Position Slider -->
-              <input
-                v-model="scrollPosition"
-                type="range"
-                min="0"
-                max="100"
-                class="g-gantt-scroller"
-                :style="{ '--value': `${scrollPosition}%` }"
-                @input="handleScroll(ganttWrapper!)"
-                :aria-valuemin="0"
-                :aria-valuemax="100"
-                :aria-valuenow="scrollPosition"
-                aria-label="Gantt scroll position"
-              />
-
-              <button
-                :disabled="scrollPosition === 100"
-                @click="handleStep(scrollPosition + 10, ganttWrapper!)"
-                aria-label="Scroll up"
-              >
-                <FontAwesomeIcon :icon="faAngleRight" class="command-icon" />
-              </button>
-              <button
-                :disabled="scrollPosition === 100"
-                @click="handleStep(100, ganttWrapper!)"
-                aria-label="Scroll to end"
-              >
-                <FontAwesomeIcon :icon="faAnglesRight" class="command-icon" />
-              </button>
-            </div>
-          </div>
-          <div class="g-gantt-command-block">
-            <!-- Zoom Controls -->
-            <div class="g-gantt-command-zoom">
-              <button
-                @click="() => handleZoomUpdate(false)"
-                aria-label="Zoom-out Gantt"
-                :disabled="zoomLevel === 1 && internalPrecision === 'month'"
-              >
-                <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
-              </button>
-              <button
-                @click="() => handleZoomUpdate(true)"
-                aria-label="Zoom-out Gantt"
-                :disabled="zoomLevel === 10 && internalPrecision === precision"
-              >
-                <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
-              </button>
-            </div>
-
-            <div class="g-gantt-command-history">
-              <button
-                @click="undo"
-                :disabled="!rowManager.canUndo.value"
-                aria-label="Undo last action"
-              >
-                <FontAwesomeIcon :icon="faUndo" class="command-icon" />
-              </button>
-              <button @click="redo" :disabled="!rowManager.canRedo.value" aria-label="Redo action">
-                <FontAwesomeIcon :icon="faRedo" class="command-icon" />
-              </button>
-            </div>
-          </div>
-          <div class="g-gantt-command-block">
-            <div class="g-gantt-command-export" v-if="exportEnabled">
-              <div class="g-gantt-export-container">
-                <select
-                  v-model="selectedExportFormat"
-                  class="g-gantt-export-select"
-                  :disabled="isExporting"
-                >
-                  <option value="" disabled>Export</option>
-                  <option value="pdf">PDF</option>
-                  <option value="png">PNG</option>
-                  <option value="svg">SVG</option>
-                  <option value="excel">Excel</option>
-                </select>
-                <button @click="triggerExport" :disabled="!selectedExportFormat || isExporting">
-                  <FontAwesomeIcon :icon="faFileExport" class="command-icon" />
-                  <span v-if="isExporting" class="g-gantt-export-loading">
-                    <FontAwesomeIcon :icon="faSpinner" class="fa-spin" />
-                  </span>
-                </button>
-              </div>
-            </div>
-          </div>
+          <!-- Default slot content using the extracted component -->
+          <g-gantt-commands
+            :colors="colors"
+            :font="font"
+            :max-rows="maxRows"
+            :has-group-rows="hasGroupRows"
+            :is-at-top="isAtTop"
+            :is-at-bottom="isAtBottom"
+            :zoom-level="zoomLevel"
+            :internal-precision="internalPrecision"
+            :precision="precision"
+            :scroll-position="scrollPosition"
+            :export-enabled="exportEnabled"
+            :is-exporting="isExporting"
+            :selected-export-format="selectedExportFormat"
+            :row-manager="rowManager"
+            @scroll-row-up="scrollRowUp"
+            @scroll-row-down="scrollRowDown"
+            @expand-all-groups="rowManager.expandAllGroups()"
+            @collapse-all-groups="rowManager.collapseAllGroups()"
+            @handle-to-start="handleStep(0, ganttWrapper!)"
+            @handle-back="handleStep(scrollPosition - 10, ganttWrapper!)"
+            @handle-scroll="handleScroll(ganttWrapper!)"
+            @handle-forward="handleStep(scrollPosition + 10, ganttWrapper!)"
+            @handle-to-end="handleStep(100, ganttWrapper!)"
+            @zoom-out="() => handleZoomUpdate(false)"
+            @zoom-in="() => handleZoomUpdate(true)"
+            @undo="undo"
+            @redo="redo"
+            @trigger-export="triggerExport"
+            @update:selected-export-format="selectedExportFormat = $event"
+            @update:scroll-position="scrollPosition = $event"
+          />
         </slot>
       </div>
     </div>
@@ -1327,7 +1241,7 @@ defineExpose({
   flex-direction: row;
 }
 
-/* Command Section Styles */
+/* Basic Command Section Styles */
 .g-gantt-command {
   display: flex;
   align-items: center;
@@ -1337,196 +1251,8 @@ defineExpose({
   gap: 8px;
 }
 
-.g-gantt-command-block {
-  display: flex;
-  gap: 8px;
-}
-
-.g-gantt-command-fixed,
-.g-gantt-command-slider,
-.g-gantt-command-vertical,
-.g-gantt-command-zoom,
-.g-gantt-command-history,
-.g-gantt-command-groups,
-.g-gantt-export-container {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.g-gantt-command-custom {
-  flex-grow: 1;
-}
-
-.g-gantt-command-vertical button:disabled,
-.g-gantt-command-slider button:disabled,
-.g-gantt-command-zoom button:disabled,
-.g-gantt-command-groups button:disabled,
-.g-gantt-command-history button:disabled,
-.g-gantt-export-container button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.g-gantt-export-select {
-  border-radius: 4px;
-  font-size: 0.75rem;
-  padding-inline: 2px;
-  padding-block: 0;
-  height: 22px;
-}
-
-.g-gantt-export-loading {
-  margin-left: 4px;
-}
-
-.g-gantt-export-menu button:hover {
-  background: #f5f5f5;
-}
-
-@media screen and (max-width: 768px) {
-  .g-gantt-command {
-    height: auto;
-    min-height: unset;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px 6px;
-    gap: 12px;
-  }
-
-  .g-gantt-command > * {
-    width: 100%;
-  }
-
-  .g-gantt-command-block {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-  }
-
-  .g-gantt-command-fixed {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .g-gantt-command-groups {
-    justify-content: center;
-    margin-right: 0;
-  }
-
-  .g-gantt-command-slider {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .g-gantt-command-vertical {
-    flex-direction: row;
-    justify-content: center;
-  }
-
-  .g-gantt-command-zoom,
-  .g-gantt-command-history {
-    justify-content: center;
-  }
-
-  .g-gantt-command-export {
-    display: flex;
-    align-items: center;
-  }
-
-  .command-icon {
-    padding: 8px;
-    width: 16px;
-    height: 16px;
-  }
-
-  .g-gantt-scroller {
-    height: 12px;
-  }
-
-  .g-gantt-scroller::-webkit-slider-thumb {
-    width: 24px;
-    height: 24px;
-  }
-
-  .g-gantt-scroller::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
-  }
-}
-
-/* Scroller Styles */
-.g-gantt-scroller {
-  -webkit-appearance: none;
-  height: 8px;
-  border-radius: 4px;
-  outline: none;
-  background: linear-gradient(
-    to right,
-    v-bind(colors.rangeHighlight) var(--value),
-    #ddd var(--value)
-  );
-}
-
-/* Scroller Thumb Styles */
-.g-gantt-scroller::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  background: v-bind(colors.rangeHighlight);
-  border-radius: 50%;
-  cursor: pointer;
-  border: none;
-}
-
-.g-gantt-scroller::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: v-bind(colors.rangeHighlight);
-  border-radius: 50%;
-  cursor: pointer;
-  border: none;
-}
-
-/* Track Styles */
-.g-gantt-scroller::-moz-range-track {
-  height: 8px;
-  background: #ddd;
-  border-radius: 4px;
-  border: none;
-}
-
-/* Hover States */
-.g-gantt-scroller::-webkit-slider-thumb:hover {
-  background: v-bind(colors.rangeHighlight);
-}
-
-.g-gantt-scroller::-moz-range-thumb:hover {
-  background: v-bind(colors.rangeHighlight);
-}
-
-/* Icon Styles */
-.command-icon {
-  background: v-bind(colors.rangeHighlight);
-  padding: 4px;
-  margin: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-}
-
-button {
-  display: flex;
-  padding: 0;
-  background-color: transparent;
-  background-image: none;
-  border: 0;
-  color: v-bind(colors.text);
-}
-
 .g-gantt-chart:focus-within {
-  outline: 2px solid v-bind(colors.primary);
+  outline: 2px solid #007bff;
   outline-offset: 2px;
 }
 

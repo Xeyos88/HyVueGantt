@@ -1,6 +1,6 @@
 {
   "name": "hy-vue-gantt",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Evolution of vue-ganttastic package",
   "author": "Eugenio Topa (@Xeyos88)",
   "scripts": {
@@ -79,7 +79,7 @@
     "date-holidays": "^3.23.14",
     "dayjs": "^1.11.13",
     "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.1",
+    "jspdf": "^3.0.2",
     "lodash-es": "^4.17.21",
     "papaparse": "^5.5.2",
     "uuid": "^11.0.5",

@@ -19,6 +19,7 @@ The GGanttChart component accepts several key configuration properties that defi
   :push-on-overlap="true"
   :no-overlap="false"
   :commands="true"
+  :auto-scroll-to-today="true"
 />
 ```
 
@@ -58,6 +59,33 @@ The chart emits various events that you can listen to:
   @sort="handleSort"
 />
 ```
+
+## Auto-Scroll to Current Date
+
+The chart can automatically center on today's date when it loads using the `autoScrollToToday` property:
+
+```vue
+<template>
+  <g-gantt-chart
+    :chart-start="'2024-01-01'"
+    :chart-end="'2024-12-31'"
+    :auto-scroll-to-today="true"
+  >
+    <!-- Your gantt rows here -->
+  </g-gantt-chart>
+</template>
+```
+
+**Key Features:**
+- Only activates when today's date falls within the chart's visible range (`chartStart` to `chartEnd`)
+- Centers the current date in the viewport on chart initialization
+- No action taken if today is outside the date range
+- Executes after the chart is fully loaded and positioned
+
+**Use Cases:**
+- Project timelines where you want immediate visibility of current status
+- Long-term planning charts that span multiple months or years
+- Real-time dashboards showing current progress
 
 ## Performance Optimization
 

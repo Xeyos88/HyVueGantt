@@ -66,4 +66,73 @@ describe("GGanttRow", () => {
     expect(barContainer.exists()).toBe(true)
     expect(wrapper.props("bars")).toHaveLength(1)
   })
+
+  it("should handle props correctly", () => {
+    const connections = [{ targetId: "2", type: "straight", relation: "FS" }]
+    const wrapper = createWrapper({
+      connections,
+      highlightOnHover: true,
+      id: "custom-id",
+      label: "Custom Label"
+    })
+
+    expect(wrapper.props("connections")).toEqual(connections)
+    expect(wrapper.props("highlightOnHover")).toBe(true)
+    expect(wrapper.props("id")).toBe("custom-id")
+    expect(wrapper.props("label")).toBe("Custom Label")
+  })
+
+  it("should handle multiple bars", () => {
+    const secondBar: GanttBarObject = {
+      ganttBarConfig: { id: "2", label: "Second Bar" },
+      start: "2024-01-03",
+      end: "2024-01-04"
+    }
+    const wrapper = createWrapper({ bars: [mockBar, secondBar] })
+
+    expect(wrapper.props("bars")).toHaveLength(2)
+  })
+
+  it("should handle empty bars array", () => {
+    const wrapper = createWrapper({ bars: [] })
+
+    expect(wrapper.props("bars")).toHaveLength(0)
+  })
+
+  it("should have proper ARIA role", () => {
+    const wrapper = createWrapper()
+    const row = wrapper.find(".g-gantt-row")
+
+    expect(row.attributes("role")).toBe("list")
+  })
+
+  it("should handle various event listeners", async () => {
+    const wrapper = createWrapper()
+    const row = wrapper.find(".g-gantt-row")
+
+    // Test that events don't crash the component
+    await row.trigger("mouseover")
+    await row.trigger("mouseleave")
+    await row.trigger("dragover")
+    await row.trigger("dragleave")
+    await row.trigger("mousedown", { clientX: 50, clientY: 20 })
+
+    expect(row.exists()).toBe(true)
+  })
+
+  it("should handle prop updates", async () => {
+    const wrapper = createWrapper({ label: "Initial" })
+    expect(wrapper.props("label")).toBe("Initial")
+
+    await wrapper.setProps({ label: "Updated" })
+    expect(wrapper.props("label")).toBe("Updated")
+  })
+
+  it("should handle numeric and string ids", () => {
+    const numericWrapper = createWrapper({ id: 123 })
+    expect(numericWrapper.props("id")).toBe(123)
+
+    const stringWrapper = createWrapper({ id: "string-id" })
+    expect(stringWrapper.props("id")).toBe("string-id")
+  })
 })
