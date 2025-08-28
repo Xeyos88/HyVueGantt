@@ -95,6 +95,7 @@ Here's a minimal example of using the GGanttChart component:
 | baseUnitWidth | `number` | `24` | Default width in px for one lower unit in timeaxis (min: 20, max: 50) |
 | defaultZoom | `number` | `3` | Default initial zoom value (min: 1, max: 10)  |
 | tick | `number` | `0` | Range selection snap interval. When > 0, enables snapped selection based on current precision |
+| autoScrollToToday | `boolean` | `false` | Automatically scroll to center today's date on chart initialization. Only works if today falls within the chart range |
 
 ### Events
 

@@ -7,7 +7,7 @@ const createMockBar = (id: string, immobile = false): GanttBarObject => ({
   ganttBarConfig: {
     id,
     immobile,
-    bundle: null,
+    bundle: undefined,
     pushOnOverlap: true,
     pushOnConnect: true
   },
@@ -32,6 +32,14 @@ vi.mock("../../src/provider/provideEmitBarEvent", () => ({
 
 vi.mock("../../src/composables/useDayjsHelper", () => ({
   default: () => ({
+    chartStartDayjs: ref({
+      format: vi.fn().mockReturnValue("2024-01-01"),
+      diff: vi.fn().mockReturnValue(1440)
+    }),
+    chartEndDayjs: ref({
+      format: vi.fn().mockReturnValue("2024-12-31"),
+      diff: vi.fn().mockReturnValue(1440)
+    }),
     toDayjs: vi.fn().mockReturnValue({
       format: vi.fn().mockReturnValue("2024-01-01 10:00"),
       add: vi.fn().mockReturnValue({
@@ -53,11 +61,7 @@ vi.mock("vue", async () => {
       rows: ref([
         {
           label: "Row 1",
-          bars: [
-            createMockBar("bar1"),
-            createMockBar("bar2"),
-            createMockBar("bar3", true)
-          ]
+          bars: [createMockBar("bar1"), createMockBar("bar2"), createMockBar("bar3", true)]
         }
       ])
     })
@@ -65,8 +69,6 @@ vi.mock("vue", async () => {
 })
 
 describe("useBarDragManagement", () => {
-
-
   const createMockEvent = (clientX = 0): MouseEvent => {
     return new MouseEvent("mousedown", {
       clientX,
@@ -120,7 +122,7 @@ describe("useBarDragManagement", () => {
       const event = createMockEvent(100)
 
       barDragManagement.initDragOfBundle(mainBar, event)
-      expect(mainBar.ganttBarConfig.bundle).toBeNull()
+      expect(mainBar.ganttBarConfig.bundle).toBeUndefined()
     })
   })
 
@@ -143,9 +145,7 @@ describe("useBarDragManagement", () => {
         ...createMockBar("source"),
         ganttBarConfig: {
           ...createMockBar("source").ganttBarConfig,
-          connections: [
-            { targetId: "target1", type: "straight" }
-          ]
+          connections: [{ targetId: "target1", type: "straight" }]
         }
       }
 
@@ -168,8 +168,6 @@ describe("useBarDragManagement", () => {
       expect(bar.start).toBe("invalid-date")
       expect(bar.end).toBe("invalid-date")
     })
-
-   
   })
 
   describe("drag state management", () => {
@@ -191,14 +189,14 @@ describe("useBarDragManagement", () => {
 
       barDragManagement.initDragOfBar(bar, event)
       barDragManagement.handleDrag(event, bar)
-      
+
       const dragEndEvent = new MouseEvent("mouseup", {
         clientX: 200,
         bubbles: true
       })
-      
+
       document.dispatchEvent(dragEndEvent)
-      
+
       expect(bar.ganttBarConfig.id).toBe("test")
     })
   })
