@@ -507,6 +507,7 @@ const handleImport = (result: ImportResult) => {
 
 const closeImporter = () => {
   isImporterVisible.value = false
+  emit("update:importer-visible", false)
 }
 
 // -----------------------------

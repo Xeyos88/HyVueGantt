@@ -106,4 +106,5 @@ export interface GGanttChartEmits {
   (e: "export-error", error: string): void
   (e: "import-data", value: ImportResult): void
   (e: "range-selection", value: RangeSelectionEvent): void
+  (e: "update:importer-visible", value: boolean): void
 }
