@@ -62,6 +62,7 @@ const {
   chartEnd,
   chartSize,
   showLabel,
+  showGroupLabel,
   showProgress,
   defaultProgressResizable,
   enableConnectionCreation,
@@ -581,6 +582,22 @@ onMounted(() => {
           />
         </svg>
       </slot>
+      <!-- Group Bar Label -->
+      <div v-if="showGroupLabel" class="g-gantt-group-bar-label">
+        <slot name="group-bar-label" :bar="bar">
+          <div
+            :style="{
+              backgroundColor: config.colors.value.barContainer,
+              padding: '0px 6px',
+              borderRadius: '4px',
+              marginTop: '-10px'
+            }"
+          >
+            {{ barConfig.label || "" }}
+          </div>
+          <div v-if="barConfig.html" v-html="barConfig.html" />
+        </slot>
+      </div>
     </template>
     <!-- Bar Label -->
     <div v-else class="g-gantt-bar-label">
@@ -695,6 +712,26 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+.g-gantt-group-bar-label {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0 14px 0 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3;
+  pointer-events: none;
+  color: inherit;
+}
+
+.g-gantt-group-bar-label > * {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .g-gantt-progress-bar {

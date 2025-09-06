@@ -49,6 +49,7 @@ const labelColumnWidth = ref(100)
 const commands = ref(true)
 const width = ref('100%')
 const showLabel = ref(true)
+const showGroupLabel = ref(true)
 const barLabelEditable = ref(true)
 const showProgress = ref(true)
 const showEventsAxis = ref(true)
@@ -250,6 +251,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group1',
     label: 'Frontend Development',
+    style: { background: '#42b883' },
     children: [
       {
         id: 'task1',
@@ -300,6 +302,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group2',
     label: 'Backend Development',
+    style: { background: '#ff7e67' },
     children: [
       {
         id: 'task3',
@@ -355,6 +358,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group3',
     label: 'Progress Examples',
+    style: { background: '#e67e22' },
     children: [
       {
         id: 'progress1',
@@ -393,6 +397,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group4',
     label: 'Bundle Example',
+    style: { background: '#8e44ad' },
     children: [
       {
         id: 'bundle1',
@@ -442,6 +447,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group5',
     label: 'Final Milestone',
+    style: { background: '#2ecc71' },
     children: [
       {
         id: 'milestone',
@@ -844,6 +850,12 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
+                Show Group Label:
+                <input type="checkbox" v-model="showGroupLabel">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
                 Edit Bar Label:
                 <input type="checkbox" v-model="barLabelEditable">
               </label>
@@ -1140,6 +1152,7 @@ const formattedEventLog = computed(() => {
         :default-progress-resizable="defaultProgressResizable"
         :show-progress="showProgress"
         :showLabel="showLabel"
+        :show-group-label="showGroupLabel"
         :barLabelEditable="barLabelEditable"
         :milestones="milestones"
         :enableConnectionCreation="enableConnectionCreation"

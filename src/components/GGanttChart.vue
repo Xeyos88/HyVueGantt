@@ -130,6 +130,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   enableRowDragAndDrop: false,
   markerConnection: "forward",
   showLabel: true,
+  showGroupLabel: true,
   showProgress: true,
   defaultProgressResizable: true,
   enableConnectionCreation: false,

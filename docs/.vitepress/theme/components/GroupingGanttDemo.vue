@@ -26,10 +26,12 @@ const rows = ref([
   {
     id: 'frontend',
     label: 'Frontend Development',
+    style: { background: '#3498DB' },
     children: [
       {
         id: 'fe-core',
         label: 'Core Features',
+        style: { background: '#2980B9' },
         children: [
           {
             id: 'fe-setup',
@@ -78,6 +80,7 @@ const rows = ref([
       {
         id: 'fe-ui',
         label: 'UI Components',
+        style: { background: '#8E44AD' },
         children: [
           {
             id: 'fe-comp-base',
@@ -158,6 +161,7 @@ const rows = ref([
   {
     id: 'backend',
     label: 'Backend Development',
+    style: { background: '#27AE60' },
     children: [
       {
         id: 'be-core',
@@ -243,6 +247,7 @@ const rows = ref([
   {
     id: 'mobile',
     label: 'Mobile Development',
+    style: { background: '#E74C3C' },
     children: [
       {
         id: 'mob-ios',
@@ -532,6 +537,8 @@ onMounted(() => {
         :color-scheme="customColorScheme"
         label-column-title="Project Structure"
         :multi-column-label="multiColumnLabel"
+        :show-label="true"
+        :show-group-label="true"
         
       >
         <g-gantt-row

@@ -76,6 +76,7 @@ export interface GGanttChartProps {
   enableRowDragAndDrop?: boolean
   markerConnection?: MarkerConnection
   showLabel?: boolean
+  showGroupLabel?: boolean
   showProgress?: boolean
   defaultProgressResizable?: boolean
   utc?: boolean
