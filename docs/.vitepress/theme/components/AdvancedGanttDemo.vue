@@ -1282,6 +1282,7 @@ const formattedEventLog = computed(() => {
           expandAllGroups, collapseAllGroups,
           undo, redo, canUndo, canRedo,
           isAtTop, isAtBottom, zoomLevel,
+          scrollPosition, areAllGroupsExpanded, areAllGroupsCollapsed,
           export: exportFunction
         }">
           <div class="custom-commands" :style="customCommandStyle">
@@ -1296,10 +1297,26 @@ const formattedEventLog = computed(() => {
           
             <div class="command-group">
               <span class="command-label">Navigation</span>
-              <button class="command-button" @click="handleToStart">⟪</button>
-              <button class="command-button" @click="handleBack">⟨</button>
-              <button class="command-button" @click="handleForward">⟩</button>
-              <button class="command-button" @click="handleToEnd">⟫</button>
+              <button class="command-button" @click="handleToStart" 
+                :disabled="scrollPosition <= 0"
+                title="Go to start">
+                ⟪
+              </button>
+              <button class="command-button" @click="handleBack"
+                :disabled="scrollPosition <= 0"
+                title="Go back">
+                ⟨
+              </button>
+              <button class="command-button" @click="handleForward" 
+                :disabled="scrollPosition >= 100"
+                title="Go forward">
+                ⟩
+              </button>
+              <button class="command-button" @click="handleToEnd" 
+                :disabled="scrollPosition >= 100"
+                title="Go forward">
+                ⟫
+              </button>
             </div>
 
             <div class="command-group">
@@ -1310,8 +1327,16 @@ const formattedEventLog = computed(() => {
 
             <div class="command-group">
               <span class="command-label">Groups</span>
-              <button class="command-button" @click="expandAllGroups">Expand</button>
-              <button class="command-button" @click="collapseAllGroups">Collapse</button>
+              <button class="command-button" @click="expandAllGroups" 
+                :disabled="areAllGroupsExpanded.value" 
+                title="Expand all groups">
+                Expand
+              </button>
+              <button class="command-button" @click="collapseAllGroups"
+                :disabled="areAllGroupsCollapsed.value"
+                title="Collapse all groups">
+                Collapse
+              </button>
             </div>
 
             <div class="command-group">
@@ -1342,7 +1367,6 @@ const formattedEventLog = computed(() => {
                 Export
               </button>
             </div>
-
         </div>
       </template>
   
@@ -1683,6 +1707,7 @@ const formattedEventLog = computed(() => {
   color: white !important;
   font-weight: 500;
 }
+
 
 .custom-bar-label {
   display: flex;

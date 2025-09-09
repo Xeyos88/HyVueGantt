@@ -1158,6 +1158,9 @@ defineExpose({
           :is-at-top="isAtTop"
           :is-at-bottom="isAtBottom"
           :zoom-level="zoomLevel"
+          :scroll-position="scrollPosition"
+          :are-all-groups-expanded="rowManager.areAllGroupsExpanded"
+          :are-all-groups-collapsed="rowManager.areAllGroupsCollapsed"
           :export="triggerExport"
         >
           <!-- Default slot content using the extracted component -->
