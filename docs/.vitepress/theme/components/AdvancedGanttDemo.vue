@@ -1281,7 +1281,8 @@ const formattedEventLog = computed(() => {
           handleToStart, handleBack, handleForward, handleToEnd,
           expandAllGroups, collapseAllGroups,
           undo, redo, canUndo, canRedo,
-          isAtTop, isAtBottom, zoomLevel 
+          isAtTop, isAtBottom, zoomLevel,
+          export: exportFunction
         }">
           <div class="custom-commands" :style="customCommandStyle">
             <div class="command-group">
@@ -1317,6 +1318,29 @@ const formattedEventLog = computed(() => {
               <span class="command-label">History</span>
               <button class="command-button" @click="undo" :disabled="!canUndo">Undo</button>
               <button class="command-button" @click="redo" :disabled="!canRedo">Redo</button>
+            </div>
+
+            <div class="command-group" v-if="exportEnabled">
+              <span class="command-label">Export</span>
+              <select 
+                v-model="exportFormat" 
+                class="export-select"
+                :disabled="!exportEnabled"
+              >
+                <option value="" disabled>Format</option>
+                <option value="pdf">PDF</option>
+                <option value="png">PNG</option>
+                <option value="svg">SVG</option>
+                <option value="excel">Excel</option>
+              </select>
+              <button 
+                class="command-button export-button" 
+                @click="() => exportFunction(exportFormat)" 
+                :disabled="!exportFormat || !exportEnabled"
+                title="Export Gantt Chart"
+              >
+                Export
+              </button>
             </div>
 
         </div>
@@ -1637,6 +1661,27 @@ const formattedEventLog = computed(() => {
   font-size: 0.8em;
   color: #fff;
   font-weight: 600;
+}
+
+.export-select {
+  padding: 2px 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #222;
+  color: white;
+  font-size: 10px;
+  min-width: 60px;
+}
+
+.export-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-button {
+  background: #42b883 !important;
+  color: white !important;
+  font-weight: 500;
 }
 
 .custom-bar-label {

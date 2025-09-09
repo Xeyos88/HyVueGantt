@@ -36,6 +36,7 @@ interface Props {
   isExporting: boolean
   selectedExportFormat: string
   rowManager: UseRowsReturn
+  export?: (format?: string) => Promise<void>
 }
 
 // Emits interface
@@ -87,7 +88,15 @@ const handleZoomOut = () => emit('zoomOut')
 const handleZoomIn = () => emit('zoomIn')
 const handleUndo = () => emit('undo')
 const handleRedo = () => emit('redo')
-const handleTriggerExport = () => emit('triggerExport')
+const handleTriggerExport = (format?: string) => {
+  if (format) {
+    // Se viene passato un formato specifico, possiamo solo emettere l'evento
+    // Il gestore dovrebbe essere modificato per gestire il formato
+    emit('triggerExport')
+  } else {
+    emit('triggerExport')
+  }
+}
 </script>
 
 <template>
@@ -116,7 +125,7 @@ const handleTriggerExport = () => emit('triggerExport')
       :is-at-top="isAtTop"
       :is-at-bottom="isAtBottom"
       :zoom-level="zoomLevel"
-      :export="handleTriggerExport"
+      :export="props.export || handleTriggerExport"
     >
       <div class="g-gantt-command-block">
         <!-- Navigation Controls -->
@@ -240,7 +249,7 @@ const handleTriggerExport = () => emit('triggerExport')
               <option value="svg">SVG</option>
               <option value="excel">Excel</option>
             </select>
-            <button @click="handleTriggerExport" :disabled="!selectedExportFormat || isExporting">
+            <button @click="() => handleTriggerExport()" :disabled="!selectedExportFormat || isExporting">
               <FontAwesomeIcon :icon="faFileExport" class="command-icon" />
               <span v-if="isExporting" class="g-gantt-export-loading">
                 <FontAwesomeIcon :icon="faSpinner" class="fa-spin" />

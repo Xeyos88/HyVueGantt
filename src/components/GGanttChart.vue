@@ -480,18 +480,22 @@ const handleExport = async (options?: Partial<ExportOptions>): Promise<ExportRes
 
 const selectedExportFormat = ref("")
 
-const triggerExport = async () => {
-  if (!selectedExportFormat.value || isExporting.value) return
+const triggerExport = async (format?: string) => {
+  const exportFormat = format || selectedExportFormat.value
+  if (!exportFormat || isExporting.value) return
 
   const options = {
     ...props.exportOptions,
-    format: selectedExportFormat.value as "pdf" | "png" | "svg" | "excel"
+    format: exportFormat as "pdf" | "png" | "svg" | "excel"
   }
 
   try {
     const result = await handleExport(options)
     downloadExport(result)
-    selectedExportFormat.value = ""
+    // Solo reset selectedExportFormat se non è stato passato un formato esplicito
+    if (!format) {
+      selectedExportFormat.value = ""
+    }
   } catch (error) {
     console.error("Error during export:", error)
   }
@@ -1154,7 +1158,7 @@ defineExpose({
           :is-at-top="isAtTop"
           :is-at-bottom="isAtBottom"
           :zoom-level="zoomLevel"
-          :export="() => triggerExport()"
+          :export="triggerExport"
         >
           <!-- Default slot content using the extracted component -->
           <g-gantt-commands
@@ -1172,6 +1176,7 @@ defineExpose({
             :is-exporting="isExporting"
             :selected-export-format="selectedExportFormat"
             :row-manager="rowManager"
+            :export="triggerExport"
             @scroll-row-up="scrollRowUp"
             @scroll-row-down="scrollRowDown"
             @expand-all-groups="rowManager.expandAllGroups()"
@@ -1185,7 +1190,7 @@ defineExpose({
             @zoom-in="() => handleZoomUpdate(true)"
             @undo="undo"
             @redo="redo"
-            @trigger-export="triggerExport"
+            @trigger-export="() => triggerExport()"
             @update:selected-export-format="selectedExportFormat = $event"
             @update:scroll-position="scrollPosition = $event"
           />
