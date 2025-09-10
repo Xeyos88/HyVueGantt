@@ -88,6 +88,7 @@ describe("GGanttBar", () => {
       width: ref(1000)
     },
     showLabel: ref(true),
+    showGroupLabel: ref(true),
     showProgress: ref(true),
     defaultProgressResizable: ref(true),
     enableConnectionCreation: ref(false),
@@ -96,7 +97,8 @@ describe("GGanttBar", () => {
     utc: ref(false),
     pushOnOverlap: ref(false),
     pushOnConnect: ref(false),
-    noOverlap: ref(false)
+    noOverlap: ref(false),
+    showPlannedBars: ref(false)
   }
 
   const mockEmitBarEvent = vi.fn()
@@ -130,12 +132,13 @@ describe("GGanttBar", () => {
     it("should render with basic props", () => {
       const wrapper = createWrapper()
       expect(wrapper.exists()).toBe(true)
-      expect(wrapper.classes()).toContain("g-gantt-bar")
+      expect(wrapper.find(".g-gantt-bar").exists()).toBe(true)
     })
 
     it("should apply custom styles from ganttBarConfig", () => {
       const wrapper = createWrapper()
-      expect(wrapper.attributes("style")).toContain("background: blue")
+      const barElement = wrapper.find(".g-gantt-bar")
+      expect(barElement.attributes("style")).toContain("background: blue")
     })
 
     it("should render bar label correctly", () => {
@@ -162,15 +165,17 @@ describe("GGanttBar", () => {
   describe("events", () => {
     it("should handle click event", async () => {
       const wrapper = createWrapper()
-      await wrapper.trigger("click")
+      const barElement = wrapper.find(".g-gantt-bar")
+      await barElement.trigger("click")
       expect(wrapper.emitted("click")).toBeTruthy()
     })
 
     it("should handle mouseenter and mouseleave events", async () => {
       const wrapper = createWrapper()
-      await wrapper.trigger("mouseenter")
+      const barElement = wrapper.find(".g-gantt-bar")
+      await barElement.trigger("mouseenter")
       expect(wrapper.emitted("mouseenter")).toBeTruthy()
-      await wrapper.trigger("mouseleave")
+      await barElement.trigger("mouseleave")
       expect(wrapper.emitted("mouseleave")).toBeTruthy()
     })
   })
@@ -185,7 +190,8 @@ describe("GGanttBar", () => {
         }
       }
       const wrapper = createWrapper(immobileBar)
-      expect(wrapper.attributes("style")).not.toContain("cursor: grab")
+      const barElement = wrapper.find(".g-gantt-bar")
+      expect(barElement.attributes("style")).not.toContain("cursor: grab")
     })
   })
 
@@ -193,8 +199,9 @@ describe("GGanttBar", () => {
     it("should set up mousemove event listener on mousedown", async () => {
       const addEventListenerSpy = vi.spyOn(window, "addEventListener")
       const wrapper = createWrapper()
+      const barElement = wrapper.find(".g-gantt-bar")
 
-      await wrapper.trigger("mousedown")
+      await barElement.trigger("mousedown")
 
       expect(addEventListenerSpy).toHaveBeenCalledWith("mousemove", expect.any(Function), {
         once: true

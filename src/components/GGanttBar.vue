@@ -66,12 +66,17 @@ const {
   showProgress,
   defaultProgressResizable,
   enableConnectionCreation,
-  barLabelEditable
+  barLabelEditable,
+  showPlannedBars
 } = config
 
 // Position coordinates
 const xStart = ref(0)
 const xEnd = ref(0)
+
+// Position coordinates for planned bar
+const xStartPlanned = ref(0)
+const xEndPlanned = ref(0)
 
 // -----------------------------
 // 5. COMPUTED PROPERTIES
@@ -83,6 +88,37 @@ const barConfig = computed(() => bar.value.ganttBarConfig)
 // Check if bar is a group bar
 const isGroupBar = computed(() => {
   return bar.value.ganttBarConfig.id.startsWith("group-")
+})
+
+// Check if bar has planned dates
+const hasPlannedDates = computed(() => {
+  return (
+    showPlannedBars.value &&
+    bar.value.start_planned !== undefined &&
+    bar.value.end_planned !== undefined
+  )
+})
+
+// Style for planned bar - independent positioning
+const plannedBarStyle = computed(() => {
+  const defaultStyle = {
+    background: "#9e9e9e",
+    opacity: 0.7
+  }
+
+  const customStyle = bar.value.ganttBarConfig.plannedStyle || {}
+
+  return {
+    ...defaultStyle,
+    ...customStyle,
+    position: "absolute" as const,
+    top: `${rowHeight.value * 0.85}px`, // Positioned at the bottom of the row
+    left: `${xStartPlanned.value}px`,
+    width: `${xEndPlanned.value - xStartPlanned.value}px`,
+    height: `${rowHeight.value * 0.15}px`, // Half of the remaining space (rowHeight - mainBarHeight) / 2
+    zIndex: "1",
+    pointerEvents: "none" as const
+  }
 })
 
 // Style for progress bar
@@ -494,6 +530,12 @@ onMounted(() => {
   xStart.value = mapTimeToPosition(bar.value[barStart.value])
   xEnd.value = mapTimeToPosition(bar.value[barEnd.value])
 
+  // Calculate planned bar positions if they exist
+  if (hasPlannedDates.value) {
+    xStartPlanned.value = mapTimeToPosition(bar.value.start_planned! as string)
+    xEndPlanned.value = mapTimeToPosition(bar.value.end_planned! as string)
+  }
+
   watch(
     [() => bar.value, width, chartStart, chartEnd, chartSize.width],
     () => {
@@ -502,6 +544,12 @@ onMounted(() => {
 
       xStart.value = newXStart
       xEnd.value = newXEnd
+
+      // Update planned bar positions if they exist
+      if (hasPlannedDates.value) {
+        xStartPlanned.value = mapTimeToPosition(bar.value.start_planned! as string)
+        xEndPlanned.value = mapTimeToPosition(bar.value.end_planned! as string)
+      }
     },
     { deep: true, immediate: true }
   )
@@ -509,6 +557,15 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- Planned Bar (rendered as independent element) -->
+  <div
+    v-if="hasPlannedDates && !isGroupBar"
+    :id="`${barConfig.id}-planned`"
+    class="g-gantt-planned-bar"
+    :style="plannedBarStyle"
+  />
+
+  <!-- Main Bar -->
   <div
     :id="barConfig.id"
     :class="['g-gantt-bar', barConfig.class || '']"
@@ -783,5 +840,9 @@ onMounted(() => {
 
 .connection-point.end:hover {
   transform: translate(50%, -50%) scale(1.2);
+}
+
+.g-gantt-planned-bar {
+  pointer-events: none;
 }
 </style>

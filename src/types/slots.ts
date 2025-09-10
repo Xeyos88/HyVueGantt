@@ -203,6 +203,8 @@ export interface GGanttChartSlots {
     bar: GanttBarObject
     barStart: string | Date
     barEnd: string | Date
+    barStartPlanned?: string | Date
+    barEndPlanned?: string | Date
   }) => void
 
   /**

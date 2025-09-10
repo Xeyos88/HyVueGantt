@@ -156,7 +156,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   baseUnitWidth: 24,
   defaultZoom: 3,
   tick: 0,
-  autoScrollToToday: false
+  autoScrollToToday: false,
+  showPlannedBars: false
 })
 
 // Events

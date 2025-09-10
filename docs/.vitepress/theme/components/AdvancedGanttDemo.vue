@@ -55,6 +55,7 @@ const showProgress = ref(true)
 const showEventsAxis = ref(true)
 const eventsAxisHeight = ref(30)
 const tick = ref(10)
+const showPlannedBars = ref(true)
 
 
 // Time Highlight Configuration
@@ -259,6 +260,8 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
         bars: [{
           start: `${year}-${month}-02`,
           end: `${year}-${month}-10`,
+          start_planned: `${year}-${month}-01`,
+          end_planned: `${year}-${month}-12`,
           ganttBarConfig: {
             id: 'bar1',
             label: 'Initial Setup',
@@ -285,11 +288,17 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
         bars: [{
           start: `${year}-${month}-11`, 
           end: `${year}-${month}-20`,
+          start_planned: `${year}-${month}-08`,
+          end_planned: `${year}-${month}-18`,
           ganttBarConfig: {
             id: 'bar2',
             label: 'Development',
             style: { background: '#35495e' },
             progress: 75,
+            plannedStyle: {
+              background: '#ff6b35',
+              opacity: 0.6
+            },
             connections: [{
               targetId: 'bar3',
               pattern: 'dash'
@@ -310,12 +319,19 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
         bars: [{
           start: `${year}-${month}-21`,
           end: `${year}-${month}-28`,
+          start_planned: `${year}-${month}-19`,
+          end_planned: `${year}-${month+1}-02`,
           ganttBarConfig: {
             id: 'bar3',
             label: 'API Planning',
             style: { background: '#ff7e67' },
             hasHandles: true,
             progress: 60,
+            plannedStyle: {
+              background: '#3498db',
+              opacity: 0.8,
+              borderRadius: '2px'
+            },
             connections: [{
               targetId: 'bar4',
             }]
@@ -329,12 +345,18 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
           {
             start: `${year}-${month+1}-01`,
             end: `${year}-${month+1}-10`,
+            start_planned: `${year}-${month+1}-03`,
+            end_planned: `${year}-${month+1}-15`,
             ganttBarConfig: {
               id: 'bar4',
               label: 'DB Implementation',
               style: { background: '#4dc9ff' },
               hasHandles: true,
               progress: 30,
+              plannedStyle: {
+                background: '#e74c3c',
+                opacity: 0.7
+              },
               connections: [{
                 targetId: 'bar7',
                 type: 'squared'
@@ -367,12 +389,19 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
           {
             start: `${year}-${month+1}-21`,
             end: `${year}-${month+1}-25`,
+            start_planned: `${year}-${month+1}-18`,
+            end_planned: `${year}-${month+1}-23`,
             ganttBarConfig: {
               id: 'bar7',
               label: 'In Progress',
               style: { background: '#e67e22' },
               progress: 50,
               progressResizable: true,
+              plannedStyle: {
+                background: '#f39c12',
+                opacity: 0.5,
+                borderRadius: '8px'
+              },
               connections: [{
                 targetId: 'bar9',
                 type: 'bezier'
@@ -868,6 +897,12 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
+                Show Planned Bars:
+                <input type="checkbox" v-model="showPlannedBars">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
                 Show Event Axis:
                 <input type="checkbox" v-model="showEventsAxis">
               </label>
@@ -1168,6 +1203,7 @@ const formattedEventLog = computed(() => {
         :importer-default-format="'csv'"
         :importer-allowed-formats="['jira', 'csv']"
         :tick="tick"
+        :show-planned-bars="showPlannedBars"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"

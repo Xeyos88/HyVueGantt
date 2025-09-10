@@ -54,7 +54,7 @@ const props = defineProps<{
 // 5. INTERNAL STATE
 // -----------------------------
 const { bar, event, unit, targetElement, type } = toRefs(props)
-const { precision, font, barStart, barEnd, rowHeight, milestones, colors, dateFormat } =
+const { precision, font, barStart, barEnd, rowHeight, milestones, colors, dateFormat, showPlannedBars } =
   provideConfig()
 
 // Position state for tooltip
@@ -148,7 +148,16 @@ const tooltipContent = computed(() => {
   // Add milestone name if present
   const milestoneName = milestone ? ` - (${milestone.name})` : ""
 
-  return `${barStartFormatted} \u2013 ${barEndFormatted}${milestoneName}`
+  let content = `${barStartFormatted} \u2013 ${barEndFormatted}${milestoneName}`
+
+  // Add planned dates if available and enabled
+  if (showPlannedBars.value && bar.value.start_planned && bar.value.end_planned) {
+    const plannedStartFormatted = toDayjs(bar.value.start_planned).format(format)
+    const plannedEndFormatted = toDayjs(bar.value.end_planned).format(format)
+    content += `\nPlanned: ${plannedStartFormatted} \u2013 ${plannedEndFormatted}`
+  }
+
+  return content
 })
 
 /**
@@ -209,7 +218,13 @@ const tooltipStyle = computed(() => {
         <div class="g-gantt-tooltip-color-dot" :style="{ background: dotColor }" />
 
         <!-- Tooltip content with slot support -->
-        <slot :bar="bar" :bar-start="barStartRaw" :bar-end="barEndRaw">
+        <slot 
+          :bar="bar" 
+          :bar-start="barStartRaw" 
+          :bar-end="barEndRaw"
+          :bar-start-planned="bar?.start_planned"
+          :bar-end-planned="bar?.end_planned"
+        >
           {{ tooltipContent }}
         </slot>
       </div>
