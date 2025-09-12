@@ -60,6 +60,15 @@ interface CommandsSlotProps {
   /** Current zoom level */
   zoomLevel: Ref<number>
 
+  /** Current scroll position as percentage (0-100) */
+  scrollPosition: Ref<number>
+
+  /** Flag indicating if all groups are expanded */
+  areAllGroupsExpanded: ComputedRef<boolean>
+
+  /** Flag indicating if all groups are collapsed */
+  areAllGroupsCollapsed: ComputedRef<boolean>
+
   /** Function to export the chart */
   export: () => void
 }
@@ -194,6 +203,8 @@ export interface GGanttChartSlots {
     bar: GanttBarObject
     barStart: string | Date
     barEnd: string | Date
+    barStartPlanned?: string | Date
+    barEndPlanned?: string | Date
   }) => void
 
   /**

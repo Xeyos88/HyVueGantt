@@ -38,11 +38,14 @@ interface GanttBarConfig {
   progress?: number;
   progressResizable?: boolean;
   progressStyle?: CSSProperties;
+  plannedStyle?: CSSProperties;        // Styling for planned bars
 }
 
 interface GanttBarObject {
   [key: string]: any;
   ganttBarConfig: GanttBarConfig;
+  start_planned?: string | Date;       // Planned start date
+  end_planned?: string | Date;         // Planned end date
 }
 
 interface GanttBarConnection {
@@ -68,6 +71,62 @@ type GanttBarConfigWithoutStyles = Omit<
 interface GanttBarObjectWithoutStyles extends Omit<GanttBarObject, "ganttBarConfig"> {
   ganttBarConfig: GanttBarConfigWithoutStyles
 }
+```
+
+## Planned Bars Types
+
+The planned bars feature introduces additional properties for displaying planned/expected dates alongside actual dates:
+
+```typescript
+// Planned Bars Configuration
+interface PlannedBarConfig {
+  start_planned?: string | Date;       // Planned start date
+  end_planned?: string | Date;         // Planned end date
+  plannedStyle?: CSSProperties;        // Custom styling for planned bars
+}
+
+// Extended Bar Object with Planned Dates
+interface GanttBarObjectWithPlanned extends GanttBarObject {
+  start_planned?: string | Date;
+  end_planned?: string | Date;
+}
+
+// Tooltip Data with Planned Information  
+interface BarTooltipData {
+  bar: GanttBarObject;
+  barStart: string | Date;
+  barEnd: string | Date;
+  barStartPlanned?: string | Date;     // Available when showPlannedBars is true
+  barEndPlanned?: string | Date;       // Available when showPlannedBars is true
+}
+```
+
+### Planned Bars Usage Example
+
+```typescript
+const barsWithPlanning: GanttBarObject[] = [
+  {
+    start: '2024-02-15',           // Actual start
+    end: '2024-02-28',             // Actual end  
+    start_planned: '2024-02-01',   // Planned start
+    end_planned: '2024-02-20',     // Planned end
+    ganttBarConfig: {
+      id: 'task-1',
+      label: 'Development Task',
+      // Styling for the actual bar
+      style: {
+        backgroundColor: '#2196f3',
+        color: 'white'
+      },
+      // Styling for the planned bar (shown as overlay/underlay)
+      plannedStyle: {
+        backgroundColor: '#e3f2fd',
+        border: '2px dashed #1976d2',
+        opacity: 0.7
+      }
+    }
+  }
+]
 ```
 
 ## Connection Label Styling

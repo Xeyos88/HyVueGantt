@@ -1,13 +1,13 @@
 {
   "name": "hy-vue-gantt",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "Evolution of vue-ganttastic package",
   "author": "Eugenio Topa (@Xeyos88)",
   "scripts": {
     "serve": "vite --host",
     "build": "npm run build:types && npm run build:lib",
     "build:lib": "vite build",
-    "build:types": "vue-tsc --declaration --emitDeclarationOnly --outDir lib_types -p tsconfig.build.json",
+    "build:types": "vue-tsc --declaration --emitDeclarationOnly --declarationMap false --outDir lib_types -p tsconfig.build.json",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "npm run lint --fix",
@@ -23,16 +23,15 @@
   "exports": {
     ".": {
       "types": "./lib_types/hy-vue-gantt.d.ts",
-      "import": "./lib/hy-vue-gantt.js",
-      "require": "./lib/hy-vue-gantt.umd.cjs"
+      "import": "./lib/hy-vue-gantt.js"
     }
   },
-  "main": "./lib/hy-vue-gantt.umd.cjs",
+  "main": "./lib/hy-vue-gantt.js",
+  "module": "./lib/hy-vue-gantt.js",
   "types": "./lib_types/hy-vue-gantt.d.ts",
   "files": [
-    "lib_types",
-    "lib/hy-vue-gantt.js",
-    "lib/hy-vue-gantt.umd.cjs"
+    "lib_types/**/*.d.ts",
+    "lib/hy-vue-gantt.js"
   ],
   "devDependencies": {
     "@eslint/compat": "^1.2.3",

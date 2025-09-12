@@ -51,12 +51,15 @@ export interface GanttBarConfig {
   progress?: number
   progressResizable?: boolean
   progressStyle?: GanttCSSProperties // Use our custom type
+  plannedStyle?: GanttCSSProperties // Style for planned bar
   _previousLabel?: string
 }
 
 export interface GanttBarObject {
   [key: string]: any
   ganttBarConfig: GanttBarConfig
+  start_planned?: string | Date
+  end_planned?: string | Date
 }
 
 type GanttBarConfigWithoutStyles = Omit<

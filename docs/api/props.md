@@ -50,6 +50,7 @@ interface VisualProps {
   markConnection?: MarkConnection;           // Type of marker in connections
   showLabel?: boolean;                       // Show bar labels
   showProgress?: boolean;                    // Show progress indicators
+  showPlannedBars?: boolean;                 // Show planned bars alongside actual bars
   showEventsAxis?: boolean;                  // Show events axis
   eventsAxisHeight?: number;                 // Height of events axis
   timeaxisEvents?: TimeaxisEvent[];          // Events to display on time axis

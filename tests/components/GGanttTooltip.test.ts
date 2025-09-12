@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { mount } from "@vue/test-utils"
-import { nextTick } from "vue"
+import { nextTick, ref } from "vue"
 import GGanttTooltip from "../../src/components/GGanttTooltip.vue"
 import type { GanttBarObject, TimeaxisEvent, TimeaxisUnit } from "../../src/types"
+import { CONFIG_KEY } from "../../src/provider/symbols"
 
 describe("GGanttTooltip", () => {
   const mockBar: GanttBarObject = {
@@ -27,6 +28,25 @@ describe("GGanttTooltip", () => {
     holidayName: "New Year's Day"
   }
 
+  const mockConfig = {
+    precision: ref("hour"),
+    font: ref("inherit"),
+    barStart: ref("start"),
+    barEnd: ref("end"),
+    rowHeight: ref(40),
+    milestones: ref([]),
+    colors: ref({
+      primary: "#eeeeee",
+      secondary: "#E0E0E0",
+      barContainer: "#000000",
+      text: "#000000"
+    }),
+    dateFormat: ref("YYYY-MM-DD HH:mm"),
+    showPlannedBars: ref(false),
+    showGroupLabel: ref(true),
+    locale: ref("en")
+  }
+
   const createWrapper = (props = {}) => {
     return mount(GGanttTooltip, {
       props: {
@@ -36,6 +56,9 @@ describe("GGanttTooltip", () => {
         ...props
       },
       global: {
+        provide: {
+          [CONFIG_KEY]: mockConfig
+        },
         stubs: {
           teleport: true
         }

@@ -87,6 +87,69 @@ The chart can automatically center on today's date when it loads using the `auto
 - Long-term planning charts that span multiple months or years
 - Real-time dashboards showing current progress
 
+## Planned Bars
+
+The chart can display planned/expected dates alongside actual dates using the planned bars feature. This is particularly useful for project management and progress tracking scenarios.
+
+```vue
+<template>
+  <g-gantt-chart
+    :chart-start="'2024-01-01'"
+    :chart-end="'2024-12-31'"
+    :show-planned-bars="true"
+  >
+    <g-gantt-row
+      label="Task with Planning"
+      :bars="barsWithPlanning"
+    />
+  </g-gantt-chart>
+</template>
+
+<script setup lang="ts">
+const barsWithPlanning = ref([
+  {
+    start: '2024-02-15',           // Actual start date
+    end: '2024-02-28',             // Actual end date
+    start_planned: '2024-02-01',   // Originally planned start
+    end_planned: '2024-02-20',     // Originally planned end
+    ganttBarConfig: {
+      id: 'task-1',
+      label: 'Development Task',
+      // Custom styling for the planned bar
+      plannedStyle: {
+        backgroundColor: '#e3f2fd',
+        border: '1px dashed #1976d2',
+        opacity: 0.7
+      }
+    }
+  }
+])
+</script>
+```
+
+### Planned Bars Features
+
+- **Visual Comparison**: Shows both planned and actual timelines for easy variance tracking
+- **Custom Styling**: Use `plannedStyle` in `ganttBarConfig` to customize planned bar appearance
+- **Tooltip Integration**: Tooltips automatically display both actual and planned dates when enabled
+- **Export Support**: Planned dates are included in Excel/CSV exports with dedicated columns
+- **Independent Positioning**: Planned bars are positioned independently of actual bars
+
+### Configuration Options
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| showPlannedBars | `boolean` | `false` | Enable/disable planned bars visualization |
+| start_planned | `string \| Date` | - | Planned start date for the bar |
+| end_planned | `string \| Date` | - | Planned end date for the bar |
+| plannedStyle | `GanttCSSProperties` | `{}` | Custom CSS styling for planned bars |
+
+**Key Benefits:**
+- **Project Variance Tracking**: Compare planned vs actual timelines
+- **Schedule Analysis**: Identify delays and schedule deviations
+- **Resource Planning**: Visualize original planning alongside current reality
+- **Client Communication**: Show progress against original estimates
+
 ## Performance Optimization
 
 For optimal performance:

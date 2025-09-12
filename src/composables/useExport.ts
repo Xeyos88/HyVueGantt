@@ -582,7 +582,9 @@ export function useExport(
         "Duration",
         "Progress (%)",
         "Connections",
-        "Milestone"
+        "Milestone",
+        "Start Planned",
+        "End Planned"
       ])
 
       const processedBarIds = new Set<string>()
@@ -643,6 +645,14 @@ export function useExport(
 
         const milestone = barConfig.milestoneId ? barConfig.milestoneId : "-"
 
+        // Handle planned dates
+        const startPlanned = bar.start_planned 
+          ? dayjs(bar.start_planned).format(config.dateFormat.value || "YYYY-MM-DD HH:mm")
+          : "-"
+        const endPlanned = bar.end_planned 
+          ? dayjs(bar.end_planned).format(config.dateFormat.value || "YYYY-MM-DD HH:mm")
+          : "-"
+
         secondSheetData.push([
           barConfig.id,
           barConfig.label || "",
@@ -653,7 +663,9 @@ export function useExport(
           duration,
           progress,
           connections,
-          milestone
+          milestone,
+          startPlanned,
+          endPlanned
         ])
       })
 

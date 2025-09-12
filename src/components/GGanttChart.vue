@@ -130,6 +130,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   enableRowDragAndDrop: false,
   markerConnection: "forward",
   showLabel: true,
+  showGroupLabel: true,
   showProgress: true,
   defaultProgressResizable: true,
   enableConnectionCreation: false,
@@ -155,7 +156,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   baseUnitWidth: 24,
   defaultZoom: 3,
   tick: 0,
-  autoScrollToToday: false
+  autoScrollToToday: false,
+  showPlannedBars: false
 })
 
 // Events
@@ -479,18 +481,22 @@ const handleExport = async (options?: Partial<ExportOptions>): Promise<ExportRes
 
 const selectedExportFormat = ref("")
 
-const triggerExport = async () => {
-  if (!selectedExportFormat.value || isExporting.value) return
+const triggerExport = async (format?: string) => {
+  const exportFormat = format || selectedExportFormat.value
+  if (!exportFormat || isExporting.value) return
 
   const options = {
     ...props.exportOptions,
-    format: selectedExportFormat.value as "pdf" | "png" | "svg" | "excel"
+    format: exportFormat as "pdf" | "png" | "svg" | "excel"
   }
 
   try {
     const result = await handleExport(options)
     downloadExport(result)
-    selectedExportFormat.value = ""
+    // Solo reset selectedExportFormat se non è stato passato un formato esplicito
+    if (!format) {
+      selectedExportFormat.value = ""
+    }
   } catch (error) {
     console.error("Error during export:", error)
   }
@@ -507,6 +513,7 @@ const handleImport = (result: ImportResult) => {
 
 const closeImporter = () => {
   isImporterVisible.value = false
+  emit("update:importer-visible", false)
 }
 
 // -----------------------------
@@ -1152,7 +1159,10 @@ defineExpose({
           :is-at-top="isAtTop"
           :is-at-bottom="isAtBottom"
           :zoom-level="zoomLevel"
-          :export="() => triggerExport()"
+          :scroll-position="scrollPosition"
+          :are-all-groups-expanded="rowManager.areAllGroupsExpanded"
+          :are-all-groups-collapsed="rowManager.areAllGroupsCollapsed"
+          :export="triggerExport"
         >
           <!-- Default slot content using the extracted component -->
           <g-gantt-commands
@@ -1170,6 +1180,7 @@ defineExpose({
             :is-exporting="isExporting"
             :selected-export-format="selectedExportFormat"
             :row-manager="rowManager"
+            :export="triggerExport"
             @scroll-row-up="scrollRowUp"
             @scroll-row-down="scrollRowDown"
             @expand-all-groups="rowManager.expandAllGroups()"
@@ -1183,7 +1194,7 @@ defineExpose({
             @zoom-in="() => handleZoomUpdate(true)"
             @undo="undo"
             @redo="redo"
-            @trigger-export="triggerExport"
+            @trigger-export="() => triggerExport()"
             @update:selected-export-format="selectedExportFormat = $event"
             @update:scroll-position="scrollPosition = $event"
           />

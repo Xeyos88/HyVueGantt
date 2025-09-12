@@ -76,6 +76,7 @@ export interface GGanttChartProps {
   enableRowDragAndDrop?: boolean
   markerConnection?: MarkerConnection
   showLabel?: boolean
+  showGroupLabel?: boolean
   showProgress?: boolean
   defaultProgressResizable?: boolean
   utc?: boolean
@@ -92,6 +93,7 @@ export interface GGanttChartProps {
   defaultZoom?: number
   tick?: number
   autoScrollToToday?: boolean
+  showPlannedBars?: boolean
 }
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {

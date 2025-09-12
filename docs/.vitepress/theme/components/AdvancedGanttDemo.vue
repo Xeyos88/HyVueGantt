@@ -49,11 +49,13 @@ const labelColumnWidth = ref(100)
 const commands = ref(true)
 const width = ref('100%')
 const showLabel = ref(true)
+const showGroupLabel = ref(true)
 const barLabelEditable = ref(true)
 const showProgress = ref(true)
 const showEventsAxis = ref(true)
 const eventsAxisHeight = ref(30)
 const tick = ref(10)
+const showPlannedBars = ref(true)
 
 
 // Time Highlight Configuration
@@ -250,6 +252,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group1',
     label: 'Frontend Development',
+    style: { background: '#42b883' },
     children: [
       {
         id: 'task1',
@@ -257,6 +260,8 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
         bars: [{
           start: `${year}-${month}-02`,
           end: `${year}-${month}-10`,
+          start_planned: `${year}-${month}-01`,
+          end_planned: `${year}-${month}-12`,
           ganttBarConfig: {
             id: 'bar1',
             label: 'Initial Setup',
@@ -283,11 +288,17 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
         bars: [{
           start: `${year}-${month}-11`, 
           end: `${year}-${month}-20`,
+          start_planned: `${year}-${month}-08`,
+          end_planned: `${year}-${month}-18`,
           ganttBarConfig: {
             id: 'bar2',
             label: 'Development',
             style: { background: '#35495e' },
             progress: 75,
+            plannedStyle: {
+              background: '#ff6b35',
+              opacity: 0.6
+            },
             connections: [{
               targetId: 'bar3',
               pattern: 'dash'
@@ -300,6 +311,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group2',
     label: 'Backend Development',
+    style: { background: '#ff7e67' },
     children: [
       {
         id: 'task3',
@@ -307,12 +319,19 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
         bars: [{
           start: `${year}-${month}-21`,
           end: `${year}-${month}-28`,
+          start_planned: `${year}-${month}-19`,
+          end_planned: `${year}-${month+1}-02`,
           ganttBarConfig: {
             id: 'bar3',
             label: 'API Planning',
             style: { background: '#ff7e67' },
             hasHandles: true,
             progress: 60,
+            plannedStyle: {
+              background: '#3498db',
+              opacity: 0.8,
+              borderRadius: '2px'
+            },
             connections: [{
               targetId: 'bar4',
             }]
@@ -326,12 +345,18 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
           {
             start: `${year}-${month+1}-01`,
             end: `${year}-${month+1}-10`,
+            start_planned: `${year}-${month+1}-03`,
+            end_planned: `${year}-${month+1}-15`,
             ganttBarConfig: {
               id: 'bar4',
               label: 'DB Implementation',
               style: { background: '#4dc9ff' },
               hasHandles: true,
               progress: 30,
+              plannedStyle: {
+                background: '#e74c3c',
+                opacity: 0.7
+              },
               connections: [{
                 targetId: 'bar7',
                 type: 'squared'
@@ -355,6 +380,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group3',
     label: 'Progress Examples',
+    style: { background: '#e67e22' },
     children: [
       {
         id: 'progress1',
@@ -363,12 +389,19 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
           {
             start: `${year}-${month+1}-21`,
             end: `${year}-${month+1}-25`,
+            start_planned: `${year}-${month+1}-18`,
+            end_planned: `${year}-${month+1}-23`,
             ganttBarConfig: {
               id: 'bar7',
               label: 'In Progress',
               style: { background: '#e67e22' },
               progress: 50,
               progressResizable: true,
+              plannedStyle: {
+                background: '#f39c12',
+                opacity: 0.5,
+                borderRadius: '8px'
+              },
               connections: [{
                 targetId: 'bar9',
                 type: 'bezier'
@@ -393,6 +426,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group4',
     label: 'Bundle Example',
+    style: { background: '#8e44ad' },
     children: [
       {
         id: 'bundle1',
@@ -442,6 +476,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
   {
     id: 'group5',
     label: 'Final Milestone',
+    style: { background: '#2ecc71' },
     children: [
       {
         id: 'milestone',
@@ -844,6 +879,12 @@ const formattedEventLog = computed(() => {
             </div>
             <div class="setting-item">
               <label>
+                Show Group Label:
+                <input type="checkbox" v-model="showGroupLabel">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
                 Edit Bar Label:
                 <input type="checkbox" v-model="barLabelEditable">
               </label>
@@ -852,6 +893,12 @@ const formattedEventLog = computed(() => {
               <label>
                 Show Progress:
                 <input type="checkbox" v-model="showProgress">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Show Planned Bars:
+                <input type="checkbox" v-model="showPlannedBars">
               </label>
             </div>
             <div class="setting-item">
@@ -1140,6 +1187,7 @@ const formattedEventLog = computed(() => {
         :default-progress-resizable="defaultProgressResizable"
         :show-progress="showProgress"
         :showLabel="showLabel"
+        :show-group-label="showGroupLabel"
         :barLabelEditable="barLabelEditable"
         :milestones="milestones"
         :enableConnectionCreation="enableConnectionCreation"
@@ -1155,6 +1203,7 @@ const formattedEventLog = computed(() => {
         :importer-default-format="'csv'"
         :importer-allowed-formats="['jira', 'csv']"
         :tick="tick"
+        :show-planned-bars="showPlannedBars"
         @click-bar="handleEvent($event, 'Bar Click')"
         @drag-bar="handleEvent($event, 'Bar Drag')"
         @sort="handleEvent($event, 'Sort Change')"
@@ -1268,7 +1317,9 @@ const formattedEventLog = computed(() => {
           handleToStart, handleBack, handleForward, handleToEnd,
           expandAllGroups, collapseAllGroups,
           undo, redo, canUndo, canRedo,
-          isAtTop, isAtBottom, zoomLevel 
+          isAtTop, isAtBottom, zoomLevel,
+          scrollPosition, areAllGroupsExpanded, areAllGroupsCollapsed,
+          export: exportFunction
         }">
           <div class="custom-commands" :style="customCommandStyle">
             <div class="command-group">
@@ -1282,10 +1333,26 @@ const formattedEventLog = computed(() => {
           
             <div class="command-group">
               <span class="command-label">Navigation</span>
-              <button class="command-button" @click="handleToStart">⟪</button>
-              <button class="command-button" @click="handleBack">⟨</button>
-              <button class="command-button" @click="handleForward">⟩</button>
-              <button class="command-button" @click="handleToEnd">⟫</button>
+              <button class="command-button" @click="handleToStart" 
+                :disabled="scrollPosition <= 0"
+                title="Go to start">
+                ⟪
+              </button>
+              <button class="command-button" @click="handleBack"
+                :disabled="scrollPosition <= 0"
+                title="Go back">
+                ⟨
+              </button>
+              <button class="command-button" @click="handleForward" 
+                :disabled="scrollPosition >= 100"
+                title="Go forward">
+                ⟩
+              </button>
+              <button class="command-button" @click="handleToEnd" 
+                :disabled="scrollPosition >= 100"
+                title="Go forward">
+                ⟫
+              </button>
             </div>
 
             <div class="command-group">
@@ -1296,8 +1363,16 @@ const formattedEventLog = computed(() => {
 
             <div class="command-group">
               <span class="command-label">Groups</span>
-              <button class="command-button" @click="expandAllGroups">Expand</button>
-              <button class="command-button" @click="collapseAllGroups">Collapse</button>
+              <button class="command-button" @click="expandAllGroups" 
+                :disabled="areAllGroupsExpanded.value" 
+                title="Expand all groups">
+                Expand
+              </button>
+              <button class="command-button" @click="collapseAllGroups"
+                :disabled="areAllGroupsCollapsed.value"
+                title="Collapse all groups">
+                Collapse
+              </button>
             </div>
 
             <div class="command-group">
@@ -1306,6 +1381,28 @@ const formattedEventLog = computed(() => {
               <button class="command-button" @click="redo" :disabled="!canRedo">Redo</button>
             </div>
 
+            <div class="command-group" v-if="exportEnabled">
+              <span class="command-label">Export</span>
+              <select 
+                v-model="exportFormat" 
+                class="export-select"
+                :disabled="!exportEnabled"
+              >
+                <option value="" disabled>Format</option>
+                <option value="pdf">PDF</option>
+                <option value="png">PNG</option>
+                <option value="svg">SVG</option>
+                <option value="excel">Excel</option>
+              </select>
+              <button 
+                class="command-button export-button" 
+                @click="() => exportFunction(exportFormat)" 
+                :disabled="!exportFormat || !exportEnabled"
+                title="Export Gantt Chart"
+              >
+                Export
+              </button>
+            </div>
         </div>
       </template>
   
@@ -1625,6 +1722,28 @@ const formattedEventLog = computed(() => {
   color: #fff;
   font-weight: 600;
 }
+
+.export-select {
+  padding: 2px 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #222;
+  color: white;
+  font-size: 10px;
+  min-width: 60px;
+}
+
+.export-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-button {
+  background: #42b883 !important;
+  color: white !important;
+  font-weight: 500;
+}
+
 
 .custom-bar-label {
   display: flex;
