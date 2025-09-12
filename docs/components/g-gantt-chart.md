@@ -79,6 +79,7 @@ Here's a minimal example of using the GGanttChart component:
 | markerConnection| `MarkerConnection` | `forward` | Choose the type of marker in connection |
 | showLabel| `boolean` | `true` | Enable the visualization of bar label |
 | showProgress| `boolean` | `true` | Enable the visualization of percentage bar progress |
+| showPlannedBars| `boolean` | `false` | Enable the visualization of planned bars alongside actual bars |
 | defaultProgressResizable | `boolean` | `true` | Enable progress adjustment through dragging |
 | enableConnectionCreation | `boolean` | `false` | Enable the possibility to draw connections |
 | enableConnectionDelete | `boolean` | `false` | Enable the possibility to delete connections |

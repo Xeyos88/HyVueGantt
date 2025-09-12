@@ -40,40 +40,30 @@ export default () => {
           ? {
               entry: fileURLToPath(new URL("src/hy-vue-gantt.ts", import.meta.url)),
               name: "HyVueGantt",
-              fileName: "hy-vue-gantt"
+              fileName: "hy-vue-gantt",
+              formats: ["es"]
             }
           : undefined,
       outDir: process.env.NODE_ENV === "production" ? "lib" : "dist",
+      copyPublicDir: process.env.NODE_ENV !== "production",
       rollupOptions: {
         external: [
           "vue",
+          /^vue\//,
           "dayjs",
+          /^dayjs/,
           "date-holidays",
-          /^dayjs\/plugin/,
-          /^dayjs\/locale/,
-          "@fortawesome/vue-fontawesome",
-          "@fortawesome/free-solid-svg-icons",
-          "@vueuse/core",
+          /^@fortawesome/,
+          /^@vueuse/,
           "html2canvas",
           "jspdf",
-          "lodash-es",
+          /^lodash/,
           "uuid",
-          "xlsx"
+          "xlsx",
+          "papaparse"
         ],
         output: {
-          // Provide global variables to use in the UMD build
-          // for externalized deps
           compact: true,
-          globals: {
-            vue: "Vue",
-            dayjs: "dayjs",
-            "date-holidays": "date-holidays",
-            "lodash-es": "lodash-es",
-            uuid: "uuid",
-            html2canvas: "html2canvas",
-            jspdf: "jspdf",
-            xlsx: "xlsx"
-          },
           exports: "named"
         },
         treeshake: {
