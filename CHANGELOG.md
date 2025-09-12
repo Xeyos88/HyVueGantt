@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v4.2.0](https://github.com/Xeyos88/HyVueGantt/tree/v4.2.0) (2025-09-12)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.1.0...v4.2.0)
+
+
+
+**♻️ Refactoring:**
+
+- 30% reduction in package size
+
+**✨ New Features:**
+
+- Added label for group bars
+- Planned bars
+- Status on group expansion made accessible
+
+**🐛 Fix:**
+
+- ensure closeImporter method emits to parent for proper two-way binding
+- Export with custom commands slot
+
 ## [v4.1.0](https://github.com/Xeyos88/HyVueGantt/tree/v4.1.0) (2025-08-28)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.0.0...v4.1.0)
