@@ -4,6 +4,12 @@
 // -----------------------------
 import { computed, ref, toRefs, watch, onMounted, inject } from "vue"
 
+// Prevent automatic attribute inheritance to the root element
+// We'll handle it manually to avoid Vue warnings with multiple root elements
+defineOptions({
+  inheritAttrs: false
+})
+
 // -----------------------------
 // 2. INTERNAL IMPORTS
 // -----------------------------
@@ -557,45 +563,47 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- Planned Bar (rendered as independent element) -->
-  <div
-    v-if="hasPlannedDates && !isGroupBar"
-    :id="`${barConfig.id}-planned`"
-    class="g-gantt-planned-bar"
-    :style="plannedBarStyle"
-  />
+  <!-- Single root container for proper Vue 3 component structure -->
+  <div class="g-gantt-bar-container" v-bind="$attrs">
+    <!-- Planned Bar (rendered as independent element) -->
+    <div
+      v-if="hasPlannedDates && !isGroupBar"
+      :id="`${barConfig.id}-planned`"
+      class="g-gantt-planned-bar"
+      :style="plannedBarStyle"
+    />
 
-  <!-- Main Bar -->
-  <div
-    :id="barConfig.id"
-    :class="['g-gantt-bar', barConfig.class || '']"
-    :style="{
-      ...barConfig.style,
-      position: 'absolute',
-      top: `${rowHeight * 0.15}px`,
-      left: `${xStart}px`,
-      width: `${xEnd - xStart}px`,
-      height: `${rowHeight * 0.7}px`,
-      zIndex: isDragging ? 3 : 2,
-      cursor: bar.ganttBarConfig.immobile ? '' : 'grab'
-    }"
-    @mousedown="onMouseEvent"
-    @click="onMouseEvent"
-    @mouseenter="handleBarMouseEnter"
-    @mouseleave="handleBarMouseLeave"
-    @contextmenu="onMouseEvent"
-    @touchstart="onTouchEvent"
-    @touchmove="onTouchEvent"
-    @touchend="onTouchEvent"
-    @touchcancel="onTouchEvent"
-    @keydown="onBarKeyDown"
-    @dblclick="startEditing"
-    role="listitem"
-    :aria-label="`Activity ${barConfig.label}`"
-    :aria-grabbed="isDragging"
-    tabindex="0"
-    :aria-describedby="`tooltip-${barConfig.id}`"
-  >
+    <!-- Main Bar -->
+    <div
+      :id="barConfig.id"
+      :class="['g-gantt-bar', barConfig.class || '']"
+      :style="{
+        ...barConfig.style,
+        position: 'absolute',
+        top: `${rowHeight * 0.15}px`,
+        left: `${xStart}px`,
+        width: `${xEnd - xStart}px`,
+        height: `${rowHeight * 0.7}px`,
+        zIndex: isDragging ? 3 : 2,
+        cursor: bar.ganttBarConfig.immobile ? '' : 'grab'
+      }"
+      @mousedown="onMouseEvent"
+      @click="onMouseEvent"
+      @mouseenter="handleBarMouseEnter"
+      @mouseleave="handleBarMouseLeave"
+      @contextmenu="onMouseEvent"
+      @touchstart="onTouchEvent"
+      @touchmove="onTouchEvent"
+      @touchend="onTouchEvent"
+      @touchcancel="onTouchEvent"
+      @keydown="onBarKeyDown"
+      @dblclick="startEditing"
+      role="listitem"
+      :aria-label="`Activity ${barConfig.label}`"
+      :aria-grabbed="isDragging"
+      tabindex="0"
+      :aria-describedby="`tooltip-${barConfig.id}`"
+    >
     <!-- Connection Points -->
     <template v-if="enableConnectionCreation">
       <div
@@ -681,10 +689,17 @@ onMounted(() => {
       <div class="g-gantt-bar-handle-left" />
       <div class="g-gantt-bar-handle-right" />
     </template>
+    </div>
   </div>
 </template>
 
 <style>
+.g-gantt-bar-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .g-gantt-bar {
   display: flex;
   justify-content: center;
