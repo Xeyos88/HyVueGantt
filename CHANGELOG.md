@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v4.2.1](https://github.com/Xeyos88/HyVueGantt/tree/v4.2.1) (2025-09-28)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.2.0...v4.2.1)
+
+
+
+**🐛 Fix:**
+
+- Fixed warning in gantt bar for multiple root elements
+
 ## [v4.2.0](https://github.com/Xeyos88/HyVueGantt/tree/v4.2.0) (2025-09-12)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.1.0...v4.2.0)
