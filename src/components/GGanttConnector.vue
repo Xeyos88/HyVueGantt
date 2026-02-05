@@ -2,7 +2,7 @@
 // -----------------------------
 // 1. EXTERNAL IMPORTS
 // -----------------------------
-import { computed, ref } from "vue"
+import { computed } from "vue"
 
 // -----------------------------
 // 2. INTERNAL IMPORTS
@@ -58,7 +58,7 @@ const props = withDefaults(defineProps<Props>(), {
 // 4. INTERNAL STATE
 // -----------------------------
 const { enableConnectionDeletion } = provideConfig()
-const pathRef = ref<SVGPathElement | null>(null)
+
 
 // -----------------------------
 // 5. COMPUTED PROPERTIES
@@ -188,8 +188,8 @@ const pathData = computed(() => {
     case "straight":
       if (isOverlapping) {
         const midY = (sourceY + targetY) / 2 + verticalOffset * (sourceY > targetY ? -1 : 1)
-        return `M ${sourceX + startAdjust},${sourceY} 
-                Q ${sourceX + offset},${midY} ${(sourceX + targetX) / 2},${midY} 
+        return `M ${sourceX + startAdjust},${sourceY}
+                Q ${sourceX + offset},${midY} ${(sourceX + targetX) / 2},${midY}
                 Q ${targetX - offset},${midY} ${targetX - endAdjust},${targetY}`
       } else {
         return `M ${sourceX + startAdjust},${sourceY} L ${targetX - endAdjust},${targetY}`
@@ -367,7 +367,7 @@ const endpointPositions = computed(() => {
 
     <!-- Connection path -->
     <path
-      ref="pathRef"
+
       :d="pathData"
       fill="none"
       :stroke="
