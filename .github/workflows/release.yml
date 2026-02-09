@@ -20,7 +20,6 @@ permissions:
   pages: write
   id-token: write
 
-
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
@@ -41,7 +40,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4.1.0
         with:
-          node-version: 20
+          node-version: 22
           registry-url: "https://registry.npmjs.org"
           cache: npm # or pnpm / yarn
       - name: Setup Pages
@@ -49,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: npm ci # or pnpm install / yarn install / bun install
       - name: Run Tests
-        run: npm run test	
+        run: npm run test
       - name: Build package
         run: npm run build
       - name: Build with VitePress
