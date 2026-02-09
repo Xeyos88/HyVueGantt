@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v5.0.0](https://github.com/Xeyos88/HyVueGantt/tree/v5.0.0) (2026-02-09)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.2.1...v5.0.0)
+
+
+
+**✨ New Features:**
+
+- upgrade dependencies to latest major versions
+
+### Note
+
+#### BREAKING CHANGES
+* upgrade dependencies to latest major versions
+
 ## [v4.2.1](https://github.com/Xeyos88/HyVueGantt/tree/v4.2.1) (2025-09-28)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.2.0...v4.2.1)
