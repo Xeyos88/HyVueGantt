@@ -64,7 +64,6 @@ import {
 import type {
   GanttBarObject,
   GGanttChartProps,
-  GGanttTimeaxisInstance,
   ColorScheme,
   ChartRow,
   RowDragEvent,
@@ -178,9 +177,7 @@ const isImporterVisible = ref(props.showImporter)
 const gGantt = ref<HTMLElement | null>(null)
 const ganttChart = ref<HTMLElement | null>(null)
 const ganttWrapper = ref<HTMLElement | null>(null)
-const timeaxisComponent = ref<
-  (InstanceType<typeof GGanttTimeaxis> & GGanttTimeaxisInstance) | null
->(null)
+
 const ganttContainer = ref<HTMLElement | null>(null)
 const rowsContainer = ref<HTMLElement | null>(null)
 const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
@@ -1009,7 +1006,7 @@ defineExpose({
             <!-- Timeaxis Component -->
             <g-gantt-timeaxis
               v-if="!hideTimeaxis"
-              ref="timeaxisComponent"
+
               @drag-start="handleTimeaxisMouseDown"
               @touchstart="handleTimeaxisTouchStart"
               @touchmove="handleTimeaxisTouchMove"

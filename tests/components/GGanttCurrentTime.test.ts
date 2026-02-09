@@ -61,7 +61,8 @@ describe("GGanttCurrentTime", () => {
     it("should apply the border color from config", async () => {
       const wrapper = await createWrapper()
       const marker = wrapper.find(".g-grid-current-time-marker")
-      expect(marker.element.style.border).toMatch(/1px dashed #000/)
+      // Accept both hex (#000) and rgb(0, 0, 0) formats
+      expect(marker.element.style.border).toMatch(/1px dashed (#000|rgb\(0, 0, 0\))/)
     })
   })
 

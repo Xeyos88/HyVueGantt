@@ -20,6 +20,7 @@ import { BAR_CONTAINER_KEY, INTERNAL_PRECISION_KEY } from "../provider/symbols"
 
 // Components
 import GGanttBar from "./GGanttBar.vue"
+import GGanttRow from "./GGanttRow.vue"
 
 // Types
 import type { GanttBarConnection, GanttBarObject } from "../types"
@@ -49,14 +50,7 @@ const emit = defineEmits<{
   (e: "range-selection", value: RangeSelectionEvent): void
 }>()
 
-/**
- * Interface for slot data structure to ensure type safety
- */
-interface SlotData {
-  bar?: GanttBarObject
-  label?: string
-  [key: string]: GanttBarObject | string | undefined
-}
+
 
 // -----------------------------
 // 4. INTERNAL STATE
@@ -469,7 +463,8 @@ provide(BAR_CONTAINER_KEY, barContainer)
   </div>
   <!-- Child rows (rendered when group is expanded) -->
   <div v-if="isGroup && isExpanded" class="g-gantt-row-children">
-    <g-gantt-row
+    <component
+      :is="(GGanttRow as any)"
       v-for="child in visibleChildRows"
       :key="child.id || child.label"
       v-bind="child"
@@ -477,10 +472,10 @@ provide(BAR_CONTAINER_KEY, barContainer)
       @range-selection="(event: RangeSelectionEvent) => $emit('range-selection', event)"
     >
       <!-- Forward all slots to child rows -->
-      <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps: SlotData">
+      <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps">
         <slot :name="name" v-bind="slotProps" />
       </template>
-    </g-gantt-row>
+    </component>
   </div>
   <!-- AGGIUNTO: Start Tooltip (fixed at selection start) -->
   <teleport to="body">
