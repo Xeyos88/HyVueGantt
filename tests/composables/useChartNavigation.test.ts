@@ -202,19 +202,35 @@ describe("useChartNavigation", () => {
       expect(navigation.scrollPosition.value).toBe(40)
     })
 
-    it("should use deltaY when deltaX is not available", () => {
+    it("should ignore pure vertical scroll and let the browser handle page scroll", () => {
       const navigation = useChartNavigation(mockOptions, 0)
       const wrapper = createMockElement({ clientWidth: 200 })
 
-      const wheelEvent = new WheelEvent("wheel", { 
+      const wheelEvent = new WheelEvent("wheel", {
         deltaX: 0,
         deltaY: 75
       })
 
       navigation.handleWheel(wheelEvent, wrapper)
 
-      expect(wrapper.scrollLeft).toBe(75)
-      expect(navigation.scrollPosition.value).toBe(30) // (75/250) * 100
+      expect(wrapper.scrollLeft).toBe(0)
+      expect(navigation.scrollPosition.value).toBe(0)
+    })
+
+    it("should prevent default on horizontal scroll when maxRows is 0", () => {
+      const navigation = useChartNavigation(mockOptions, 0)
+      const wrapper = createMockElement({ clientWidth: 200 })
+
+      const wheelEvent = new WheelEvent("wheel", {
+        deltaX: 100,
+        deltaY: 0,
+        cancelable: true
+      })
+      const preventDefaultSpy = vi.spyOn(wheelEvent, "preventDefault")
+
+      navigation.handleWheel(wheelEvent, wrapper)
+
+      expect(preventDefaultSpy).toHaveBeenCalled()
     })
   })
 
