@@ -518,6 +518,16 @@ const closeImporter = () => {
 // -----------------------------
 const rows = computed(() => rowManager.rows.value)
 
+/**
+ * Filters slot names to only milestone-related slots
+ * Used to avoid v-for + v-if on the same template element
+ */
+const milestoneSlotNames = computed(() =>
+  Object.keys(slots).filter(
+    (name) => name.startsWith("milestone-") || name === "milestone"
+  )
+)
+
 const rowsContainerStyle = computed<CSSProperties>(() => {
   if (props.maxRows === 0) return {}
 
@@ -709,6 +719,15 @@ watch(
   { immediate: true }
 )
 
+const normalizeSlots = (children: unknown): Record<string, () => unknown> => {
+  if (!children || typeof children !== "object") return {}
+  const normalized: Record<string, () => unknown> = {}
+  for (const [key, value] of Object.entries(children as Record<string, unknown>)) {
+    normalized[key] = typeof value === "function" ? (value as () => unknown) : () => value
+  }
+  return normalized
+}
+
 const renderRow = (row: ChartRow) => {
   if (row._originalNode) {
     return h(
@@ -722,7 +741,7 @@ const renderRow = (row: ChartRow) => {
         key: row.id || row.label,
         onRangeSelection: handleRangeSelection
       },
-      row._originalNode.children || {}
+      normalizeSlots(row._originalNode.children)
     )
   }
 
@@ -1015,19 +1034,19 @@ defineExpose({
               :timeaxisUnits="timeaxisUnits"
               :internalPrecision="internalPrecision"
             >
-              <template #upper-timeunit="slotProps">
+              <template v-if="$slots['upper-timeunit']" #upper-timeunit="slotProps">
                 <slot name="upper-timeunit" v-bind="slotProps" />
               </template>
-              <template #timeunit="slotProps">
+              <template v-if="$slots['timeunit']" #timeunit="slotProps">
                 <slot name="timeunit" v-bind="slotProps" />
               </template>
-              <template #holiday-tooltip="slotProps">
+              <template v-if="$slots['holiday-tooltip']" #holiday-tooltip="slotProps">
                 <slot name="holiday-tooltip" v-bind="slotProps" />
               </template>
-              <template #event-tooltip="slotProps">
+              <template v-if="$slots['event-tooltip']" #event-tooltip="slotProps">
                 <slot name="event-tooltip" v-bind="slotProps" />
               </template>
-              <template #timeaxis-event="slotProps">
+              <template v-if="$slots['timeaxis-event']" #timeaxis-event="slotProps">
                 <slot name="timeaxis-event" v-bind="slotProps" />
               </template>
             </g-gantt-timeaxis>
@@ -1039,13 +1058,13 @@ defineExpose({
               :internalPrecision="internalPrecision"
             />
             <g-gantt-current-time v-if="currentTime">
-              <template #current-time-label>
+              <template v-if="$slots['current-time-label']" #current-time-label>
                 <slot name="current-time-label" />
               </template>
             </g-gantt-current-time>
 
             <g-gantt-pointer-marker v-if="pointerMarker">
-              <template #pointer-marker-tooltips="{ hitBars, datetime }">
+              <template v-if="$slots['pointer-marker-tooltips']" #pointer-marker-tooltips="{ hitBars, datetime }">
                 <slot name="pointer-marker-tooltips" v-bind="{ hitBars, datetime }" />
               </template>
             </g-gantt-pointer-marker>
@@ -1055,13 +1074,14 @@ defineExpose({
               :key="milestone.date.toString()"
               :milestone="milestone"
             >
-              <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
-                <slot
-                  :name="name"
-                  v-bind="slotData"
-                  v-if="(name as string).startsWith('milestone-') || name === 'milestone'"
-                /> </template
-            ></g-gantt-milestone>
+              <template
+                v-for="name in milestoneSlotNames"
+                :key="name"
+                #[name]="slotData"
+              >
+                <slot :name="name" v-bind="slotData" />
+              </template>
+            </g-gantt-milestone>
 
             <!-- Rows Container -->
             <div
@@ -1201,7 +1221,7 @@ defineExpose({
 
     <!-- Tooltip -->
     <g-gantt-tooltip type="bar" :model-value="showTooltip || isDragging" :bar="tooltipBar">
-      <template #default="slotProps">
+      <template v-if="$slots['bar-tooltip']" #default="slotProps">
         <slot name="bar-tooltip" v-bind="slotProps" />
       </template>
     </g-gantt-tooltip>
