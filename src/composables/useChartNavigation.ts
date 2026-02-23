@@ -66,7 +66,11 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
   }
 
   /**
-   * Handles mouse wheel event for scrolling
+   * Handles mouse wheel event for horizontal scrolling.
+   * Only responds to explicit horizontal input (deltaX).
+   * Pure vertical scrolls (deltaX === 0) are ignored so the browser
+   * can handle them as normal page scroll.
+   *
    * @param e - Mouse wheel event
    * @param wrapper - Container DOM element
    */
@@ -78,7 +82,12 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
       return
     }
 
-    wrapper.scrollLeft += e.deltaX || e.deltaY
+    if (e.deltaX === 0) {
+      return
+    }
+
+    e.preventDefault()
+    wrapper.scrollLeft += e.deltaX
     const maxScroll = totalWidth.value - wrapper.clientWidth
     scrollPosition.value = (wrapper.scrollLeft / maxScroll) * 100
   }
