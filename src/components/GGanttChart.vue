@@ -971,7 +971,7 @@ defineExpose({
           <!-- Label Column -->
           <g-gantt-label-column ref="labelColumn" @scroll="handleLabelScroll" @row-drop="dropRow">
             <template v-for="(_, name) in $slots" :key="name" #[name]="slotData">
-              <slot :name="name" v-bind="slotData" />
+              <slot :name="name" v-bind="slotData" v-if="$slots[name]" />
             </template>
           </g-gantt-label-column>
           <div
@@ -1059,7 +1059,7 @@ defineExpose({
                 <slot
                   :name="name"
                   v-bind="slotData"
-                  v-if="(name as string).startsWith('milestone-') || name === 'milestone'"
+                  v-if="$slots[name] && ((name as string).startsWith('milestone-') || name === 'milestone')"
                 /> </template
             ></g-gantt-milestone>
 
