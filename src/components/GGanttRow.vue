@@ -455,7 +455,7 @@ provide(BAR_CONTAINER_KEY, barContainer)
         >
           <!-- Pass bar label slot to children -->
           <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps">
-            <slot :name="name" v-bind="slotProps" v-if="$slots[name]" />
+            <slot :name="name" v-bind="slotProps" />
           </template>
         </g-gantt-bar>
       </transition-group>
@@ -473,7 +473,7 @@ provide(BAR_CONTAINER_KEY, barContainer)
     >
       <!-- Forward all slots to child rows -->
       <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps">
-        <slot :name="name" v-bind="slotProps" v-if="$slots[name]" />
+        <slot :name="name" v-bind="slotProps" />
       </template>
     </component>
   </div>

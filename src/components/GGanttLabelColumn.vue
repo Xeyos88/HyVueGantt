@@ -167,7 +167,7 @@ const {
  * Get columns based on multiColumnLabel configuration
  */
 const columns = computed<LabelColumnConfig[]>(() => {
-  if (!multiColumnLabel.value?.length || !labelColumnTitle.value) {
+  if (!multiColumnLabel.value?.length) {
     return [{ field: "Label", sortable: sortable.value }]
   }
   const filteredColumns = multiColumnLabel.value.filter((col) => col.field !== "Label")
@@ -731,7 +731,7 @@ defineExpose({
           >
             <span class="text-ellipsis">
               <slot :name="`label-column-title-${column.field.toLowerCase()}`">
-                {{ column.field }}
+                {{ column.field === 'Label' && labelColumnTitle ? labelColumnTitle : column.field }}
               </slot>
             </span>
             <span v-if="columnSortableStates[column.field]" class="sort-icon">

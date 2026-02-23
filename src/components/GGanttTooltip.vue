@@ -218,15 +218,17 @@ const tooltipStyle = computed(() => {
         <div class="g-gantt-tooltip-color-dot" :style="{ background: dotColor }" />
 
         <!-- Tooltip content with slot support -->
-        <slot 
-          :bar="bar" 
-          :bar-start="barStartRaw" 
+        <slot
+          v-if="$slots.default"
+          :bar="bar"
+          :bar-start="barStartRaw"
           :bar-end="barEndRaw"
           :bar-start-planned="bar?.start_planned"
           :bar-end-planned="bar?.end_planned"
-        >
+        />
+        <template v-else>
           {{ tooltipContent }}
-        </slot>
+        </template>
       </div>
 
       <!-- Event Tooltip -->
@@ -236,17 +238,16 @@ const tooltipStyle = computed(() => {
         :style="tooltipStyle"
       >
         <!-- Tooltip content with slot support -->
-        <slot name="event-tooltip" :event="event" :format-date="formatDate">
-          <div class="g-gantt-event-tooltip-content">
-            <div class="g-gantt-event-tooltip-title">{{ event.label }}</div>
-            <div class="g-gantt-event-tooltip-time">
-              {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}
-            </div>
-            <div v-if="event.description" class="g-gantt-event-tooltip-description">
-              {{ event.description }}
-            </div>
+        <slot v-if="$slots['event-tooltip']" name="event-tooltip" :event="event" :format-date="formatDate" />
+        <div v-else class="g-gantt-event-tooltip-content">
+          <div class="g-gantt-event-tooltip-title">{{ event.label }}</div>
+          <div class="g-gantt-event-tooltip-time">
+            {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}
           </div>
-        </slot>
+          <div v-if="event.description" class="g-gantt-event-tooltip-description">
+            {{ event.description }}
+          </div>
+        </div>
       </div>
 
       <!-- Holiday Tooltip -->
@@ -256,11 +257,10 @@ const tooltipStyle = computed(() => {
         :style="tooltipStyle"
       >
         <!-- Tooltip content with slot support -->
-        <slot name="holiday-tooltip" :unit="unit">
-          <div class="g-gantt-holiday-tooltip-content">
-            {{ unit.holidayName }}
-          </div>
-        </slot>
+        <slot v-if="$slots['holiday-tooltip']" name="holiday-tooltip" :unit="unit" />
+        <div v-else class="g-gantt-holiday-tooltip-content">
+          {{ unit.holidayName }}
+        </div>
       </div>
     </transition>
   </teleport>

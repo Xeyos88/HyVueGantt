@@ -82,10 +82,7 @@ export default () => {
           unsafe_methods: true
         },
         mangle: {
-          safari10: true,
-          properties: {
-            regex: /^_/
-          }
+          safari10: true
         },
         format: {
           comments: false
