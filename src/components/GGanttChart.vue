@@ -1015,19 +1015,19 @@ defineExpose({
               :timeaxisUnits="timeaxisUnits"
               :internalPrecision="internalPrecision"
             >
-              <template #upper-timeunit="slotProps">
+              <template #upper-timeunit="slotProps" v-if="$slots['upper-timeunit']">
                 <slot name="upper-timeunit" v-bind="slotProps" />
               </template>
-              <template #timeunit="slotProps">
+              <template #timeunit="slotProps" v-if="$slots['timeunit']">
                 <slot name="timeunit" v-bind="slotProps" />
               </template>
-              <template #holiday-tooltip="slotProps">
+              <template #holiday-tooltip="slotProps" v-if="$slots['holiday-tooltip']">
                 <slot name="holiday-tooltip" v-bind="slotProps" />
               </template>
-              <template #event-tooltip="slotProps">
+              <template #event-tooltip="slotProps" v-if="$slots['event-tooltip']">
                 <slot name="event-tooltip" v-bind="slotProps" />
               </template>
-              <template #timeaxis-event="slotProps">
+              <template #timeaxis-event="slotProps" v-if="$slots['timeaxis-event']">
                 <slot name="timeaxis-event" v-bind="slotProps" />
               </template>
             </g-gantt-timeaxis>
@@ -1039,13 +1039,13 @@ defineExpose({
               :internalPrecision="internalPrecision"
             />
             <g-gantt-current-time v-if="currentTime">
-              <template #current-time-label>
+              <template #current-time-label v-if="$slots['current-time-label']">
                 <slot name="current-time-label" />
               </template>
             </g-gantt-current-time>
 
             <g-gantt-pointer-marker v-if="pointerMarker">
-              <template #pointer-marker-tooltips="{ hitBars, datetime }">
+              <template #pointer-marker-tooltips="{ hitBars, datetime }" v-if="$slots['pointer-marker-tooltips']">
                 <slot name="pointer-marker-tooltips" v-bind="{ hitBars, datetime }" />
               </template>
             </g-gantt-pointer-marker>
@@ -1201,7 +1201,7 @@ defineExpose({
 
     <!-- Tooltip -->
     <g-gantt-tooltip type="bar" :model-value="showTooltip || isDragging" :bar="tooltipBar">
-      <template #default="slotProps">
+      <template #default="slotProps" v-if="$slots['bar-tooltip']">
         <slot name="bar-tooltip" v-bind="slotProps" />
       </template>
     </g-gantt-tooltip>

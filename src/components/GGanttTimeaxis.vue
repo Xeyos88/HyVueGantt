@@ -386,7 +386,7 @@ defineExpose({ timeaxisElement })
       :unit="hoveredUnit"
       :target-element="hoveredElement"
     >
-      <template #holiday-tooltip="slotProps">
+      <template #holiday-tooltip="slotProps" v-if="$slots['holiday-tooltip']">
         <slot name="holiday-tooltip" v-bind="slotProps" />
       </template>
     </g-gantt-tooltip>
@@ -398,7 +398,7 @@ defineExpose({ timeaxisElement })
       :event="hoveredEvent"
       :target-element="hoveredEventElement"
     >
-      <template #event-tooltip="slotProps">
+      <template #event-tooltip="slotProps" v-if="$slots['event-tooltip']">
         <slot name="event-tooltip" v-bind="slotProps" />
       </template>
     </g-gantt-tooltip>
