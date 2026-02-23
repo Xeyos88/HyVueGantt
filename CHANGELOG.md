@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v5.0.1](https://github.com/Xeyos88/HyVueGantt/tree/v5.0.1) (2026-02-23)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.0...v5.0.1)
+
+
+
+**🐛 Fix:**
+
+- horizontal scroll while scrolling in the Y axis
+- Streamline slot rendering logic across components, improve label column title handling, and update terser configuration.
+- **slots:** conditionally forward slots inside v-for loops to prevent Vue non-function slot warnings
+- **slots:** conditionally render slots to resolve vue non-function value warnings
+
 ## [v5.0.0](https://github.com/Xeyos88/HyVueGantt/tree/v5.0.0) (2026-02-09)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.2.1...v5.0.0)
