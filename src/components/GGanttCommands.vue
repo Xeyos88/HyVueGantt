@@ -31,6 +31,8 @@ interface Props {
   zoomLevel: number
   internalPrecision: string
   precision: string
+  canZoomIn: boolean
+  canZoomOut: boolean
   scrollPosition: number
   exportEnabled: boolean
   isExporting: boolean
@@ -209,14 +211,14 @@ const handleTriggerExport = (format?: string) => {
           <button
             @click="handleZoomOut"
             aria-label="Zoom-out Gantt"
-            :disabled="zoomLevel === 1 && internalPrecision === 'month'"
+            :disabled="!canZoomOut"
           >
             <FontAwesomeIcon :icon="faMagnifyingGlassMinus" class="command-icon" />
           </button>
           <button
             @click="handleZoomIn"
             aria-label="Zoom-in Gantt"
-            :disabled="zoomLevel === 10 && internalPrecision === precision"
+            :disabled="!canZoomIn"
           >
             <FontAwesomeIcon :icon="faMagnifyingGlassPlus" class="command-icon" />
           </button>

@@ -60,6 +60,12 @@ interface CommandsSlotProps {
   /** Current zoom level */
   zoomLevel: Ref<number>
 
+  /** Whether zoom-in is allowed */
+  canZoomIn: ComputedRef<boolean>
+
+  /** Whether zoom-out is allowed */
+  canZoomOut: ComputedRef<boolean>
+
   /** Current scroll position as percentage (0-100) */
   scrollPosition: Ref<number>
 

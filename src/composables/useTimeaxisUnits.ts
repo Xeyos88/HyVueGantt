@@ -171,7 +171,8 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
    */
   const getNextPrecision = (currentPrecision: TimeUnit): TimeUnit => {
     const currentIndex = precisionHierarchy.indexOf(currentPrecision)
-    if (currentIndex < precisionHierarchy.length - 1) {
+    const configIndex = precisionHierarchy.indexOf(configPrecision.value)
+    if (currentIndex < precisionHierarchy.length - 1 && currentIndex < configIndex) {
       return precisionHierarchy[currentIndex + 1]!
     }
     return currentPrecision
@@ -552,6 +553,14 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     }
   }
 
+  const canZoomIn = computed(() => {
+    return !(internalPrecision.value === "hour" && zoomLevel.value >= MAX_ZOOM)
+  })
+
+  const canZoomOut = computed(() => {
+    return !(zoomLevel.value <= MIN_ZOOM && internalPrecision.value === configPrecision.value)
+  })
+
   /**
    * Handles zoom level adjustments
    */
@@ -600,6 +609,8 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     timeaxisUnits,
     internalPrecision,
     zoomLevel,
-    adjustZoomAndPrecision
+    adjustZoomAndPrecision,
+    canZoomIn,
+    canZoomOut
   }
 }

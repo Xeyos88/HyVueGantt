@@ -701,6 +701,7 @@ defineExpose({
     :style="{
       fontFamily: font,
       color: colors.text,
+      background: colors.background,
       minWidth: `100%`,
       flex: `0 0 ${totalWidth}px`,
       borderRight: `1px solid ${colors.gridAndBorder}`
@@ -864,7 +865,6 @@ defineExpose({
   color: rgb(64, 64, 64);
   font-variant-numeric: tabular-nums;
   font-size: 0.9em;
-  background: white;
   box-sizing: border-box;
   flex-shrink: 0;
 }

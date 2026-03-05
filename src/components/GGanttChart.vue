@@ -181,7 +181,7 @@ const ganttWrapper = ref<HTMLElement | null>(null)
 const ganttContainer = ref<HTMLElement | null>(null)
 const rowsContainer = ref<HTMLElement | null>(null)
 const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
-const validatedBaseUnitWidth = ref(Math.min(50, Math.max(20, props.baseUnitWidth)))
+const validatedBaseUnitWidth = ref(Math.max(1, props.baseUnitWidth))
 const validatedDefaultZoom = ref(Math.min(10, Math.max(1, props.defaultZoom)))
 
 const setLabelWidth = () => {
@@ -252,7 +252,7 @@ const { font, colorScheme } = toRefs(props)
 const colors = computed(() => getColorScheme(colorScheme.value))
 
 // Time Units Management
-const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision } = useTimeaxisUnits({
+const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision, canZoomIn, canZoomOut } = useTimeaxisUnits({
   ...toRefs(props),
   baseUnitWidth: validatedBaseUnitWidth,
   defaultZoom: validatedDefaultZoom,
@@ -280,7 +280,7 @@ const {
       labelColumn
     },
     updateBarPositions,
-    timeaxisUnits: { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision }
+    timeaxisUnits: { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision, canZoomIn, canZoomOut }
   },
   props.maxRows
 )
@@ -523,9 +523,7 @@ const rows = computed(() => rowManager.rows.value)
  * Used to avoid v-for + v-if on the same template element
  */
 const milestoneSlotNames = computed(() =>
-  Object.keys(slots).filter(
-    (name) => name.startsWith("milestone-") || name === "milestone"
-  )
+  Object.keys(slots).filter((name) => name.startsWith("milestone-") || name === "milestone")
 )
 
 const rowsContainerStyle = computed<CSSProperties>(() => {
@@ -932,7 +930,7 @@ watch(
 watch(
   () => props.baseUnitWidth,
   (newValue) => {
-    validatedBaseUnitWidth.value = Math.max(20, newValue)
+    validatedBaseUnitWidth.value = Math.max(1, newValue)
   }
 )
 
@@ -983,7 +981,7 @@ defineExpose({
     ref="ganttContainer"
     :id="id"
   >
-    <div class="g-gantt-rounded-wrapper" ref="gGantt">
+    <div class="g-gantt-rounded-wrapper" ref="gGantt" :style="{ background: colors.background }">
       <!-- Chart Layout Section -->
       <div class="g-gantt-main-layout" aria-controls="gantt-controls">
         <div v-if="labelColumnTitle" class="g-gantt-label-section" :style="labelSectionStyle">
@@ -1064,7 +1062,10 @@ defineExpose({
             </g-gantt-current-time>
 
             <g-gantt-pointer-marker v-if="pointerMarker">
-              <template v-if="$slots['pointer-marker-tooltips']" #pointer-marker-tooltips="{ hitBars, datetime }">
+              <template
+                v-if="$slots['pointer-marker-tooltips']"
+                #pointer-marker-tooltips="{ hitBars, datetime }"
+              >
                 <slot name="pointer-marker-tooltips" v-bind="{ hitBars, datetime }" />
               </template>
             </g-gantt-pointer-marker>
@@ -1074,11 +1075,7 @@ defineExpose({
               :key="milestone.date.toString()"
               :milestone="milestone"
             >
-              <template
-                v-for="name in milestoneSlotNames"
-                :key="name"
-                #[name]="slotData"
-              >
+              <template v-for="name in milestoneSlotNames" :key="name" #[name]="slotData">
                 <slot :name="name" v-bind="slotData" />
               </template>
             </g-gantt-milestone>
@@ -1167,6 +1164,7 @@ defineExpose({
           :handle-to-start="() => handleStep(0, ganttWrapper!)"
           :handle-back="() => handleStep(scrollPosition - 10, ganttWrapper!)"
           :handle-scroll="() => handleScroll(ganttWrapper!)"
+          :handle-step="(pos: number) => handleStep(pos, ganttWrapper!)"
           :handle-forward="() => handleStep(scrollPosition + 10, ganttWrapper!)"
           :handle-to-end="() => handleStep(100, ganttWrapper!)"
           :undo="() => undo()"
@@ -1176,6 +1174,9 @@ defineExpose({
           :is-at-top="isAtTop"
           :is-at-bottom="isAtBottom"
           :zoom-level="zoomLevel"
+          :internal-precision="internalPrecision"
+          :can-zoom-in="canZoomIn"
+          :can-zoom-out="canZoomOut"
           :scroll-position="scrollPosition"
           :are-all-groups-expanded="rowManager.areAllGroupsExpanded"
           :are-all-groups-collapsed="rowManager.areAllGroupsCollapsed"
@@ -1192,6 +1193,8 @@ defineExpose({
             :zoom-level="zoomLevel"
             :internal-precision="internalPrecision"
             :precision="precision"
+            :can-zoom-in="canZoomIn"
+            :can-zoom-out="canZoomOut"
             :scroll-position="scrollPosition"
             :export-enabled="exportEnabled"
             :is-exporting="isExporting"
@@ -1288,7 +1291,6 @@ defineExpose({
   border-radius: 5px;
   overflow: hidden;
   border: 1px solid #eaeaea;
-  background: white;
   display: flex;
   flex-direction: column;
 }
