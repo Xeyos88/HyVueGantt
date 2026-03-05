@@ -160,6 +160,8 @@ interface CommandSlotProps {
   zoomIn: () => void                    // Increase zoom level
   zoomOut: () => void                   // Decrease zoom level
   zoomLevel: Ref<number>                // Current zoom level (1-10)
+  canZoomIn: ComputedRef<boolean>       // Whether zoom-in is allowed based on precision bounds
+  canZoomOut: ComputedRef<boolean>      // Whether zoom-out is allowed based on config bounds
   
   // Row Navigation
   scrollRowUp: () => void               // Scroll one row up
@@ -214,14 +216,16 @@ Here's an example of customizing the command section:
       isAtTop,
       isAtBottom,
       zoomLevel,
+      canZoomIn,
+      canZoomOut,
       export
     }">
       <div class="custom-commands">
         <!-- Zoom Controls -->
         <div class="zoom-controls">
-          <button @click="zoomOut" :disabled="zoomLevel === 1">-</button>
+          <button @click="zoomOut" :disabled="!canZoomOut">-</button>
           <span>Zoom: {{ zoomLevel }}x</span>
-          <button @click="zoomIn" :disabled="zoomLevel === 10">+</button>
+          <button @click="zoomIn" :disabled="!canZoomIn">+</button>
         </div>
 
         <!-- Navigation Controls -->

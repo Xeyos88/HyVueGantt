@@ -176,12 +176,14 @@ const isWeekend = (date) => {
       isAtTop,
       isAtBottom,
       zoomLevel,
+      canZoomIn,
+      canZoomOut,
       export
     }">
       <div class="custom-controls">
         <div class="control-group">
-          <button @click="zoomOut" :disabled="zoomLevel === 1">-</button>
-          <button @click="zoomIn" :disabled="zoomLevel === 10">+</button>
+          <button @click="zoomOut" :disabled="!canZoomOut">-</button>
+          <button @click="zoomIn" :disabled="!canZoomIn">+</button>
         </div>
         
         <div class="navigation-group">

@@ -117,7 +117,9 @@ const commandStyles = {
         canRedo,
         isAtTop,
         isAtBottom,
-        zoomLevel
+        zoomLevel,
+        canZoomIn,
+        canZoomOut
       }">
         <style>
           {{ commandStyles[commandsStyle] }}
@@ -128,9 +130,9 @@ const commandStyles = {
           <template v-if="showZoom">
             <div class="command-group">
               <span class="command-label">Zoom</span>
-              <button class="command-button" @click="zoomOut" :disabled="zoomLevel === 1">-</button>
+              <button class="command-button" @click="zoomOut" :disabled="!canZoomOut">-</button>
               <span>{{ zoomLevel }}x</span>
-              <button class="command-button" @click="zoomIn" :disabled="zoomLevel === 10">+</button>
+              <button class="command-button" @click="zoomIn" :disabled="!canZoomIn">+</button>
             </div>
           </template>
 
