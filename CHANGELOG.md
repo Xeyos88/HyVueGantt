@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v5.0.2](https://github.com/Xeyos88/HyVueGantt/tree/v5.0.2) (2026-03-05)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.1...v5.0.2)
+
+
+
+**♻️ Refactoring:**
+
+- **dom:** add optional chaining for safer element access
+
+**📚 Documentation:**
+
+- update documentation for canZoomIn and canZoomOut capabilities
+
+**🐛 Fix:**
+
+- constrain `baseUnitWidth` to a range between 20 and 50.
+- **zoom:** expose canZoomIn/canZoomOut and fix precision bounds
+
 ## [v5.0.1](https://github.com/Xeyos88/HyVueGantt/tree/v5.0.1) (2026-02-23)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.0...v5.0.1)
