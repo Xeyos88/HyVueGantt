@@ -188,17 +188,17 @@ export function useConnections(
   const updateBarPositions = async () => {
     await new Promise((resolve) => requestAnimationFrame(resolve))
     const parentElement = document.getElementById(id.value)
-    const rowsContainer = parentElement!.querySelector(".g-gantt-rows-container")
+    const rowsContainer = parentElement?.querySelector(".g-gantt-rows-container")
     if (!rowsContainer) return
     const scrollTop = rowsContainer.scrollTop
     const scrollLeft = rowsContainer.scrollLeft
 
     const containerRect = rowsContainer.getBoundingClientRect()
-    const bars = parentElement!.querySelectorAll(".g-gantt-bar")
+    const bars = parentElement?.querySelectorAll(".g-gantt-bar")
 
     barPositions.value.clear()
 
-    bars.forEach((bar) => {
+    bars?.forEach((bar) => {
       const rect = bar.getBoundingClientRect()
       const barId = bar.getAttribute("id")
 

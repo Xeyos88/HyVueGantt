@@ -756,7 +756,7 @@ const renderRow = (row: ChartRow) => {
 
 const updateRangeBackground = () => {
   const parentElement = document.getElementById(id.value)
-  const slider = parentElement!.querySelector(".g-gantt-scroller") as HTMLInputElement
+  const slider = parentElement?.querySelector(".g-gantt-scroller") as HTMLInputElement | undefined
   if (slider) {
     slider.style.setProperty("--value", `${scrollPosition.value}%`)
   }
