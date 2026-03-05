@@ -181,7 +181,7 @@ const ganttWrapper = ref<HTMLElement | null>(null)
 const ganttContainer = ref<HTMLElement | null>(null)
 const rowsContainer = ref<HTMLElement | null>(null)
 const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
-const validatedBaseUnitWidth = ref(Math.max(1, props.baseUnitWidth))
+const validatedBaseUnitWidth = ref(Math.min(50, Math.max(20, props.baseUnitWidth)))
 const validatedDefaultZoom = ref(Math.min(10, Math.max(1, props.defaultZoom)))
 
 const setLabelWidth = () => {
