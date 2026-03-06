@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v5.1.0](https://github.com/Xeyos88/HyVueGantt/tree/v5.1.0) (2026-03-06)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.2...v5.1.0)
+
+
+
+**✨ New Features:**
+
+- **highlighting:** add custom date range highlighting
+
 ## [v5.0.2](https://github.com/Xeyos88/HyVueGantt/tree/v5.0.2) (2026-03-05)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.1...v5.0.2)
