@@ -71,6 +71,7 @@ Here's a minimal example of using the GGanttChart component:
 | showEventsAxis | `boolean` | `false` | Controls the visibility of the events axis |
 | eventsAxisHeight | `number` | `25` | Sets the height of the events axis in pixels |
 | holidayHighlight| `string` | `` | Country Cody of date-holidays |
+| highlightedDateRanges| `HighlightedDateRange[]` | `[]` | Array of custom date ranges to highlight on the chart |
 | rowClass| `(row: ChartRow) => string` | `` | Method to add classes to data rows |
 | rowLabelClass| `(row: ChartRow) => string` | `` | Method to add classes to label rows |
 | dayOptionLabel| `DayOptionLabel[]` | `['day']` | Customization for time unit day |

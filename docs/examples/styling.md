@@ -103,6 +103,7 @@ You can highlight specific time units and holidays:
     :highlighted-days-in-month="[1, 15, 30]" 
     :highlighted-months="[0, 6]"             
     :highlighted-week="[1, 52]"              
+    :highlighted-date-ranges="[{ start: '2024-12-24', end: '2024-12-26', color: '#ff0000' }]"
     :holiday-highlight="'US'"
   >
     <!-- chart content -->

@@ -33,6 +33,7 @@ const {
   highlightedDaysInMonth,
   highlightedMonths,
   highlightedWeek,
+  highlightedDateRanges,
   enableMinutes
 } = provideConfig()
 
@@ -92,6 +93,29 @@ const isHighlightedWeek = (date: Date) => highlightedWeek?.value.includes(toDayj
  * Checks if the month of a date is in the highlighted months list
  */
 const isHighlightedMonth = (date: Date) => highlightedMonths?.value.includes(date.getMonth())
+
+/**
+ * Returns the highlight color if a cell interval overlaps any highlighted date range.
+ * @param {Date} date - The start date of the grid cell
+ * @param {number} cellDurationMs - The duration of the cell in milliseconds
+ * @returns {string | undefined} The color if highlighted, undefined otherwise
+ */
+const getDateRangeHighlightColor = (date: Date, cellDurationMs: number): string | undefined => {
+  if (!highlightedDateRanges?.value?.length) return undefined
+  if (props.internalPrecision !== "hour") return undefined
+  const cellStartMs = date.getTime()
+  const cellEndMs = cellStartMs + cellDurationMs
+  for (const range of highlightedDateRanges.value) {
+    const startMs =
+      range.start instanceof Date ? range.start.getTime() : new Date(range.start).getTime()
+    const endMs =
+      range.end instanceof Date ? range.end.getTime() : new Date(range.end).getTime()
+    if (cellStartMs < endMs && cellEndMs > startMs) {
+      return range.color || colors.value.hoverHighlight
+    }
+  }
+  return undefined
+}
 </script>
 
 <template>
@@ -104,7 +128,13 @@ const isHighlightedMonth = (date: Date) => highlightedMonths?.value.includes(dat
         :style="{
           width,
           borderLeft: `1px solid ${colors.gridAndBorder}`,
-          background: highlightLine(date) ? colors.hoverHighlight : undefined
+          background: highlightLine(date)
+            ? colors.hoverHighlight
+            : getDateRangeHighlightColor(
+                date,
+                (timeaxisUnits.result.lowerUnits[index + 1]?.date ?? date).getTime() - date.getTime()
+                  || (index > 0 ? date.getTime() - timeaxisUnits.result.lowerUnits[index - 1]!.date.getTime() : 3600000)
+              )
         }"
       />
     </template>
@@ -121,7 +151,13 @@ const isHighlightedMonth = (date: Date) => highlightedMonths?.value.includes(dat
           :style="{
             width,
             borderLeft: `1px solid ${colors.gridAndBorder}`,
-            background: highlightLine(date) ? colors.hoverHighlight : undefined
+            background: highlightLine(date)
+              ? colors.hoverHighlight
+              : getDateRangeHighlightColor(
+                  date,
+                  (timeaxisUnits.result.lowerUnits[index + 1]?.date ?? date).getTime() - date.getTime()
+                    || (index > 0 ? date.getTime() - timeaxisUnits.result.lowerUnits[index - 1]!.date.getTime() : 3600000)
+                )
           }"
       /></template>
     </template>

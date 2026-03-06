@@ -46,6 +46,7 @@ interface VisualProps {
   highlightedDaysInMonth?: number[];         // Array of days to highlight (1-31)
   highlightedMonths?: number[];              // Array of months to highlight (0-11, 0 is January)
   highlightedWeek?: number[];                // Array of weeks to highlight (1-53)
+  highlightedDateRanges?: HighlightedDateRange[]; // Array of date ranges to highlight with optional custom color
   locale?: string;                           // Locale for dayjs
   markConnection?: MarkConnection;           // Type of marker in connections
   showLabel?: boolean;                       // Show bar labels

@@ -125,6 +125,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   highlightedDaysInMonth: () => [],
   highlightedMonths: () => [],
   highlightedWeek: () => [],
+  highlightedDateRanges: () => [],
   locale: "en",
   enableRowDragAndDrop: false,
   markerConnection: "forward",

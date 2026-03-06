@@ -40,6 +40,7 @@ You can customize the time scale appearance:
   :highlighted-days-in-week="[0, 6]"  
   :highlighted-days-in-month="[1, 15, 30]"
   :highlighted-months="[0, 6]"  
+  :highlighted-date-ranges="[{ start: '2024-01-01', end: '2024-01-05', color: '#ff0000' }]"
   :holiday-highlight="'US'"
   :locale="'en'"
 />

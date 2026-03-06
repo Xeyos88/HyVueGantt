@@ -18,6 +18,12 @@ import type { ExportOptions } from "./export"
 import type { ImportFormat } from "./import"
 import type { ConnectionLabelStyle } from "./bar"
 
+export interface HighlightedDateRange {
+  start: string | Date
+  end: string | Date
+  color?: string
+}
+
 export interface GGanttChartProps {
   chartStart: string | Date
   chartEnd: string | Date
@@ -72,6 +78,7 @@ export interface GGanttChartProps {
   highlightedDaysInMonth?: number[]
   highlightedMonths?: number[]
   highlightedWeek?: number[]
+  highlightedDateRanges?: HighlightedDateRange[]
   locale?: string
   enableRowDragAndDrop?: boolean
   markerConnection?: MarkerConnection
