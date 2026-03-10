@@ -4,11 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [v5.1.0](https://github.com/Xeyos88/HyVueGantt/tree/v5.1.0) (2026-03-06)
+## [v5.0.3](https://github.com/Xeyos88/HyVueGantt/tree/v5.0.3) (2026-03-06)
 
-[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.2...v5.1.0)
-
-
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.2...v5.0.3)
 
 **✨ New Features:**
 
@@ -17,8 +15,6 @@ All notable changes to this project will be documented in this file.
 ## [v5.0.2](https://github.com/Xeyos88/HyVueGantt/tree/v5.0.2) (2026-03-05)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.1...v5.0.2)
-
-
 
 **♻️ Refactoring:**
 
@@ -37,8 +33,6 @@ All notable changes to this project will be documented in this file.
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.0...v5.0.1)
 
-
-
 **🐛 Fix:**
 
 - horizontal scroll while scrolling in the Y axis
@@ -50,8 +44,6 @@ All notable changes to this project will be documented in this file.
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.2.1...v5.0.0)
 
-
-
 **✨ New Features:**
 
 - upgrade dependencies to latest major versions
@@ -59,13 +51,12 @@ All notable changes to this project will be documented in this file.
 ### Note
 
 #### BREAKING CHANGES
-* upgrade dependencies to latest major versions
+
+- upgrade dependencies to latest major versions
 
 ## [v4.2.1](https://github.com/Xeyos88/HyVueGantt/tree/v4.2.1) (2025-09-28)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.2.0...v4.2.1)
-
-
 
 **🐛 Fix:**
 
@@ -74,8 +65,6 @@ All notable changes to this project will be documented in this file.
 ## [v4.2.0](https://github.com/Xeyos88/HyVueGantt/tree/v4.2.0) (2025-09-12)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.1.0...v4.2.0)
-
-
 
 **♻️ Refactoring:**
 
@@ -96,8 +85,6 @@ All notable changes to this project will be documented in this file.
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v4.0.0...v4.1.0)
 
-
-
 **✨ New Features:**
 
 - Auto scroll in current day
@@ -105,8 +92,6 @@ All notable changes to this project will be documented in this file.
 ## [v4.0.0](https://github.com/Xeyos88/HyVueGantt/tree/v4.0.0) (2025-07-23)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.9.0...v4.0.0)
-
-
 
 **⚠ BREAKING CHANGES:**
 
@@ -119,13 +104,12 @@ All notable changes to this project will be documented in this file.
 ### Note
 
 #### BREAKING CHANGES
-* Package size reduced by 80%!!!
+
+- Package size reduced by 80%!!!
 
 ## [v3.9.0](https://github.com/Xeyos88/HyVueGantt/tree/v3.9.0) (2025-07-13)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v3.8.1...v3.9.0)
-
-
 
 **✨ New Features:**
 

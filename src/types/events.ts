@@ -1,5 +1,5 @@
 import type { ConnectionPoint, GanttBarObject } from "./bar"
-import type { ChartRow, SortState } from "./chart"
+import type { ChartRow, SortState, TimeaxisEvent } from "./chart"
 import type { ExportResult } from "./export"
 import type { ImportResult } from "./import"
 
@@ -107,4 +107,5 @@ export interface GGanttChartEmits {
   (e: "import-data", value: ImportResult): void
   (e: "range-selection", value: RangeSelectionEvent): void
   (e: "update:importer-visible", value: boolean): void
+  (e: "click-timeaxis-event", value: TimeaxisEvent): void
 }

@@ -35,11 +35,12 @@ const props = defineProps<{
 
 const { timeaxisUnits, internalPrecision } = toRefs(props)
 
-// Events emitted for timeaxis drag interactions
+// Events emitted for timeaxis drag interactions and event clicks
 const emit = defineEmits<{
   (e: "dragStart", value: MouseEvent): void
   (e: "drag", value: MouseEvent): void
   (e: "dragEnd", value: MouseEvent): void
+  (e: "click-event", value: TimeaxisEvent): void
 }>()
 
 // -----------------------------
@@ -168,6 +169,14 @@ const handleEventMouseLeave = () => {
   showEventTooltip.value = false
   hoveredEvent.value = undefined
   hoveredEventElement.value = null
+}
+
+/**
+ * Handles click events on timeaxis event bands
+ * @param event - Timeaxis event that was clicked
+ */
+const handleEventClick = (event: TimeaxisEvent) => {
+  emit("click-event", event)
 }
 
 // -----------------------------
@@ -371,6 +380,7 @@ defineExpose({ timeaxisElement })
         }"
         @mouseenter="(e) => handleEventMouseEnter(event, e)"
         @mouseleave="handleEventMouseLeave"
+        @click.stop="handleEventClick(event)"
       >
         <div class="g-timeaxis-event-label">
           <slot name="timeaxis-event" :event="event">

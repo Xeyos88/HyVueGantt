@@ -1025,6 +1025,7 @@ defineExpose({
             <g-gantt-timeaxis
               v-if="!hideTimeaxis"
 
+              @click-event="(e) => emit('click-timeaxis-event', e)"
               @drag-start="handleTimeaxisMouseDown"
               @touchstart="handleTimeaxisTouchStart"
               @touchmove="handleTimeaxisTouchMove"
@@ -1246,6 +1247,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   width: 100%;
+  height: 100%;
 }
 /* Layout */
 .g-gantt-chart {
@@ -1294,6 +1296,8 @@ defineExpose({
   border: 1px solid #eaeaea;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .g-gantt-rows-container::-webkit-scrollbar {
@@ -1304,6 +1308,9 @@ defineExpose({
   display: flex;
   width: 100%;
   position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .g-gantt-label-section {
