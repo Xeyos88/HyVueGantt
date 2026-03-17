@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v5.0.5](https://github.com/Xeyos88/HyVueGantt/tree/v5.0.5) (2026-03-17)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.4...v5.0.5)
+
+
+
+**♻️ Refactoring:**
+
+- `hasAnyGroup` now correctly identifies groups by checking for non-empty child arrays.
+
+**🐛 Fix:**
+
+- **groups:** improve handling of empty child arrays in group rows
+
 ## [v5.0.4](https://github.com/Xeyos88/HyVueGantt/tree/v5.0.4) (2026-03-10)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.3...v5.0.4)
