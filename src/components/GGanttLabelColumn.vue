@@ -197,7 +197,7 @@ const getProcessedRows = computed(() => {
 
       const isExpanded = row.id ? rowManager.isGroupExpanded(row.id) : false
 
-      if (row.children?.length && isExpanded) {
+      if (Array.isArray(row.children) && isExpanded && row.children.length) {
         return [processedRow, ...processRows(row.children, level + 1)]
       }
 
@@ -416,7 +416,7 @@ const rowClasses = (row: LabelColumnRowProps) => {
   if (rowLabelClass.value) {
     classes.push(rowLabelClass.value(row))
   }
-  if (row.children?.length) {
+  if (Array.isArray(row.children)) {
     classes.push("g-label-column-group")
   }
   return classes
@@ -467,7 +467,7 @@ const getRowStyle = (row: LabelColumnRowProps, isLabelColumn: boolean): CSSPrope
     position: "relative"
   }
 
-  if (!row.children?.length && !row.indentLevel) {
+  if (!Array.isArray(row.children) && !row.indentLevel) {
     style.paddingLeft = `${INDENT_WIDTH}px`
   } else if (row.indentLevel) {
     style.paddingLeft = `${row.indentLevel * INDENT_WIDTH}px`
@@ -768,7 +768,7 @@ defineExpose({
         :key="`${row.id || row.label}_${index}`"
         :data-row-id="row.id"
         :style="{
-          background: row.children?.length
+          background: Array.isArray(row.children)
             ? colors.rowContainer
             : index % 2 === 0
               ? colors.ternary
@@ -805,27 +805,30 @@ defineExpose({
             <template v-if="isValidColumn(column.field) || column.valueGetter">
               <div
                 class="g-label-column-cell"
-                :style="getColumnStyle(column.field, Boolean(row.children?.length))"
+                :style="getColumnStyle(column.field, Array.isArray(row.children))"
               >
                 <div :style="getCellStyle(column.field === 'Label')">
                   <div :style="getRowStyle(row, column.field === 'Label')" class="cell-content">
-                    <button
-                      v-if="column.field === 'Label' && row.children && row.children.length > 0"
-                      class="group-toggle-button"
-                      @click="handleGroupToggle(row, $event)"
-                    >
-                      <FontAwesomeIcon
-                        :icon="
-                          row.id && rowManager.isGroupExpanded(row.id)
-                            ? faChevronDown
-                            : faChevronRight
-                        "
-                        class="group-icon"
-                      />
-                    </button>
+                    <template v-if="column.field === 'Label' && Array.isArray(row.children)">
+                      <button
+                        v-if="row.children.length > 0"
+                        class="group-toggle-button"
+                        @click="handleGroupToggle(row, $event)"
+                      >
+                        <FontAwesomeIcon
+                          :icon="
+                            row.id && rowManager.isGroupExpanded(row.id)
+                              ? faChevronDown
+                              : faChevronRight
+                          "
+                          class="group-icon"
+                        />
+                      </button>
+                      <span v-else class="group-toggle-button group-toggle-placeholder" />
+                    </template>
                     <span class="text-ellipsis-value">
                       <slot
-                        v-if="row.children?.length"
+                        v-if="Array.isArray(row.children)"
                         :name="`label-column-${column.field.toLowerCase()}-group`"
                         :row="row"
                         :value="getRowValue(row, column, index)"
@@ -1033,6 +1036,10 @@ defineExpose({
   align-items: center;
   justify-content: center;
   width: 20px;
+}
+
+.group-toggle-placeholder {
+  pointer-events: none;
   height: 20px;
   padding: 0;
   border: none;

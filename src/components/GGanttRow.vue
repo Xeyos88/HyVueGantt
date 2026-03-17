@@ -94,7 +94,8 @@ const tooltipEndDate = ref<string | Date>("")
 /**
  * Determines if this row is a group row based on the presence of children
  */
-const isGroup = computed(() => Boolean(props.children?.length))
+const isGroup = computed(() => Array.isArray(props.children))
+const hasChildren = computed(() => Boolean(props.children?.length))
 
 /**
  * Determines if a group row is expanded
@@ -431,12 +432,13 @@ provide(BAR_CONTAINER_KEY, barContainer)
       class="g-gantt-row-label"
       :class="{ 'g-gantt-row-group-label': isGroup }"
       :style="{ background: colors.primary, color: colors.text }"
-      @click="isGroup ? handleGroupToggle($event) : undefined"
+      @click="hasChildren ? handleGroupToggle($event) : undefined"
     >
-      <!-- Expand/collapse button for groups -->
-      <button v-if="isGroup" class="group-toggle-button" @click="handleGroupToggle($event)">
+      <!-- Expand/collapse button for groups, or placeholder to preserve alignment -->
+      <button v-if="hasChildren" class="group-toggle-button" @click="handleGroupToggle($event)">
         <FontAwesomeIcon :icon="isExpanded ? faChevronDown : faChevronRight" class="group-icon" />
       </button>
+      <span v-else-if="isGroup" class="group-toggle-button group-toggle-placeholder" />
       <!-- Row label content -->
       <slot name="label">
         {{ label }}
@@ -623,6 +625,10 @@ provide(BAR_CONTAINER_KEY, barContainer)
   padding: 2px;
   border-radius: 2px;
   transition: background-color 0.2s;
+}
+
+.group-toggle-placeholder {
+  pointer-events: none;
 }
 
 .group-toggle-button:hover {

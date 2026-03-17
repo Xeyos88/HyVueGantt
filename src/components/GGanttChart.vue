@@ -547,7 +547,7 @@ const hasGroupRows = computed(() => {
   const checkForGroups = (rows: ChartRow[]): boolean => {
     return rows.some(
       (row) =>
-        (row.children && row.children.length > 0) || (row.children && checkForGroups(row.children))
+        Array.isArray(row.children) || (row.children && checkForGroups(row.children))
     )
   }
   return checkForGroups(rows.value)

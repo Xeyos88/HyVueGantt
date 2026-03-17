@@ -643,16 +643,21 @@ export const useRows = (
    * @returns Array of calculated group bars
    */
   const calculateGroupBars = (row: ChartRow): GanttBarObject[] => {
-    if (!row.children?.length) return row.bars || []
+    // No children prop at all → plain row, show user-defined bars
+    if (!row.children) return row.bars || []
 
     const allChildBars = row.children.flatMap((child): GanttBarObject[] => {
       const childGroupBars = calculateGroupBars(child)
       return [...childGroupBars, ...(child.bars || [])]
     })
 
-    if (!allChildBars.length) return []
+    // Use children bars when available, otherwise fall back to the row's own bars
+    // (handles the case of children:[] with no child bars — e.g. a session with no reservations
+    // that still wants to render as a group/chevron row)
+    const sourceBars = allChildBars.length ? allChildBars : (row.bars || [])
+    if (!sourceBars.length) return []
 
-    const minStart = allChildBars.reduce(
+    const minStart = sourceBars.reduce(
       (min, bar) => {
         const currentStart = toDayjs(bar[barStart.value])
         return !min || currentStart.isBefore(min) ? currentStart : min
@@ -660,7 +665,7 @@ export const useRows = (
       null as dayjs.Dayjs | null
     )
 
-    const maxEnd = allChildBars.reduce(
+    const maxEnd = sourceBars.reduce(
       (max, bar) => {
         const currentEnd = toDayjs(bar[barEnd.value])
         return !max || currentEnd.isAfter(max) ? currentEnd : max
@@ -680,7 +685,8 @@ export const useRows = (
           immobile: true,
           label: row.label,
           style: {
-            background: "transparent"
+            background: "transparent",
+            cursor: "pointer"
           },
           connections: row.connections || []
         }
@@ -906,8 +912,10 @@ export const useRows = (
      */
     const processRowsWithGroupBars = (rows: ChartRow[]): ChartRow[] => {
       return rows.map((row) => {
-        if (row.children?.length) {
-          const processedChildren = processRowsWithGroupBars(row.children)
+        if (Array.isArray(row.children)) {
+          const processedChildren = row.children.length
+            ? processRowsWithGroupBars(row.children)
+            : []
           return {
             ...row,
             children: processedChildren,
@@ -1069,9 +1077,9 @@ export const useRows = (
   const expandAllGroups = () => {
     const addGroupsToExpanded = (rows: ChartRow[]) => {
       rows.forEach((row) => {
-        if (row.children?.length && row.id) {
+        if (Array.isArray(row.children) && row.id) {
           expandedGroups.value.add(row.id)
-          addGroupsToExpanded(row.children)
+          if (row.children.length) addGroupsToExpanded(row.children)
         }
       })
     }
@@ -1097,7 +1105,7 @@ export const useRows = (
   const hasAnyGroup = computed(() => {
     const checkForGroups = (rows: ChartRow[]): boolean => {
       return rows.some(
-        (row) => row.children?.length! > 0 || (row.children && checkForGroups(row.children))
+        (row) => Array.isArray(row.children) || (row.children && checkForGroups(row.children))
       )
     }
     return checkForGroups(rows.value)
@@ -1115,9 +1123,9 @@ export const useRows = (
 
     const checkAllExpanded = (rows: ChartRow[]): boolean => {
       return rows.every((row) => {
-        if (row.children?.length) {
+        if (Array.isArray(row.children)) {
           const isCurrentExpanded = row.id ? expandedGroups.value.has(row.id) : false
-          return isCurrentExpanded && checkAllExpanded(row.children)
+          return isCurrentExpanded && (row.children.length ? checkAllExpanded(row.children) : true)
         }
         return true
       })
@@ -1138,9 +1146,9 @@ export const useRows = (
 
     const checkAllCollapsed = (rows: ChartRow[]): boolean => {
       return rows.every((row) => {
-        if (row.children?.length) {
+        if (Array.isArray(row.children)) {
           const isCurrentCollapsed = row.id ? !expandedGroups.value.has(row.id) : true
-          return isCurrentCollapsed && checkAllCollapsed(row.children)
+          return isCurrentCollapsed && (row.children.length ? checkAllCollapsed(row.children) : true)
         }
         return true
       })
