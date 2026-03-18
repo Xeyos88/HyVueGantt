@@ -417,19 +417,51 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     let lowerUnits = getFromCache(cache.lower, lowerCacheKey)
     const lowerUnitsByStartTime = new Map<number, TimeaxisUnit>()
 
+    // Compute shared values for proportional width calculations
+    const totalMinutes = chartEndDayjs.value.diff(chartStartDayjs.value, "minutes")
+    const dayjsUnit = getDayjsUnit(internalPrecision.value)
+
+    // Count lower units to determine total pixel width
+    let lowerUnitCount = 0
+    let temp = chartStartDayjs.value.clone()
+    while (temp.isBefore(chartEndDayjs.value)) {
+      lowerUnitCount++
+      temp = temp.add(1, dayjsUnit)
+    }
+    const totalPixelWidth = lowerUnitCount * unitWidth.value
+
     if (!lowerUnits) {
       lowerUnits = []
-      let currentLower = chartStartDayjs.value.clone()
 
-      while (currentLower.isBefore(chartEndDayjs.value)) {
+      // Collect unit boundaries
+      const unitBoundaries: Dayjs[] = []
+      let t = chartStartDayjs.value.clone()
+      while (t.isBefore(chartEndDayjs.value)) {
+        unitBoundaries.push(t)
+        t = t.add(1, dayjsUnit)
+      }
+
+      // Pass 2: create units with proportional widths using running accumulator
+      let accumulatedPixels = 0
+
+      for (let i = 0; i < unitBoundaries.length; i++) {
+        const unitStart = unitBoundaries[i]!
+        const unitEnd = i + 1 < unitBoundaries.length
+          ? unitBoundaries[i + 1]!
+          : chartEndDayjs.value
+
+        const minutesFromStart = unitEnd.diff(chartStartDayjs.value, "minutes")
+        const targetAccumulated = Math.round((minutesFromStart / totalMinutes) * totalPixelWidth)
+        const pixelWidth = targetAccumulated - accumulatedPixels
+
         const unit = createTimeaxisUnit(
-          currentLower,
+          unitStart,
           getDisplayFormat(internalPrecision.value),
-          `${unitWidth.value}px`
+          `${pixelWidth}px`
         )
         lowerUnits.push(unit)
-        lowerUnitsByStartTime.set(currentLower.valueOf(), unit)
-        currentLower = currentLower.add(1, getDayjsUnit(internalPrecision.value))
+        lowerUnitsByStartTime.set(unitStart.valueOf(), unit)
+        accumulatedPixels = targetAccumulated
       }
 
       setInCache(cache.lower, lowerCacheKey, lowerUnits)
@@ -448,42 +480,30 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
       upperUnits = []
 
       let currentUpper = chartStartDayjs.value.startOf(getDayjsUnit(upperPrecision.value))
+      let upperAccumulatedPixels = 0
 
       while (currentUpper.isBefore(chartEndDayjs.value)) {
         const nextUpper = currentUpper.add(1, getDayjsUnit(upperPrecision.value))
-
-        const effectiveStart = currentUpper.isBefore(chartStartDayjs.value)
-          ? chartStartDayjs.value
-          : currentUpper
 
         const effectiveEnd = nextUpper.isAfter(chartEndDayjs.value)
           ? chartEndDayjs.value
           : nextUpper
 
-        let unitsInPeriod = 0
+        const minutesFromStart = effectiveEnd.diff(chartStartDayjs.value, "minutes")
+        const targetAccumulated = Math.round((minutesFromStart / totalMinutes) * totalPixelWidth)
+        const periodWidth = targetAccumulated - upperAccumulatedPixels
 
-        if (internalPrecision.value === "day") {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "day", true))
-        } else if (internalPrecision.value === "month") {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "month", true))
-        } else if (internalPrecision.value === "week") {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "week", true))
-        } else {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "hour", true))
-        }
-
-        const totalWidth = unitsInPeriod * unitWidth.value
-
-        if (totalWidth > 0) {
+        if (periodWidth > 0) {
           upperUnits.push(
             createTimeaxisUnit(
               currentUpper,
               getDisplayFormat(upperPrecision.value),
-              `${totalWidth}px`
+              `${periodWidth}px`
             )
           )
         }
 
+        upperAccumulatedPixels = targetAccumulated
         currentUpper = nextUpper
       }
 
