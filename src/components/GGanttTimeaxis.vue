@@ -445,6 +445,7 @@ defineExpose({ timeaxisElement })
   justify-content: center;
   flex-shrink: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .g-upper-timeunit {
@@ -454,6 +455,7 @@ defineExpose({ timeaxisElement })
   align-items: center;
   flex-shrink: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .g-timeaxis-hour-pin {

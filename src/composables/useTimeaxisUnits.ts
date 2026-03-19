@@ -210,7 +210,7 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
    * Generates cache key for unit storage
    */
   const getCacheKey = (startDate: Dayjs, endDate: Dayjs, precision: TimeUnit, zoom: number) => {
-    return `${startDate.valueOf()}-${endDate.valueOf()}-${precision}-${zoom}`
+    return `${startDate.valueOf()}-${endDate.valueOf()}-${precision}-${zoom}-${baseUnitWidth.value}`
   }
 
   /**
