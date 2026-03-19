@@ -161,6 +161,8 @@ interface ChartRow {
   label: string
   bars: GanttBarObject[]
   children?: ChartRow[]
+  groupStartDate?: string | Date 
+  groupEndDate?: string | Date    
 }
 
 interface GanttMilestone {

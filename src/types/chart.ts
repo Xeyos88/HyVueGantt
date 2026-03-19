@@ -7,6 +7,8 @@ export interface ChartRow {
   children?: ChartRow[]
   connections?: GanttBarConnection[]
   _originalNode?: any
+  groupStartDate?: string | Date
+  groupEndDate?: string | Date
 }
 
 export type TimeUnit = "hour" | "day" | "date" | "week" | "month"
