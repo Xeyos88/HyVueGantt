@@ -583,6 +583,11 @@ export const useRows = (
 
     if (!defaultSlot) return rows
 
+    const extractGroupDates = (props: Record<string, any>) => ({
+      groupStartDate: props.groupStartDate ?? props["group-start-date"],
+      groupEndDate: props.groupEndDate ?? props["group-end-date"]
+    })
+
     defaultSlot.forEach((child) => {
       if (child.props?.bars || child.props?.children) {
         const { label, bars = [], children = [], id, connections = [] } = child.props
@@ -592,11 +597,12 @@ export const useRows = (
           bars,
           children,
           connections,
+          ...extractGroupDates(child.props),
           _originalNode: child
         })
       } else if (Array.isArray(child.children)) {
         child.children.forEach((grandchild) => {
-          const grandchildNode = grandchild as { props?: ChartRow }
+          const grandchildNode = grandchild as { props?: Record<string, any> }
           if (grandchildNode?.props?.bars || grandchildNode?.props?.children) {
             const { label, bars = [], children = [], id, connections = [] } = grandchildNode.props
             rows.push({
@@ -605,6 +611,7 @@ export const useRows = (
               bars,
               children,
               connections,
+              ...extractGroupDates(grandchildNode.props),
               _originalNode: grandchildNode
             })
           }
@@ -655,9 +662,37 @@ export const useRows = (
     // (handles the case of children:[] with no child bars — e.g. a session with no reservations
     // that still wants to render as a group/chevron row)
     const sourceBars = allChildBars.length ? allChildBars : (row.bars || [])
-    if (!sourceBars.length) return []
 
-    const minStart = sourceBars.reduce(
+    const hasGroupOverrides = row.groupStartDate || row.groupEndDate
+
+    if (!sourceBars.length && !hasGroupOverrides) return []
+
+    const format = typeof dateFormat.value === "string" ? dateFormat.value : "YYYY-MM-DD HH:mm"
+
+    // When no source bars but group overrides exist, build bar from overrides only
+    if (!sourceBars.length) {
+      const start = row.groupStartDate ? toDayjs(row.groupStartDate) : null
+      const end = row.groupEndDate ? toDayjs(row.groupEndDate) : null
+      if (!start && !end) return []
+      return [
+        {
+          [barStart.value]: (start || end!).format(format),
+          [barEnd.value]: (end || start!).format(format),
+          ganttBarConfig: {
+            id: `group-${row.id || row.label}`,
+            immobile: true,
+            label: row.label,
+            style: {
+              background: "transparent",
+              cursor: "pointer"
+            },
+            connections: row.connections || []
+          }
+        }
+      ]
+    }
+
+    let minStart: dayjs.Dayjs | null = sourceBars.reduce(
       (min, bar) => {
         const currentStart = toDayjs(bar[barStart.value])
         return !min || currentStart.isBefore(min) ? currentStart : min
@@ -665,7 +700,7 @@ export const useRows = (
       null as dayjs.Dayjs | null
     )
 
-    const maxEnd = sourceBars.reduce(
+    let maxEnd: dayjs.Dayjs | null = sourceBars.reduce(
       (max, bar) => {
         const currentEnd = toDayjs(bar[barEnd.value])
         return !max || currentEnd.isAfter(max) ? currentEnd : max
@@ -675,7 +710,16 @@ export const useRows = (
 
     if (!minStart || !maxEnd) return []
 
-    const format = typeof dateFormat.value === "string" ? dateFormat.value : "YYYY-MM-DD HH:mm"
+    // Apply optional group date overrides — extend the bar if the override is wider
+    if (row.groupStartDate) {
+      const overrideStart = toDayjs(row.groupStartDate)
+      if (overrideStart.isBefore(minStart)) minStart = overrideStart
+    }
+    if (row.groupEndDate) {
+      const overrideEnd = toDayjs(row.groupEndDate)
+      if (overrideEnd.isAfter(maxEnd)) maxEnd = overrideEnd
+    }
+
     return [
       {
         [barStart.value]: minStart.format(format),

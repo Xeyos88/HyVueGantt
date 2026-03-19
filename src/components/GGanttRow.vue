@@ -42,6 +42,8 @@ const props = defineProps<{
     connections?: GanttBarConnection[]
   }[]
   connections?: GanttBarConnection[]
+  groupStartDate?: string | Date
+  groupEndDate?: string | Date
 }>()
 
 // Events that can be emitted by this component
@@ -456,6 +458,7 @@ provide(BAR_CONTAINER_KEY, barContainer)
           :class="{ 'g-gantt-group-bar': isGroup }"
         >
           <!-- Pass bar label slot to children -->
+          <!-- @vue-ignore -->
           <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="slotProps">
             <slot :name="name" v-bind="slotProps" />
           </template>
