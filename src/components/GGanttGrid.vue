@@ -168,16 +168,16 @@ const getDateRangeHighlightColor = (date: Date, cellDurationMs: number): string 
 .g-grid-container {
   position: absolute;
   top: 0;
-  left: 0%;
+  left: 0;
   width: 100%;
   height: 100%;
   display: flex;
-  justify-content: space-between;
 }
 
 .g-grid-line {
   width: 1px;
   height: 100%;
+  box-sizing: border-box;
 }
 
 .g-grid-line:first-child {

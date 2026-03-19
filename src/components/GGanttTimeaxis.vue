@@ -443,6 +443,8 @@ defineExpose({ timeaxisElement })
   font-size: 65%;
   display: flex;
   justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .g-upper-timeunit {
@@ -450,6 +452,8 @@ defineExpose({ timeaxisElement })
   height: 100%;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .g-timeaxis-hour-pin {
