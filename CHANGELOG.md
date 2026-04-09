@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v5.2.0](https://github.com/Xeyos88/HyVueGantt/tree/v5.2.0) (2026-04-09)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.1.0...v5.2.0)
+
+
+
+**✨ New Features:**
+
+- expose group expansion state and chart restoration methods via component API
+
 ## [v5.1.0](https://github.com/Xeyos88/HyVueGantt/tree/v5.1.0) (2026-03-19)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.0.5...v5.1.0)
