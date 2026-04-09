@@ -39,6 +39,7 @@ export interface UseRowsReturn {
   onBarMove: () => void
   areAllGroupsExpanded: ComputedRef<boolean>
   areAllGroupsCollapsed: ComputedRef<boolean>
+  expandedGroups: Ref<Set<string | number>>
 }
 
 /**
@@ -1240,6 +1241,7 @@ export const useRows = (
     clearHistory,
     onBarMove,
     areAllGroupsExpanded,
-    areAllGroupsCollapsed
+    areAllGroupsCollapsed,
+    expandedGroups
   }
 }

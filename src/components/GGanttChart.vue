@@ -964,10 +964,46 @@ provide(INTERNAL_PRECISION_KEY, internalPrecision)
 // 13. EXPOSE
 // ---------------------------
 
+/**
+ * Atomically restore zoom level and internal precision.
+ *
+ * @param zoom - Integer zoom level (1–10)
+ * @param precision - Internal precision string ('hour'|'day'|'week'|'month')
+ */
+const restoreZoom = (zoom: number, precision: ReturnType<typeof internalPrecision["value"]["toString"]>) => {
+  zoomLevel.value = zoom
+  internalPrecision.value = precision as typeof internalPrecision.value
+}
+
+/**
+ * Restore horizontal scroll position.
+ *
+ * @param percentage - Scroll percentage (0–100)
+ */
+const restoreScrollPosition = (percentage: number) => {
+  if (!ganttWrapper.value) return
+  handleStep(percentage, ganttWrapper.value)
+}
+
 defineExpose({
   exportChart,
-  isExporting
+  isExporting,
+  // ── Readable state (for save before unmount) ──────────────────────────────
+  scrollPosition: computed(() => scrollPosition.value),
+  zoomLevel: computed(() => zoomLevel.value),
+  internalPrecision: computed(() => internalPrecision.value),
+  // ── Group expansion ───────────────────────────────────────────────────────
+  getExpandedGroupIds: (): (string | number)[] => [...rowManager.expandedGroups.value],
+  toggleGroupExpansion: rowManager.toggleGroupExpansion,
+  expandAllGroups: rowManager.expandAllGroups,
+  collapseAllGroups: rowManager.collapseAllGroups,
+  areAllGroupsExpanded: rowManager.areAllGroupsExpanded,
+  areAllGroupsCollapsed: rowManager.areAllGroupsCollapsed,
+  // ── Restore helpers (must be called after nextTick on mount) ──────────────
+  restoreZoom,
+  restoreScrollPosition,
 })
+
 </script>
 
 <template>
