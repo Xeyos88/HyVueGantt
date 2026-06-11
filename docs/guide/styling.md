@@ -25,6 +25,20 @@ const schemes = [
 ];
 ```
 
+You can also pass a custom `ColorScheme` object. The `gridAndBorder` field controls
+the grid lines and internal separators and, since v5.3.0, also the chart's **outer
+border** and the **commands-bar top border**. Set it to `transparent` to remove the
+outer frame (it falls back to `#eaeaea` when omitted):
+
+```typescript
+<g-gantt-chart
+  :color-scheme="{
+    /* ...other colors... */
+    gridAndBorder: 'transparent' // no outer border / no commands-bar separator
+  }"
+/>
+```
+
 ## Custom Bar Styling
 
 Individual bars can be styled:

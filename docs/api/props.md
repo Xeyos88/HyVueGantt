@@ -57,6 +57,8 @@ interface VisualProps {
   timeaxisEvents?: TimeaxisEvent[];          // Events to display on time axis
   baseUnitWidth?: number;                    // Width in px of lower unit
   defaultZoom?: number;                      // Default initial zoom value
+  maxZoom?: number;                          // Upper zoom bound (clamped to [1, 20], default 10)
+  minZoom?: number;                          // Lower zoom bound (clamped to [1, maxZoom], default 1)
   tick?: number;                             // Range selection snap interval (0 = disabled)
 }
 ```

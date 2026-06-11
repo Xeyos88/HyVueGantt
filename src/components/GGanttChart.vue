@@ -155,6 +155,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   importerBarEndField: "end",
   baseUnitWidth: 24,
   defaultZoom: 3,
+  maxZoom: 10,
+  minZoom: 1,
   tick: 0,
   autoScrollToToday: false,
   showPlannedBars: false
@@ -183,7 +185,17 @@ const ganttContainer = ref<HTMLElement | null>(null)
 const rowsContainer = ref<HTMLElement | null>(null)
 const labelColumn = ref<InstanceType<typeof GGanttLabelColumn> | null>(null)
 const validatedBaseUnitWidth = ref(Math.min(50, Math.max(20, props.baseUnitWidth)))
-const validatedDefaultZoom = ref(Math.min(10, Math.max(1, props.defaultZoom)))
+const ZOOM_HARD_MIN = 1
+const ZOOM_HARD_MAX = 20
+
+const clampZoom = (value: number, lower: number, upper: number) =>
+  Math.min(upper, Math.max(lower, value))
+
+const validatedMaxZoom = ref(clampZoom(props.maxZoom, ZOOM_HARD_MIN, ZOOM_HARD_MAX))
+const validatedMinZoom = ref(clampZoom(props.minZoom, ZOOM_HARD_MIN, validatedMaxZoom.value))
+const validatedDefaultZoom = ref(
+  clampZoom(props.defaultZoom, validatedMinZoom.value, validatedMaxZoom.value)
+)
 
 const setLabelWidth = () => {
   return (
@@ -257,6 +269,8 @@ const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision, can
   ...toRefs(props),
   baseUnitWidth: validatedBaseUnitWidth,
   defaultZoom: validatedDefaultZoom,
+  maxZoom: validatedMaxZoom,
+  minZoom: validatedMinZoom,
   colors,
   chartSize
 })
@@ -936,9 +950,15 @@ watch(
 )
 
 watch(
-  () => props.defaultZoom,
-  (newValue) => {
-    validatedDefaultZoom.value = Math.min(10, Math.max(1, newValue))
+  [() => props.maxZoom, () => props.minZoom, () => props.defaultZoom],
+  ([newMax, newMin, newDefault]) => {
+    validatedMaxZoom.value = clampZoom(newMax, ZOOM_HARD_MIN, ZOOM_HARD_MAX)
+    validatedMinZoom.value = clampZoom(newMin, ZOOM_HARD_MIN, validatedMaxZoom.value)
+    validatedDefaultZoom.value = clampZoom(
+      newDefault,
+      validatedMinZoom.value,
+      validatedMaxZoom.value
+    )
   }
 )
 
@@ -950,6 +970,8 @@ provide(CONFIG_KEY, {
   ...toRefs(props),
   baseUnitWidth: validatedBaseUnitWidth,
   defaultZoom: validatedDefaultZoom,
+  maxZoom: validatedMaxZoom,
+  minZoom: validatedMinZoom,
   colors,
   chartSize
 })
@@ -967,11 +989,11 @@ provide(INTERNAL_PRECISION_KEY, internalPrecision)
 /**
  * Atomically restore zoom level and internal precision.
  *
- * @param zoom - Integer zoom level (1–10)
+ * @param zoom - Integer zoom level, clamped to the configured [minZoom, maxZoom] range
  * @param precision - Internal precision string ('hour'|'day'|'week'|'month')
  */
 const restoreZoom = (zoom: number, precision: ReturnType<typeof internalPrecision["value"]["toString"]>) => {
-  zoomLevel.value = zoom
+  zoomLevel.value = clampZoom(zoom, validatedMinZoom.value, validatedMaxZoom.value)
   internalPrecision.value = precision as typeof internalPrecision.value
 }
 
@@ -1018,7 +1040,14 @@ defineExpose({
     ref="ganttContainer"
     :id="id"
   >
-    <div class="g-gantt-rounded-wrapper" ref="gGantt" :style="{ background: colors.background }">
+    <div
+      class="g-gantt-rounded-wrapper"
+      ref="gGantt"
+      :style="{
+        background: colors.background,
+        '--g-gantt-border-color': colors.gridAndBorder ?? '#eaeaea'
+      }"
+    >
       <!-- Chart Layout Section -->
       <div class="g-gantt-main-layout" aria-controls="gantt-controls">
         <div v-if="labelColumnTitle" class="g-gantt-label-section" :style="labelSectionStyle">
@@ -1286,10 +1315,19 @@ defineExpose({
   height: 100%;
 }
 /* Layout */
+.g-gantt-main-layout > .gantt-wrapper {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .g-gantt-chart {
   position: relative;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   overflow-x: hidden;
   -webkit-touch-callout: none;
   user-select: none;
@@ -1300,7 +1338,8 @@ defineExpose({
 .g-gantt-rows-container {
   position: relative;
   width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: visible;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -1316,7 +1355,7 @@ defineExpose({
   display: flex;
   align-items: center;
   height: 40px;
-  border-top: 1px solid #eaeaea;
+  border-top: 1px solid var(--g-gantt-border-color, #eaeaea);
   padding: 0px 6px;
   gap: 8px;
 }
@@ -1329,7 +1368,7 @@ defineExpose({
 .g-gantt-rounded-wrapper {
   border-radius: 5px;
   overflow: hidden;
-  border: 1px solid #eaeaea;
+  border: 1px solid var(--g-gantt-border-color, #eaeaea);
   display: flex;
   flex-direction: column;
   flex: 1;

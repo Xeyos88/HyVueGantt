@@ -98,6 +98,8 @@ export interface GGanttChartProps {
   importerBarEndField?: string
   baseUnitWidth?: number
   defaultZoom?: number
+  maxZoom?: number
+  minZoom?: number
   tick?: number
   autoScrollToToday?: boolean
   showPlannedBars?: boolean

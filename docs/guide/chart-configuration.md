@@ -45,6 +45,22 @@ interface GGanttChartConfig {
 }
 ```
 
+### Zoom Bounds
+
+The zoom controls in the commands bar are constrained by `min-zoom` and `max-zoom`.
+Both default to the previous fixed behaviour (`max-zoom: 10`, `min-zoom: 1`) and are
+clamped to the hard range `[1, 20]` (with `min-zoom` additionally clamped to `max-zoom`)
+to keep the time axis readable and performant. `default-zoom` is clamped into the
+resulting `[min-zoom, max-zoom]` range.
+
+```typescript
+<g-gantt-chart
+  :default-zoom="6"
+  :min-zoom="2"
+  :max-zoom="20"
+/>
+```
+
 ## Event Handling
 
 The chart emits various events that you can listen to:

@@ -122,6 +122,9 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     defaultZoom
   } = config
 
+  const maxZoom = computed(() => config.maxZoom?.value ?? MAX_ZOOM)
+  const minZoom = computed(() => config.minZoom?.value ?? MIN_ZOOM)
+
   const internalPrecision = ref<TimeUnit>(configPrecision.value)
   const zoomLevel = ref(defaultZoom.value)
   const processedTimeaxisEvents = ref<TimeaxisEvent[]>([])
@@ -554,11 +557,11 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
   }
 
   const canZoomIn = computed(() => {
-    return !(internalPrecision.value === "hour" && zoomLevel.value >= MAX_ZOOM)
+    return !(internalPrecision.value === "hour" && zoomLevel.value >= maxZoom.value)
   })
 
   const canZoomOut = computed(() => {
-    return !(zoomLevel.value <= MIN_ZOOM && internalPrecision.value === configPrecision.value)
+    return !(zoomLevel.value <= minZoom.value && internalPrecision.value === configPrecision.value)
   })
 
   /**
@@ -566,21 +569,21 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
    */
   const adjustZoomAndPrecision = (increase: boolean) => {
     if (increase) {
-      if (zoomLevel.value === MAX_ZOOM) {
+      if (zoomLevel.value >= maxZoom.value) {
         const previousPrecision = getPreviousPrecision(internalPrecision.value)
         if (previousPrecision !== internalPrecision.value) {
           internalPrecision.value = previousPrecision
-          zoomLevel.value = MIN_ZOOM
+          zoomLevel.value = minZoom.value
         }
       } else {
         zoomLevel.value += 1
       }
     } else {
-      if (zoomLevel.value === MIN_ZOOM) {
+      if (zoomLevel.value <= minZoom.value) {
         const nextPrecision = getNextPrecision(internalPrecision.value)
         if (nextPrecision !== internalPrecision.value) {
           internalPrecision.value = nextPrecision
-          zoomLevel.value = MAX_ZOOM
+          zoomLevel.value = maxZoom.value
         }
       } else {
         zoomLevel.value -= 1
