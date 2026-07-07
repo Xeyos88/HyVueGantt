@@ -16,6 +16,8 @@ The demo provides a complete configuration panel that allows real-time adjustmen
 
 The time settings section allows configuration of fundamental temporal aspects of the chart. This includes precision settings, date formats, and current time display options. These settings affect how time is represented and manipulated within the chart.
 
+The `precision` setting defines the finest time unit: zooming out past the minimum zoom level automatically switches to coarser units (e.g. `day` → `week` → `month`), and every switch is reported in the event log through the `precision-change` event. Enable **Fixed Precision** to lock the time unit so that zooming only changes the unit width. The **Go To Date** control demonstrates the `scrollToDate` method exposed by the chart: pick a date and the chart scrolls to center it in the viewport (the event log reports whether the date was inside the chart range).
+
 ### Display Configuration
 
 The display settings control the visual aspects of the chart, from color schemes to layout dimensions. You can experiment with different visual configurations to find the optimal presentation for your needs.

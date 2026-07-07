@@ -33,7 +33,8 @@ Here's a minimal example of using the GGanttChart component:
 |-----------|------|---------|-------------|
 | chartStart | `string \| Date` | Required | The start date of the chart's visible range |
 | chartEnd | `string \| Date` | Required | The end date of the chart's visible range |
-| precision | `'hour' \| 'day' \| 'week' \| 'month'` | `'day'` | Time unit precision for the chart |
+| precision | `'hour' \| 'day' \| 'week' \| 'month'` | `'day'` | Finest time unit precision for the chart. Zooming out can switch to coarser units, zooming in never goes below this value |
+| fixedPrecision | `boolean` | `false` | Lock the time unit to `precision`: zooming only changes the unit width and never switches unit |
 | barStart | `string` | Required | Property name for bar start dates |
 | barEnd | `string` | Required | Property name for bar end dates |
 | width | `string` | `'100%'` | Chart width |
@@ -130,6 +131,7 @@ Here's a minimal example of using the GGanttChart component:
 | export-error | `error: string` | Emitted when the export process encounters an error |
 | import-data | `result: ImportResult` | Emitted when data is imported with the import result |
 | range-selection | `{ row: ChartRow, startDate: string | Date, endDate: string | Date, e: MouseEvent }` | User selects a time range on a row by dragging |
+| precision-change | `{ precision: TimeUnit, previousPrecision: TimeUnit }` | Internal time unit changed while zooming (never emitted when `fixedPrecision` is `true`) |
 
 ### Slots
 
@@ -150,6 +152,65 @@ Here's a minimal example of using the GGanttChart component:
 | timeaxis-event | `{ event: TimeaxisEvent }` | Custom template for timeline events displayed on the events axis |
 | holiday-tooltip | `{ unit: TimeaxisUnit }` | Customizes the tooltip that appears when hovering over holiday dates in the time axis |
 | event-tooltip | `{ event: TimeaxisEvent, formatDate: Function }` | Customizes the tooltip that appears when hovering over events in the events axis |
+
+### Exposed Methods
+
+The following methods and readable states are available on the component instance through a template ref:
+
+```typescript
+interface GGanttChartExposed {
+  // Navigation
+  scrollToDate: (date: string | Date) => boolean // Scroll to a date, centering it in the viewport
+                                                 // when possible. Returns false if the date is
+                                                 // outside the chartStart/chartEnd range
+  // Export
+  exportChart: (options?: Partial<ExportOptions>) => Promise<ExportResult>
+  isExporting: Ref<boolean>
+
+  // Readable state
+  scrollPosition: ComputedRef<number>            // Horizontal scroll percentage (0-100)
+  zoomLevel: ComputedRef<number>                 // Current zoom level
+  internalPrecision: ComputedRef<TimeUnit>       // Current effective time unit
+
+  // Group expansion
+  getExpandedGroupIds: () => (string | number)[]
+  toggleGroupExpansion: (rowId: string | number) => void
+  expandAllGroups: () => void
+  collapseAllGroups: () => void
+  areAllGroupsExpanded: ComputedRef<boolean>
+  areAllGroupsCollapsed: ComputedRef<boolean>
+
+  // Restore helpers
+  restoreZoom: (zoom: number, precision: TimeUnit) => void
+  restoreScrollPosition: (percentage: number) => void
+}
+```
+
+Example of a "go to date" control:
+
+```vue
+<template>
+  <input type="date" v-model="targetDate" />
+  <button @click="goToDate">Go to date</button>
+  <g-gantt-chart ref="ganttRef" v-bind="chartConfig">
+    <!-- rows -->
+  </g-gantt-chart>
+</template>
+
+<script setup lang="ts">
+import { ref } from "vue"
+
+const ganttRef = ref()
+const targetDate = ref("")
+
+const goToDate = () => {
+  const shown = ganttRef.value?.scrollToDate(targetDate.value)
+  if (!shown) {
+    console.warn("Date is outside the chart range")
+  }
+}
+</script>
+```
 
 ## Command Slot Usage
 

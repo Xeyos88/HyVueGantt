@@ -26,7 +26,8 @@ The GGanttChart component accepts several key configuration properties that defi
 ### Essential Properties
 
 - `chart-start` and `chart-end`: Define the visible time range (string | Date)
-- `precision`: Sets the time unit ('hour', 'day', 'week', 'month')
+- `precision`: Sets the finest time unit ('hour', 'day', 'week', 'month'); zooming out can switch to coarser units unless `fixed-precision` is set
+- `fixed-precision`: When `true`, the time unit never changes while zooming
 - `bar-start` and `bar-end`: Specify data properties for dates
 - `row-height`: Controls row height in pixels
 

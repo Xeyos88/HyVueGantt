@@ -51,7 +51,7 @@ import { useExport } from "../composables/useExport"
 
 // Types and Constants
 import { colorSchemes, type ColorSchemeKey } from "../color-schemes"
-import { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
+import useDayjsHelper, { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
 import {
   BOOLEAN_KEY,
   CONFIG_KEY,
@@ -71,7 +71,8 @@ import type {
   ExportOptions,
   ExportResult,
   ImportResult,
-  RangeSelectionEvent
+  RangeSelectionEvent,
+  TimeUnit
 } from "../types"
 
 // Props
@@ -80,6 +81,7 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   pointerMarkerLabel: "",
   dateFormat: DEFAULT_DATE_FORMAT,
   precision: "day",
+  fixedPrecision: false,
   width: "100%",
   hideTimeaxis: false,
   colorScheme: "default",
@@ -275,6 +277,24 @@ const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision, can
   chartSize
 })
 
+// Dayjs helpers bound to this chart's configuration
+const { toDayjs, chartStartDayjs, chartEndDayjs } = useDayjsHelper({
+  ...toRefs(props),
+  baseUnitWidth: validatedBaseUnitWidth,
+  defaultZoom: validatedDefaultZoom,
+  maxZoom: validatedMaxZoom,
+  minZoom: validatedMinZoom,
+  colors,
+  chartSize
+})
+
+// Notify consumers when the internal precision changes (e.g. while zooming)
+watch(internalPrecision, (precision, previousPrecision) => {
+  if (previousPrecision && precision !== previousPrecision) {
+    emit("precision-change", { precision, previousPrecision })
+  }
+})
+
 // Navigation Management
 const {
   scrollPosition,
@@ -408,18 +428,6 @@ const previewLinePoints = computed(() => {
   }
 })
 
-watch(
-  () => scrollPosition.value,
-  () => {
-    if (connectionState.value.isCreating) {
-      const container = ganttContainer.value?.querySelector(".g-gantt-rows-container")
-      if (container) {
-        connectionState.value.mouseX = connectionState.value.mouseX
-      }
-    }
-  }
-)
-
 const { exportChart, downloadExport, isExporting } = useExport(
   () => ganttChart.value,
   () => gGantt.value,
@@ -432,29 +440,40 @@ const { exportChart, downloadExport, isExporting } = useExport(
   }
 )
 
-const autoScrollToToday = () => {
-  if (!props.autoScrollToToday || !ganttWrapper.value) return
+/**
+ * Scrolls the chart horizontally to bring a specific date into view,
+ * centering it in the viewport when possible.
+ *
+ * @param date - Date to show; must be within the chartStart/chartEnd range
+ * @returns true if the date is within the chart range and the scroll was applied
+ */
+const scrollToDate = (date: string | Date): boolean => {
+  const wrapper = ganttWrapper.value
+  if (!wrapper) return false
 
-  const today = new Date()
-  const chartStart = new Date(props.chartStart)
-  const chartEnd = new Date(props.chartEnd)
-
-  if (today < chartStart || today > chartEnd) {
-    return
+  const target = toDayjs(date)
+  if (!target.isValid()) return false
+  if (target.isBefore(chartStartDayjs.value) || target.isAfter(chartEndDayjs.value)) {
+    return false
   }
 
-  const totalDuration = chartEnd.getTime() - chartStart.getTime()
-  const todayOffset = today.getTime() - chartStart.getTime()
-  const todayPercent = (todayOffset / totalDuration) * 100
+  const totalMinutes = chartEndDayjs.value.diff(chartStartDayjs.value, "minutes")
+  if (totalMinutes <= 0) return false
 
-  const maxScroll = totalWidth.value - ganttWrapper.value.clientWidth
-  const targetScroll = (maxScroll * todayPercent) / 100
+  const offsetMinutes = target.diff(chartStartDayjs.value, "minutes", true)
+  const targetX = (offsetMinutes / totalMinutes) * totalWidth.value
 
-  const centeredScroll = targetScroll - ganttWrapper.value.clientWidth / 2
-  const finalScroll = Math.max(0, Math.min(maxScroll, centeredScroll))
+  const maxScroll = Math.max(0, totalWidth.value - wrapper.clientWidth)
+  const finalScroll = Math.max(0, Math.min(maxScroll, targetX - wrapper.clientWidth / 2))
 
-  ganttWrapper.value.scrollLeft = finalScroll
-  scrollPosition.value = (finalScroll / maxScroll) * 100
+  wrapper.scrollLeft = finalScroll
+  scrollPosition.value = maxScroll > 0 ? (finalScroll / maxScroll) * 100 : 0
+  return true
+}
+
+const autoScrollToToday = () => {
+  if (!props.autoScrollToToday) return
+  scrollToDate(new Date())
 }
 
 const handleExport = async (options?: Partial<ExportOptions>): Promise<ExportResult> => {
@@ -990,11 +1009,11 @@ provide(INTERNAL_PRECISION_KEY, internalPrecision)
  * Atomically restore zoom level and internal precision.
  *
  * @param zoom - Integer zoom level, clamped to the configured [minZoom, maxZoom] range
- * @param precision - Internal precision string ('hour'|'day'|'week'|'month')
+ * @param precision - Internal precision ('hour' | 'day' | 'week' | 'month')
  */
-const restoreZoom = (zoom: number, precision: ReturnType<typeof internalPrecision["value"]["toString"]>) => {
+const restoreZoom = (zoom: number, precision: TimeUnit) => {
   zoomLevel.value = clampZoom(zoom, validatedMinZoom.value, validatedMaxZoom.value)
-  internalPrecision.value = precision as typeof internalPrecision.value
+  internalPrecision.value = precision
 }
 
 /**
@@ -1024,6 +1043,8 @@ defineExpose({
   // ── Restore helpers (must be called after nextTick on mount) ──────────────
   restoreZoom,
   restoreScrollPosition,
+  // ── Navigation ─────────────────────────────────────────────────────────────
+  scrollToDate,
 })
 
 </script>

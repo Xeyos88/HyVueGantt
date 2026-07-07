@@ -12,7 +12,8 @@ These props control the temporal aspects of your Gantt chart:
 interface TimeManagementProps {
   chartStart: string | Date;        // Start date of visible range
   chartEnd: string | Date;          // End date of visible range
-  precision: TimeUnit;              // Time unit precision
+  precision: TimeUnit;              // Finest time unit precision reachable when zooming in
+  fixedPrecision?: boolean;         // Lock the time unit: zoom only changes unit width (default: false)
   barStart: string;                 // Property name for bar start dates
   barEnd: string;                   // Property name for bar end dates
   dateFormat?: string | false;      // Date format string
@@ -22,6 +23,10 @@ interface TimeManagementProps {
   utc?: boolean;                    // Use UTC time for current marker
 }
 ```
+
+::: tip Precision and zoom
+`precision` is a lower bound, not a fixed value: zooming out past the minimum zoom level switches the chart to coarser units (e.g. `day` → `week` → `month`), while zooming in never goes below the configured precision. Every switch emits the `precision-change` event. Set `fixedPrecision` to `true` to disable unit switching entirely.
+:::
 
 ### Visual Configuration Props
 
@@ -154,3 +159,7 @@ interface GGanttRowProps {
   connections?: GanttBarConnection[]; // Row-level connections
 }
 ```
+
+::: tip Group rows
+A row is treated as a group row only when the `children` prop is explicitly provided. Omitting it (or passing `undefined`) renders a normal task row. Passing an empty array (`:children="[]"`) is a valid way to force group styling and behavior on a row that has no child rows yet.
+:::

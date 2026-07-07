@@ -16,6 +16,27 @@ type TimeUnit = 'hour' | 'day' | 'date' | 'week' | 'month';
 />
 ```
 
+### Precision and Zoom
+
+The `precision` prop defines the **finest** time unit of the chart, not a fixed one. While zooming:
+
+- Zooming in stops at the configured precision (e.g. with `precision="day"` the chart never switches to `hour`).
+- Zooming out past the minimum zoom level switches to coarser units (`day` → `week` → `month`).
+- Every unit switch emits the `precision-change` event with `{ precision, previousPrecision }`.
+
+```vue
+<g-gantt-chart
+  :precision="'day'"
+  @precision-change="({ precision, previousPrecision }) => console.log(previousPrecision, '→', precision)"
+/>
+```
+
+To keep the time unit fixed and let zoom only change the unit width, set `fixed-precision`:
+
+```vue
+<g-gantt-chart :precision="'day'" :fixed-precision="true" />
+```
+
 ### Format Patterns
 
 Common date format patterns:

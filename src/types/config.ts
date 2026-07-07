@@ -28,6 +28,7 @@ export interface GGanttChartProps {
   chartStart: string | Date
   chartEnd: string | Date
   precision?: TimeUnit
+  fixedPrecision?: boolean
   barStart: string
   barEnd: string
   currentTime?: boolean
