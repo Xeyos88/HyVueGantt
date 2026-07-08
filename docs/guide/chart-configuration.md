@@ -43,7 +43,7 @@ interface GGanttChartConfig {
   labelColumnWidth?: string;
   font?: string;
   dateFormat?: string;
-}
+} 
 ```
 
 ### Zoom Bounds
