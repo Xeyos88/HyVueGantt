@@ -1,5 +1,5 @@
 import type { ConnectionPoint, GanttBarObject } from "./bar"
-import type { ChartRow, SortState, TimeaxisEvent } from "./chart"
+import type { ChartRow, SortState, TimeaxisEvent, TimeUnit } from "./chart"
 import type { ExportResult } from "./export"
 import type { ImportResult } from "./import"
 
@@ -78,6 +78,11 @@ export interface LabelEditEvent {
   e: MouseEvent
 }
 
+export interface PrecisionChangeEvent {
+  precision: TimeUnit
+  previousPrecision: TimeUnit
+}
+
 export interface GGanttChartEmits {
   (e: "click-bar", value: GanttBarEvent): void
   (e: "mousedown-bar", value: GanttBarEvent): void
@@ -108,4 +113,5 @@ export interface GGanttChartEmits {
   (e: "range-selection", value: RangeSelectionEvent): void
   (e: "update:importer-visible", value: boolean): void
   (e: "click-timeaxis-event", value: TimeaxisEvent): void
+  (e: "precision-change", value: PrecisionChangeEvent): void
 }

@@ -24,7 +24,11 @@ The GGanttRow component represents a single row in the Gantt chart. It manages t
 | bars | `GanttBarObject[]` | Required | Array of bar objects |
 | highlightOnHover | `boolean` | `false` | Highlight row on hover |
 | id | `string \| number` | `` |Row identifier |
-| children | `ChartRow[]` | `[]` | Array of child rows |
+| children | `ChartRow[]` | `undefined` | Array of child rows. When provided (even empty), the row is rendered as a group row |
+
+::: tip Group rows
+A row becomes a group row only when the `children` prop is explicitly set. Omitting it renders a normal task row. Passing `:children="[]"` forces group styling and behavior on a row without child rows (e.g. a container whose children will be added later).
+:::
 
 
 ### Events

@@ -39,7 +39,7 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
    */
   const totalWidth = computed(() => {
     return timeaxisUnits.timeaxisUnits.value.result.lowerUnits.reduce((total, unit) => {
-      return total + parseInt(unit.width!)
+      return total + parseFloat(unit.width!)
     }, 0)
   })
 

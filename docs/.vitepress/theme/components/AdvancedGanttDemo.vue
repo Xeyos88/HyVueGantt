@@ -27,6 +27,7 @@ const month = new Date().getMonth() + 1
 
 // Time Configuration
 const precision = ref<TimeUnit>('day')
+const fixedPrecision = ref(false)
 const chartStart = ref(`${year}-${month}-01`)
 const chartEnd = ref(`${year}-${month+2}-28`)
 const dateFormat = ref('YYYY-MM-DD HH:mm')
@@ -36,6 +37,18 @@ const currentTimeLabel = ref('Now')
 const pointerMarker = ref(true)
 const locale = ref('en')
 const utc = ref(false)
+
+// Go To Date
+const ganttRef = ref<InstanceType<typeof GGanttChart> | null>(null)
+const goToDateValue = ref(dayjs().format('YYYY-MM-DD'))
+
+const handleGoToDate = () => {
+  const shown = ganttRef.value?.scrollToDate(goToDateValue.value)
+  addEventLog('Go To Date', {
+    date: goToDateValue.value,
+    shown: shown ? 'date centered in viewport' : 'date outside chart range'
+  })
+}
 
 
 // Display Configuration
@@ -487,7 +500,7 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
           ganttBarConfig: {
             id: 'milestone1',
             label: 'Release v1.0',
-            style: { 
+            style: {
               background: '#2ecc71',
               borderRadius: '50%',
               width: '24px',
@@ -497,6 +510,21 @@ const sampleData = ref<ChartRowWithOptionalBars[]>([
         }]
       }
     ]
+  },
+  // Row without children: must render as a normal task row, not a group row
+  {
+    id: 'standalone1',
+    label: 'Standalone Task',
+    bars: [{
+      start: `${year}-${month}-05`,
+      end: `${year}-${month}-15`,
+      ganttBarConfig: {
+        id: 'bar-standalone',
+        label: 'No children row',
+        style: { background: '#16a085' },
+        progress: 20
+      }
+    }]
   }
 ])
 
@@ -563,6 +591,27 @@ const formattedEventLog = computed(() => {
                   </option>
                 </select>
               </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Fixed Precision:
+                <input type="checkbox" v-model="fixedPrecision">
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                Go To Date:
+                <input type="date" v-model="goToDateValue">
+              </label>
+            </div>
+            <div class="setting-item">
+              <button
+                class="go-to-date-button"
+                @click="handleGoToDate"
+                style="width: 100%; padding: 8px; background: #42b883; color: white; border: none; border-radius: 4px; cursor: pointer;"
+              >
+                Go To Date
+              </button>
             </div>
             <div class="setting-item">
               <label>
@@ -1141,9 +1190,11 @@ const formattedEventLog = computed(() => {
     <!-- Gantt Container -->
     <div class="gantt-container">
       <g-gantt-chart
+        ref="ganttRef"
         :chart-start="chartStart"
         :chart-end="chartEnd"
         :precision="precision"
+        :fixed-precision="fixedPrecision"
         :locale="locale"
         bar-start="start"
         bar-end="end"
@@ -1220,6 +1271,7 @@ const formattedEventLog = computed(() => {
         @export-error="handleEvent($event, 'Start Error')"
         @import-data="handleImport"
         @range-selection="handleEvent($event, 'Range Selection')"
+        @precision-change="handleEvent($event, 'Precision Change')"
       >
         <g-gantt-row
           v-for="row in sampleData"
@@ -1227,7 +1279,7 @@ const formattedEventLog = computed(() => {
           :id="row.id || ''"
           :label="row.label"
           :bars="row.bars || []"
-          :children="row.children || []"
+          :children="row.children"
           :connections="row.connections || []"
           highlightOnHover
         >

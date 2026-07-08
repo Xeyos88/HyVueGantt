@@ -591,7 +591,9 @@ export const useRows = (
 
     defaultSlot.forEach((child) => {
       if (child.props?.bars || child.props?.children) {
-        const { label, bars = [], children = [], id, connections = [] } = child.props
+        // Keep children undefined when not provided: only an explicit children prop
+        // (even an empty array) marks the row as a group row
+        const { label, bars = [], children, id, connections = [] } = child.props
         rows.push({
           id,
           label,
@@ -605,7 +607,7 @@ export const useRows = (
         child.children.forEach((grandchild) => {
           const grandchildNode = grandchild as { props?: Record<string, any> }
           if (grandchildNode?.props?.bars || grandchildNode?.props?.children) {
-            const { label, bars = [], children = [], id, connections = [] } = grandchildNode.props
+            const { label, bars = [], children, id, connections = [] } = grandchildNode.props
             rows.push({
               id,
               label,

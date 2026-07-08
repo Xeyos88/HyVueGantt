@@ -96,7 +96,7 @@ Let's break down the key components:
 ### Chart Properties
 
 - `chart-start` and `chart-end`: Define the visible time range
-- `precision`: Sets the time unit ('hour', 'day', 'week', or 'month')
+- `precision`: Sets the finest time unit ('hour', 'day', 'week', or 'month'); zooming out can switch to coarser units
 - `bar-start` and `bar-end`: Specify which properties of your data contain the start and end dates
 - `row-height`: Controls the height of each row
 - `grid`: Enables the background grid

@@ -54,7 +54,7 @@ export default function useTimePositionMapping(config: GGanttChartConfig = provi
 
     const width = ganttWidth.value || 0
     const diffFromStart = toDayjs(time).diff(chartStartDayjs.value, "minutes", true)
-    const position = Math.ceil((diffFromStart / totalNumOfMinutes.value) * width)
+    const position = Math.round((diffFromStart / totalNumOfMinutes.value) * width)
 
     // Cache the result
     timeToPositionCache.value.set(time, position)

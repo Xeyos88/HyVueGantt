@@ -124,6 +124,7 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
 
   const maxZoom = computed(() => config.maxZoom?.value ?? MAX_ZOOM)
   const minZoom = computed(() => config.minZoom?.value ?? MIN_ZOOM)
+  const isPrecisionFixed = computed(() => config.fixedPrecision?.value ?? false)
 
   const internalPrecision = ref<TimeUnit>(configPrecision.value)
   const zoomLevel = ref(defaultZoom.value)
@@ -168,14 +169,37 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
   const unitWidth = computed(() => baseUnitWidth.value * zoomLevel.value)
 
   /**
+   * Nominal duration in minutes of one unit at each precision.
+   * Used to derive the pixel-per-minute scale so that cell widths stay
+   * proportional to their real duration (e.g. February vs March)
+   */
+  const NOMINAL_UNIT_MINUTES: Record<TimeUnit, number> = {
+    hour: 60,
+    day: 1440,
+    date: 1440,
+    week: 10080,
+    month: 43200
+  }
+
+  /**
+   * Pixel-per-minute scale shared by header cells and bar/marker positioning.
+   * Keeping a single time-to-pixel map is what guarantees that grid/header
+   * boundaries match the linear mapping used by bars, hover and markers
+   */
+  const pxPerMinute = computed(
+    () => unitWidth.value / (NOMINAL_UNIT_MINUTES[internalPrecision.value] ?? 1440)
+  )
+
+  /**
    * Gets the next coarser precision level
+   * The configured precision is only a lower bound (finest granularity):
+   * zooming out can always reach coarser levels, up to the coarsest one
    * @param currentPrecision - Time current precition
    * @returns Next precision
    */
   const getNextPrecision = (currentPrecision: TimeUnit): TimeUnit => {
     const currentIndex = precisionHierarchy.indexOf(currentPrecision)
-    const configIndex = precisionHierarchy.indexOf(configPrecision.value)
-    if (currentIndex < precisionHierarchy.length - 1 && currentIndex < configIndex) {
+    if (currentIndex < precisionHierarchy.length - 1) {
       return precisionHierarchy[currentIndex + 1]!
     }
     return currentPrecision
@@ -418,21 +442,30 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     )
 
     let lowerUnits = getFromCache(cache.lower, lowerCacheKey)
-    const lowerUnitsByStartTime = new Map<number, TimeaxisUnit>()
 
     if (!lowerUnits) {
       lowerUnits = []
+      const startOfUnit =
+        internalPrecision.value === "week" ? "isoWeek" : getDayjsUnit(internalPrecision.value)
       let currentLower = chartStartDayjs.value.clone()
 
       while (currentLower.isBefore(chartEndDayjs.value)) {
-        const unit = createTimeaxisUnit(
-          currentLower,
-          getDisplayFormat(internalPrecision.value),
-          `${unitWidth.value}px`
+        const nextBoundary = currentLower
+          .startOf(startOfUnit)
+          .add(1, getDayjsUnit(internalPrecision.value))
+        const cellEnd = nextBoundary.isAfter(chartEndDayjs.value)
+          ? chartEndDayjs.value
+          : nextBoundary
+        const cellWidth = cellEnd.diff(currentLower, "minute", true) * pxPerMinute.value
+
+        lowerUnits.push(
+          createTimeaxisUnit(
+            currentLower,
+            getDisplayFormat(internalPrecision.value),
+            `${cellWidth}px`
+          )
         )
-        lowerUnits.push(unit)
-        lowerUnitsByStartTime.set(currentLower.valueOf(), unit)
-        currentLower = currentLower.add(1, getDayjsUnit(internalPrecision.value))
+        currentLower = nextBoundary
       }
 
       setInCache(cache.lower, lowerCacheKey, lowerUnits)
@@ -463,19 +496,7 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
           ? chartEndDayjs.value
           : nextUpper
 
-        let unitsInPeriod = 0
-
-        if (internalPrecision.value === "day") {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "day", true))
-        } else if (internalPrecision.value === "month") {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "month", true))
-        } else if (internalPrecision.value === "week") {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "week", true))
-        } else {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "hour", true))
-        }
-
-        const totalWidth = unitsInPeriod * unitWidth.value
+        const totalWidth = effectiveEnd.diff(effectiveStart, "minute", true) * pxPerMinute.value
 
         if (totalWidth > 0) {
           upperUnits.push(
@@ -557,17 +578,33 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
   }
 
   const canZoomIn = computed(() => {
-    return !(internalPrecision.value === "hour" && zoomLevel.value >= maxZoom.value)
+    if (isPrecisionFixed.value) {
+      return zoomLevel.value < maxZoom.value
+    }
+    // configPrecision is the finest granularity reachable when zooming in
+    return !(internalPrecision.value === configPrecision.value && zoomLevel.value >= maxZoom.value)
   })
 
   const canZoomOut = computed(() => {
-    return !(zoomLevel.value <= minZoom.value && internalPrecision.value === configPrecision.value)
+    if (isPrecisionFixed.value) {
+      return zoomLevel.value > minZoom.value
+    }
+    const coarsestPrecision = precisionHierarchy[precisionHierarchy.length - 1]
+    return !(zoomLevel.value <= minZoom.value && internalPrecision.value === coarsestPrecision)
   })
 
   /**
    * Handles zoom level adjustments
    */
   const adjustZoomAndPrecision = (increase: boolean) => {
+    if (isPrecisionFixed.value) {
+      if (increase && zoomLevel.value < maxZoom.value) {
+        zoomLevel.value += 1
+      } else if (!increase && zoomLevel.value > minZoom.value) {
+        zoomLevel.value -= 1
+      }
+      return
+    }
     if (increase) {
       if (zoomLevel.value >= maxZoom.value) {
         const previousPrecision = getPreviousPrecision(internalPrecision.value)

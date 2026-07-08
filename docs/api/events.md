@@ -72,6 +72,11 @@ interface RangeSelectionEvent {
   endDate: string | Date
   e: MouseEvent
 }
+
+interface PrecisionChangeEvent {
+  precision: TimeUnit
+  previousPrecision: TimeUnit
+}
 ```
 
 ## Bar Events
@@ -137,4 +142,7 @@ interface RangeSelectionEvent {
 ```typescript
 @sort="(event: { sortState: SortState }) => void"
 @range-selection="(event: RangeSelectionEvent) => void"
+@precision-change="(event: PrecisionChangeEvent) => void"
 ```
+
+`precision-change` is emitted whenever the internal time unit changes while zooming (e.g. from `day` to `week` when zooming out). It is never emitted when the `fixedPrecision` prop is `true`.
