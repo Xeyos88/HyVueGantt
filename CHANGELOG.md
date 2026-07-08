@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v5.3.0](https://github.com/Xeyos88/HyVueGantt/tree/v5.3.0) (2026-07-08)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.2.1...v5.3.0)
+
+
+
+**✨ New Features:**
+
+- configurable time precision, go-to-date navigation, and timeaxis alignment fixes
+
+**♻️ Refactoring:**
+
+- standardize time-to-pixel mapping using sub-pixel precision and nominal unit durations
+
+**🐛 Fix:**
+
+- add fixed precision prop, update docs, fixed github bugs
+
 ## [v5.2.1](https://github.com/Xeyos88/HyVueGantt/tree/v5.2.1) (2026-06-11)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.2.0...v5.2.1)
