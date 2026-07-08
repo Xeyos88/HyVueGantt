@@ -169,6 +169,28 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
   const unitWidth = computed(() => baseUnitWidth.value * zoomLevel.value)
 
   /**
+   * Nominal duration in minutes of one unit at each precision.
+   * Used to derive the pixel-per-minute scale so that cell widths stay
+   * proportional to their real duration (e.g. February vs March)
+   */
+  const NOMINAL_UNIT_MINUTES: Record<TimeUnit, number> = {
+    hour: 60,
+    day: 1440,
+    date: 1440,
+    week: 10080,
+    month: 43200
+  }
+
+  /**
+   * Pixel-per-minute scale shared by header cells and bar/marker positioning.
+   * Keeping a single time-to-pixel map is what guarantees that grid/header
+   * boundaries match the linear mapping used by bars, hover and markers
+   */
+  const pxPerMinute = computed(
+    () => unitWidth.value / (NOMINAL_UNIT_MINUTES[internalPrecision.value] ?? 1440)
+  )
+
+  /**
    * Gets the next coarser precision level
    * The configured precision is only a lower bound (finest granularity):
    * zooming out can always reach coarser levels, up to the coarsest one
@@ -423,17 +445,27 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
 
     if (!lowerUnits) {
       lowerUnits = []
+      const startOfUnit =
+        internalPrecision.value === "week" ? "isoWeek" : getDayjsUnit(internalPrecision.value)
       let currentLower = chartStartDayjs.value.clone()
 
       while (currentLower.isBefore(chartEndDayjs.value)) {
+        const nextBoundary = currentLower
+          .startOf(startOfUnit)
+          .add(1, getDayjsUnit(internalPrecision.value))
+        const cellEnd = nextBoundary.isAfter(chartEndDayjs.value)
+          ? chartEndDayjs.value
+          : nextBoundary
+        const cellWidth = cellEnd.diff(currentLower, "minute", true) * pxPerMinute.value
+
         lowerUnits.push(
           createTimeaxisUnit(
             currentLower,
             getDisplayFormat(internalPrecision.value),
-            `${unitWidth.value}px`
+            `${cellWidth}px`
           )
         )
-        currentLower = currentLower.add(1, getDayjsUnit(internalPrecision.value))
+        currentLower = nextBoundary
       }
 
       setInCache(cache.lower, lowerCacheKey, lowerUnits)
@@ -464,19 +496,7 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
           ? chartEndDayjs.value
           : nextUpper
 
-        let unitsInPeriod = 0
-
-        if (internalPrecision.value === "day") {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "day", true))
-        } else if (internalPrecision.value === "month") {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "month", true))
-        } else if (internalPrecision.value === "week") {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "week", true))
-        } else {
-          unitsInPeriod = Math.ceil(effectiveEnd.diff(effectiveStart, "hour", true))
-        }
-
-        const totalWidth = unitsInPeriod * unitWidth.value
+        const totalWidth = effectiveEnd.diff(effectiveStart, "minute", true) * pxPerMinute.value
 
         if (totalWidth > 0) {
           upperUnits.push(

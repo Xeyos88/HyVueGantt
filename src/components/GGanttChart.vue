@@ -572,7 +572,7 @@ const rowsContainerStyle = computed<CSSProperties>(() => {
 const totalWidth = computed(() => {
   const lowerUnits = timeaxisUnits.value!.result.lowerUnits
   return lowerUnits.reduce((total, unit) => {
-    return total + parseInt(unit.width!)
+    return total + parseFloat(unit.width!)
   }, 0)
 })
 
