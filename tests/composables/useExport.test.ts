@@ -23,7 +23,7 @@ vi.mock("jspdf", () => ({
   }))
 }))
 
-vi.mock("xlsx", () => ({
+vi.mock("@e965/xlsx", () => ({
   utils: {
     book_new: vi.fn(() => ({})),
     aoa_to_sheet: vi.fn(() => ({})),
@@ -36,7 +36,7 @@ vi.mock("xlsx", () => ({
 
 import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
-import * as XLSX from "xlsx"
+import * as XLSX from "@e965/xlsx"
 
 describe("useExport", () => {
   let mockGetChartElement: () => HTMLElement | null

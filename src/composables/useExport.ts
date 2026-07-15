@@ -2,7 +2,6 @@ import { ref, type Ref } from "vue"
 import type { ChartRow, ExportOptions, ExportResult, GanttBarObject, TimeUnit } from "../types"
 import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
-import * as XLSX from "xlsx"
 import type { UseRowsReturn } from "./useRows"
 import dayjs from "dayjs"
 
@@ -495,7 +494,14 @@ export function useExport(
    */
   const exportToExcel = async (options: ExportOptions): Promise<ExportResult> => {
     try {
-      const workbook = XLSX.utils.book_new()
+      const xlsx = await import("@e965/xlsx").catch(() => {
+        throw new Error(
+          'Excel export requires the "@e965/xlsx" peer dependency. Install it to enable this feature.'
+        )
+      })
+      const { utils, write } = xlsx
+
+      const workbook = utils.book_new()
 
       const getAllRows = (rows: ChartRow[]): ChartRow[] => {
         return rows.flatMap((row) => {
@@ -568,8 +574,8 @@ export function useExport(
         ])
       })
 
-      const worksheet1 = XLSX.utils.aoa_to_sheet(firstSheetData)
-      XLSX.utils.book_append_sheet(workbook, worksheet1, "Gantt Rows")
+      const worksheet1 = utils.aoa_to_sheet(firstSheetData)
+      utils.book_append_sheet(workbook, worksheet1, "Gantt Rows")
 
       const secondSheetData = [] as any[][]
       secondSheetData.push([
@@ -669,12 +675,12 @@ export function useExport(
         ])
       })
 
-      const worksheet2 = XLSX.utils.aoa_to_sheet(secondSheetData)
-      XLSX.utils.book_append_sheet(workbook, worksheet2, "Bars Detail")
+      const worksheet2 = utils.aoa_to_sheet(secondSheetData)
+      utils.book_append_sheet(workbook, worksheet2, "Bars Detail")
       ;[worksheet1, worksheet2].forEach((worksheet) => {
-        const headerRange = XLSX.utils.decode_range(worksheet["!ref"] || "A1")
+        const headerRange = utils.decode_range(worksheet["!ref"] || "A1")
         for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
-          const cellRef = XLSX.utils.encode_cell({ r: 0, c: col })
+          const cellRef = utils.encode_cell({ r: 0, c: col })
           if (!worksheet[cellRef]) worksheet[cellRef] = {}
           worksheet[cellRef].s = { font: { bold: true } }
         }
@@ -704,7 +710,7 @@ export function useExport(
       ]
       worksheet2["!cols"] = colWidths2
 
-      const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" })
+      const excelBuffer = write(workbook, { bookType: "xlsx", type: "array" })
       const blob = new Blob([excelBuffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       })

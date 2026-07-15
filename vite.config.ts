@@ -58,7 +58,7 @@ export default () => {
           "jspdf",
           /^lodash/,
           "uuid",
-          "xlsx",
+          "@e965/xlsx",
           "papaparse"
         ],
         output: {
