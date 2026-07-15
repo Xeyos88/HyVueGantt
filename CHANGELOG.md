@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v5.3.1](https://github.com/Xeyos88/HyVueGantt/tree/v5.3.1) (2026-07-15)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.3.0...v5.3.1)
+
+
+
+**🐛 Fix:**
+
+- migrate xlsx dependency to @e965/xlsx and implement lazy loading for Excel export
+
 ## [v5.3.0](https://github.com/Xeyos88/HyVueGantt/tree/v5.3.0) (2026-07-08)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.2.1...v5.3.0)
