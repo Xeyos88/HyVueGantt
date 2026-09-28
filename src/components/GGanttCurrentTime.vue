@@ -2,7 +2,7 @@
 // -----------------------------
 // 1. EXTERNAL IMPORTS
 // -----------------------------
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import dayjs from "dayjs"
 import { useIntervalFn } from "@vueuse/core"
 
@@ -35,12 +35,13 @@ const currentMoment = ref(dayjs())
 /**
  * Extract configuration from provider
  */
-const { colors, dateFormat, currentTimeLabel, utc } = provideConfig()
+const { colors, dateFormat, currentTimeLabel, utc, chartStart, chartEnd, ganttWidth, locale } =
+  provideConfig()
 
 /**
  * X-coordinate position for current time marker
  */
-const xDist = ref()
+const xDist = ref(0)
 
 // -----------------------------
 // 4. TIME TRACKING FUNCTIONS
@@ -61,6 +62,8 @@ const loopTime = () => {
 /**
  * Set up interval for updating current time
  */
+// Position on first render and react to chart changes without waiting for the next tick.
+watch([chartStart, chartEnd, ganttWidth, dateFormat, locale, utc], loopTime, { immediate: true })
 useIntervalFn(loopTime, 1000)
 
 // -----------------------------
