@@ -61,6 +61,10 @@ export interface GGanttChartProps {
   defaultConnectionLabel?: string
   defaultConnectionLabelAlwaysVisible?: boolean
   defaultConnectionLabelStyle?: ConnectionLabelStyle
+  /** Render only visible rows when maxRows > 0. Disabled by default. */
+  virtualRows?: boolean
+  /** Extra rows rendered above and below the viewport. Default: 5. */
+  virtualRowsOverscan?: number
   maxRows?: number
   initialSort?: SortState
   initialRows?: ChartRow[]

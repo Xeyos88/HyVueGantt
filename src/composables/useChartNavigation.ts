@@ -1,4 +1,4 @@
-import { ref, computed, type Ref, nextTick } from "vue"
+import { ref, computed, type Ref, nextTick, unref } from "vue"
 import type useTimeaxisUnits from "./useTimeaxisUnits"
 
 /**
@@ -26,7 +26,12 @@ interface ChartNavigationOptions {
  * @param maxRows - Maximum number of rows that can be displayed simultaneously
  * @returns Object containing navigation state and methods
  */
-export function useChartNavigation(options: ChartNavigationOptions, maxRows: number) {
+export function useChartNavigation(
+  options: ChartNavigationOptions,
+  maxRows: number | Ref<number>,
+  configuredRowHeight?: Ref<number>,
+  onVerticalScroll?: (top: number) => void
+) {
   const { scrollRefs, updateBarPositions, timeaxisUnits } = options
   const { adjustZoomAndPrecision } = timeaxisUnits
 
@@ -75,7 +80,7 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
    * @param wrapper - Container DOM element
    */
   const handleWheel = (e: WheelEvent, wrapper: HTMLElement) => {
-    if (maxRows !== 0) {
+    if (unref(maxRows) !== 0) {
       if (e.deltaX !== 0) {
         e.preventDefault()
       }
@@ -112,6 +117,7 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
     if (scrollRefs.labelColumn.value) {
       scrollRefs.labelColumn.value.setScroll(target.scrollTop)
     }
+    onVerticalScroll?.(target.scrollTop)
     updateVerticalScrollState()
   }
 
@@ -123,6 +129,7 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
   const handleLabelScroll = (scrollTop: number) => {
     if (scrollRefs.rowsContainer.value) {
       scrollRefs.rowsContainer.value.scrollTop = scrollTop
+      onVerticalScroll?.(scrollRefs.rowsContainer.value.scrollTop)
       updateVerticalScrollState()
     }
   }
@@ -146,7 +153,7 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
     if (!scrollRefs.rowsContainer.value) return
 
     const currentScroll = scrollRefs.rowsContainer.value.scrollTop
-    const rowHeight = scrollRefs.rowsContainer.value.firstElementChild?.clientHeight || 0
+    const rowHeight = configuredRowHeight?.value || scrollRefs.rowsContainer.value.firstElementChild?.clientHeight || 0
 
     scrollRefs.rowsContainer.value.scrollTop = Math.max(0, currentScroll - rowHeight)
     handleContentScroll(createScrollEvent(scrollRefs.rowsContainer.value))
@@ -159,7 +166,7 @@ export function useChartNavigation(options: ChartNavigationOptions, maxRows: num
     if (!scrollRefs.rowsContainer.value) return
 
     const currentScroll = scrollRefs.rowsContainer.value.scrollTop
-    const rowHeight = scrollRefs.rowsContainer.value.firstElementChild?.clientHeight || 0
+    const rowHeight = configuredRowHeight?.value || scrollRefs.rowsContainer.value.firstElementChild?.clientHeight || 0
     const maxScroll =
       scrollRefs.rowsContainer.value.scrollHeight - scrollRefs.rowsContainer.value.clientHeight
 

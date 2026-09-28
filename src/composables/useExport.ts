@@ -50,11 +50,11 @@ export function useExport(
     const textElements = clonedElement.querySelectorAll(textSelectors.join(", "))
 
     const commands = clonedElement.querySelector(".g-gantt-command") as HTMLElement
-    commands.style.display = "none"
+    if (commands) commands.style.display = "none"
 
     if (!options.exportColumnLabel) {
       const columnLabels = clonedElement.querySelector(".g-gantt-label-section") as HTMLElement
-      columnLabels.style.display = "none"
+      if (columnLabels) columnLabels.style.display = "none"
     }
 
     textElements.forEach((el) => {

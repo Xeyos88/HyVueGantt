@@ -62,6 +62,8 @@ Here's a minimal example of using the GGanttChart component:
 | defaultConnectionLabel | `string` | `''` | Default label for all connections |
 | defaultConnectionLabelAlwaysVisible | `boolean` | `false` | Default visibility setting for connection labels |
 | defaultConnectionLabelStyle | `ConnectionLabelStyle` | `{}` | Default styling for connection labels |
+| virtualRows | `boolean` | `false` | Render a window of rows when maxRows > 0 |
+| virtualRowsOverscan | `number` | `5` | Extra rows rendered above and below the viewport |
 | maxRows | `number` | `0` | Maximum number of visible rows || initialSort | `SortState` | `'none'` | Initial sorting column and direction |
 | initialRows | `ChartRow[]` | `[]` | Initial rows data |
 | currentTime | `boolean` | `false` | Show current time indicator |

@@ -18,6 +18,7 @@ import {
 // -----------------------------
 
 // Provider
+import { VIRTUAL_ROWS_KEY } from "../provider/symbols"
 import provideConfig from "../provider/provideConfig"
 
 // Composables
@@ -72,6 +73,7 @@ if (!rowManager) {
  * Extract rows and sorting state from row manager
  */
 const { rows, sortState, toggleSort } = rowManager
+const virtual = inject(VIRTUAL_ROWS_KEY, undefined)
 
 /**
  * Extract props from configuration
@@ -188,6 +190,7 @@ const totalWidth = computed(() => {
  * Get processed rows with indentation level
  */
 const getProcessedRows = computed(() => {
+  if (virtual?.enabled.value) return virtual.flatRows.value.map(({ row, depth }) => ({ ...row, indentLevel: depth }))
   const processRows = (rows: ChartRow[], level = 0): LabelColumnRowProps[] => {
     return rows.flatMap((row) => {
       const processedRow: LabelColumnRowProps = {
@@ -211,7 +214,14 @@ const getProcessedRows = computed(() => {
 /**
  * Style for container based on maxRows setting
  */
+const visibleLabelRows = computed(() => {
+  const all = getProcessedRows.value
+  return virtual?.enabled.value ? all.slice(virtual.window.value.start, virtual.window.value.end) : all
+})
+const rowIndexOffset = computed(() => virtual?.enabled.value ? virtual.window.value.start : 0)
+
 const labelContainerStyle = computed<CSSProperties>(() => {
+  if (virtual?.exporting.value) return {}
   if (maxRows.value === 0) return {}
   const minRows = Math.min(maxRows.value, getProcessedRows.value.length)
 
@@ -763,17 +773,19 @@ defineExpose({
       ref="labelContainer"
       @scroll="handleLabelScroll"
     >
+      <div v-if="virtual?.enabled.value" class="g-virtual-spacer" aria-hidden="true" :style="{ height: `${virtual.window.value.top}px` }" />
       <div
-        v-for="(row, index) in getProcessedRows"
-        :key="`${row.id || row.label}_${index}`"
+        v-for="(row, index) in visibleLabelRows"
+        :key="row.id ?? row.label"
         :data-row-id="row.id"
         :style="{
           background: Array.isArray(row.children)
             ? colors.rowContainer
-            : index % 2 === 0
+            : (index + rowIndexOffset) % 2 === 0
               ? colors.ternary
               : colors.quartenary,
           height: `${rowHeight}px`,
+          boxSizing: 'border-box',
           borderBottom: `1px solid ${colors.gridAndBorder}`,
           transform:
             rowTouchState.draggedRow === row
@@ -831,23 +843,23 @@ defineExpose({
                         v-if="Array.isArray(row.children)"
                         :name="`label-column-${column.field.toLowerCase()}-group`"
                         :row="row"
-                        :value="getRowValue(row, column, index)"
+                        :value="getRowValue(row, column, index + rowIndexOffset)"
                       >
                         <slot
                           :name="`label-column-${column.field.toLowerCase()}`"
                           :row="row"
-                          :value="getRowValue(row, column, index)"
+                          :value="getRowValue(row, column, index + rowIndexOffset)"
                         >
-                          {{ getRowValue(row, column, index) }}
+                          {{ getRowValue(row, column, index + rowIndexOffset) }}
                         </slot>
                       </slot>
                       <slot
                         v-else
                         :name="`label-column-${column.field.toLowerCase()}`"
                         :row="row"
-                        :value="getRowValue(row, column, index)"
+                        :value="getRowValue(row, column, index + rowIndexOffset)"
                       >
-                        {{ getRowValue(row, column, index) }}
+                        {{ getRowValue(row, column, index + rowIndexOffset) }}
                       </slot>
                     </span>
                   </div>
@@ -857,6 +869,7 @@ defineExpose({
           </template>
         </div>
       </div>
+      <div v-if="virtual?.enabled.value" class="g-virtual-spacer" aria-hidden="true" :style="{ height: `${virtual.window.value.bottom}px` }" />
     </div>
   </div>
 </template>

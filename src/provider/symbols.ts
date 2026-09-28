@@ -1,4 +1,5 @@
 import type { InjectionKey, Ref } from "vue"
+import type { VirtualRows } from "../composables/useVirtualRows"
 
 import type { GGanttBooleanConfig, GGanttChartConfig, GanttBarObject, TimeUnit } from "../types"
 
@@ -23,3 +24,5 @@ export const GANTT_ID_KEY = Symbol("GANTT_ID_KEY") as InjectionKey<string>
 export const INTERNAL_PRECISION_KEY = Symbol("INTERNAL_PRECISION_KEY") as InjectionKey<
   Ref<TimeUnit>
 >
+
+export const VIRTUAL_ROWS_KEY: InjectionKey<VirtualRows> = Symbol("VIRTUAL_ROWS_KEY")

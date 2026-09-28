@@ -54,7 +54,8 @@ export function useConnections(
   id: Ref<string>,
   emit: {
     (e: "connection-delete", value: ConnectionDeleteEvent): void
-  }
+  },
+  virtualPositions?: ComputedRef<Map<string, BarPosition> | undefined>
 ): UseConnectionsReturn {
   const connections = ref<BarConnection[]>([])
   const barPositions = ref<Map<string, BarPosition>>(new Map())
@@ -186,6 +187,10 @@ export function useConnections(
    * Calculates and stores positions accounting for scroll offsets
    */
   const updateBarPositions = async () => {
+    if (virtualPositions?.value) {
+      barPositions.value = virtualPositions.value
+      return
+    }
     await new Promise((resolve) => requestAnimationFrame(resolve))
     const parentElement = document.getElementById(id.value)
     const rowsContainer = parentElement?.querySelector(".g-gantt-rows-container")

@@ -78,6 +78,8 @@ interface BehaviorProps {
   pushOnConnect?: boolean;                  // Push connected bars
   noOverlap?: boolean;                      // Prevent bar overlap
   commands?: boolean;                       // Show control commands
+  virtualRows?: boolean;                   // Opt-in row virtualization; requires maxRows > 0
+  virtualRowsOverscan?: number;             // Extra rows on each side (default: 5)
   maxRows?: number;                         // Maximum visible rows
   initialSortDirection?: SortState;         // Initial sort direction
   enableRowDragAndDrop?: boolean;           // Enable row drag and drop

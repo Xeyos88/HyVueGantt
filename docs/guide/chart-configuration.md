@@ -174,4 +174,44 @@ For optimal performance:
 1. Use appropriate precision for your needs
 2. Limit the visible time range
 3. Consider pagination for large datasets
-4. Use maxRows for controlled loading
+4. Use `maxRows` with `virtualRows` to limit the number of mounted rows
+
+## Row virtualization
+
+Enable `virtual-rows` together with a positive `max-rows` to mount only the visible
+rows plus a small buffer. Labels and timeline rows share the same window.
+
+```vue
+<g-gantt-chart
+  chart-start="2026-01-01 00:00"
+  chart-end="2026-02-01 00:00"
+  bar-start="start"
+  bar-end="end"
+  :initial-rows="rows"
+  :row-height="40"
+  :max-rows="10"
+  :virtual-rows="true"
+  :virtual-rows-overscan="5"
+/>
+```
+
+`virtualRows` defaults to `false`. `virtualRowsOverscan` defaults to 5 extra rows
+on each side. With 1,000 rows and a ten-row viewport, this mounts about 15–21
+rows instead of 1,000. `maxRows` alone only limits the viewport height; with
+`maxRows: 0`, virtualization is inactive. Keep row heights fixed using `rowHeight`;
+custom CSS must not change individual row heights or add vertical margins.
+
+Expanded groups are flattened for rendering; their labels, nesting, synthetic
+bars and inherited row slots are retained. Sorting and data changes update the
+window and clamp the scroll position when the dataset shrinks. Connections use
+date/row coordinates, so connections to rows outside the window remain visible
+where they cross the viewport.
+
+For compatibility with DOM-based dragging, resizing and editing, all expanded
+rows are temporarily mounted during a row interaction. The window is restored
+on release (or when a label editor loses focus). Graphic exports also temporarily
+mount all expanded rows, remove the viewport height limit, and restore scrolling
+after completion or failure. Excel exports continue to read the complete dataset.
+This reduces DOM work during normal viewing and scrolling; it does not reduce
+data storage, calculation costs, or peak DOM size during interactions and exports.
+Time-axis columns are not virtualized.
