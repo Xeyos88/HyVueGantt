@@ -185,7 +185,7 @@ describe("GGanttChart", () => {
     it("should have correct ARIA attributes", () => {
       const wrapper = createWrapper()
       const container = wrapper.find(".g-gantt-container")
-      expect(container.attributes("role")).toBe("application")
+      expect(container.attributes("role")).toBe("region")
       expect(container.attributes("aria-label")).toBe("Interactive Gantt")
       expect(container.attributes("tabindex")).toBe("0")
     })

@@ -272,7 +272,7 @@ defineExpose({ timeaxisElement })
     ref="timeaxisElement"
     class="g-timeaxis"
     @mousedown="handleMouseDown"
-    role="tablist"
+    role="group"
     aria-label="Time Axis"
     :style="{
       borderBottom: `1px solid ${colors.gridAndBorder}`,

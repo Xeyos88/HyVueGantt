@@ -105,6 +105,7 @@ const handleTriggerExport = (format?: string) => {
   <div
     class="g-gantt-command"
     :style="{ background: colors.commands, fontFamily: font }"
+    role="group"
     aria-label="Gantt Commands"
   >
     <slot
@@ -192,7 +193,7 @@ const handleTriggerExport = (format?: string) => {
           <button
             :disabled="scrollPosition === 100"
             @click="handleForward"
-            aria-label="Scroll up"
+            aria-label="Scroll forward"
           >
             <FontAwesomeIcon :icon="faAngleRight" class="command-icon" />
           </button>
@@ -243,6 +244,7 @@ const handleTriggerExport = (format?: string) => {
             <select
               v-model="localExportFormat"
               class="g-gantt-export-select"
+              aria-label="Export format"
               :disabled="isExporting"
             >
               <option value="" disabled>Export</option>
@@ -251,7 +253,7 @@ const handleTriggerExport = (format?: string) => {
               <option value="svg">SVG</option>
               <option value="excel">Excel</option>
             </select>
-            <button @click="() => handleTriggerExport()" :disabled="!selectedExportFormat || isExporting">
+            <button type="button" aria-label="Export chart" @click="() => handleTriggerExport()" :disabled="!selectedExportFormat || isExporting">
               <FontAwesomeIcon :icon="faFileExport" class="command-icon" />
               <span v-if="isExporting" class="g-gantt-export-loading">
                 <FontAwesomeIcon :icon="faSpinner" class="fa-spin" />
@@ -438,6 +440,10 @@ const handleTriggerExport = (format?: string) => {
 }
 
 button {
+  min-width: 32px;
+  min-height: 32px;
+  justify-content: center;
+  align-items: center;
   display: flex;
   padding: 0;
   background-color: transparent;

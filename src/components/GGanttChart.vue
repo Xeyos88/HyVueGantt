@@ -979,6 +979,9 @@ const redo = () => {
 }
 
 const handleKeyboardShortcuts = (e: KeyboardEvent) => {
+  const target = e.target
+  if (!(target instanceof HTMLElement) || !ganttContainer.value?.contains(target)) return
+  if (target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return
   const isCtrlPressed = e.ctrlKey || e.metaKey
   if (isCtrlPressed && e.code === "KeyZ") {
     e.preventDefault()
@@ -1171,7 +1174,7 @@ defineExpose({
 <template>
   <div
     class="g-gantt-container"
-    role="application"
+    role="region"
     aria-label="Interactive Gantt"
     tabindex="0"
     @keydown="handleKeyDown"
@@ -1193,7 +1196,7 @@ defineExpose({
       }"
     >
       <!-- Chart Layout Section -->
-      <div class="g-gantt-main-layout" aria-controls="gantt-controls">
+      <div class="g-gantt-main-layout">
         <div v-if="labelColumnTitle" class="g-gantt-label-section" :style="labelSectionStyle">
           <!-- Label Column -->
           <g-gantt-label-column ref="labelColumn" @scroll="handleLabelScroll" @row-drop="dropRow">

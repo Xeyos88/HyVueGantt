@@ -708,6 +708,8 @@ defineExpose({
 <template>
   <div
     class="g-label-column"
+    role="table"
+    :aria-label="labelColumnTitle || 'Tasks'"
     :style="{
       fontFamily: font,
       color: colors.text,
@@ -720,6 +722,7 @@ defineExpose({
     <!-- Column Header -->
     <div
       class="g-label-column-header"
+      role="row"
       v-if="!hideTimeaxis"
       :style="{
         background: colors.primary,
@@ -734,9 +737,12 @@ defineExpose({
           class="g-label-column-header-cell"
           :class="{ sortable: columnSortableStates[column.field] }"
           role="columnheader"
+          :aria-sort="columnSortableStates[column.field] ? (sortState.column === column.field && sortState.direction !== 'none' ? (sortState.direction === 'asc' ? 'ascending' : 'descending') : 'none') : undefined"
           :style="getColumnStyle(column.field, false)"
         >
-          <div
+          <component
+            :is="columnSortableStates[column.field] ? 'button' : 'div'"
+            :type="columnSortableStates[column.field] ? 'button' : undefined"
             class="header-content"
             @click="columnSortableStates[column.field] ? toggleSort(column.field) : undefined"
           >
@@ -748,7 +754,7 @@ defineExpose({
             <span v-if="columnSortableStates[column.field]" class="sort-icon">
               <FontAwesomeIcon :icon="getSortIcon(column.field)" />
             </span>
-          </div>
+          </component>
           <div
             v-if="labelResizable"
             class="column-resizer"
@@ -769,6 +775,7 @@ defineExpose({
     <!-- Rows Container -->
     <div
       class="g-label-column-rows"
+      role="rowgroup"
       :style="labelContainerStyle"
       ref="labelContainer"
       @scroll="handleLabelScroll"
@@ -776,6 +783,7 @@ defineExpose({
       <div v-if="virtual?.enabled.value" class="g-virtual-spacer" aria-hidden="true" :style="{ height: `${virtual.window.value.top}px` }" />
       <div
         v-for="(row, index) in visibleLabelRows"
+        role="row"
         :key="row.id ?? row.label"
         :data-row-id="row.id"
         :style="{
@@ -817,6 +825,7 @@ defineExpose({
             <template v-if="isValidColumn(column.field) || column.valueGetter">
               <div
                 class="g-label-column-cell"
+                role="cell"
                 :style="getColumnStyle(column.field, Array.isArray(row.children))"
               >
                 <div :style="getCellStyle(column.field === 'Label')">
@@ -825,6 +834,9 @@ defineExpose({
                       <button
                         v-if="row.children.length > 0"
                         class="group-toggle-button"
+                        type="button"
+                        :aria-label="`${rowManager.isGroupExpanded(row.id) ? 'Collapse' : 'Expand'} ${row.label}`"
+                        :aria-expanded="rowManager.isGroupExpanded(row.id)"
                         @click="handleGroupToggle(row, $event)"
                       >
                         <FontAwesomeIcon
@@ -930,6 +942,11 @@ defineExpose({
 }
 
 .header-content {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  min-height: 24px;
   width: 100%;
   display: flex;
   align-items: center;

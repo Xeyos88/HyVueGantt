@@ -441,7 +441,9 @@ provide(BAR_CONTAINER_KEY, barContainer)
       @click="hasChildren ? handleGroupToggle($event) : undefined"
     >
       <!-- Expand/collapse button for groups, or placeholder to preserve alignment -->
-      <button v-if="hasChildren" class="group-toggle-button" @click="handleGroupToggle($event)">
+      <button v-if="hasChildren" type="button" class="group-toggle-button"
+        :aria-label="`${isExpanded ? 'Collapse' : 'Expand'} ${label}`"
+        :aria-expanded="isExpanded" @click="handleGroupToggle($event)">
         <FontAwesomeIcon :icon="isExpanded ? faChevronDown : faChevronRight" class="group-icon" />
       </button>
       <span v-else-if="isGroup" class="group-toggle-button group-toggle-placeholder" />

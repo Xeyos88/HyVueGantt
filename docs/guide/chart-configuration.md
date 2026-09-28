@@ -215,3 +215,30 @@ after completion or failure. Excel exports continue to read the complete dataset
 This reduces DOM work during normal viewing and scrolling; it does not reduce
 data storage, calculation costs, or peak DOM size during interactions and exports.
 Time-axis columns are not virtualized.
+
+## Accessibility support
+
+The chart is a named region. Its label columns use table semantics; sortable headers
+are native buttons and expose the current sort direction. Group buttons announce
+which group they control and whether it is expanded. Export controls have accessible
+names, and the default command buttons have a minimum target size of 32 × 32 CSS px.
+
+Activities expose persistent descriptions of their start, end and progress, including
+when a visual tooltip is absent. When label editing is enabled, focus an activity and
+press **F2** or **Enter** to edit its label. Enter saves, Escape cancels, and both return
+focus to the activity. Existing arrow-key movement and resizing remain available.
+Chart undo/redo shortcuts apply only inside the focused chart and leave native input
+editing shortcuts untouched.
+
+The importer uses a native HTML dialog. The file chooser can be opened with the
+keyboard; Tab and Shift+Tab stay within its controls, and Escape closes it. Closing
+or unmounting the importer returns focus to the opening control if it still exists.
+Changing steps focuses the dialog heading. Configuration fields have linked labels,
+and import results use status/alert semantics. These behaviors require browser
+support for `HTMLDialogElement.showModal()`.
+
+This support is not a claim of complete WCAG conformance. Accessible alternatives to
+connection/progress/row dragging, visual tooltip keyboard behavior, all custom theme
+contrasts, efficient navigation of very large datasets, localization of built-in
+accessibility strings and accessible PDF structure still need further work. Consumer
+slots and CSS must preserve control names, keyboard behavior and visible focus.
