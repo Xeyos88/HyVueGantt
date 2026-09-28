@@ -544,7 +544,7 @@ onMounted(() => {
   }
 
   watch(
-    [() => bar.value, width, chartStart, chartEnd, chartSize.width, ganttWidth],
+    [() => bar.value, width, chartStart, chartEnd, chartSize.width, ganttWidth, showPlannedBars],
     () => {
       const newXStart = mapTimeToPosition(bar.value[barStart.value])
       const newXEnd = mapTimeToPosition(bar.value[barEnd.value])

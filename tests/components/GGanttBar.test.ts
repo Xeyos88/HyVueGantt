@@ -8,7 +8,7 @@ import {
   GANTT_ID_KEY,
   BAR_CONTAINER_KEY
 } from "../../src/provider/symbols"
-import { ref } from "vue"
+import { nextTick, ref } from "vue"
 
 describe("GGanttBar", () => {
   const defaultBar: GanttBarObject = {
@@ -160,6 +160,68 @@ describe("GGanttBar", () => {
       const wrapper = createWrapper(barWithHandles)
       expect(wrapper.find(".g-gantt-bar-handle-left").exists()).toBe(true)
       expect(wrapper.find(".g-gantt-bar-handle-right").exists()).toBe(true)
+    })
+  })
+
+  describe("planned bar positioning", () => {
+    it("positions planned bars when enabled after mount and after hidden updates", async () => {
+      const showPlannedBars = ref(false)
+      const ganttWidth = ref(1000)
+      const bar = {
+        ...defaultBar,
+        start_planned: "2024-01-03",
+        end_planned: "2024-01-07"
+      }
+      const wrapper = createWrapper(bar, {
+        showPlannedBars,
+        ganttWidth,
+        chartEnd: ref("2024-01-11")
+      })
+      const geometry = () => {
+        const element = wrapper.get<HTMLElement>(".g-gantt-planned-bar").element
+        return { left: element.style.left, width: element.style.width }
+      }
+      try {
+        expect(wrapper.find(".g-gantt-planned-bar").exists()).toBe(false)
+        showPlannedBars.value = true
+        await nextTick()
+        expect(geometry()).toEqual({ left: "200px", width: "400px" })
+
+        showPlannedBars.value = false
+        await nextTick()
+        expect(wrapper.find(".g-gantt-planned-bar").exists()).toBe(false)
+        await wrapper.setProps({
+          bar: { ...bar, start_planned: "2024-01-04", end_planned: "2024-01-09" }
+        })
+        ganttWidth.value = 2000
+        await nextTick()
+        showPlannedBars.value = true
+        await nextTick()
+        expect(geometry()).toEqual({ left: "600px", width: "1000px" })
+      } finally {
+        wrapper.unmount()
+      }
+    })
+
+    it("waits for both planned dates and updates their position while visible", async () => {
+      const bar = { ...defaultBar, start_planned: "2024-01-02" }
+      const wrapper = createWrapper(bar, {
+        showPlannedBars: ref(true),
+        chartEnd: ref("2024-01-11")
+      })
+      try {
+        expect(wrapper.find(".g-gantt-planned-bar").exists()).toBe(false)
+        await wrapper.setProps({ bar: { ...bar, end_planned: "2024-01-06" } })
+        const element = wrapper.get<HTMLElement>(".g-gantt-planned-bar").element
+        expect(element.style.left).toBe("100px")
+        expect(element.style.width).toBe("400px")
+        await wrapper.setProps({ bar: { ...bar, end_planned: "2024-01-08" } })
+        expect(element.style.width).toBe("600px")
+        await wrapper.setProps({ bar })
+        expect(wrapper.find(".g-gantt-planned-bar").exists()).toBe(false)
+      } finally {
+        wrapper.unmount()
+      }
     })
   })
 
