@@ -532,7 +532,7 @@ const autoScrollToToday = () => {
 
 // Graphic exports require every expanded row, not just the current viewport.
 const exportChart = async (options: ExportOptions): Promise<ExportResult> => {
-  if (!virtual.enabled.value || options.format === "excel") return exportRenderedChart(options)
+  if (options.format === "excel") return exportRenderedChart(options)
   const top = rowsContainer.value?.scrollTop ?? 0
   const left = ganttWrapper.value?.scrollLeft ?? 0
   virtual.exporting.value = true

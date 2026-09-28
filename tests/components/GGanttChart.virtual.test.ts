@@ -143,6 +143,21 @@ describe("virtual chart rows", () => {
     expect(w.findAll(".g-gantt-row")).toHaveLength(14)
   })
 
+  it("expands capped rows for graphic export even without virtualization", async () => {
+    const w = await setup(makeRows(20), { virtualRows: false })
+    await scroll(w, 200)
+    exportMock.mockImplementationOnce(async () => {
+      expect(w.get<HTMLElement>(".g-gantt-rows-container").element.style.maxHeight).toBe("")
+      expect(w.get<HTMLElement>(".g-label-column-rows").element.style.height).toBe("")
+      expect(w.get<HTMLElement>(".g-gantt-rows-container").element.scrollTop).toBe(0)
+      return { success: true }
+    })
+    await w.vm.exportChart({ format: "pdf" })
+    expect(w.get<HTMLElement>(".g-gantt-rows-container").element.style.maxHeight).toBe("400px")
+    expect(w.get<HTMLElement>(".g-label-column-rows").element.style.height).toBe("400px")
+    expect(w.get<HTMLElement>(".g-gantt-rows-container").element.scrollTop).toBe(200)
+  })
+
   it("keeps active rows mounted through a drag and restores the window on release", async () => {
     const w = await setup(makeRows(100))
     await w.get(".g-gantt-row").trigger("mousedown")

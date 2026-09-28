@@ -126,11 +126,21 @@ interface ExportOptions {
   paperSize?: "a4" | "a3" | "letter" | "legal"; // PDF paper size
   orientation?: "portrait" | "landscape";    // PDF orientation
   scale?: number;                           // Export scale factor
-  margin?: number;                          // Margin in pixels
+  margin?: number;                          // PDF margin in millimetres
   filename?: string;                        // Output filename
   exportColumnLabel?: boolean;              // Include label column in export
 }
 ```
+
+PDF export fits the chart to the printable page width, preserving its aspect ratio.
+Tall charts continue on successive pages as consecutive image slices; the final
+page retains its natural height. Page breaks may cross rows and do not repeat the
+time axis. The default is A4 landscape with 10 mm margins. Scale must be positive;
+margins must be non-negative and leave a printable area. PDF export still captures
+the full chart in memory before splitting it into pages. Graphical exports include
+the full timeline width plus the optional label column, preserving ancestor CSS,
+fonts, and slot styling. Command controls are hidden in the captured copy.
+Decorative box shadows are omitted to avoid capture artifacts that darken fills.
 
 ### Import Props
 

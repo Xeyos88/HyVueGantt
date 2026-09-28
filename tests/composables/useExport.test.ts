@@ -12,17 +12,19 @@ vi.mock("html2canvas", () => ({
 }))
 
 vi.mock("jspdf", () => ({
-  default: vi.fn().mockImplementation(() => ({
-    internal: {
-      pageSize: {
-        getWidth: () => 297,
-        getHeight: () => 210
-      }
-    },
-    addPage: vi.fn(),
-    addImage: vi.fn(),
-    output: vi.fn().mockReturnValue(new Blob())
-  }))
+  default: vi.fn().mockImplementation(function () {
+    return {
+      internal: {
+        pageSize: {
+          getWidth: () => 297,
+          getHeight: () => 210
+        }
+      },
+      addPage: vi.fn(),
+      addImage: vi.fn(),
+      output: vi.fn().mockReturnValue(new Blob())
+    }
+  })
 }))
 
 vi.mock("@e965/xlsx", () => ({
@@ -152,7 +154,7 @@ describe("useExport", () => {
     // Mock canvas for html2canvas
     const mockCanvas = {
       width: 800,
-      height: 600,
+      height: 400,
       toDataURL: vi.fn().mockReturnValue("data:image/png;base64,mock"),
       toBlob: vi.fn().mockImplementation((callback) => {
         callback(new Blob())
@@ -216,94 +218,6 @@ describe("useExport", () => {
       expect(html2canvas).toHaveBeenCalled()
     })
   })
-
-  // describe("PDF export", () => {
-  //   it("should export to PDF successfully", async () => {
-  //     const options: ExportOptions = {
-  //       format: "pdf",
-  //       filename: "test-gantt",
-  //       paperSize: "a4",
-  //       orientation: "landscape",
-  //       scale: 1,
-  //       margin: 10,
-  //       quality: 0.95
-  //     }
-
-  //     const result = await exportComposable.exportChart(options)
-
-  //     expect(result.success).toBe(true)
-  //     expect(result.data).toBeInstanceOf(Blob)
-  //     expect(result.filename).toBe("test-gantt.pdf")
-  //     expect(jsPDF).toHaveBeenCalledWith({
-  //       orientation: "landscape",
-  //       unit: "mm",
-  //       format: "a4"
-  //     })
-  //   })
-
-  //   it("should export to PDF with portrait orientation", async () => {
-  //     const options: ExportOptions = {
-  //       format: "pdf",
-  //       orientation: "portrait"
-  //     }
-
-  //     const result = await exportComposable.exportChart(options)
-
-  //     expect(result.success).toBe(true)
-  //     expect(jsPDF).toHaveBeenCalledWith({
-  //       orientation: "portrait",
-  //       unit: "mm",
-  //       format: "a4"
-  //     })
-  //   })
-
-  //   it("should handle PDF export with multi-page content", async () => {
-  //     // Mock a tall canvas that would require multiple pages
-  //     const tallCanvas = {
-  //       width: 800,
-  //       height: 2000, // Very tall to trigger multi-page
-  //       toDataURL: vi.fn().mockReturnValue("data:image/png;base64,mock")
-  //     }
-
-  //     vi.mocked(html2canvas).mockResolvedValueOnce(tallCanvas as any)
-
-  //     const mockPdf = {
-  //       internal: {
-  //         pageSize: {
-  //           getWidth: () => 210,
-  //           getHeight: () => 297
-  //         }
-  //       },
-  //       addPage: vi.fn(),
-  //       addImage: vi.fn(),
-  //       output: vi.fn().mockReturnValue(new Blob())
-  //     }
-
-  //     vi.mocked(jsPDF).mockReturnValueOnce(mockPdf as any)
-
-  //     const options: ExportOptions = {
-  //       format: "pdf"
-  //     }
-
-  //     const result = await exportComposable.exportChart(options)
-
-  //     expect(result.success).toBe(true)
-  //     expect(mockPdf.addPage).toHaveBeenCalled()
-  //   })
-
-  //   it("should handle PDF export errors", async () => {
-  //     vi.mocked(html2canvas).mockRejectedValueOnce(new Error("Canvas error"))
-
-  //     const options: ExportOptions = {
-  //       format: "pdf"
-  //     }
-
-  //     const result = await exportComposable.exportChart(options)
-
-  //     expect(result.success).toBe(false)
-  //     expect(result.error).toBe("Canvas error")
-  //   })
-  // })
 
   // describe("PNG export", () => {
   //   it("should export to PNG successfully", async () => {
@@ -653,6 +567,7 @@ describe("useExport", () => {
 
       const result = await exportComposable.exportChart(options)
 
+      expect(result.success).toBe(true)
       expect(result.filename).toBe("custom-name.pdf")
     })
   })
