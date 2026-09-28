@@ -1,7 +1,5 @@
 import { ref, type Ref } from "vue"
 import type { ChartRow, ExportOptions, ExportResult, GanttBarObject, TimeUnit } from "../types"
-import html2canvas from "html2canvas"
-import jsPDF from "jspdf"
 import type { UseRowsReturn } from "./useRows"
 import dayjs from "dayjs"
 
@@ -222,6 +220,10 @@ export function useExport(
     options: ExportOptions
   ): Promise<ExportResult> => {
     try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf")
+      ])
       const processedElement = prepareElementForExport(element, wrapper, options)
 
       const tempContainer = document.createElement("div")
@@ -347,6 +349,7 @@ export function useExport(
     options: ExportOptions
   ): Promise<ExportResult> => {
     try {
+      const { default: html2canvas } = await import("html2canvas")
       const processedElement = prepareElementForExport(element, wrapper, options)
 
       const tempContainer = document.createElement("div")
@@ -418,6 +421,7 @@ export function useExport(
     options: ExportOptions
   ): Promise<ExportResult> => {
     try {
+      const { default: html2canvas } = await import("html2canvas")
       const processedElement = prepareElementForExport(element, wrapper, options)
 
       const tempContainer = document.createElement("div")

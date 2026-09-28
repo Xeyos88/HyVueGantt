@@ -111,7 +111,8 @@ export const capitalizeWords = (str: string): string => {
  * @returns Object containing timeaxis state and control methods
  */
 export default function useTimeaxisUnits(config: GGanttChartConfig = provideConfig()) {
-  const { getHolidayInfo } = useHolidays(config)
+  const { getHolidayInfo, holidays } = useHolidays(config)
+  const holidayRevision = ref(0)
   const {
     precision: configPrecision,
     holidayHighlight,
@@ -237,7 +238,7 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
    * Generates cache key for unit storage
    */
   const getCacheKey = (startDate: Dayjs, endDate: Dayjs, precision: TimeUnit, zoom: number) => {
-    return `${startDate.valueOf()}-${endDate.valueOf()}-${precision}-${zoom}-${baseUnitWidth.value}-${locale.value}-${holidayHighlight.value}`
+    return `${startDate.valueOf()}-${endDate.valueOf()}-${precision}-${zoom}-${baseUnitWidth.value}-${locale.value}-${holidayHighlight.value}-${holidayRevision.value}`
   }
 
   /**
@@ -407,6 +408,17 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
       internalPrecision.value = configPrecision.value
       zoomLevel.value = defaultZoom.value
     }
+  )
+
+  // Cached axis units must be regenerated when lazy-loaded holiday data arrives.
+  watch(
+    holidays,
+    () => {
+      cache.lower.clear()
+      cache.upper.clear()
+      holidayRevision.value++
+    },
+    { flush: "sync" }
   )
 
   watch([() => holidayHighlight.value, () => locale.value], () => {

@@ -110,3 +110,32 @@ If you encounter any installation issues:
 4. Try with a fresh installation
 
 For more help, visit our [GitHub Issues](https://github.com/Xeyos88/HyVueGantt/issues) page.
+
+## Loading optional features
+
+The library uses dynamic imports for heavier feature dependencies:
+
+| Dependency | Loaded when |
+| --- | --- |
+| `html2canvas` | Exporting PNG, SVG or PDF |
+| `jspdf` | Exporting PDF |
+| `papaparse` | Importing a CSV file; Jira JSON imports do not need it |
+| `date-holidays` | `holidayHighlight` has a country code |
+| `@e965/xlsx` | Exporting Excel (already loaded on demand) |
+
+A bundler that supports code splitting can keep these modules out of the initial
+application download. The first use of a feature waits for its chunk to load;
+subsequent uses reuse the loaded module. Holiday highlighting appears once the
+calendar is available and updates automatically for country/date-range changes.
+
+These are still peer dependencies: install them as before. This changes browser
+loading, not the installation size. Keep loading the Day.js locales used by your
+application explicitly. Consumers that import one of these dependencies statically
+elsewhere may include it in their initial bundle again.
+
+In the sibling playground production build, with holidays disabled and before
+using import/export, initial JavaScript decreased from approximately **2.43 MB to
+436 kB** (gzip: **543 kB to 136 kB**, about **75% less**). This measures the entry
+chunk and its static JavaScript imports, excluding CSS and deferred chunks; it is
+not a measurement of total installed size or page-load time. The full calendar
+remains a sizeable deferred download when holiday highlighting is enabled.

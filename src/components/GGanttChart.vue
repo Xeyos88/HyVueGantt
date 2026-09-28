@@ -385,7 +385,7 @@ const { handleKeyDown } = useKeyboardNavigation(
     selectedConnection,
     deleteSelectedConnection
   },
-  toRef(props.enableConnectionDeletion)
+  toRef(props, "enableConnectionDeletion")
 )
 
 // Size Management
