@@ -49,6 +49,7 @@ export interface UseRowsProps {
   barStart: Ref<string>
   barEnd: Ref<string>
   dateFormat: Ref<string | false>
+  locale?: Ref<string>
   multiColumnLabel: Ref<LabelColumnConfig[]>
   onSort: (sortState: SortState) => void
   initialSort?: SortState
@@ -458,6 +459,7 @@ export const useRows = (
     barStart,
     barEnd,
     dateFormat,
+    locale = ref("en"),
     multiColumnLabel,
     onSort,
     initialSort,
@@ -748,11 +750,11 @@ export const useRows = (
    */
   const toDayjs = (input: string | Date) => {
     if (typeof input === "string") {
-      return dayjs(input)
+      return dayjs(input).locale(locale.value)
     } else if (input instanceof Date) {
-      return dayjs(input)
+      return dayjs(input).locale(locale.value)
     }
-    return dayjs()
+    return dayjs().locale(locale.value)
   }
 
   /**

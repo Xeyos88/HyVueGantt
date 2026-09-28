@@ -20,9 +20,11 @@ export function useExport(
     barStart: Ref<string>
     barEnd: Ref<string>
     dateFormat: Ref<string | false>
+    locale?: Ref<string>
     precision: Ref<TimeUnit>
   }
 ) {
+  const toDayjs = (input: string | Date) => dayjs(input).locale(config.locale?.value ?? "en")
   const isExporting = ref(false)
   const lastError = ref<string | null>(null)
 
@@ -526,7 +528,7 @@ export function useExport(
         if (row.bars && row.bars.length > 0) {
           const minStartDate = row.bars.reduce(
             (min, bar) => {
-              const currentStart = dayjs(bar[config.barStart.value])
+              const currentStart = toDayjs(bar[config.barStart.value])
               return !min || currentStart.isBefore(min) ? currentStart : min
             },
             null as dayjs.Dayjs | null
@@ -534,7 +536,7 @@ export function useExport(
 
           const maxEndDate = row.bars.reduce(
             (max, bar) => {
-              const currentEnd = dayjs(bar[config.barEnd.value])
+              const currentEnd = toDayjs(bar[config.barEnd.value])
               return !max || currentEnd.isAfter(max) ? currentEnd : max
             },
             null as dayjs.Dayjs | null
@@ -626,16 +628,16 @@ export function useExport(
         const { bar, rowLabel, rowId } = item
         const barConfig = bar.ganttBarConfig
 
-        const startDate = dayjs(bar[config.barStart.value]).format(
+        const startDate = toDayjs(bar[config.barStart.value]).format(
           config.dateFormat.value || "YYYY-MM-DD HH:mm"
         )
 
-        const endDate = dayjs(bar[config.barEnd.value]).format(
+        const endDate = toDayjs(bar[config.barEnd.value]).format(
           config.dateFormat.value || "YYYY-MM-DD HH:mm"
         )
 
-        const durationValue = dayjs(bar[config.barEnd.value]).diff(
-          dayjs(bar[config.barStart.value]),
+        const durationValue = toDayjs(bar[config.barEnd.value]).diff(
+          toDayjs(bar[config.barStart.value]),
           config.precision.value
         )
 
@@ -653,10 +655,10 @@ export function useExport(
 
         // Handle planned dates
         const startPlanned = bar.start_planned 
-          ? dayjs(bar.start_planned).format(config.dateFormat.value || "YYYY-MM-DD HH:mm")
+          ? toDayjs(bar.start_planned).format(config.dateFormat.value || "YYYY-MM-DD HH:mm")
           : "-"
         const endPlanned = bar.end_planned 
-          ? dayjs(bar.end_planned).format(config.dateFormat.value || "YYYY-MM-DD HH:mm")
+          ? toDayjs(bar.end_planned).format(config.dateFormat.value || "YYYY-MM-DD HH:mm")
           : "-"
 
         secondSheetData.push([

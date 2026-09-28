@@ -71,6 +71,7 @@ beforeAll(() => {
       grid: ref(false),
       rowClass: ref(() => ""),
       rowLabelClass: ref(() => ""),
+      ganttWidth: ref(800),
       chartSize: {
         width: ref(800),
         height: ref(600)

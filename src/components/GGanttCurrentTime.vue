@@ -12,6 +12,7 @@ import { useIntervalFn } from "@vueuse/core"
 
 // Composables
 import useTimePositionMapping from "../composables/useTimePositionMapping"
+import useDayjsHelper from "../composables/useDayjsHelper"
 
 // Provider
 import provideConfig from "../provider/provideConfig"
@@ -24,6 +25,7 @@ import provideConfig from "../provider/provideConfig"
  * Time position mapping utility for converting time to x-coordinate
  */
 const { mapTimeToPosition } = useTimePositionMapping()
+const { format: formatDate } = useDayjsHelper()
 
 /**
  * Current moment reference, updated by interval
@@ -53,7 +55,7 @@ const loopTime = () => {
   currentMoment.value = now
 
   const format = dateFormat.value || "YYYY-MM-DD HH:mm:ss"
-  xDist.value = mapTimeToPosition(dayjs(currentMoment.value, format).format(format))
+  xDist.value = mapTimeToPosition(formatDate(currentMoment.value, format) as string)
 }
 
 /**

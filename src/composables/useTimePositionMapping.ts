@@ -2,7 +2,10 @@ import type { GGanttChartConfig } from "../types"
 import { computed, ref, watch } from "vue"
 import useDayjsHelper from "./useDayjsHelper"
 import provideConfig from "../provider/provideConfig"
-import { ganttWidth } from "./useSimpleStore"
+
+type MappingConfig = Pick<GGanttChartConfig,
+  "chartStart" | "chartEnd" | "barStart" | "barEnd" | "dateFormat" | "locale" | "ganttWidth"
+>
 
 /**
  * A composable that handles the bi-directional mapping between time values and pixel positions.
@@ -11,16 +14,13 @@ import { ganttWidth } from "./useSimpleStore"
  * @param config - Optional Gantt chart configuration. Uses default config if not provided
  * @returns Object containing mapping functions between time and position
  */
-export default function useTimePositionMapping(config: GGanttChartConfig = provideConfig()) {
-  const { dateFormat } = config
+export default function useTimePositionMapping(config: MappingConfig = provideConfig()) {
+  const { dateFormat, locale, ganttWidth } = config
   const { chartStartDayjs, chartEndDayjs, toDayjs, format } = useDayjsHelper(config)
 
   // Cache for position calculations
   const timeToPositionCache = ref(new Map<string, number>())
   const positionToTimeCache = ref(new Map<string, string>())
-  
-  // Cache key based on chart configuration
-  const cacheKey = ref('')
   
   /**
    * Calculates the total duration of the chart in minutes.
@@ -30,15 +30,11 @@ export default function useTimePositionMapping(config: GGanttChartConfig = provi
     return chartEndDayjs.value.diff(chartStartDayjs.value, "minutes")
   })
 
-  // Update cache key when chart parameters change
-  watch([chartStartDayjs, chartEndDayjs, ganttWidth], () => {
-    const newCacheKey = `${chartStartDayjs.value.format()}-${chartEndDayjs.value.format()}-${ganttWidth.value}`
-    if (cacheKey.value !== newCacheKey) {
-      cacheKey.value = newCacheKey
-      timeToPositionCache.value.clear()
-      positionToTimeCache.value.clear()
-    }
-  }, { immediate: true })
+  // Invalidate before consumers react to a zoom, range, format or locale change.
+  watch([chartStartDayjs, chartEndDayjs, ganttWidth, dateFormat, locale], () => {
+    timeToPositionCache.value.clear()
+    positionToTimeCache.value.clear()
+  }, { flush: "sync" })
 
   /**
    * Converts a time value to x-coordinate position with caching

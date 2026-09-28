@@ -10,13 +10,17 @@ import provideConfig from "../provider/provideConfig"
  */
 export const DEFAULT_DATE_FORMAT = "YYYY-MM-DD HH:mm"
 
+type DateConfig = Pick<GGanttChartConfig,
+  "chartStart" | "chartEnd" | "barStart" | "barEnd" | "dateFormat" | "locale"
+>
+
 /**
  * A composable that provides date manipulation utilities using dayjs
  * Centralizes date handling logic for consistency across the Gantt chart
  * @param config - Optional Gantt chart configuration. If not provided, uses default config
  * @returns Object containing date manipulation methods and computed properties
  */
-export default function useDayjsHelper(config: GGanttChartConfig = provideConfig()) {
+export default function useDayjsHelper(config: DateConfig = provideConfig()) {
   const { chartStart, chartEnd, barStart, barEnd, dateFormat, locale } = config
 
   /**
@@ -28,11 +32,6 @@ export default function useDayjsHelper(config: GGanttChartConfig = provideConfig
    * Computed property for the chart end date as a dayjs object
    */
   const chartEndDayjs = computed(() => toDayjs(chartEnd.value))
-
-  /**
-   * Sets the locale for date formatting
-   */
-  dayjs.locale(locale.value)
 
   /**
    * Converts various input types to a dayjs object
@@ -49,10 +48,10 @@ export default function useDayjsHelper(config: GGanttChartConfig = provideConfig
     if (typeof input === "string") {
       value = input
     } else if (input instanceof Date) {
-      return dayjs(input)
+      return dayjs(input).locale(locale.value)
     }
     const format = dateFormat.value || DEFAULT_DATE_FORMAT
-    return dayjs(value, format, false)
+    return dayjs(value, format, locale.value, false).locale(locale.value)
   }
 
   /**
@@ -67,7 +66,7 @@ export default function useDayjsHelper(config: GGanttChartConfig = provideConfig
     }
     const inputDayjs = typeof input === "string" || input instanceof Date ? toDayjs(input) : input
 
-    return inputDayjs.format(pattern)
+    return inputDayjs.locale(locale.value).format(pattern)
   }
 
   /**

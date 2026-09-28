@@ -14,7 +14,6 @@ import provideConfig from "../provider/provideConfig"
 // Utilities
 import { capitalizeWords } from "../composables/useTimeaxisUnits"
 import useDayjsHelper from "../composables/useDayjsHelper"
-import { ganttWidth } from "../composables/useSimpleStore"
 
 // Components
 //import GGanttHolidayTooltip from "./GGanttHolidayTooltip.vue"
@@ -65,6 +64,7 @@ const hoveredEventElement = ref<HTMLElement | null>(null)
 // -----------------------------
 const {
   precision,
+  ganttWidth,
   colors,
   holidayHighlight,
   dayOptionLabel,
@@ -76,7 +76,7 @@ const {
 // -----------------------------
 // 6. HELPER FUNCTIONS
 // -----------------------------
-const { toDayjs } = useDayjsHelper()
+const { toDayjs, chartStartDayjs, chartEndDayjs } = useDayjsHelper()
 
 /**
  * Handles mouse down events on the timeaxis
@@ -237,7 +237,6 @@ const shouldShowEventsAxis = computed(() => {
 const eventPositions = computed(() => {
   if (!timeaxisUnits.value.result.events.length) return []
 
-  const { chartStartDayjs, chartEndDayjs } = useDayjsHelper()
   const totalMinutes = chartEndDayjs.value.diff(chartStartDayjs.value, "minutes")
 
   return timeaxisUnits.value.result.events.map((event) => {

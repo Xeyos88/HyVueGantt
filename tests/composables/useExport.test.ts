@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { ref } from "vue"
+import "dayjs/locale/en"
+import "dayjs/locale/it"
 import { useExport } from "../../src/composables/useExport"
 import type { ExportOptions, ChartRow, TimeUnit } from "../../src/types"
 import type { UseRowsReturn } from "../../src/composables/useRows"
@@ -136,6 +138,7 @@ describe("useExport", () => {
       barStart: ref("start"),
       barEnd: ref("end"),
       dateFormat: ref("YYYY-MM-DD"),
+      locale: ref("en"),
       precision: ref("day" as TimeUnit)
     }
 
@@ -362,6 +365,19 @@ describe("useExport", () => {
   //     expect(result.error).toBe("PNG export error")
   //   })
   // })
+
+  it("exports dates using the chart locale, including after a locale change", async () => {
+    mockConfig.dateFormat.value = "MMMM"
+    for (const [locale, month] of [["en", "January"], ["it", "gennaio"]]) {
+      mockConfig.locale.value = locale
+      vi.mocked(XLSX.utils.aoa_to_sheet).mockClear()
+      const result = await exportComposable.exportChart({ format: "excel" })
+      expect(result.success).toBe(true)
+      const calls = vi.mocked(XLSX.utils.aoa_to_sheet).mock.calls
+      expect(calls[0][0][1][2]).toBe(month)
+      expect(calls[1][0][1][4]).toBe(month)
+    }
+  })
 
   // describe("SVG export", () => {
   //   it("should export to SVG successfully", async () => {

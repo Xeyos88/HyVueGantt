@@ -84,6 +84,7 @@ describe("GGanttBar", () => {
     chartStart: ref("2024-01-01"),
     chartEnd: ref("2024-12-31"),
     precision: ref("day"),
+    ganttWidth: ref(1000),
     chartSize: {
       width: ref(1000)
     },

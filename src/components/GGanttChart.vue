@@ -42,7 +42,6 @@ import { useTooltip } from "../composables/useTooltip"
 import { useChartNavigation } from "../composables/useChartNavigation"
 import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
 import { useRows, findBarInRows } from "../composables/useRows"
-import { ganttWidth } from "../composables/useSimpleStore"
 import useTimeaxisUnits from "../composables/useTimeaxisUnits"
 import { useSectionResize } from "../composables/useSectionResize"
 import { useConnectionCreation } from "../composables/useConnectionCreation"
@@ -181,6 +180,7 @@ const isImporterVisible = ref(props.showImporter)
 // Component Refs
 const gGantt = ref<HTMLElement | null>(null)
 const ganttChart = ref<HTMLElement | null>(null)
+const ganttWidth = ref(0)
 const ganttWrapper = ref<HTMLElement | null>(null)
 
 const ganttContainer = ref<HTMLElement | null>(null)
@@ -237,6 +237,7 @@ const rowManager = useRows(
     barStart: toRef(props, "barStart"),
     barEnd: toRef(props, "barEnd"),
     dateFormat: toRef(props, "dateFormat"),
+    locale: toRef(props, "locale"),
     multiColumnLabel: toRef(props, "multiColumnLabel"),
     onSort: (sortState) => emit("sort", { sortState }),
     initialSort: props.initialSort,
@@ -274,19 +275,12 @@ const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision, can
   maxZoom: validatedMaxZoom,
   minZoom: validatedMinZoom,
   colors,
-  chartSize
+  chartSize,
+  ganttWidth
 })
 
 // Dayjs helpers bound to this chart's configuration
-const { toDayjs, chartStartDayjs, chartEndDayjs } = useDayjsHelper({
-  ...toRefs(props),
-  baseUnitWidth: validatedBaseUnitWidth,
-  defaultZoom: validatedDefaultZoom,
-  maxZoom: validatedMaxZoom,
-  minZoom: validatedMinZoom,
-  colors,
-  chartSize
-})
+const { toDayjs, chartStartDayjs, chartEndDayjs } = useDayjsHelper(toRefs(props))
 
 // Notify consumers when the internal precision changes (e.g. while zooming)
 watch(internalPrecision, (precision, previousPrecision) => {
@@ -359,7 +353,8 @@ const {
   {
     ...toRefs(props),
     colors,
-    chartSize
+    chartSize,
+    ganttWidth
   },
   rowManager,
   emit,
@@ -436,6 +431,7 @@ const { exportChart, downloadExport, isExporting } = useExport(
     barStart: toRef(props, "barStart"),
     barEnd: toRef(props, "barEnd"),
     dateFormat: toRef(props, "dateFormat"),
+    locale: toRef(props, "locale"),
     precision: toRef(props, "precision")
   }
 )
@@ -748,7 +744,7 @@ watch(
   () => {
     ganttWidth.value = totalWidth.value
   },
-  { immediate: true }
+  { immediate: true, flush: "sync" }
 )
 
 const normalizeSlots = (children: unknown): Record<string, () => unknown> => {
@@ -992,7 +988,8 @@ provide(CONFIG_KEY, {
   maxZoom: validatedMaxZoom,
   minZoom: validatedMinZoom,
   colors,
-  chartSize
+  chartSize,
+  ganttWidth
 })
 provide(EMIT_BAR_EVENT_KEY, emitBarEvent)
 provide(BOOLEAN_KEY, { ...props })

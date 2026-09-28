@@ -67,6 +67,7 @@ const {
   chartStart,
   chartEnd,
   chartSize,
+  ganttWidth,
   showLabel,
   showGroupLabel,
   showProgress,
@@ -543,7 +544,7 @@ onMounted(() => {
   }
 
   watch(
-    [() => bar.value, width, chartStart, chartEnd, chartSize.width],
+    [() => bar.value, width, chartStart, chartEnd, chartSize.width, ganttWidth],
     () => {
       const newXStart = mapTimeToPosition(bar.value[barStart.value])
       const newXEnd = mapTimeToPosition(bar.value[barEnd.value])

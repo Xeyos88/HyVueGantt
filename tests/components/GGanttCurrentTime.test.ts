@@ -15,7 +15,7 @@ vi.mock("dayjs", () => {
     diff: vi.fn().mockReturnValue(60),
     add: vi.fn().mockImplementation((value, unit) => mockDayjs("2024-01-02")),
     subtract: vi.fn().mockImplementation((value, unit) => mockDayjs("2023-12-31")),
-    locale: vi.fn().mockReturnValue(mockDayjs),
+    locale: vi.fn().mockReturnThis(),
     utc: vi.fn()
   }))
 

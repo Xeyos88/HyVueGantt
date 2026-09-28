@@ -108,6 +108,7 @@ export interface GGanttChartProps {
 
 export type GGanttChartConfig = ToRefs<Required<GGanttChartProps>> & {
   colors: ComputedRef<ColorScheme>
+  ganttWidth: Ref<number>
   chartSize: {
     width: Ref<number>
     height: Ref<number>

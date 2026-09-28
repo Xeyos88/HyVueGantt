@@ -5,7 +5,6 @@ import provideConfig from "../provider/provideConfig"
 import type { GGanttChartConfig, TimeaxisEvent, TimeaxisUnit, TimeUnit } from "../types"
 import { useHolidays } from "./useHolidays"
 import dayjs from "dayjs"
-import { ganttWidth } from "./useSimpleStore"
 
 /**
  * Base width for time unit elements (in pixels)
@@ -117,6 +116,7 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     precision: configPrecision,
     holidayHighlight,
     locale,
+    ganttWidth,
     timeaxisEvents,
     baseUnitWidth,
     defaultZoom
@@ -237,14 +237,14 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
    * Generates cache key for unit storage
    */
   const getCacheKey = (startDate: Dayjs, endDate: Dayjs, precision: TimeUnit, zoom: number) => {
-    return `${startDate.valueOf()}-${endDate.valueOf()}-${precision}-${zoom}`
+    return `${startDate.valueOf()}-${endDate.valueOf()}-${precision}-${zoom}-${baseUnitWidth.value}-${locale.value}-${holidayHighlight.value}`
   }
 
   /**
    * Generates cache key for events storage
    */
   const getEventsCacheKey = (startDate: Dayjs, endDate: Dayjs, zoom: number) => {
-    return `${startDate.valueOf()}-${endDate.valueOf()}-${zoom}`
+    return `${startDate.valueOf()}-${endDate.valueOf()}-${zoom}-${ganttWidth.value}`
   }
 
   /**
@@ -410,7 +410,6 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
   )
 
   watch([() => holidayHighlight.value, () => locale.value], () => {
-    dayjs.locale(locale.value)
     cache.lower.clear()
     cache.upper.clear()
   })
