@@ -2,7 +2,7 @@
 // -----------------------------
 // 1. EXTERNAL IMPORTS
 // -----------------------------
-import { ref, computed, watch, inject } from "vue"
+import { ref, computed, watch, inject, nextTick, onBeforeUnmount, useId } from "vue"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import {
   faFileImport,
@@ -68,6 +68,46 @@ const importWarnings = ref<string[]>([])
 const importSuccess = ref<boolean | null>(null)
 const showOptions = ref(false)
 const activeStep = ref(1)
+const dialog = ref<HTMLDialogElement | null>(null)
+const dialogTitle = ref<HTMLElement | null>(null)
+const dialogId = useId()
+let opener: HTMLElement | null = null
+
+// Keep Tab within the controls instead of handing focus to browser chrome at the boundary.
+const handleDialogKeydown = (event: KeyboardEvent) => {
+  if (event.key !== "Tab" || event.ctrlKey || event.metaKey || event.altKey || !dialog.value) return
+  const controls = Array.from(dialog.value.querySelectorAll<HTMLElement>(
+    'button, input, select, textarea, a[href], [tabindex]'
+  )).filter(element => element.tabIndex >= 0 && !element.matches(":disabled") &&
+    element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden")
+  const first = controls[0]
+  const last = controls[controls.length - 1]
+  if (!first || !last) { event.preventDefault(); return }
+  if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogTitle.value)) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+const restoreFocus = () => {
+  dialog.value?.close()
+  if (opener?.isConnected) opener.focus({ preventScroll: true })
+  opener = null
+}
+watch(dialog, (element) => {
+  if (element && visible.value && !element.open) {
+    opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    element.showModal()
+  }
+})
+watch(activeStep, async () => {
+  await nextTick()
+  if (visible.value) dialogTitle.value?.focus()
+})
+onBeforeUnmount(restoreFocus)
 
 // -----------------------------
 // 5. COMPUTED PROPERTIES
@@ -117,6 +157,7 @@ watch(
 )
 
 watch(visible, (newVal) => {
+  if (!newVal) restoreFocus()
   emit("update:modelValue", newVal)
 })
 
@@ -185,6 +226,7 @@ const startImport = async () => {
     emit("import", result)
   } else {
     importSuccess.value = false
+    activeStep.value = 3
   }
 }
 
@@ -213,7 +255,8 @@ const close = () => {
 <template>
   <teleport to="body">
     <transition name="g-fade">
-      <div v-if="visible" class="g-gantt-importer-overlay">
+      <dialog v-if="visible" ref="dialog" class="g-gantt-importer-overlay"
+        :aria-labelledby="`${dialogId}-title`" aria-modal="true" @cancel.prevent="close" @keydown="handleDialogKeydown">
         <div
           class="g-gantt-importer-modal"
           :style="{
@@ -224,8 +267,8 @@ const close = () => {
         >
           <!-- Modal Header -->
           <div class="g-gantt-importer-header" :style="{ background: primaryStyle }">
-            <h3>{{ title || "Import Data" }}</h3>
-            <button class="g-gantt-importer-close-btn" @click="close" :style="{ color: textStyle }">
+            <h3 ref="dialogTitle" :id="`${dialogId}-title`" tabindex="-1">{{ title || "Import Data" }}</h3>
+            <button type="button" aria-label="Close import dialog" class="g-gantt-importer-close-btn" @click="close" :style="{ color: textStyle }">
               <FontAwesomeIcon :icon="faXmark" />
             </button>
           </div>
@@ -251,7 +294,7 @@ const close = () => {
                 </div>
                 <div
                   class="g-gantt-step-label"
-                  :style="{ color: activeStep === 1 ? textStyle : secondaryStyle }"
+                  :style="{ color: textStyle }"
                 >
                   Select File
                 </div>
@@ -279,7 +322,7 @@ const close = () => {
                 </div>
                 <div
                   class="g-gantt-step-label"
-                  :style="{ color: activeStep === 2 ? textStyle : secondaryStyle }"
+                  :style="{ color: textStyle }"
                 >
                   Configure
                 </div>
@@ -307,7 +350,7 @@ const close = () => {
                 </div>
                 <div
                   class="g-gantt-step-label"
-                  :style="{ color: activeStep === 3 ? textStyle : secondaryStyle }"
+                  :style="{ color: textStyle }"
                 >
                   Result
                 </div>
@@ -317,7 +360,7 @@ const close = () => {
             <!-- Step 1: File Selection -->
             <div v-if="activeStep === 1" class="g-gantt-importer-step">
               <div class="g-gantt-file-upload">
-                <div
+                <button type="button" autofocus
                   class="g-gantt-file-dropzone"
                   @click="triggerFileInput"
                   @dragover.prevent
@@ -343,9 +386,10 @@ const close = () => {
                   <small
                     >Supported formats: {{ availableFormats.map((f) => f.label).join(", ") }}</small
                   >
-                </div>
+                </button>
 
                 <input
+                  aria-label="File to import"
                   type="file"
                   ref="fileInput"
                   @change="handleFileSelect"
@@ -379,8 +423,8 @@ const close = () => {
 
                 <div class="g-gantt-import-options">
                   <div class="g-gantt-option-group">
-                    <label>Format</label>
-                    <select v-model="selectedFormat" :style="{ borderColor: colors.gridAndBorder }">
+                    <label :for="`${dialogId}-format`">Format</label>
+                    <select :id="`${dialogId}-format`" v-model="selectedFormat" :style="{ borderColor: colors.gridAndBorder }">
                       <option
                         v-for="format in availableFormats"
                         :key="format.value"
@@ -395,6 +439,7 @@ const close = () => {
                     <button
                       class="g-gantt-toggle-btn"
                       @click="showOptions = !showOptions"
+                      :aria-expanded="showOptions"
                       :style="{ color: accentColor }"
                     >
                       {{ showOptions ? "Hide advanced options" : "Show advanced options" }}
@@ -407,19 +452,21 @@ const close = () => {
                     :style="{ borderTopColor: colors.gridAndBorder }"
                   >
                     <div class="g-gantt-option-group">
-                      <label>Start date field</label>
+                      <label :for="`${dialogId}-start`">Start date field</label>
                       <input
                         type="text"
                         v-model="mapStartField"
+                        :id="`${dialogId}-start`"
                         :style="{ borderColor: colors.gridAndBorder }"
                       />
                     </div>
 
                     <div class="g-gantt-option-group">
-                      <label>End date field</label>
+                      <label :for="`${dialogId}-end`">End date field</label>
                       <input
                         type="text"
                         v-model="mapEndField"
+                        :id="`${dialogId}-end`"
                         :style="{ borderColor: colors.gridAndBorder }"
                       />
                     </div>
@@ -447,7 +494,7 @@ const close = () => {
                     }"
                   >
                     <FontAwesomeIcon v-if="isImporting" :icon="faSpinner" class="fa-spin" />
-                    <span v-else>Import</span>
+                    <span>{{ isImporting ? "Importing…" : "Import" }}</span>
                   </button>
                 </div>
               </div>
@@ -456,7 +503,7 @@ const close = () => {
             <!-- Step 3: Result -->
             <div v-else-if="activeStep === 3" class="g-gantt-importer-step">
               <div class="g-gantt-import-result">
-                <div v-if="importSuccess" class="g-gantt-result-success">
+                <div v-if="importSuccess" class="g-gantt-result-success" role="status">
                   <FontAwesomeIcon
                     :icon="faCheck"
                     class="result-icon success"
@@ -498,7 +545,7 @@ const close = () => {
                   </div>
                 </div>
 
-                <div v-else-if="importSuccess === false" class="g-gantt-result-error">
+                <div v-else-if="importSuccess === false" class="g-gantt-result-error" role="alert">
                   <FontAwesomeIcon
                     :icon="faXmark"
                     class="result-icon error"
@@ -539,13 +586,20 @@ const close = () => {
             </div>
           </div>
         </div>
-      </div>
+      </dialog>
     </transition>
   </teleport>
 </template>
 
 <style>
+.g-gantt-importer-overlay:not([open]) { display: none; }
+.g-gantt-importer-overlay::backdrop { background: transparent; }
 .g-gantt-importer-overlay {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  max-width: none;
+  max-height: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -646,6 +700,10 @@ const close = () => {
 }
 
 .g-gantt-file-dropzone {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: transparent;
   border: 2px dashed;
   border-radius: 8px;
   padding: 40px;
@@ -670,7 +728,7 @@ const close = () => {
 }
 
 .g-gantt-file-dropzone small {
-  color: #666;
+  color: inherit;
 }
 
 .g-gantt-file-input {

@@ -1,8 +1,19 @@
 import { ref, watch } from "vue"
-import Holidays from "date-holidays"
+import type Holidays from "date-holidays"
 import type { Holiday } from "../types"
 import type { GGanttChartConfig } from "../types/config"
 import useDayjsHelper from "./useDayjsHelper"
+
+// Share the in-flight download across charts, but keep each calendar instance local.
+// Clear failures so a later enable/country change can retry the download.
+let calendarModule: Promise<typeof import("date-holidays")> | undefined
+const loadCalendar = () => {
+  calendarModule ??= import("date-holidays").catch((error) => {
+    calendarModule = undefined
+    throw error
+  })
+  return calendarModule
+}
 
 /**
  * A composable that manages holiday information and highlighting in the Gantt chart
@@ -13,35 +24,8 @@ import useDayjsHelper from "./useDayjsHelper"
 export function useHolidays(config: GGanttChartConfig) {
   const { chartStartDayjs, chartEndDayjs } = useDayjsHelper(config)
   const holidays = ref<Holiday[]>([])
-  const hd = new Holidays()
-
-  /**
-   * Loads holidays for a specified country
-   * Fetches holidays that fall within the chart's date range
-   * @param country - Country code for holiday data
-   */
-  const loadHolidays = (country: string) => {
-    hd.init(country)
-    const start = chartStartDayjs.value.toDate()
-    const end = chartEndDayjs.value.toDate()
-
-    const holidaysListStart = hd.getHolidays(start) as unknown as Holiday[]
-    const holidaysListEnd = hd.getHolidays(end) as unknown as Holiday[]
-
-    const startHolidays = holidaysListStart.map((h: Holiday) => ({
-      date: new Date(h.date),
-      name: h.name,
-      type: h.type
-    }))
-
-    const endHolidays = holidaysListEnd.map((h: Holiday) => ({
-      date: new Date(h.date),
-      name: h.name,
-      type: h.type
-    }))
-
-    holidays.value = [...startHolidays, ...endHolidays]
-  }
+  const loadError = ref<string | null>(null)
+  let calendar: Holidays | undefined
 
   /**
    * Retrieves holiday information for a specific date
@@ -64,12 +48,33 @@ export function useHolidays(config: GGanttChartConfig) {
    * Handles changes in country selection and clears data when disabled
    */
   watch(
-    () => config.holidayHighlight.value?.toUpperCase(),
-    (newCountry) => {
-      if (newCountry) {
-        loadHolidays(newCountry)
-      } else {
-        holidays.value = []
+    [() => config.holidayHighlight.value?.toUpperCase(), chartStartDayjs, chartEndDayjs],
+    async ([country, start, end], _previous, onCleanup) => {
+      let cancelled = false
+      onCleanup(() => {
+        cancelled = true
+      })
+      holidays.value = []
+      loadError.value = null
+      if (!country) return
+
+      try {
+        const { default: Holidays } = await loadCalendar()
+        // Country/range changes and unmounts can happen while the chunk is loading.
+        if (cancelled) return
+        calendar ??= new Holidays()
+        calendar.init(country)
+        const result: Holiday[] = []
+        for (let year = start.year(); year <= end.year(); year++) {
+          for (const holiday of calendar.getHolidays(year)) {
+            result.push({ date: new Date(holiday.date), name: holiday.name, type: holiday.type })
+          }
+        }
+        holidays.value = result
+      } catch (error) {
+        if (!cancelled) {
+          loadError.value = error instanceof Error ? error.message : "Failed to load holidays"
+        }
       }
     },
     { immediate: true }
@@ -77,6 +82,7 @@ export function useHolidays(config: GGanttChartConfig) {
 
   return {
     holidays,
+    loadError,
     getHolidayInfo
   }
 }

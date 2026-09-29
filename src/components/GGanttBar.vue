@@ -2,7 +2,7 @@
 // -----------------------------
 // 1. EXTERNAL IMPORTS
 // -----------------------------
-import { computed, ref, toRefs, watch, onMounted, inject } from "vue"
+import { computed, ref, toRefs, watch, onMounted, inject, nextTick, useId } from "vue"
 
 // Prevent automatic attribute inheritance to the root element
 // We'll handle it manually to avoid Vue warnings with multiple root elements
@@ -58,6 +58,17 @@ const isDragging = ref(false)
 const isEditing = ref(false)
 const editedLabel = ref("")
 const labelInput = ref<HTMLInputElement | null>(null)
+const barElement = ref<HTMLElement | null>(null)
+const descriptionId = useId()
+const handleActivityKeydown = (event: KeyboardEvent) => {
+  if (event.target === barElement.value && (event.key === "F2" || event.key === "Enter") &&
+      barLabelEditable.value && !isGroupBar.value) {
+    event.preventDefault()
+    startEditing(event)
+    return
+  }
+  onBarKeyDown(event)
+}
 
 // Extract configuration properties from provider
 const {
@@ -67,6 +78,7 @@ const {
   chartStart,
   chartEnd,
   chartSize,
+  ganttWidth,
   showLabel,
   showGroupLabel,
   showProgress,
@@ -413,7 +425,7 @@ const handleBarMouseLeave = (e: MouseEvent) => {
 // -----------------------------
 
 // Start label editing
-const startEditing = (e: MouseEvent) => {
+const startEditing = (e: Event) => {
   if (!barLabelEditable.value || isGroupBar.value) return
 
   e.stopPropagation()
@@ -455,12 +467,14 @@ const cancelEditing = () => {
 }
 
 // Handle keyboard input during label editing
-const handleLabelKeydown = (e: KeyboardEvent) => {
-  if (e.key === "Enter") {
-    saveLabel()
-  } else if (e.key === "Escape") {
-    cancelEditing()
-  }
+const handleLabelKeydown = async (e: KeyboardEvent) => {
+  if (e.key !== "Enter" && e.key !== "Escape") return
+  e.preventDefault()
+  e.stopPropagation()
+  if (e.key === "Enter") saveLabel()
+  else cancelEditing()
+  await nextTick()
+  barElement.value?.focus({ preventScroll: true })
 }
 
 // Handle input blur
@@ -543,7 +557,7 @@ onMounted(() => {
   }
 
   watch(
-    [() => bar.value, width, chartStart, chartEnd, chartSize.width],
+    [() => bar.value, width, chartStart, chartEnd, chartSize.width, ganttWidth, showPlannedBars],
     () => {
       const newXStart = mapTimeToPosition(bar.value[barStart.value])
       const newXEnd = mapTimeToPosition(bar.value[barEnd.value])
@@ -596,14 +610,19 @@ onMounted(() => {
       @touchmove="onTouchEvent"
       @touchend="onTouchEvent"
       @touchcancel="onTouchEvent"
-      @keydown="onBarKeyDown"
+      @keydown="handleActivityKeydown"
+      ref="barElement"
       @dblclick="startEditing"
       role="listitem"
       :aria-label="`Activity ${barConfig.label}`"
-      :aria-grabbed="isDragging"
       tabindex="0"
-      :aria-describedby="`tooltip-${barConfig.id}`"
+      :aria-describedby="descriptionId"
     >
+    <span :id="descriptionId" hidden>
+      Start: {{ bar[barStart] }}. End: {{ bar[barEnd] }}.
+      <template v-if="barConfig.progress !== undefined">Progress: {{ Math.round(barConfig.progress) }}%.</template>
+      <template v-if="barLabelEditable && !isGroupBar">Press F2 or Enter to edit the label.</template>
+    </span>
     <!-- Connection Points -->
     <template v-if="enableConnectionCreation">
       <div
@@ -671,6 +690,7 @@ onMounted(() => {
           <div v-if="isEditing && barLabelEditable" class="g-gantt-bar-label-edit">
             <input
               ref="labelInput"
+              aria-label="Activity label"
               v-model="editedLabel"
               @keydown="handleLabelKeydown"
               @blur="handleInputBlur"

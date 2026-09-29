@@ -174,4 +174,71 @@ For optimal performance:
 1. Use appropriate precision for your needs
 2. Limit the visible time range
 3. Consider pagination for large datasets
-4. Use maxRows for controlled loading
+4. Use `maxRows` with `virtualRows` to limit the number of mounted rows
+
+## Row virtualization
+
+Enable `virtual-rows` together with a positive `max-rows` to mount only the visible
+rows plus a small buffer. Labels and timeline rows share the same window.
+
+```vue
+<g-gantt-chart
+  chart-start="2026-01-01 00:00"
+  chart-end="2026-02-01 00:00"
+  bar-start="start"
+  bar-end="end"
+  :initial-rows="rows"
+  :row-height="40"
+  :max-rows="10"
+  :virtual-rows="true"
+  :virtual-rows-overscan="5"
+/>
+```
+
+`virtualRows` defaults to `false`. `virtualRowsOverscan` defaults to 5 extra rows
+on each side. With 1,000 rows and a ten-row viewport, this mounts about 15–21
+rows instead of 1,000. `maxRows` alone only limits the viewport height; with
+`maxRows: 0`, virtualization is inactive. Keep row heights fixed using `rowHeight`;
+custom CSS must not change individual row heights or add vertical margins.
+
+Expanded groups are flattened for rendering; their labels, nesting, synthetic
+bars and inherited row slots are retained. Sorting and data changes update the
+window and clamp the scroll position when the dataset shrinks. Connections use
+date/row coordinates, so connections to rows outside the window remain visible
+where they cross the viewport.
+
+For compatibility with DOM-based dragging, resizing and editing, all expanded
+rows are temporarily mounted during a row interaction. The window is restored
+on release (or when a label editor loses focus). Graphic exports also temporarily
+mount all expanded rows, remove the viewport height limit, and restore scrolling
+after completion or failure. Excel exports continue to read the complete dataset.
+This reduces DOM work during normal viewing and scrolling; it does not reduce
+data storage, calculation costs, or peak DOM size during interactions and exports.
+Time-axis columns are not virtualized.
+
+## Accessibility support
+
+The chart is a named region. Its label columns use table semantics; sortable headers
+are native buttons and expose the current sort direction. Group buttons announce
+which group they control and whether it is expanded. Export controls have accessible
+names, and the default command buttons have a minimum target size of 32 × 32 CSS px.
+
+Activities expose persistent descriptions of their start, end and progress, including
+when a visual tooltip is absent. When label editing is enabled, focus an activity and
+press **F2** or **Enter** to edit its label. Enter saves, Escape cancels, and both return
+focus to the activity. Existing arrow-key movement and resizing remain available.
+Chart undo/redo shortcuts apply only inside the focused chart and leave native input
+editing shortcuts untouched.
+
+The importer uses a native HTML dialog. The file chooser can be opened with the
+keyboard; Tab and Shift+Tab stay within its controls, and Escape closes it. Closing
+or unmounting the importer returns focus to the opening control if it still exists.
+Changing steps focuses the dialog heading. Configuration fields have linked labels,
+and import results use status/alert semantics. These behaviors require browser
+support for `HTMLDialogElement.showModal()`.
+
+This support is not a claim of complete WCAG conformance. Accessible alternatives to
+connection/progress/row dragging, visual tooltip keyboard behavior, all custom theme
+contrasts, efficient navigation of very large datasets, localization of built-in
+accessibility strings and accessible PDF structure still need further work. Consumer
+slots and CSS must preserve control names, keyboard behavior and visible focus.

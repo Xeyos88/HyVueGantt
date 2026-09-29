@@ -1,107 +1,79 @@
-import { describe, it, expect, vi } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 import { ref } from "vue"
-import useDayjsHelper from "../../src/composables/useDayjsHelper"
 import dayjs from "dayjs"
+import customParseFormat from "dayjs/plugin/customParseFormat"
+import "dayjs/locale/en"
+import "dayjs/locale/it"
+import "dayjs/locale/fr"
+import "dayjs/locale/de"
+import useDayjsHelper from "../../src/composables/useDayjsHelper"
 
-// Mock dayjs
-vi.mock("dayjs", () => {
-  const mockDayjs = vi.fn((input) => ({
-    format: vi.fn().mockReturnValue(input || "2024-01-01"),
-    diff: vi.fn().mockReturnValue(60),
-    add: vi.fn().mockImplementation((value, unit) => mockDayjs("2024-01-02")),
-    subtract: vi.fn().mockImplementation((value, unit) => mockDayjs("2023-12-31")),
-    locale: vi.fn().mockReturnValue(mockDayjs)
-  }))
+dayjs.extend(customParseFormat)
+const originalLocale = dayjs.locale()
+afterEach(() => dayjs.locale(originalLocale))
 
-  // Add static methods and properties that dayjs uses
-  mockDayjs.extend = vi.fn()
-  mockDayjs.locale = vi.fn()
-
-  return {
-    default: mockDayjs,
-    __esModule: true
-  }
+const createConfig = (locale = "en", dateFormat: string | false = "YYYY-MM-DD HH:mm") => ({
+  chartStart: ref("2024-01-01 00:00"),
+  chartEnd: ref("2024-01-05 00:00"),
+  barStart: ref("start"),
+  barEnd: ref("end"),
+  dateFormat: ref(dateFormat),
+  locale: ref(locale)
 })
 
-// Mock provideConfig
-vi.mock("../../src/provider/provideConfig", () => ({
-  default: () => ({
-    chartStart: ref("2024-01-01"),
-    chartEnd: ref("2024-12-31"),
-    barStart: ref("start"),
-    barEnd: ref("end"),
-    dateFormat: ref("YYYY-MM-DD HH:mm"),
-    locale: ref("en")
-  })
-}))
-
 describe("useDayjsHelper", () => {
-  const mockConfig = {
-    chartStart: ref("2024-01-01"),
-    chartEnd: ref("2024-12-31"),
-    barStart: ref("start"),
-    barEnd: ref("end"),
-    dateFormat: ref("YYYY-MM-DD HH:mm"),
-    locale: ref("en")
-  }
-
-  describe("toDayjs", () => {
-    it("should convert string date to dayjs object", () => {
-      const { toDayjs } = useDayjsHelper(mockConfig)
-      const result = toDayjs("2024-01-01")
-      expect(dayjs).toHaveBeenCalledWith("2024-01-01", "YYYY-MM-DD HH:mm", false)
-    })
-
-    it("should convert Date object to dayjs object", () => {
-      const { toDayjs } = useDayjsHelper(mockConfig)
-      const date = new Date("2024-01-01")
-      const result = toDayjs(date)
-      expect(dayjs).toHaveBeenCalledWith(date)
-    })
-
-    it("should handle bar object with start property", () => {
-      const { toDayjs } = useDayjsHelper(mockConfig)
-      const bar = {
-        start: "2024-01-01",
-        end: "2024-01-02",
-        ganttBarConfig: { id: "1" }
-      }
-      const result = toDayjs(bar, "start")
-      expect(dayjs).toHaveBeenCalledWith("2024-01-01", "YYYY-MM-DD HH:mm", false)
-    })
-
-    it("should handle bar object with end property", () => {
-      const { toDayjs } = useDayjsHelper(mockConfig)
-      const bar = {
-        start: "2024-01-01",
-        end: "2024-01-02",
-        ganttBarConfig: { id: "1" }
-      }
-      const result = toDayjs(bar, "end")
-      expect(dayjs).toHaveBeenCalledWith("2024-01-02", "YYYY-MM-DD HH:mm", false)
-    })
+  it("parses strings and Date objects", () => {
+    const helper = useDayjsHelper(createConfig())
+    expect(helper.toDayjs("2024-01-02 12:30").format("YYYY-MM-DD HH:mm"))
+      .toBe("2024-01-02 12:30")
+    const date = new Date(2024, 0, 2, 12, 30)
+    expect(helper.toDayjs(date).valueOf()).toBe(date.getTime())
   })
 
-  describe("format", () => {
-    it("should format date string with default pattern", () => {
-      const { format } = useDayjsHelper(mockConfig)
-      const result = format("2024-01-01")
-      expect(result).toBe("2024-01-01")
-    })
-
-    it("should return Date object when pattern is false", () => {
-      const { format } = useDayjsHelper(mockConfig)
-      const date = new Date("2024-01-01")
-      const result = format(date, false)
-      expect(result).toBeInstanceOf(Date)
-    })
+  it("reads the configured start and end fields from bars", () => {
+    const config = createConfig()
+    config.barStart.value = "begin"
+    config.barEnd.value = "finish"
+    const helper = useDayjsHelper(config)
+    const bar = { begin: "2024-01-02 00:00", finish: "2024-01-03 00:00", ganttBarConfig: { id: "a" } }
+    expect(helper.toDayjs(bar, "start").date()).toBe(2)
+    expect(helper.toDayjs(bar, "end").date()).toBe(3)
   })
 
-  describe("diffDates", () => {
-    it("should calculate difference between chart start and end", () => {
-      const { diffDates } = useDayjsHelper(mockConfig)
-      const result = diffDates()
-      expect(result).toBe(60)
-    })
+  it("returns native dates when formatting is disabled", () => {
+    const helper = useDayjsHelper(createConfig())
+    const date = new Date(2024, 0, 2)
+    expect(helper.format(date, false)).toBe(date)
+    expect(helper.format("2024-01-02 00:00", false)).toEqual(date)
+  })
+
+  it("calculates the range duration", () => {
+    expect(useDayjsHelper(createConfig()).diffDates()).toBe(4)
+  })
+
+  it("parses localized month names using each chart's locale", () => {
+    const italian = useDayjsHelper(createConfig("it", "D MMMM YYYY"))
+    const english = useDayjsHelper(createConfig("en", "D MMMM YYYY"))
+    expect(italian.toDayjs("2 gennaio 2024").format("YYYY-MM-DD")).toBe("2024-01-02")
+    expect(english.toDayjs("2 January 2024").format("YYYY-MM-DD")).toBe("2024-01-02")
+  })
+
+  it("formats strings, dates and existing Day.js objects in the chart's locale", () => {
+    const helper = useDayjsHelper(createConfig("it"))
+    for (const input of ["2024-01-02 00:00", new Date(2024, 0, 2), dayjs("2024-01-02").locale("en")]) {
+      expect(helper.format(input, "MMMM")).toBe("gennaio")
+    }
+  })
+
+  it("reacts to locale changes without affecting other charts or the application", () => {
+    dayjs.locale("de")
+    const config = createConfig("it")
+    const italian = useDayjsHelper(config)
+    const english = useDayjsHelper(createConfig("en"))
+    expect(italian.chartStartDayjs.value.format("MMMM")).toBe("gennaio")
+    config.locale.value = "fr"
+    expect(italian.chartStartDayjs.value.format("MMMM")).toBe("janvier")
+    expect(english.chartStartDayjs.value.format("MMMM")).toBe("January")
+    expect(dayjs.locale()).toBe("de")
   })
 })

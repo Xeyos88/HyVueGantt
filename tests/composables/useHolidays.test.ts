@@ -1,151 +1,113 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { ref } from "vue"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { effectScope, nextTick, ref, type EffectScope } from "vue"
 import { useHolidays } from "../../src/composables/useHolidays"
-import Holidays from "date-holidays"
-import type { Holiday } from "../../src/types"
+import type { GGanttChartConfig } from "../../src/types"
 
-vi.mock("date-holiholidaysdays", () => {
+const loader = vi.hoisted(() => ({ loaded: vi.fn(), calculated: vi.fn() }))
+vi.mock("date-holidays", () => {
+  loader.loaded()
   return {
-    default: vi.fn().mockImplementation(() => ({
-      init: vi.fn(),
-      getHolidays: vi.fn().mockImplementation((date) => [
-        {
-          date: new Date("2024-01-01"),
-          name: "New Year's Day",
-          type: "public"
-        },
-        {
-          date: new Date("2024-12-25"),
-          name: "Christmas Day",
-          type: "public"
-        }
-      ])
-    }))
+    default: class {
+      country = ""
+      init(country: string) {
+        if (country === "FAIL") throw new Error("Calendar unavailable")
+        this.country = country
+      }
+      getHolidays(year: number) {
+        loader.calculated(this.country, year)
+        return [
+          { date: `${year}-01-01 00:00:00`, name: `${this.country} New Year`, type: "public" }
+        ]
+      }
+    }
   }
 })
-
-vi.mock("../../src/composables/useDayjsHelper", () => ({
-  default: () => ({
-    chartStartDayjs: {
-      value: {
-        toDate: () => new Date("2024-01-01")
-      }
-    },
-    chartEndDayjs: {
-      value: {
-        toDate: () => new Date("2024-12-31")
-      }
-    },
-    toDayjs: vi.fn().mockReturnValue({
-      toDate: () => new Date("2024-01-01")
-    }),
-    format: vi.fn().mockReturnValue("2024-01-01")
-  })
-}))
-
-describe("useHolidays", () => {
-  const mockConfig = {
+const scopes: EffectScope[] = []
+afterEach(() => scopes.splice(0).forEach((scope) => scope.stop()))
+const setup = (country = "") => {
+  const scope = effectScope()
+  scopes.push(scope)
+  const config = {
     chartStart: ref("2024-01-01"),
     chartEnd: ref("2024-12-31"),
-    holidayHighlight: ref("US")
+    barStart: ref("start"),
+    barEnd: ref("end"),
+    locale: ref("en"),
+    dateFormat: ref("YYYY-MM-DD"),
+    holidayHighlight: ref(country)
   }
+  return { scope, config, ...scope.run(() => useHolidays(config as unknown as GGanttChartConfig))! }
+}
 
-  beforeEach(() => {
-    vi.clearAllMocks()
+describe("lazy holiday data", () => {
+  it("defers loading and ignores stale country requests and disposed charts", async () => {
+    const disabled = setup()
+    expect(disabled.holidays.value).toEqual([])
+    expect(loader.loaded).not.toHaveBeenCalled()
+    const first = setup("US")
+    const second = setup("FR")
+    const disposed = setup("US")
+    disposed.scope.stop()
+    first.config.holidayHighlight.value = "IT"
+    await nextTick()
+    await vi.dynamicImportSettled()
+    expect(loader.loaded).toHaveBeenCalledTimes(1)
+    expect([first.loadError.value, second.loadError.value]).toEqual([null, null])
+    await vi.waitFor(() => expect(loader.calculated).toHaveBeenCalledTimes(2))
+    expect(loader.calculated.mock.calls).toEqual(
+      expect.arrayContaining([
+        ["FR", 2024],
+        ["IT", 2024]
+      ])
+    )
+    expect(first.getHolidayInfo(new Date(2024, 0, 1))?.holidayName).toBe("IT New Year")
+    expect(second.getHolidayInfo(new Date(2024, 0, 1))?.holidayName).toBe("FR New Year")
+    expect(disposed.holidays.value).toEqual([])
   })
 
-  describe("initialization", () => {
-    it("should initialize with empty holidays array", () => {
-      const config = {
-        ...mockConfig,
-        holidayHighlight: ref("")
-      }
-      const { holidays } = useHolidays(config)
-      expect(holidays.value).toHaveLength(0)
-    })
-
-    it("should load holidays when country code is provided", () => {
-      const { holidays } = useHolidays(mockConfig)
-      expect(holidays.value).toHaveLength(46)
-      expect(holidays.value[0]).toMatchObject({
-        date: expect.any(Date),
-        name: "New Year's Day",
-        type: "public"
-      })
-    })
-
-    it("should clear holidays when country code is removed", async () => {
-      const config = {
-        ...mockConfig,
-        holidayHighlight: ref("US")
-      }
-      const { holidays } = useHolidays(config)
-      expect(holidays.value.length).toBeGreaterThan(0)
-
-      config.holidayHighlight.value = ""
-      await vi.dynamicImportSettled()
-      expect(holidays.value).toHaveLength(0)
-    })
+  it("clears disabled holidays and can enable them again", async () => {
+    const calendar = setup("US")
+    await vi.dynamicImportSettled()
+    expect(calendar.holidays.value).toHaveLength(1)
+    calendar.config.holidayHighlight.value = ""
+    await nextTick()
+    expect(calendar.holidays.value).toEqual([])
+    calendar.config.holidayHighlight.value = "it"
+    await nextTick()
+    await vi.dynamicImportSettled()
+    expect(calendar.getHolidayInfo(new Date(2024, 0, 1))?.holidayName).toBe("IT New Year")
   })
 
-  describe("getHolidayInfo", () => {
-    it("should return holiday info for a matching date", () => {
-      const { getHolidayInfo } = useHolidays(mockConfig)
-      const date = new Date("2024-01-01")
-      const info = getHolidayInfo(date)
-
-      expect(info).toMatchObject({
-        isHoliday: true,
-        holidayName: "New Year's Day",
-        holidayType: "public"
-      })
-    })
-
-    it("should return null for non-holiday date", () => {
-      const { getHolidayInfo } = useHolidays(mockConfig)
-      const date = new Date("2024-01-02")
-      const info = getHolidayInfo(date)
-
-      expect(info).toBeNull()
-    })
+  it("reloads every year in the new range without duplicating a single year", async () => {
+    const calendar = setup("US")
+    await vi.dynamicImportSettled()
+    expect(calendar.holidays.value).toHaveLength(1)
+    calendar.config.chartStart.value = "2025-01-01"
+    calendar.config.chartEnd.value = "2027-12-31"
+    await nextTick()
+    await vi.dynamicImportSettled()
+    expect(calendar.holidays.value.map((holiday) => holiday.date.getFullYear())).toEqual([
+      2025, 2026, 2027
+    ])
   })
 
-  describe("holiday updates", () => {
-    
-    it("should handle invalid country codes gracefully", () => {
-      const config = {
-        ...mockConfig,
-        holidayHighlight: ref("INVALID")
-      }
-      const { holidays } = useHolidays(config)
-      expect(holidays.value).toBeDefined()
-      expect(Array.isArray(holidays.value)).toBe(true)
-    })
+  it("matches days regardless of time and returns null for other days", async () => {
+    const calendar = setup("US")
+    await vi.dynamicImportSettled()
+    expect(calendar.getHolidayInfo(new Date(2024, 0, 1, 8))?.isHoliday).toBe(true)
+    expect(calendar.getHolidayInfo(new Date(2024, 0, 1, 20))?.isHoliday).toBe(true)
+    expect(calendar.getHolidayInfo(new Date(2024, 0, 2))).toBeNull()
   })
 
-  describe("date handling", () => {
-    it("should correctly compare dates ignoring time", () => {
-      const { getHolidayInfo } = useHolidays(mockConfig)
-      
-      const morningDate = new Date("2024-01-01T08:00:00")
-      const eveningDate = new Date("2024-01-01T20:00:00")
-      
-      const morningInfo = getHolidayInfo(morningDate)
-      const eveningInfo = getHolidayInfo(eveningDate)
-      
-      expect(morningInfo?.isHoliday).toBe(true)
-      expect(eveningInfo?.isHoliday).toBe(true)
-      expect(morningInfo?.holidayName).toBe(eveningInfo?.holidayName)
-    })
-
-    it("should handle timezone differences", () => {
-      const { getHolidayInfo } = useHolidays(mockConfig)
-      
-      const date = new Date(Date.UTC(2024, 0, 1))
-      const info = getHolidayInfo(date)
-      
-      expect(info?.isHoliday).toBe(true)
-      expect(info?.holidayName).toBe("New Year's Day")
-    })
+  it("exposes loading errors without rejecting the chart watcher and recovers on change", async () => {
+    const calendar = setup("FAIL")
+    await vi.dynamicImportSettled()
+    expect(calendar.holidays.value).toEqual([])
+    expect(calendar.loadError.value).toBe("Calendar unavailable")
+    calendar.config.holidayHighlight.value = "US"
+    await nextTick()
+    await vi.dynamicImportSettled()
+    expect(calendar.loadError.value).toBeNull()
+    expect(calendar.holidays.value).toHaveLength(1)
   })
 })

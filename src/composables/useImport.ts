@@ -15,7 +15,6 @@ import type {
   ImportFormat,
   JiraIssue
 } from "../types/import"
-import Papa from "papaparse"
 
 /**
  * Composable for importing data from various formats into the Gantt chart
@@ -44,7 +43,7 @@ export function useImport() {
         case "jira":
           return JSON.parse(content.toString())
         case "csv":
-          return parseCsv(content.toString())
+          return await parseCsv(content.toString())
         default:
           throw new Error(`Format not supported: ${format}`)
       }
@@ -60,7 +59,8 @@ export function useImport() {
    * @param csvContent - CSV content to parse
    * @returns Array of parsed rows
    */
-  const parseCsv = (csvContent: string): SpreadsheetRow[] => {
+  const parseCsv = async (csvContent: string): Promise<SpreadsheetRow[]> => {
+    const { default: Papa } = await import("papaparse")
     const result = Papa.parse(csvContent, {
       header: true,
       skipEmptyLines: true,

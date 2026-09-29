@@ -18,6 +18,7 @@ import {
 // -----------------------------
 
 // Provider
+import { VIRTUAL_ROWS_KEY } from "../provider/symbols"
 import provideConfig from "../provider/provideConfig"
 
 // Composables
@@ -72,6 +73,7 @@ if (!rowManager) {
  * Extract rows and sorting state from row manager
  */
 const { rows, sortState, toggleSort } = rowManager
+const virtual = inject(VIRTUAL_ROWS_KEY, undefined)
 
 /**
  * Extract props from configuration
@@ -188,6 +190,7 @@ const totalWidth = computed(() => {
  * Get processed rows with indentation level
  */
 const getProcessedRows = computed(() => {
+  if (virtual?.enabled.value) return virtual.flatRows.value.map(({ row, depth }) => ({ ...row, indentLevel: depth }))
   const processRows = (rows: ChartRow[], level = 0): LabelColumnRowProps[] => {
     return rows.flatMap((row) => {
       const processedRow: LabelColumnRowProps = {
@@ -211,7 +214,14 @@ const getProcessedRows = computed(() => {
 /**
  * Style for container based on maxRows setting
  */
+const visibleLabelRows = computed(() => {
+  const all = getProcessedRows.value
+  return virtual?.enabled.value ? all.slice(virtual.window.value.start, virtual.window.value.end) : all
+})
+const rowIndexOffset = computed(() => virtual?.enabled.value ? virtual.window.value.start : 0)
+
 const labelContainerStyle = computed<CSSProperties>(() => {
+  if (virtual?.exporting.value) return {}
   if (maxRows.value === 0) return {}
   const minRows = Math.min(maxRows.value, getProcessedRows.value.length)
 
@@ -698,6 +708,8 @@ defineExpose({
 <template>
   <div
     class="g-label-column"
+    role="table"
+    :aria-label="labelColumnTitle || 'Tasks'"
     :style="{
       fontFamily: font,
       color: colors.text,
@@ -710,6 +722,7 @@ defineExpose({
     <!-- Column Header -->
     <div
       class="g-label-column-header"
+      role="row"
       v-if="!hideTimeaxis"
       :style="{
         background: colors.primary,
@@ -724,9 +737,12 @@ defineExpose({
           class="g-label-column-header-cell"
           :class="{ sortable: columnSortableStates[column.field] }"
           role="columnheader"
+          :aria-sort="columnSortableStates[column.field] ? (sortState.column === column.field && sortState.direction !== 'none' ? (sortState.direction === 'asc' ? 'ascending' : 'descending') : 'none') : undefined"
           :style="getColumnStyle(column.field, false)"
         >
-          <div
+          <component
+            :is="columnSortableStates[column.field] ? 'button' : 'div'"
+            :type="columnSortableStates[column.field] ? 'button' : undefined"
             class="header-content"
             @click="columnSortableStates[column.field] ? toggleSort(column.field) : undefined"
           >
@@ -738,7 +754,7 @@ defineExpose({
             <span v-if="columnSortableStates[column.field]" class="sort-icon">
               <FontAwesomeIcon :icon="getSortIcon(column.field)" />
             </span>
-          </div>
+          </component>
           <div
             v-if="labelResizable"
             class="column-resizer"
@@ -759,21 +775,25 @@ defineExpose({
     <!-- Rows Container -->
     <div
       class="g-label-column-rows"
+      role="rowgroup"
       :style="labelContainerStyle"
       ref="labelContainer"
       @scroll="handleLabelScroll"
     >
+      <div v-if="virtual?.enabled.value" class="g-virtual-spacer" aria-hidden="true" :style="{ height: `${virtual.window.value.top}px` }" />
       <div
-        v-for="(row, index) in getProcessedRows"
-        :key="`${row.id || row.label}_${index}`"
+        v-for="(row, index) in visibleLabelRows"
+        role="row"
+        :key="row.id ?? row.label"
         :data-row-id="row.id"
         :style="{
           background: Array.isArray(row.children)
             ? colors.rowContainer
-            : index % 2 === 0
+            : (index + rowIndexOffset) % 2 === 0
               ? colors.ternary
               : colors.quartenary,
           height: `${rowHeight}px`,
+          boxSizing: 'border-box',
           borderBottom: `1px solid ${colors.gridAndBorder}`,
           transform:
             rowTouchState.draggedRow === row
@@ -805,6 +825,7 @@ defineExpose({
             <template v-if="isValidColumn(column.field) || column.valueGetter">
               <div
                 class="g-label-column-cell"
+                role="cell"
                 :style="getColumnStyle(column.field, Array.isArray(row.children))"
               >
                 <div :style="getCellStyle(column.field === 'Label')">
@@ -813,6 +834,9 @@ defineExpose({
                       <button
                         v-if="row.children.length > 0"
                         class="group-toggle-button"
+                        type="button"
+                        :aria-label="`${rowManager.isGroupExpanded(row.id) ? 'Collapse' : 'Expand'} ${row.label}`"
+                        :aria-expanded="rowManager.isGroupExpanded(row.id)"
                         @click="handleGroupToggle(row, $event)"
                       >
                         <FontAwesomeIcon
@@ -831,23 +855,23 @@ defineExpose({
                         v-if="Array.isArray(row.children)"
                         :name="`label-column-${column.field.toLowerCase()}-group`"
                         :row="row"
-                        :value="getRowValue(row, column, index)"
+                        :value="getRowValue(row, column, index + rowIndexOffset)"
                       >
                         <slot
                           :name="`label-column-${column.field.toLowerCase()}`"
                           :row="row"
-                          :value="getRowValue(row, column, index)"
+                          :value="getRowValue(row, column, index + rowIndexOffset)"
                         >
-                          {{ getRowValue(row, column, index) }}
+                          {{ getRowValue(row, column, index + rowIndexOffset) }}
                         </slot>
                       </slot>
                       <slot
                         v-else
                         :name="`label-column-${column.field.toLowerCase()}`"
                         :row="row"
-                        :value="getRowValue(row, column, index)"
+                        :value="getRowValue(row, column, index + rowIndexOffset)"
                       >
-                        {{ getRowValue(row, column, index) }}
+                        {{ getRowValue(row, column, index + rowIndexOffset) }}
                       </slot>
                     </span>
                   </div>
@@ -857,6 +881,7 @@ defineExpose({
           </template>
         </div>
       </div>
+      <div v-if="virtual?.enabled.value" class="g-virtual-spacer" aria-hidden="true" :style="{ height: `${virtual.window.value.bottom}px` }" />
     </div>
   </div>
 </template>
@@ -917,6 +942,11 @@ defineExpose({
 }
 
 .header-content {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  min-height: 24px;
   width: 100%;
   display: flex;
   align-items: center;

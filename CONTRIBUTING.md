@@ -157,9 +157,13 @@ Examples:
 
 ## Release Process
 
-1. We use semantic versioning (MAJOR.MINOR.PATCH)
-2. Changes are documented in CHANGELOG.md
-3. Release branches are created from develop for final testing
-4. After testing, releases are merged to main and tagged
+1. Integrate changes into `develop` and wait for its CI pipeline to pass.
+2. Use Conventional Commits with a space after the colon, such as `fix: correct row rendering`. The release rules select a patch for fixes, a minor for features, and a major for breaking changes. Refactoring alone does not trigger a release.
+3. Update the package version manually to match the next semantic release, for example `npm version 5.3.2 --no-git-tag-version`, and commit both `package.json` and `package-lock.json`. A `chore` version bump alone does not trigger a release; the changes must include a release-triggering commit.
+4. Run tests, the library build, and the documentation build. After CI passes, merge `develop` (or a release branch prepared from it) into `main` and push.
+5. The main workflow verifies that the package and lockfile versions match the calculated release **before creating its tag**, then generates the changelog and GitHub release. Its separate `npm publish` step runs only when semantic-release creates a release. npm authentication comes from `actions/setup-node` and the `NPM_TOKEN` secret exposed as `NODE_AUTH_TOKEN`.
+6. After the release workflow succeeds, merge `main` back into `develop` to include the generated changelog commit.
+
+If npm publishing fails after the GitHub release was created, simply rerunning the workflow will not publish it: semantic-release now finds no new release. Resolve the publishing failure and publish the verified package from the existing release tag; do not create a replacement tag or rewrite release history.
 
 Thank you for contributing to HY Vue Gantt!

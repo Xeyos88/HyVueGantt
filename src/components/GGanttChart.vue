@@ -37,12 +37,13 @@ import GGanttImporter from "./GGanttImporter.vue"
 import GGanttCommands from "./GGanttCommands.vue"
 
 // Composables
+import { useVirtualRows } from "../composables/useVirtualRows"
+import useTimePositionMapping from "../composables/useTimePositionMapping"
 import { useConnections } from "../composables/useConnections"
 import { useTooltip } from "../composables/useTooltip"
 import { useChartNavigation } from "../composables/useChartNavigation"
 import { useKeyboardNavigation } from "../composables/useKeyboardNavigation"
 import { useRows, findBarInRows } from "../composables/useRows"
-import { ganttWidth } from "../composables/useSimpleStore"
 import useTimeaxisUnits from "../composables/useTimeaxisUnits"
 import { useSectionResize } from "../composables/useSectionResize"
 import { useConnectionCreation } from "../composables/useConnectionCreation"
@@ -53,6 +54,7 @@ import { useExport } from "../composables/useExport"
 import { colorSchemes, type ColorSchemeKey } from "../color-schemes"
 import useDayjsHelper, { DEFAULT_DATE_FORMAT } from "../composables/useDayjsHelper"
 import {
+  VIRTUAL_ROWS_KEY,
   BOOLEAN_KEY,
   CONFIG_KEY,
   EMIT_BAR_EVENT_KEY,
@@ -62,6 +64,7 @@ import {
   INTERNAL_PRECISION_KEY
 } from "../provider/symbols"
 import type {
+  BarPosition,
   GanttBarObject,
   GGanttChartProps,
   ColorScheme,
@@ -106,6 +109,8 @@ const props = withDefaults(defineProps<GGanttChartProps>(), {
   defaultConnectionLabelAlwaysVisible: false,
   defaultConnectionLabelStyle: () => ({}),
   maxRows: 0,
+  virtualRows: false,
+  virtualRowsOverscan: 5,
   initialSort: () => ({
     column: "Label",
     direction: "none"
@@ -181,6 +186,7 @@ const isImporterVisible = ref(props.showImporter)
 // Component Refs
 const gGantt = ref<HTMLElement | null>(null)
 const ganttChart = ref<HTMLElement | null>(null)
+const ganttWidth = ref(0)
 const ganttWrapper = ref<HTMLElement | null>(null)
 
 const ganttContainer = ref<HTMLElement | null>(null)
@@ -237,6 +243,7 @@ const rowManager = useRows(
     barStart: toRef(props, "barStart"),
     barEnd: toRef(props, "barEnd"),
     dateFormat: toRef(props, "dateFormat"),
+    locale: toRef(props, "locale"),
     multiColumnLabel: toRef(props, "multiColumnLabel"),
     onSort: (sortState) => emit("sort", { sortState }),
     initialSort: props.initialSort,
@@ -246,6 +253,53 @@ const rowManager = useRows(
 )
 
 provide("useRows", rowManager)
+
+const virtual = useVirtualRows(rowManager.rows, rowManager.isGroupExpanded, {
+  enabled: toRef(props, "virtualRows"),
+  rowHeight: toRef(props, "rowHeight"),
+  maxRows: toRef(props, "maxRows"),
+  overscan: toRef(props, "virtualRowsOverscan")
+})
+provide(VIRTUAL_ROWS_KEY, virtual)
+const { mapTimeToPosition } = useTimePositionMapping({ ...toRefs(props), ganttWidth })
+// Fixed row heights let off-screen connection endpoints keep their coordinates.
+const virtualBarPositions = computed(() => {
+  if (!virtual.enabled.value) return undefined
+  const positions = new Map<string, BarPosition>()
+  for (const { row, index } of virtual.flatRows.value) {
+    for (const bar of row.bars) {
+      const x = mapTimeToPosition(bar[props.barStart])
+      positions.set(bar.ganttBarConfig.id, {
+        id: bar.ganttBarConfig.id,
+        x,
+        y: (index + 0.15) * props.rowHeight,
+        width: mapTimeToPosition(bar[props.barEnd]) - x,
+        height: props.rowHeight * 0.7
+      })
+    }
+  }
+  return positions
+})
+const renderedRows = computed(() =>
+  virtual.enabled.value
+    ? virtual.visibleRows.value.map((entry) => entry.row)
+    : rowManager.rows.value
+)
+const beginRowInteraction = (event: Event) => {
+  if (
+    virtual.enabled.value &&
+    (event.target as Element).closest?.(".g-gantt-row, .g-label-column-row")
+  ) {
+    virtual.interacting.value = true
+  }
+}
+const endRowInteraction = async () => {
+  await nextTick()
+  // Keep editable labels mounted until the editor loses focus.
+  if (!ganttContainer.value?.querySelector(".g-gantt-row input:focus")) {
+    virtual.interacting.value = false
+  }
+}
 
 // Connections Management
 const {
@@ -257,7 +311,7 @@ const {
   handleConnectionClick,
   selectedConnection,
   deleteSelectedConnection
-} = useConnections(rowManager, props, id, emit)
+} = useConnections(rowManager, props, id, emit, virtualBarPositions)
 
 // Tooltip Management
 const { showTooltip, tooltipBar, initTooltip, clearTooltip } = useTooltip()
@@ -274,19 +328,12 @@ const { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision, can
   maxZoom: validatedMaxZoom,
   minZoom: validatedMinZoom,
   colors,
-  chartSize
+  chartSize,
+  ganttWidth
 })
 
 // Dayjs helpers bound to this chart's configuration
-const { toDayjs, chartStartDayjs, chartEndDayjs } = useDayjsHelper({
-  ...toRefs(props),
-  baseUnitWidth: validatedBaseUnitWidth,
-  defaultZoom: validatedDefaultZoom,
-  maxZoom: validatedMaxZoom,
-  minZoom: validatedMinZoom,
-  colors,
-  chartSize
-})
+const { toDayjs, chartStartDayjs, chartEndDayjs } = useDayjsHelper(toRefs(props))
 
 // Notify consumers when the internal precision changes (e.g. while zooming)
 watch(internalPrecision, (precision, previousPrecision) => {
@@ -317,7 +364,12 @@ const {
     updateBarPositions,
     timeaxisUnits: { timeaxisUnits, internalPrecision, zoomLevel, adjustZoomAndPrecision, canZoomIn, canZoomOut }
   },
-  props.maxRows
+  toRef(props, "maxRows"),
+  toRef(props, "rowHeight"),
+  (top) => {
+    virtual.scrollTop.value = top
+    if (virtual.enabled.value) clearTooltip()
+  }
 )
 
 // Keyboard Navigation
@@ -333,7 +385,7 @@ const { handleKeyDown } = useKeyboardNavigation(
     selectedConnection,
     deleteSelectedConnection
   },
-  toRef(props.enableConnectionDeletion)
+  toRef(props, "enableConnectionDeletion")
 )
 
 // Size Management
@@ -359,7 +411,8 @@ const {
   {
     ...toRefs(props),
     colors,
-    chartSize
+    chartSize,
+    ganttWidth
   },
   rowManager,
   emit,
@@ -428,7 +481,7 @@ const previewLinePoints = computed(() => {
   }
 })
 
-const { exportChart, downloadExport, isExporting } = useExport(
+const { exportChart: exportRenderedChart, downloadExport, isExporting } = useExport(
   () => ganttChart.value,
   () => gGantt.value,
   rowManager,
@@ -436,6 +489,7 @@ const { exportChart, downloadExport, isExporting } = useExport(
     barStart: toRef(props, "barStart"),
     barEnd: toRef(props, "barEnd"),
     dateFormat: toRef(props, "dateFormat"),
+    locale: toRef(props, "locale"),
     precision: toRef(props, "precision")
   }
 )
@@ -474,6 +528,28 @@ const scrollToDate = (date: string | Date): boolean => {
 const autoScrollToToday = () => {
   if (!props.autoScrollToToday) return
   scrollToDate(new Date())
+}
+
+// Graphic exports require every expanded row, not just the current viewport.
+const exportChart = async (options: ExportOptions): Promise<ExportResult> => {
+  if (options.format === "excel") return exportRenderedChart(options)
+  const top = rowsContainer.value?.scrollTop ?? 0
+  const left = ganttWrapper.value?.scrollLeft ?? 0
+  virtual.exporting.value = true
+  try {
+    await nextTick()
+    if (rowsContainer.value) rowsContainer.value.scrollTop = 0
+    labelColumn.value?.setScroll(0)
+    await updateBarPositions()
+    return await exportRenderedChart(options)
+  } finally {
+    virtual.exporting.value = false
+    virtual.scrollTop.value = top
+    await nextTick()
+    if (rowsContainer.value) rowsContainer.value.scrollTop = top
+    labelColumn.value?.setScroll(top)
+    if (ganttWrapper.value) ganttWrapper.value.scrollLeft = left
+  }
 }
 
 const handleExport = async (options?: Partial<ExportOptions>): Promise<ExportResult> => {
@@ -556,12 +632,34 @@ const rows = computed(() => rowManager.rows.value)
  * Filters slot names to only milestone-related slots
  * Used to avoid v-for + v-if on the same template element
  */
+const renderedConnections = computed(() => {
+  if (!virtual.enabled.value || virtual.interacting.value || virtual.exporting.value) {
+    return connections.value
+  }
+  const top = virtual.window.value.top
+  const bottom = virtual.window.value.end * props.rowHeight
+  return connections.value.filter((conn) => {
+    const source = virtualBarPositions.value?.get(conn.sourceId)
+    const target = virtualBarPositions.value?.get(conn.targetId)
+    return source && target &&
+      Math.max(source.y + source.height, target.y + target.height) >= top &&
+      Math.min(source.y, target.y) <= bottom
+  })
+})
+watch(virtualBarPositions, () => { void updateBarPositions() }, { flush: "post" })
+watch(() => virtual.window.value.scrollTop, async top => {
+  if (!virtual.enabled.value || virtual.exporting.value) return
+  await nextTick()
+  if (rowsContainer.value) rowsContainer.value.scrollTop = top
+  labelColumn.value?.setScroll(top)
+})
+
 const milestoneSlotNames = computed(() =>
   Object.keys(slots).filter((name) => name.startsWith("milestone-") || name === "milestone")
 )
 
 const rowsContainerStyle = computed<CSSProperties>(() => {
-  if (props.maxRows === 0) return {}
+  if (props.maxRows === 0 || virtual.exporting.value) return {}
 
   return {
     "max-height": `${props.maxRows * props.rowHeight}px`,
@@ -748,7 +846,7 @@ watch(
   () => {
     ganttWidth.value = totalWidth.value
   },
-  { immediate: true }
+  { immediate: true, flush: "sync" }
 )
 
 const normalizeSlots = (children: unknown): Record<string, () => unknown> => {
@@ -760,12 +858,21 @@ const normalizeSlots = (children: unknown): Record<string, () => unknown> => {
   return normalized
 }
 
+const virtualRowSources = computed(() => {
+  const sources = new Map<ChartRow, ChartRow["_originalNode"]>()
+  for (const entry of virtual.flatRows.value) {
+    sources.set(entry.row, entry.row._originalNode ?? (entry.parent ? sources.get(entry.parent.row) : undefined))
+  }
+  return sources
+})
 const renderRow = (row: ChartRow) => {
-  if (row._originalNode) {
+  const originalNode = virtual.enabled.value ? virtualRowSources.value.get(row) : row._originalNode
+  if (originalNode) {
     return h(
       GGanttRow,
       {
-        ...row._originalNode.props,
+        ...originalNode.props,
+        ...(virtual.enabled.value ? { renderChildren: false } : {}),
         label: row.label,
         bars: row.bars,
         children: row.children,
@@ -773,11 +880,12 @@ const renderRow = (row: ChartRow) => {
         key: row.id || row.label,
         onRangeSelection: handleRangeSelection
       },
-      normalizeSlots(row._originalNode.children)
+      normalizeSlots(originalNode.children)
     )
   }
 
   return h(GGanttRow, {
+    ...(virtual.enabled.value ? { renderChildren: false } : {}),
     label: row.label,
     bars: row.bars,
     id: row.id,
@@ -871,6 +979,9 @@ const redo = () => {
 }
 
 const handleKeyboardShortcuts = (e: KeyboardEvent) => {
+  const target = e.target
+  if (!(target instanceof HTMLElement) || !ganttContainer.value?.contains(target)) return
+  if (target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return
   const isCtrlPressed = e.ctrlKey || e.metaKey
   if (isCtrlPressed && e.code === "KeyZ") {
     e.preventDefault()
@@ -895,6 +1006,11 @@ let resizeObserver: ResizeObserver
 
 // Lifecycle Hooks
 onMounted(() => {
+  window.addEventListener("mouseup", endRowInteraction)
+  window.addEventListener("touchend", endRowInteraction)
+  window.addEventListener("touchcancel", endRowInteraction)
+  window.addEventListener("dragend", endRowInteraction)
+  window.addEventListener("blur", endRowInteraction)
   const cleanup = rowManager.onSortChange(updateBarPositions)
   const cleanupGroup = rowManager.onGroupExpansionChange(updateBarPositions)
 
@@ -929,6 +1045,11 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener("mouseup", endRowInteraction)
+  window.removeEventListener("touchend", endRowInteraction)
+  window.removeEventListener("touchcancel", endRowInteraction)
+  window.removeEventListener("dragend", endRowInteraction)
+  window.removeEventListener("blur", endRowInteraction)
   if (ganttWrapper.value) {
     ganttWrapper.value.removeEventListener("wheel", (e) => handleWheel(e, ganttWrapper.value!))
   }
@@ -992,7 +1113,8 @@ provide(CONFIG_KEY, {
   maxZoom: validatedMaxZoom,
   minZoom: validatedMinZoom,
   colors,
-  chartSize
+  chartSize,
+  ganttWidth
 })
 provide(EMIT_BAR_EVENT_KEY, emitBarEvent)
 provide(BOOLEAN_KEY, { ...props })
@@ -1052,10 +1174,14 @@ defineExpose({
 <template>
   <div
     class="g-gantt-container"
-    role="application"
+    role="region"
     aria-label="Interactive Gantt"
     tabindex="0"
     @keydown="handleKeyDown"
+    @mousedown.capture="beginRowInteraction"
+    @touchstart.capture="beginRowInteraction"
+    @focusin="beginRowInteraction"
+    @focusout="endRowInteraction"
     @mousemove="handleChartMouseMove"
     @mouseup="handleChartMouseUp"
     ref="ganttContainer"
@@ -1070,7 +1196,7 @@ defineExpose({
       }"
     >
       <!-- Chart Layout Section -->
-      <div class="g-gantt-main-layout" aria-controls="gantt-controls">
+      <div class="g-gantt-main-layout">
         <div v-if="labelColumnTitle" class="g-gantt-label-section" :style="labelSectionStyle">
           <!-- Label Column -->
           <g-gantt-label-column ref="labelColumn" @scroll="handleLabelScroll" @row-drop="dropRow">
@@ -1175,9 +1301,11 @@ defineExpose({
               ref="rowsContainer"
               @scroll="handleContentScroll"
             >
-              <template v-for="row in rows" :key="row.id || row.label">
+              <div v-if="virtual.enabled.value" class="g-virtual-spacer" aria-hidden="true" :style="{ height: `${virtual.window.value.top}px` }" />
+              <template v-for="row in renderedRows" :key="row.id ?? row.label">
                 <component :is="renderRow(row)" />
               </template>
+              <div v-if="virtual.enabled.value" class="g-virtual-spacer" aria-hidden="true" :style="{ height: `${virtual.window.value.bottom}px` }" />
               <!-- Connections -->
               <svg
                 v-if="connectionState.isCreating && previewLinePoints"
@@ -1220,7 +1348,7 @@ defineExpose({
                 />
               </svg>
               <template v-if="enableConnections">
-                <template v-for="conn in connections" :key="`${conn.sourceId}-${conn.targetId}`">
+                <template v-for="conn in renderedConnections" :key="`${conn.sourceId}-${conn.targetId}`">
                   <g-gantt-connector
                     v-if="barPositions.get(conn.sourceId) && barPositions.get(conn.targetId)"
                     v-bind="getConnectorProps(conn)!"

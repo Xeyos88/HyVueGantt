@@ -30,7 +30,9 @@ import type { RangeSelectionEvent } from "../types"
 // -----------------------------
 // 3. PROPS AND CONFIGURATION
 // -----------------------------
-const props = defineProps<{
+const props = withDefaults(defineProps<{
+  /** Internal flat rendering: the chart renders expanded descendants itself. */
+  renderChildren?: boolean
   label: string
   bars: GanttBarObject[]
   highlightOnHover?: boolean
@@ -44,7 +46,7 @@ const props = defineProps<{
   connections?: GanttBarConnection[]
   groupStartDate?: string | Date
   groupEndDate?: string | Date
-}>()
+}>(), { renderChildren: true })
 
 // Events that can be emitted by this component
 const emit = defineEmits<{
@@ -114,6 +116,7 @@ const isExpanded = computed(() => {
 const rowStyle = computed(() => {
   const baseStyle: StyleValue = {
     height: `${rowHeight.value}px`,
+    boxSizing: "border-box",
     borderBottom: `1px solid ${colors.value.gridAndBorder}`,
     background:
       highlightOnHover?.value && isHovering.value ? colors.value.hoverHighlight : undefined
@@ -419,6 +422,7 @@ provide(BAR_CONTAINER_KEY, barContainer)
   <!-- Main row component -->
   <div
     :class="rowClasses"
+    :data-row-id="id"
     :style="rowStyle"
     @dragover.prevent="isHovering = true"
     @dragleave="isHovering = false"
@@ -437,7 +441,9 @@ provide(BAR_CONTAINER_KEY, barContainer)
       @click="hasChildren ? handleGroupToggle($event) : undefined"
     >
       <!-- Expand/collapse button for groups, or placeholder to preserve alignment -->
-      <button v-if="hasChildren" class="group-toggle-button" @click="handleGroupToggle($event)">
+      <button v-if="hasChildren" type="button" class="group-toggle-button"
+        :aria-label="`${isExpanded ? 'Collapse' : 'Expand'} ${label}`"
+        :aria-expanded="isExpanded" @click="handleGroupToggle($event)">
         <FontAwesomeIcon :icon="isExpanded ? faChevronDown : faChevronRight" class="group-icon" />
       </button>
       <span v-else-if="isGroup" class="group-toggle-button group-toggle-placeholder" />
@@ -467,7 +473,7 @@ provide(BAR_CONTAINER_KEY, barContainer)
     </div>
   </div>
   <!-- Child rows (rendered when group is expanded) -->
-  <div v-if="isGroup && isExpanded" class="g-gantt-row-children">
+  <div v-if="isGroup && isExpanded && renderChildren !== false" class="g-gantt-row-children">
     <component
       :is="(GGanttRow as any)"
       v-for="child in visibleChildRows"

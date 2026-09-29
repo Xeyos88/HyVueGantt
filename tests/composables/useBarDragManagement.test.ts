@@ -19,6 +19,8 @@ vi.mock("../../src/provider/provideConfig", () => ({
     barStart: ref("start"),
     barEnd: ref("end"),
     dateFormat: ref("YYYY-MM-DD HH:mm"),
+    ganttWidth: ref(800),
+    locale: ref("en"),
     chartStart: ref("2024-01-01"),
     chartEnd: ref("2024-12-31"),
     pushOnOverlap: ref(true),

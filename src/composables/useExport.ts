@@ -1,7 +1,5 @@
 import { ref, type Ref } from "vue"
 import type { ChartRow, ExportOptions, ExportResult, GanttBarObject, TimeUnit } from "../types"
-import html2canvas from "html2canvas"
-import jsPDF from "jspdf"
 import type { UseRowsReturn } from "./useRows"
 import dayjs from "dayjs"
 
@@ -20,133 +18,97 @@ export function useExport(
     barStart: Ref<string>
     barEnd: Ref<string>
     dateFormat: Ref<string | false>
+    locale?: Ref<string>
     precision: Ref<TimeUnit>
   }
 ) {
+  const toDayjs = (input: string | Date) => dayjs(input).locale(config.locale?.value ?? "en")
   const isExporting = ref(false)
   const lastError = ref<string | null>(null)
 
-  /**
-   * Pre-processes DOM elements before export to ensure
-   * correct text positioning
-   *
-   * @param element - DOM element to pre-process
-   * @returns Pre-processed DOM element
-   */
-  const prepareElementForExport = (
+  /** Capture in html2canvas's cloned document, retaining ancestor styles and slots. */
+  const captureChart = async (
+    html2canvas: (typeof import("html2canvas"))["default"],
     element: HTMLElement,
-    wrapperELement: HTMLElement,
-    options: ExportOptions
-  ): HTMLElement => {
-    const clonedElement = wrapperELement.cloneNode(true) as HTMLElement
-
-    clonedElement.style.width = element.offsetWidth + "px"
-    clonedElement.style.height = element.offsetHeight + "px"
-
-    const textSelectors = [".g-gantt-bar-label > div", ".g-timeunit-min", ".label-unit"]
-
-    const textElements = clonedElement.querySelectorAll(textSelectors.join(", "))
-
-    const commands = clonedElement.querySelector(".g-gantt-command") as HTMLElement
-    commands.style.display = "none"
-
-    if (!options.exportColumnLabel) {
-      const columnLabels = clonedElement.querySelector(".g-gantt-label-section") as HTMLElement
-      columnLabels.style.display = "none"
-    }
-
-    textElements.forEach((el) => {
-      const element = el as HTMLElement
-
-      element.style.display = "flex"
-      element.style.alignItems = "center"
-      element.style.justifyContent = "center"
-      element.style.textAlign = "center"
-      element.style.position = "relative"
-      element.style.fontSize = "10px"
-
-      element.style.transform = "translateY(-25%)"
+    wrapper: HTMLElement,
+    options: ExportOptions,
+    scale: number
+  ) => {
+    await document.fonts?.ready
+    const timelineWidth = element.offsetWidth
+    const timelineHeight = element.offsetHeight
+    const labels = wrapper.querySelector<HTMLElement>(".g-gantt-label-section")
+    const labelWidth =
+      options.exportColumnLabel === false ? 0 : (labels?.offsetWidth ?? 0)
+    return html2canvas(wrapper, {
+      scale,
+      logging: false,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      removeContainer: true,
+      onclone: async (clonedDocument, clonedWrapper) => {
+        await clonedDocument.fonts?.ready
+        // html2canvas can paint CSS shadows over the fill, darkening event bands.
+        // Omit decorative shadows in the captured copy to preserve theme colors.
+        clonedWrapper.querySelectorAll<HTMLElement>("*").forEach((node) => {
+          node.style.boxShadow = "none"
+        })
+        // Only the cloned layout expands: the live chart keeps its viewport and scroll.
+        Object.assign(clonedWrapper.style, {
+          width: `${timelineWidth + labelWidth}px`,
+          height: `${timelineHeight}px`,
+          minWidth: "0",
+          maxWidth: "none",
+          minHeight: "0",
+          maxHeight: "none",
+          boxSizing: "content-box",
+          flex: "none"
+        })
+        clonedWrapper
+          .querySelectorAll<HTMLElement>(".g-gantt-command")
+          .forEach((command) => {
+            command.style.display = "none"
+          })
+        const clonedLabels = clonedWrapper.querySelector<HTMLElement>(
+          ".g-gantt-label-section"
+        )
+        if (clonedLabels) {
+          if (options.exportColumnLabel === false)
+            clonedLabels.style.display = "none"
+          else
+            Object.assign(clonedLabels.style, {
+              width: `${labelWidth}px`,
+              flex: `0 0 ${labelWidth}px`
+            })
+        }
+        const layout = clonedWrapper.querySelector<HTMLElement>(
+          ".g-gantt-main-layout"
+        )
+        if (layout)
+          Object.assign(layout.style, {
+            overflow: "visible",
+            flex: "none",
+            height: `${timelineHeight}px`
+          })
+        const viewport =
+          clonedWrapper.querySelector<HTMLElement>(".gantt-wrapper")
+        if (viewport) {
+          Object.assign(viewport.style, {
+            width: `${timelineWidth}px`,
+            flex: `0 0 ${timelineWidth}px`,
+            overflow: "visible"
+          })
+          viewport.scrollLeft = 0
+        }
+        clonedWrapper
+          .querySelectorAll<HTMLElement>(
+            ".g-gantt-rows-container, .g-label-column-rows"
+          )
+          .forEach((rows) => {
+            rows.scrollTop = 0
+          })
+      }
     })
-
-    const ellipsisElements = clonedElement.querySelectorAll(
-      ".cell-content, .text-ellipsis, .text-ellipsis-value"
-    )
-    ellipsisElements.forEach((el) => {
-      const element = el as HTMLElement
-      element.style.overflow = "visible"
-      element.style.alignItems = "center"
-      element.style.whiteSpace = "normal"
-      element.style.textOverflow = "ellipsis"
-      element.style.fontSize = "10px"
-      element.style.transform = "translateY(-1%)"
-    })
-
-    const rows = clonedElement.querySelectorAll(".g-label-column-row")
-    rows.forEach((row) => {
-      const rowElement = row as HTMLElement
-      rowElement.style.overflow = "visible"
-      rowElement.style.flexWrap = "wrap"
-    })
-
-    const barLabels = clonedElement.querySelectorAll(".g-gantt-bar-label")
-    barLabels.forEach((el) => {
-      const element = el as HTMLElement
-      element.style.overflow = "hidden"
-      element.style.textOverflow = "ellipsis"
-      element.style.whiteSpace = "nowrap"
-      element.style.transform = "translateY(-15%)"
-    })
-
-    const progressBars = clonedElement.querySelectorAll(".g-gantt-progress-bar")
-    progressBars.forEach((el) => {
-      const element = el as HTMLElement
-      element.style.display = ""
-      element.style.alignItems = ""
-      element.style.justifyContent = ""
-      element.style.transform = ""
-      element.style.position = ""
-    })
-
-    const minUnitLabels = clonedElement.querySelectorAll(".g-timeunit-min")
-    minUnitLabels.forEach((el) => {
-      const element = el as HTMLElement
-
-      element.style.transform = "translateY(-35%)"
-    })
-
-    const progressTexts = clonedElement.querySelectorAll(".progress-text")
-    progressTexts.forEach((el) => {
-      const element = el as HTMLElement
-
-      element.style.transform = "translateY(-40%)"
-    })
-
-    const timeAxisEventsLabels = clonedElement.querySelectorAll(".g-timeaxis-event-label")
-    timeAxisEventsLabels.forEach((el) => {
-      const element = el as HTMLElement
-      element.style.fontSize = "8px"
-      element.style.transform = "translateY(-45%)"
-    })
-
-    const milestoneLabels = clonedElement.querySelectorAll(".g-gantt-milestone-label")
-    milestoneLabels.forEach((el) => {
-      const element = el as HTMLElement
-      element.style.transform = "translateY(-15%)"
-    })
-
-    const milestoneMarkers = clonedElement.querySelectorAll(".g-gantt-milestone-marker")
-    milestoneMarkers.forEach((el) => {
-      const element = el as HTMLElement
-      element.style.transform = "translateY(-0.2%)"
-    })
-
-    const rowLabels = clonedElement.querySelectorAll(".g-gantt-row-label")
-    rowLabels.forEach((el) => {
-      const element = el as HTMLElement
-      element.style.transform = "translateY(-15%)"
-    })
-
-    return clonedElement
   }
 
   /**
@@ -219,106 +181,70 @@ export function useExport(
     wrapper: HTMLElement,
     options: ExportOptions
   ): Promise<ExportResult> => {
+    let pageCanvas: HTMLCanvasElement | undefined
     try {
-      const processedElement = prepareElementForExport(element, wrapper, options)
-
-      const tempContainer = document.createElement("div")
-      tempContainer.style.position = "absolute"
-      tempContainer.style.left = "-9999px"
-      tempContainer.style.width = element.offsetWidth + "px"
-      tempContainer.style.height = element.offsetHeight + "px"
-      tempContainer.style.overflow = "hidden"
-      tempContainer.appendChild(processedElement)
-      document.body.appendChild(tempContainer)
-
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
-      const paperSize = options.paperSize || "a4"
-      const orientation = options.orientation || "landscape"
-      const scale = options.scale || 1
-      const margin = options.margin !== undefined ? options.margin : 10
-
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf")
+      ])
+      const scale = options.scale ?? 1
+      const margin = options.margin ?? 10
+      if (!Number.isFinite(scale) || scale <= 0) {
+        throw new Error("PDF scale must be a finite positive number")
+      }
+      if (!Number.isFinite(margin) || margin < 0) {
+        throw new Error("PDF margin must be a finite non-negative number")
+      }
       const pdf = new jsPDF({
-        orientation,
+        orientation: options.orientation || "landscape",
         unit: "mm",
-        format: paperSize
+        format: options.paperSize || "a4"
       })
+      // jsPDF already applies the requested orientation to these dimensions.
+      const pdfWidth = pdf.internal.pageSize.getWidth() - margin * 2
+      const pdfHeight = pdf.internal.pageSize.getHeight() - margin * 2
+      if (pdfWidth <= 0 || pdfHeight <= 0) {
+        throw new Error("PDF margin leaves no printable area")
+      }
 
-      const canvas = await html2canvas(processedElement, {
-        scale: scale,
-        logging: false,
-        allowTaint: true,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        imageTimeout: 0,
-        removeContainer: false,
-        foreignObjectRendering: false
-      })
+      const canvas = await captureChart(html2canvas, element, wrapper, options, scale)
+      if (!canvas.width || !canvas.height) {
+        throw new Error("Cannot export an empty chart to PDF")
+      }
 
-      document.body.removeChild(tempContainer)
-
-      const pageWidth =
-        orientation === "landscape"
-          ? pdf.internal.pageSize.getHeight()
-          : pdf.internal.pageSize.getWidth()
-      const pageHeight =
-        orientation === "landscape"
-          ? pdf.internal.pageSize.getWidth()
-          : pdf.internal.pageSize.getHeight()
-      const pdfWidth = pageWidth - margin * 2
-
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
-      const ratio = imgWidth / imgHeight
-      const pdfHeight = pdfWidth / ratio
-
-      if (pdfHeight > pageHeight - margin * 2) {
-        let currentHeight = 0
-
-        while (currentHeight < imgHeight) {
-          if (currentHeight > 0) {
-            pdf.addPage()
-          }
-
-          const canvasSection = Math.min(
-            imgHeight - currentHeight,
-            (imgWidth / pdfWidth) * (pageHeight - margin * 2)
-          )
-
-          const sectionHeight = (canvasSection / imgHeight) * imgHeight
-
-          pdf.addImage(
-            canvas.toDataURL("image/jpeg", options.quality || 0.95),
-            "JPEG",
-            margin,
-            margin,
-            pdfWidth,
-            pdfWidth * (sectionHeight / imgWidth),
-            "",
-            "FAST",
-            currentHeight / imgHeight
-          )
-
-          currentHeight += canvasSection
+      // Integer source boundaries cover every pixel exactly once, without overlap.
+      const pagePixels = Math.floor((pdfHeight / pdfWidth) * canvas.width)
+      if (pagePixels < 1) {
+        throw new Error("PDF printable height is too small for one image pixel")
+      }
+      if (canvas.height > pagePixels) pageCanvas = document.createElement("canvas")
+      for (let top = 0; top < canvas.height; top += pagePixels) {
+        const height = Math.min(pagePixels, canvas.height - top)
+        let image = canvas
+        if (pageCanvas) {
+          pageCanvas.width = canvas.width
+          pageCanvas.height = height
+          const context = pageCanvas.getContext("2d")
+          if (!context) throw new Error("Cannot create a canvas for PDF pagination")
+          context.drawImage(canvas, 0, top, canvas.width, height, 0, 0, canvas.width, height)
+          image = pageCanvas
         }
-      } else {
+        if (top > 0) pdf.addPage()
         pdf.addImage(
-          canvas.toDataURL("image/jpeg", options.quality || 0.95),
+          image.toDataURL("image/jpeg", options.quality ?? 0.95),
           "JPEG",
           margin,
           margin,
           pdfWidth,
-          pdfHeight,
-          "",
+          (height / canvas.width) * pdfWidth,
+          undefined,
           "FAST"
         )
       }
 
-      const blob = pdf.output("blob")
-
       return {
         success: true,
-        data: blob,
+        data: pdf.output("blob"),
         filename: options.filename || "gantt-chart.pdf"
       }
     } catch (error) {
@@ -328,6 +254,11 @@ export function useExport(
         data: null,
         error: errorMessage,
         filename: options.filename || "gantt-chart.pdf"
+      }
+    } finally {
+      if (pageCanvas) {
+        pageCanvas.width = 0
+        pageCanvas.height = 0
       }
     }
   }
@@ -345,33 +276,8 @@ export function useExport(
     options: ExportOptions
   ): Promise<ExportResult> => {
     try {
-      const processedElement = prepareElementForExport(element, wrapper, options)
-
-      const tempContainer = document.createElement("div")
-      tempContainer.style.position = "absolute"
-      tempContainer.style.left = "-9999px"
-      tempContainer.style.width = element.offsetWidth + "px"
-      tempContainer.style.height = element.offsetHeight + "px"
-      tempContainer.style.overflow = "hidden"
-      tempContainer.appendChild(processedElement)
-      document.body.appendChild(tempContainer)
-
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
-      const scale = options.scale || 2
-
-      const canvas = await html2canvas(processedElement, {
-        scale: scale,
-        logging: false,
-        allowTaint: true,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        imageTimeout: 0,
-        removeContainer: false,
-        foreignObjectRendering: false
-      })
-
-      document.body.removeChild(tempContainer)
+      const { default: html2canvas } = await import("html2canvas")
+      const canvas = await captureChart(html2canvas, element, wrapper, options, options.scale ?? 2)
 
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob(
@@ -416,31 +322,8 @@ export function useExport(
     options: ExportOptions
   ): Promise<ExportResult> => {
     try {
-      const processedElement = prepareElementForExport(element, wrapper, options)
-
-      const tempContainer = document.createElement("div")
-      tempContainer.style.position = "absolute"
-      tempContainer.style.left = "-9999px"
-      tempContainer.style.width = element.offsetWidth + "px"
-      tempContainer.style.height = element.offsetHeight + "px"
-      tempContainer.style.overflow = "hidden"
-      tempContainer.appendChild(processedElement)
-      document.body.appendChild(tempContainer)
-
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
-      const canvas = await html2canvas(processedElement, {
-        scale: options.scale || 2,
-        logging: false,
-        allowTaint: true,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        imageTimeout: 0,
-        removeContainer: false,
-        foreignObjectRendering: false
-      })
-
-      document.body.removeChild(tempContainer)
+      const { default: html2canvas } = await import("html2canvas")
+      const canvas = await captureChart(html2canvas, element, wrapper, options, options.scale ?? 2)
 
       const width = canvas.width
       const height = canvas.height
@@ -526,7 +409,7 @@ export function useExport(
         if (row.bars && row.bars.length > 0) {
           const minStartDate = row.bars.reduce(
             (min, bar) => {
-              const currentStart = dayjs(bar[config.barStart.value])
+              const currentStart = toDayjs(bar[config.barStart.value])
               return !min || currentStart.isBefore(min) ? currentStart : min
             },
             null as dayjs.Dayjs | null
@@ -534,7 +417,7 @@ export function useExport(
 
           const maxEndDate = row.bars.reduce(
             (max, bar) => {
-              const currentEnd = dayjs(bar[config.barEnd.value])
+              const currentEnd = toDayjs(bar[config.barEnd.value])
               return !max || currentEnd.isAfter(max) ? currentEnd : max
             },
             null as dayjs.Dayjs | null
@@ -626,16 +509,16 @@ export function useExport(
         const { bar, rowLabel, rowId } = item
         const barConfig = bar.ganttBarConfig
 
-        const startDate = dayjs(bar[config.barStart.value]).format(
+        const startDate = toDayjs(bar[config.barStart.value]).format(
           config.dateFormat.value || "YYYY-MM-DD HH:mm"
         )
 
-        const endDate = dayjs(bar[config.barEnd.value]).format(
+        const endDate = toDayjs(bar[config.barEnd.value]).format(
           config.dateFormat.value || "YYYY-MM-DD HH:mm"
         )
 
-        const durationValue = dayjs(bar[config.barEnd.value]).diff(
-          dayjs(bar[config.barStart.value]),
+        const durationValue = toDayjs(bar[config.barEnd.value]).diff(
+          toDayjs(bar[config.barStart.value]),
           config.precision.value
         )
 
@@ -653,10 +536,10 @@ export function useExport(
 
         // Handle planned dates
         const startPlanned = bar.start_planned 
-          ? dayjs(bar.start_planned).format(config.dateFormat.value || "YYYY-MM-DD HH:mm")
+          ? toDayjs(bar.start_planned).format(config.dateFormat.value || "YYYY-MM-DD HH:mm")
           : "-"
         const endPlanned = bar.end_planned 
-          ? dayjs(bar.end_planned).format(config.dateFormat.value || "YYYY-MM-DD HH:mm")
+          ? toDayjs(bar.end_planned).format(config.dateFormat.value || "YYYY-MM-DD HH:mm")
           : "-"
 
         secondSheetData.push([

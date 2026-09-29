@@ -5,7 +5,6 @@ import provideConfig from "../provider/provideConfig"
 import type { GGanttChartConfig, TimeaxisEvent, TimeaxisUnit, TimeUnit } from "../types"
 import { useHolidays } from "./useHolidays"
 import dayjs from "dayjs"
-import { ganttWidth } from "./useSimpleStore"
 
 /**
  * Base width for time unit elements (in pixels)
@@ -112,11 +111,13 @@ export const capitalizeWords = (str: string): string => {
  * @returns Object containing timeaxis state and control methods
  */
 export default function useTimeaxisUnits(config: GGanttChartConfig = provideConfig()) {
-  const { getHolidayInfo } = useHolidays(config)
+  const { getHolidayInfo, holidays } = useHolidays(config)
+  const holidayRevision = ref(0)
   const {
     precision: configPrecision,
     holidayHighlight,
     locale,
+    ganttWidth,
     timeaxisEvents,
     baseUnitWidth,
     defaultZoom
@@ -237,14 +238,14 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
    * Generates cache key for unit storage
    */
   const getCacheKey = (startDate: Dayjs, endDate: Dayjs, precision: TimeUnit, zoom: number) => {
-    return `${startDate.valueOf()}-${endDate.valueOf()}-${precision}-${zoom}`
+    return `${startDate.valueOf()}-${endDate.valueOf()}-${precision}-${zoom}-${baseUnitWidth.value}-${locale.value}-${holidayHighlight.value}-${holidayRevision.value}`
   }
 
   /**
    * Generates cache key for events storage
    */
   const getEventsCacheKey = (startDate: Dayjs, endDate: Dayjs, zoom: number) => {
-    return `${startDate.valueOf()}-${endDate.valueOf()}-${zoom}`
+    return `${startDate.valueOf()}-${endDate.valueOf()}-${zoom}-${ganttWidth.value}`
   }
 
   /**
@@ -409,8 +410,18 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
     }
   )
 
+  // Cached axis units must be regenerated when lazy-loaded holiday data arrives.
+  watch(
+    holidays,
+    () => {
+      cache.lower.clear()
+      cache.upper.clear()
+      holidayRevision.value++
+    },
+    { flush: "sync" }
+  )
+
   watch([() => holidayHighlight.value, () => locale.value], () => {
-    dayjs.locale(locale.value)
     cache.lower.clear()
     cache.upper.clear()
   })
