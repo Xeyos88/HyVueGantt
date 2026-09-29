@@ -31,9 +31,11 @@ Thank you for considering contributing to HY Vue Gantt! This document provides g
    git clone https://github.com/Xeyos88/HyVueGantt.git
    cd hy-vue-gantt
    ```
-3. Install dependencies:
+3. Use Node.js 24 (the same major version as CI) and install dependencies:
    ```bash
-   npm install
+   nvm install
+   nvm use
+   npm ci
    ```
 4. Create a branch for your work:
    ```bash

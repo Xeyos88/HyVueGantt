@@ -8,8 +8,8 @@ Before installing HyVue Gantt, ensure your project meets these prerequisites:
 
 - Vue 3.5+ or higher
 - TypeScript 5.0 or higher (recommended but optional)
-- Node.js 16 or higher
-- npm 7 or higher or yarn 1.22 or higher
+- Node.js 24.x for developing and building this repository. Applications consuming the library should follow their build tool's Node.js requirements.
+- npm bundled with Node.js, or another compatible package manager
 
 ## Dependencies
 
