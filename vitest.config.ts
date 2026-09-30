@@ -35,12 +35,7 @@ export default defineConfig(() =>
           clean: true,
         },
         include: ["tests/**/*.test.ts"],
-        pool: "vmThreads",
-        poolOptions: {
-          threads: {
-            singleThread: true
-          }
-        }
+        pool: "vmThreads"
       },
       resolve: {
         alias: {

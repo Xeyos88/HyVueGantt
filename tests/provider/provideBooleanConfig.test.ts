@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { provide } from 'vue'
+import { provide, createApp } from 'vue'
 import { mount } from '@vue/test-utils'
 import provideBooleanConfig from '../../src/provider/provideBooleanConfig'
 import { BOOLEAN_KEY } from '../../src/provider/symbols'
@@ -33,16 +33,8 @@ describe('provideBooleanConfig', () => {
   })
 
   it('should throw error when config is not provided', () => {
-    const TestComponent = {
-      setup() {
-        return { config: provideBooleanConfig() }
-      },
-      template: '<div>{{ config }}</div>'
-    }
-
-    expect(() => {
-      mount(TestComponent)
-    }).toThrow('Failed to inject config!')
+    const app = createApp({ render: () => null })
+    expect(() => app.runWithContext(provideBooleanConfig)).toThrow('Failed to inject config!')
   })
 
   it('should throw error when config is null', () => {
@@ -50,7 +42,7 @@ describe('provideBooleanConfig', () => {
       setup() {
         return { config: provideBooleanConfig() }
       },
-      template: '<div>{{ config }}</div>'
+      render: () => null
     }
 
     const ParentComponent = {
@@ -71,7 +63,7 @@ describe('provideBooleanConfig', () => {
       setup() {
         return { config: provideBooleanConfig() }
       },
-      template: '<div>{{ config }}</div>'
+      render: () => null
     }
 
     const ParentComponent = {

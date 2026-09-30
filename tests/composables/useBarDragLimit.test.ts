@@ -39,27 +39,26 @@ vi.mock("../../src/composables/useBarDragManagement", () => ({
   })
 }))
 
+vi.mock("vue", async () => {
+  const actual = await vi.importActual("vue")
+  return {
+    ...(actual as any),
+    inject: () => ({
+      rows: ref<ChartRow[]>([
+        {
+          label: "Row 1",
+          bars: [
+            createMockBar("bar1"),
+            createMockBar("bar2"),
+            createMockBar("bar3", true)
+          ]
+        }
+      ])
+    })
+  }
+})
+
 describe("useBarDragLimit", () => {
-
-  vi.mock("vue", async () => {
-    const actual = await vi.importActual("vue")
-    return {
-      ...(actual as any),
-      inject: () => ({
-        rows: ref<ChartRow[]>([
-          {
-            label: "Row 1",
-            bars: [
-              createMockBar("bar1"),
-              createMockBar("bar2"),
-              createMockBar("bar3", true) 
-            ]
-          }
-        ])
-      })
-    }
-  })
-
   const createMockBarElement = (left: number, width: number) => ({
     offsetLeft: left,
     offsetWidth: width

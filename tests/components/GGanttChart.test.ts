@@ -92,7 +92,7 @@ describe("GGanttChart", () => {
           FontAwesomeIcon: true,
           GGanttRow: {
             name: "GGanttRow",
-            props: ["label", "bars", "id", "highlightOnHover"],
+            props: ["label", "bars", "id", "highlightOnHover", "children"],
             template: '<div class="g-gantt-row g-gantt-row-stub"><slot /></div>'
           },
           GGanttTimeaxis: true,

@@ -8,17 +8,14 @@ describe('useEventManager', () => {
   let app: ReturnType<typeof createApp>
 
   beforeEach(() => {
-    // Create a Vue app context to avoid lifecycle warnings
-    app = createApp({ template: '<div></div>' })
-    app.mount(document.createElement('div'))
-    
-    // Run the composable within the Vue app context
-    let manager: ReturnType<typeof useEventManager>
-    app.runWithContext(() => {
-      manager = useEventManager()
+    app = createApp({
+      setup() {
+        eventManager = useEventManager()
+        return () => null
+      }
     })
-    eventManager = manager!
-    
+    app.mount(document.createElement('div'))
+
     mockElement = document.createElement('div')
     vi.clearAllMocks()
   })
