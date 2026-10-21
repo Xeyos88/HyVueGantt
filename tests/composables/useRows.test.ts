@@ -1,8 +1,26 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { ref, nextTick } from "vue"
-import { mount } from "@vue/test-utils"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { ref, nextTick, createApp } from "vue"
+import { mount, enableAutoUnmount } from "@vue/test-utils"
 import { useRows, findBarInRows } from "../../src/composables/useRows"
 import type { ChartRow, GanttBarObject, LabelColumnConfig, SortState } from "../../src/types"
+
+enableAutoUnmount(afterEach)
+
+const apps: ReturnType<typeof createApp>[] = []
+afterEach(() => apps.splice(0).forEach((app) => app.unmount()))
+
+function setupRows(...args: Parameters<typeof useRows>) {
+  let result!: ReturnType<typeof useRows>
+  const app = createApp({
+    setup() {
+      result = useRows(...args)
+      return () => null
+    }
+  })
+  app.mount(document.createElement("div"))
+  apps.push(app)
+  return result
+}
 
 describe("useRows", () => {
   let mockSlots: any
@@ -78,7 +96,7 @@ describe("useRows", () => {
   describe("basic initialization", () => {
     it("should initialize with provided initial rows", () => {
       const initialRowsRef = ref(initialRows)
-      const { rows, getChartRows } = useRows(mockSlots, mockProps, initialRowsRef)
+      const { rows, getChartRows } = setupRows(mockSlots, mockProps, initialRowsRef)
       
       expect(rows.value).toHaveLength(2)
       expect(getChartRows()).toHaveLength(2)
@@ -87,7 +105,7 @@ describe("useRows", () => {
     })
 
     it("should extract rows from slots when no initial rows provided", () => {
-      const { rows } = useRows(mockSlots, mockProps)
+      const { rows } = setupRows(mockSlots, mockProps)
       
       expect(rows.value).toHaveLength(1)
       expect(rows.value[0].id).toBe("row1")
@@ -95,7 +113,7 @@ describe("useRows", () => {
 
     it("should handle empty slots", () => {
       const emptySlots = { default: vi.fn(() => null) }
-      const { rows } = useRows(emptySlots, mockProps)
+      const { rows } = setupRows(emptySlots, mockProps)
       
       expect(rows.value).toHaveLength(0)
     })
@@ -117,7 +135,7 @@ describe("useRows", () => {
         ])
       }
 
-      const { rows } = useRows(nestedSlots, mockProps)
+      const { rows } = setupRows(nestedSlots, mockProps)
       expect(rows.value).toHaveLength(1)
       expect(rows.value[0].id).toBe("nested1")
     })
@@ -125,7 +143,7 @@ describe("useRows", () => {
 
   describe("sorting functionality", () => {
     it("should toggle sort direction correctly", () => {
-      const { toggleSort, sortState } = useRows(mockSlots, mockProps, ref(initialRows))
+      const { toggleSort, sortState } = setupRows(mockSlots, mockProps, ref(initialRows))
       
       expect(sortState.value.direction).toBe("none")
       
@@ -145,7 +163,7 @@ describe("useRows", () => {
         { id: "z", label: "Z", bars: [] },
         { id: "a", label: "A", bars: [] }
       ]
-      const { toggleSort, rows } = useRows(mockSlots, mockProps, ref(testRows))
+      const { toggleSort, rows } = setupRows(mockSlots, mockProps, ref(testRows))
       
       toggleSort("Id")
       expect(rows.value[0].id).toBe("a")
@@ -157,7 +175,7 @@ describe("useRows", () => {
         { id: "1", label: "Zebra", bars: [] },
         { id: "2", label: "Apple", bars: [] }
       ]
-      const { toggleSort, rows } = useRows(mockSlots, mockProps, ref(testRows))
+      const { toggleSort, rows } = setupRows(mockSlots, mockProps, ref(testRows))
       
       toggleSort("Label")
       expect(rows.value[0].label).toBe("Apple")
@@ -185,7 +203,7 @@ describe("useRows", () => {
           }]
         }
       ]
-      const { toggleSort, rows } = useRows(mockSlots, mockProps, ref(testRows))
+      const { toggleSort, rows } = setupRows(mockSlots, mockProps, ref(testRows))
       
       toggleSort("StartDate")
       expect(rows.value[0].id).toBe("2")
@@ -213,7 +231,7 @@ describe("useRows", () => {
           }]
         }
       ]
-      const { toggleSort, rows } = useRows(mockSlots, mockProps, ref(testRows))
+      const { toggleSort, rows } = setupRows(mockSlots, mockProps, ref(testRows))
       
       toggleSort("EndDate")
       expect(rows.value[0].id).toBe("2")
@@ -241,7 +259,7 @@ describe("useRows", () => {
           }]
         }
       ]
-      const { toggleSort, rows } = useRows(mockSlots, mockProps, ref(testRows))
+      const { toggleSort, rows } = setupRows(mockSlots, mockProps, ref(testRows))
       
       toggleSort("Duration")
       expect(rows.value[0].id).toBe("2")
@@ -269,7 +287,7 @@ describe("useRows", () => {
           }]
         }
       ]
-      const { toggleSort, rows } = useRows(mockSlots, mockProps, ref(testRows))
+      const { toggleSort, rows } = setupRows(mockSlots, mockProps, ref(testRows))
       
       toggleSort("Progress")
       expect(rows.value[0].id).toBe("2")
@@ -290,7 +308,7 @@ describe("useRows", () => {
         { id: "1", label: "Zebra", bars: [] },
         { id: "2", label: "Apple", bars: [] }
       ]
-      const { toggleSort, rows } = useRows(mockSlots, customProps, ref(testRows))
+      const { toggleSort, rows } = setupRows(mockSlots, customProps, ref(testRows))
       
       toggleSort("custom")
       expect(rows.value[0].label).toBe("Apple")
@@ -311,7 +329,7 @@ describe("useRows", () => {
         { id: "1", label: "Apple", bars: [] },
         { id: "2", label: "Zebra", bars: [] }
       ]
-      const { toggleSort, rows } = useRows(mockSlots, customProps, ref(testRows))
+      const { toggleSort, rows } = setupRows(mockSlots, customProps, ref(testRows))
       
       toggleSort("custom")
       expect(rows.value[0].label).toBe("Zebra")
@@ -335,7 +353,7 @@ describe("useRows", () => {
           }]
         }
       ]
-      const { toggleSort, rows } = useRows(mockSlots, mockProps, ref(testRows))
+      const { toggleSort, rows } = setupRows(mockSlots, mockProps, ref(testRows))
       
       toggleSort("StartDate")
       expect(rows.value[0].id).toBe("2")
@@ -343,7 +361,7 @@ describe("useRows", () => {
     })
 
     it("should call onSort callback when sorting", () => {
-      const { toggleSort } = useRows(mockSlots, mockProps, ref(initialRows))
+      const { toggleSort } = setupRows(mockSlots, mockProps, ref(initialRows))
       
       toggleSort("Label")
       expect(mockProps.onSort).toHaveBeenCalledWith({
@@ -354,7 +372,7 @@ describe("useRows", () => {
 
     it("should handle onSortChange callbacks", () => {
       const callback = vi.fn()
-      const { onSortChange, toggleSort } = useRows(mockSlots, mockProps, ref(initialRows))
+      const { onSortChange, toggleSort } = setupRows(mockSlots, mockProps, ref(initialRows))
       
       const cleanup = onSortChange(callback)
       toggleSort("Label")
@@ -371,7 +389,7 @@ describe("useRows", () => {
         { id: "1", label: "B Task", bars: [], children: [] },
         { id: "2", label: "A Task", bars: [], children: [{ id: "2a", label: "Child", bars: [] }] }
       ]
-      const { toggleSort, rows } = useRows(mockSlots, mockProps, ref(testRows))
+      const { toggleSort, rows } = setupRows(mockSlots, mockProps, ref(testRows))
       
       toggleSort("Label")
       expect(rows.value[0].id).toBe("2")
@@ -413,7 +431,7 @@ describe("useRows", () => {
     })
 
     it("should toggle group expansion", () => {
-      const { toggleGroupExpansion, isGroupExpanded } = useRows(mockSlots, mockProps, ref(groupRows))
+      const { toggleGroupExpansion, isGroupExpanded } = setupRows(mockSlots, mockProps, ref(groupRows))
       
       expect(isGroupExpanded("group1")).toBe(false)
       
@@ -444,7 +462,7 @@ describe("useRows", () => {
         }
       ]
       
-      const { expandAllGroups, isGroupExpanded } = useRows(mockSlots, mockProps, ref(nestedGroups))
+      const { expandAllGroups, isGroupExpanded } = setupRows(mockSlots, mockProps, ref(nestedGroups))
       
       expandAllGroups()
       expect(isGroupExpanded("parent")).toBe(true)
@@ -452,7 +470,7 @@ describe("useRows", () => {
     })
 
     it("should collapse all groups", () => {
-      const { expandAllGroups, collapseAllGroups, isGroupExpanded } = useRows(mockSlots, mockProps, ref(groupRows))
+      const { expandAllGroups, collapseAllGroups, isGroupExpanded } = setupRows(mockSlots, mockProps, ref(groupRows))
       
       expandAllGroups()
       expect(isGroupExpanded("group1")).toBe(true)
@@ -462,7 +480,7 @@ describe("useRows", () => {
     })
 
     it("should get flattened rows respecting expansion state", () => {
-      const { toggleGroupExpansion, getFlattenedRows } = useRows(mockSlots, mockProps, ref(groupRows))
+      const { toggleGroupExpansion, getFlattenedRows } = setupRows(mockSlots, mockProps, ref(groupRows))
       
       let flattened = getFlattenedRows()
       expect(flattened).toHaveLength(1)
@@ -478,7 +496,7 @@ describe("useRows", () => {
 
     it("should handle group expansion change callbacks", () => {
       const callback = vi.fn()
-      const { onGroupExpansionChange, toggleGroupExpansion } = useRows(mockSlots, mockProps, ref(groupRows))
+      const { onGroupExpansionChange, toggleGroupExpansion } = setupRows(mockSlots, mockProps, ref(groupRows))
       
       const cleanup = onGroupExpansionChange(callback)
       toggleGroupExpansion("group1")
@@ -491,7 +509,7 @@ describe("useRows", () => {
     })
 
     it("should calculate group bars from children", () => {
-      const { rows } = useRows(mockSlots, mockProps, ref(groupRows))
+      const { rows } = setupRows(mockSlots, mockProps, ref(groupRows))
       
       expect(rows.value[0].bars).toHaveLength(1)
       expect(rows.value[0].bars[0].ganttBarConfig.id).toBe("group-group1")
@@ -499,7 +517,7 @@ describe("useRows", () => {
     })
 
     it("should check if all groups are expanded", () => {
-      const { areAllGroupsExpanded, expandAllGroups, toggleGroupExpansion } = useRows(mockSlots, mockProps, ref(groupRows))
+      const { areAllGroupsExpanded, expandAllGroups, toggleGroupExpansion } = setupRows(mockSlots, mockProps, ref(groupRows))
       
       expect(areAllGroupsExpanded.value).toBe(false)
       
@@ -511,7 +529,7 @@ describe("useRows", () => {
     })
 
     it("should check if all groups are collapsed", () => {
-      const { areAllGroupsCollapsed, expandAllGroups, collapseAllGroups } = useRows(mockSlots, mockProps, ref(groupRows))
+      const { areAllGroupsCollapsed, expandAllGroups, collapseAllGroups } = setupRows(mockSlots, mockProps, ref(groupRows))
       
       expect(areAllGroupsCollapsed.value).toBe(true)
       
@@ -523,7 +541,7 @@ describe("useRows", () => {
     })
 
     it("should return false for group states when no groups exist", () => {
-      const { areAllGroupsExpanded, areAllGroupsCollapsed } = useRows(mockSlots, mockProps, ref(initialRows))
+      const { areAllGroupsExpanded, areAllGroupsCollapsed } = setupRows(mockSlots, mockProps, ref(initialRows))
       
       expect(areAllGroupsExpanded.value).toBe(false)
       expect(areAllGroupsCollapsed.value).toBe(false)
@@ -532,7 +550,7 @@ describe("useRows", () => {
 
   describe("custom ordering", () => {
     it("should apply custom order when sorting is disabled", () => {
-      const { customOrder, rows, toggleSort } = useRows(mockSlots, mockProps, ref(initialRows))
+      const { customOrder, rows, toggleSort } = setupRows(mockSlots, mockProps, ref(initialRows))
       
       customOrder.value.set("row2", 0)
       customOrder.value.set("row1", 1)
@@ -546,7 +564,7 @@ describe("useRows", () => {
     })
 
     it("should reset custom order", () => {
-      const { customOrder, resetCustomOrder } = useRows(mockSlots, mockProps, ref(initialRows))
+      const { customOrder, resetCustomOrder } = setupRows(mockSlots, mockProps, ref(initialRows))
       
       customOrder.value.set("row1", 0)
       expect(customOrder.value.size).toBe(1)
@@ -695,7 +713,7 @@ describe("useRows", () => {
           }]
         }
       ]
-      const { rows } = useRows(mockSlots, mockProps, ref(dateRows))
+      const { rows } = setupRows(mockSlots, mockProps, ref(dateRows))
       
       expect(rows.value).toHaveLength(1)
       expect(rows.value[0].bars).toHaveLength(1)
@@ -707,7 +725,7 @@ describe("useRows", () => {
         dateFormat: ref("YYYY-MM-DD HH:mm:ss")
       }
       
-      const { rows } = useRows(mockSlots, dateFormatProps, ref(initialRows))
+      const { rows } = setupRows(mockSlots, dateFormatProps, ref(initialRows))
       expect(rows.value).toHaveLength(2)
     })
 
@@ -717,7 +735,7 @@ describe("useRows", () => {
         dateFormat: ref(false)
       }
       
-      const { rows } = useRows(mockSlots, dateFormatProps, ref(initialRows))
+      const { rows } = setupRows(mockSlots, dateFormatProps, ref(initialRows))
       expect(rows.value).toHaveLength(2)
     })
   })
@@ -727,7 +745,7 @@ describe("useRows", () => {
       const noIdRows = [
         { label: "No ID Task", bars: [] }
       ]
-      const { rows } = useRows(mockSlots, mockProps, ref(noIdRows))
+      const { rows } = setupRows(mockSlots, mockProps, ref(noIdRows))
       
       expect(rows.value).toHaveLength(1)
       expect(rows.value[0].label).toBe("No ID Task")
@@ -737,7 +755,7 @@ describe("useRows", () => {
       const emptyBarsRows = [
         { id: "empty", label: "Empty Bars", bars: [] }
       ]
-      const { rows } = useRows(mockSlots, mockProps, ref(emptyBarsRows))
+      const { rows } = setupRows(mockSlots, mockProps, ref(emptyBarsRows))
       
       expect(rows.value).toHaveLength(1)
       expect(rows.value[0].bars).toHaveLength(0)
@@ -770,7 +788,7 @@ describe("useRows", () => {
         }
       ]
       
-      const { rows } = useRows(mockSlots, mockProps, ref(deepNested))
+      const { rows } = setupRows(mockSlots, mockProps, ref(deepNested))
       expect(rows.value).toHaveLength(1)
       expect(rows.value[0].children?.[0]?.children).toHaveLength(1)
     })

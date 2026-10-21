@@ -8,26 +8,20 @@ describe('useObjectPool', () => {
   let app: ReturnType<typeof createApp>
 
   beforeEach(() => {
-    // Create a Vue app context to avoid lifecycle warnings
-    app = createApp({ template: '<div></div>' })
-    app.mount(document.createElement('div'))
-    
-    // Run the composable within the Vue app context
-    let pool: ReturnType<typeof useObjectPool>
-    app.runWithContext(() => {
-      pool = useObjectPool()
+    app = createApp({
+      setup() {
+        objectPool = useObjectPool()
+        return () => null
+      }
     })
-    objectPool = pool!
-    
+    app.mount(document.createElement('div'))
+
     vi.useFakeTimers()
   })
 
   afterEach(() => {
+    app.unmount()
     vi.useRealTimers()
-    objectPool.destroyAllPools()
-    if (app) {
-      app.unmount()
-    }
   })
 
   describe('createPool', () => {

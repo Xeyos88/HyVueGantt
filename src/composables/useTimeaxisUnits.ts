@@ -461,9 +461,16 @@ export default function useTimeaxisUnits(config: GGanttChartConfig = provideConf
       let currentLower = chartStartDayjs.value.clone()
 
       while (currentLower.isBefore(chartEndDayjs.value)) {
-        const nextBoundary = currentLower
-          .startOf(startOfUnit)
-          .add(1, getDayjsUnit(internalPrecision.value))
+        // startOf("hour") can jump back to the first occurrence of a repeated
+        // local hour at DST fall-back. Advance in elapsed milliseconds instead,
+        // preserving both occurrences and any partial first/last hour.
+        const elapsedInHour =
+          currentLower.minute() * 60_000 +
+          currentLower.second() * 1_000 +
+          currentLower.millisecond()
+        const nextBoundary = internalPrecision.value === "hour"
+          ? currentLower.add(3_600_000 - elapsedInHour, "millisecond")
+          : currentLower.startOf(startOfUnit).add(1, getDayjsUnit(internalPrecision.value))
         const cellEnd = nextBoundary.isAfter(chartEndDayjs.value)
           ? chartEndDayjs.value
           : nextBoundary

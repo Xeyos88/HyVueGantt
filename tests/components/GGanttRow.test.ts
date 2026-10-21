@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest"
+import { ref } from "vue"
+import { INTERNAL_PRECISION_KEY } from "../../src/provider/symbols"
 import { mount } from "@vue/test-utils"
 import GGanttRow from "../../src/components/GGanttRow.vue"
 import type { GanttBarObject } from "../../src/types"
@@ -22,6 +24,7 @@ describe("GGanttRow", () => {
         ...props
       },
       global: {
+        provide: { [INTERNAL_PRECISION_KEY]: ref("day") },
         stubs: {
           GGanttBar: {
             name: "GGanttBar",

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { provide } from 'vue'
+import { provide, createApp } from 'vue'
 import { mount } from '@vue/test-utils'
 import provideGanttId from '../../src/provider/provideGanttId'
 import { GANTT_ID_KEY } from '../../src/provider/symbols'
@@ -27,10 +27,8 @@ describe('provideGanttId', () => {
   })
 
   it('should throw error when ganttId is not provided', () => {
-    // Test directly without Vue component wrapper, since inject() will fail outside component context
-    expect(() => {
-      provideGanttId()
-    }).toThrow('Failed to inject ganttId!')
+    const app = createApp({ render: () => null })
+    expect(() => app.runWithContext(provideGanttId)).toThrow('Failed to inject ganttId!')
   })
 
   it('should throw error when ganttId is null', () => {
@@ -38,7 +36,7 @@ describe('provideGanttId', () => {
       setup() {
         return { ganttId: provideGanttId() }
       },
-      template: '<div>{{ ganttId }}</div>'
+      render: () => null
     }
 
     const ParentComponent = {
@@ -59,7 +57,7 @@ describe('provideGanttId', () => {
       setup() {
         return { ganttId: provideGanttId() }
       },
-      template: '<div>{{ ganttId }}</div>'
+      render: () => null
     }
 
     const ParentComponent = {
