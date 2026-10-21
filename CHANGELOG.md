@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v5.3.3](https://github.com/Xeyos88/HyVueGantt/tree/v5.3.3) (2026-10-21)
+
+[Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.3.2...v5.3.3)
+
+
+
+**🐛 Fix:**
+
+- **timeaxis:** prevent hourly axis freeze during DST fallback
+
 ## [v5.3.2](https://github.com/Xeyos88/HyVueGantt/tree/v5.3.2) (2026-09-29)
 
 [Full Changelog](https://github.com/Xeyos88/HyVueGantt/compare/v5.3.1...v5.3.2)
